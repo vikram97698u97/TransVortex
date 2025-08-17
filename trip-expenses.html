@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trip Expenses Manager</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color:#F5F5F5; margin:0; padding:0; }
+    .container { max-width:1000px; margin:20px auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+    .container h1 { text-align:center; color:#2E8B57; }
+    .form-group { margin-bottom:15px; }
+    .form-group label { display:block; margin-bottom:5px; color:#333; }
+    .form-group input { width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:5px; }
+    button { padding:10px 20px; background:#2E8B57; color:white; border:none; border-radius:5px; cursor:pointer; margin-right:10px; }
+    button:hover { background:#43B97F; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    table th, table td { padding:10px; border:1px solid #ccc; text-align:left; }
+    table th { background:#2E8B57; color:white; }
+    .actions button { margin:0 2px; padding:5px 10px; }
+    .date-filter { display:flex; gap:10px; align-items:center; margin-bottom:20px; padding:15px; background:#f0f8f4; border-radius:8px; flex-wrap:wrap; }
+    .accounting-summary { margin-top:20px; padding:15px; background:#f0f8f4; border-radius:8px; display:none; }
+    .summary-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:15px; margin-top:15px; }
+    .summary-card { background:white; padding:15px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+    .summary-card h3 { margin-top:0; color:#2E8B57; font-size:16px; }
+    .summary-card p { font-size:20px; font-weight:bold; margin:5px 0; }
+
+    /* Chat widget styles */
+    .chat-toggle { position:fixed; right:20px; bottom:140px; z-index:9999; background:#2E8B57; color:#fff; border-radius:50%; width:56px; height:56px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,0.2);}
+    .chat-panel { position:fixed; right:20px; bottom:20px; width:340px; max-height:560px; background:#fff; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.15); overflow:hidden; display:flex; flex-direction:column; z-index:9998; }
+    .chat-header { background:#2E8B57; color:#fff; padding:12px; display:flex; align-items:center; justify-content:space-between; }
+    .chat-body { padding:12px; overflow:auto; flex:1; background:#f7f9f8; }
+    .chat-message { margin-bottom:8px; padding:8px 10px; border-radius:8px; max-width:85%; }
+    .chat-message.me { background:#dff3e8; margin-left:auto; text-align:right; }
+    .chat-message.other { background:#fff; border:1px solid #e6e6e6; }
+    .chat-footer { padding:10px; display:flex; gap:8px; border-top:1px solid #eee; }
+    .chat-footer input { flex:1; padding:8px; border-radius:6px; border:1px solid #ccc; }
+    .small-muted { font-size:11px; color:#666; margin-top:4px; }
+
+    @media (max-width:700px) {
+      .container { margin:10px; padding:12px; }
+      .chat-panel { width:95%; right:2.5%; bottom:10px; max-height:60vh; }
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <div class="container">
+    <h1>Trip Expenses Manager</h1>
+
+    <!-- Date Filter -->
+    <div class="date-filter">
+      <div>
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate">
+      </div>
+      <div>
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate">
+      </div>
+      <div style="margin-left:auto;">
+        <button id="applyFilter">Apply Filter</button>
+        <button id="resetFilter">Reset</button>
+      </div>
+    </div>
+
+    <!-- Accounting summary -->
+    <div id="accountingSummary" class="accounting-summary">
+      <h2>Accounting Summary</h2>
+      <div class="summary-grid">
+        <div class="summary-card"><h3>Total Trips</h3><p id="totalTrips">0</p></div>
+        <div class="summary-card"><h3>Total Revenue</h3><p id="totalRevenue">₹0</p></div>
+        <div class="summary-card"><h3>Total Expenses</h3><p id="totalExpenses">₹0</p></div>
+        <div class="summary-card"><h3>Net Profit</h3><p id="netProfit">₹0</p></div>
+        <div class="summary-card"><h3>Profit Margin</h3><p id="profitMargin">0%</p></div>
+        <div class="summary-card"><h3>Diesel Expenses</h3><p id="dieselExpenses">₹0</p></div>
+        <div class="summary-card"><h3>Tyre Expenses</h3><p id="tyreExpenses">₹0</p></div>
+        <div class="summary-card"><h3>Other Expenses</h3><p id="otherTotalExpenses">₹0</p></div>
+      </div>
+    </div>
+
+    <!-- Form fields -->
+    <div class="form-group"><label for="vehicle">Vehicle Number</label><input id="vehicle" type="text" placeholder="Enter vehicle number" /></div>
+    <div class="form-group"><label for="driver">Driver Name</label><input id="driver" type="text" placeholder="Enter driver name" /></div>
+    <div class="form-group"><label for="date">Date</label><input id="date" type="date" /></div>
+    <div class="form-group"><label for="tyre">Tyre Expense</label><input id="tyre" type="number" /></div>
+    <div class="form-group"><label for="diesel">Diesel Expense</label><input id="diesel" type="number" /></div>
+    <div class="form-group"><label for="advance">Advance paid</label><input id="advance" type="number" /></div>
+    <div class="form-group"><label for="toll">Toll Paid</label><input id="toll" type="number" /></div>
+    <div class="form-group"><label for="vehicler">Vehicle Work</label><input id="vehicler" type="number" /></div>
+    <div class="form-group"><label for="other">Other expenses</label><input id="other" type="number" /></div>
+    <div class="form-group"><label for="food">Food expenses</label><input id="food" type="number" /></div>
+    <div class="form-group"><label for="gain">Amount Get From this Trip</label><input id="gain" type="number" /></div>
+
+    <hr/>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button onclick="addTripExpense()">Add Trip Expense</button>
+      <button onclick="exportToExcel()">Download Excel</button>
+      <input id="searchInput" type="text" placeholder="Search by vehicle, route, or anything..." style="padding:8px; flex:1; border-radius:8px; border:1px solid #ccc;"/>
+    </div>
+
+    <table id="expensesTable">
+      <thead>
+        <tr>
+          <th>Vehicle No</th><th>Driver</th><th>Date</th><th>Tyre</th><th>Diesel</th><th>Advance</th><th>Toll</th><th>Vehicle</th><th>Other</th><th>Food</th><th>Total</th><th>Gain</th><th>Profit</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Chat toggle + panel -->
+  <div class="chat-toggle" id="chatToggle" title="Open chat"><i class="fas fa-comments"></i></div>
+  <div class="chat-panel" id="chatPanel" style="display:none;">
+    <div class="chat-header">
+      <div><i class="fas fa-comments"></i> Trip Chat</div>
+      <div><button id="closeChat" style="background:transparent;border:none;color:#fff;cursor:pointer;font-size:16px"><i class="fas fa-times"></i></button></div>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <div class="small-muted">Loading chat...</div>
+    </div>
+    <div class="chat-footer">
+      <input id="chatInput" placeholder="Type a message..." />
+      <button id="sendChatBtn">Send</button>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Main module script (Firebase + XLSX) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+    let allExpensesData = [];
+
+    // UI elements
+    const tbody = document.querySelector("#expensesTable tbody");
+    const searchInput = document.getElementById("searchInput");
+    const applyFilterBtn = document.getElementById("applyFilter");
+    const resetFilterBtn = document.getElementById("resetFilter");
+
+    // Chat elements
+    const chatToggle = document.getElementById("chatToggle");
+    const chatPanel = document.getElementById("chatPanel");
+    const chatBody = document.getElementById("chatBody");
+    const chatInput = document.getElementById("chatInput");
+    const sendChatBtn = document.getElementById("sendChatBtn");
+    const closeChatBtn = document.getElementById("closeChat");
+
+    // toggle chat
+    chatToggle.addEventListener("click", () => chatPanel.style.display = "flex");
+    closeChatBtn.addEventListener("click", () => chatPanel.style.display = "none");
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+      currentUser = user;
+      // start listeners
+      listenExpenses();
+      listenChat();
+    });
+
+    // Add trip expense
+    window.addTripExpense = function() {
+      if (!currentUser) return alert("Not authenticated");
+      const vehicle = document.getElementById("vehicle").value.trim();
+      const driver = document.getElementById("driver").value.trim();
+      const date = document.getElementById("date").value;
+      const tyre = parseFloat(document.getElementById("tyre").value || 0);
+      const diesel = parseFloat(document.getElementById("diesel").value || 0);
+      const advance = parseFloat(document.getElementById("advance").value || 0);
+      const toll = parseFloat(document.getElementById("toll").value || 0);
+      const vehicler = parseFloat(document.getElementById("vehicler").value || 0);
+      const other = parseFloat(document.getElementById("other").value || 0);
+      const food = parseFloat(document.getElementById("food").value || 0);
+
+      if (!vehicle || !driver || !date) return alert("Please fill required fields");
+
+      const total = tyre + diesel + advance + toll + vehicler + other + food;
+      const gain = parseFloat(document.getElementById("gain").value || 0);
+      const profitt = +(gain - total).toFixed(2);
+
+      const newRef = push(ref(db, `users/${currentUser.uid}/tripExpenses`));
+      set(newRef, { vehicle, driver, date, tyre, diesel, advance, toll, vehicler, other, food, total, gain, profitt });
+      // clear form
+      ["vehicle","driver","date","tyre","diesel","advance","toll","vehicler","other","food","gain"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+    };
+
+    // Listen expenses
+    function listenExpenses() {
+      const expensesRef = ref(db, `users/${currentUser.uid}/tripExpenses`);
+      onValue(expensesRef, (snapshot) => {
+        tbody.innerHTML = "";
+        allExpensesData = [];
+        snapshot.forEach(child => {
+          const data = child.val();
+          data.key = child.key;
+          allExpensesData.push(data);
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${escapeHtml(data.vehicle)}</td>
+            <td>${escapeHtml(data.driver)}</td>
+            <td>${escapeHtml(data.date)}</td>
+            <td>${data.tyre ?? 0}</td>
+            <td>${data.diesel ?? 0}</td>
+            <td>${data.advance ?? 0}</td>
+            <td>${data.toll ?? 0}</td>
+            <td>${data.vehicler ?? 0}</td>
+            <td>${data.other ?? 0}</td>
+            <td>${data.food ?? 0}</td>
+            <td>${data.total ?? 0}</td>
+            <td>${data.gain ?? 0}</td>
+            <td>${data.profitt ?? 0}</td>
+            <td class="actions">
+              <button onclick="editExpense('${data.key}')">Edit</button>
+              <button onclick="deleteExpense('${data.key}')">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        // If user has typed a search, keep filtering
+        if (searchInput.value.trim()) {
+          searchInput.dispatchEvent(new Event('input'));
+        }
+
+        // redraw charts after data updated
+        createCharts();
+      });
+    }
+
+    // Delete & Edit
+    window.deleteExpense = function(key) {
+      if (!currentUser) return;
+      if (!confirm("Delete this expense?")) return;
+      remove(ref(db, `users/${currentUser.uid}/tripExpenses/${key}`));
+    };
+
+    window.editExpense = function(key) {
+      // Find item in array
+      const item = allExpensesData.find(i => i.key === key);
+      if (!item) return alert("Item not found");
+      // Fill form with values for editing; then delete the original so user can re-add or we'll update on save
+      document.getElementById("vehicle").value = item.vehicle || "";
+      document.getElementById("driver").value = item.driver || "";
+      document.getElementById("date").value = item.date || "";
+      document.getElementById("tyre").value = item.tyre || "";
+      document.getElementById("diesel").value = item.diesel || "";
+      document.getElementById("advance").value = item.advance || "";
+      document.getElementById("toll").value = item.toll || "";
+      document.getElementById("vehicler").value = item.vehicler || "";
+      document.getElementById("other").value = item.other || "";
+      document.getElementById("food").value = item.food || "";
+      document.getElementById("gain").value = item.gain || "";
+      // remove original; after editing user should press Add to re-create (simpler flow)
+      remove(ref(db, `users/${currentUser.uid}/tripExpenses/${key}`));
+    };
+
+    // Search input
+    searchInput.addEventListener("input", () => {
+      const q = searchInput.value.trim().toLowerCase();
+      const rows = document.querySelectorAll("#expensesTable tbody tr");
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? "" : "none";
+      });
+    });
+
+    // Export to Excel
+    window.exportToExcel = function() {
+      const table = document.getElementById("expensesTable");
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.table_to_sheet(table);
+      XLSX.utils.book_append_sheet(wb, ws, "TripExpenses");
+      XLSX.writeFile(wb, "TripExpenses.xlsx");
+    };
+
+    // Date filtering
+    applyFilterBtn.addEventListener("click", () => {
+      const s = document.getElementById("startDate").value;
+      const e = document.getElementById("endDate").value;
+      if (!s || !e) return alert("Select both start and end date");
+      filterByDateRange(s, e);
+    });
+    resetFilterBtn.addEventListener("click", () => {
+      document.getElementById("startDate").value = "";
+      document.getElementById("endDate").value = "";
+      // re-render all rows from allExpensesData
+      renderRows(allExpensesData);
+      document.getElementById("accountingSummary").style.display = "none";
+    });
+
+    function filterByDateRange(startDate, endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23,59,59);
+      const filtered = allExpensesData.filter(item => {
+        const d = new Date(item.date);
+        return d >= start && d <= end;
+      });
+      renderRows(filtered);
+      calculateAccountingSummary(filtered);
+    }
+
+    function renderRows(dataArray) {
+      tbody.innerHTML = "";
+      dataArray.forEach(data => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${escapeHtml(data.vehicle)}</td>
+          <td>${escapeHtml(data.driver)}</td>
+          <td>${escapeHtml(data.date)}</td>
+          <td>${data.tyre ?? 0}</td>
+          <td>${data.diesel ?? 0}</td>
+          <td>${data.advance ?? 0}</td>
+          <td>${data.toll ?? 0}</td>
+          <td>${data.vehicler ?? 0}</td>
+          <td>${data.other ?? 0}</td>
+          <td>${data.food ?? 0}</td>
+          <td>${data.total ?? 0}</td>
+          <td>${data.gain ?? 0}</td>
+          <td>${data.profitt ?? 0}</td>
+          <td class="actions">
+            <button onclick="editExpense('${data.key}')">Edit</button>
+            <button onclick="deleteExpense('${data.key}')">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function calculateAccountingSummary(data) {
+      const totalTrips = data.length;
+      const totalRevenue = data.reduce((s, it) => s + (Number(it.gain)||0), 0);
+      const totalExpenses = data.reduce((s, it) => s + (Number(it.total)||0), 0);
+      const netProfit = totalRevenue - totalExpenses;
+      const profitMargin = totalRevenue > 0 ? ((netProfit/totalRevenue)*100).toFixed(2) : "0";
+
+      const dieselExpenses = data.reduce((s, it) => s + (Number(it.diesel)||0), 0);
+      const tyreExpenses = data.reduce((s, it) => s + (Number(it.tyre)||0), 0);
+      const otherExpenses = totalExpenses - dieselExpenses - tyreExpenses;
+
+      document.getElementById("totalTrips").textContent = totalTrips;
+      document.getElementById("totalRevenue").textContent = `₹${totalRevenue.toFixed(2)}`;
+      document.getElementById("totalExpenses").textContent = `₹${totalExpenses.toFixed(2)}`;
+      document.getElementById("netProfit").textContent = `₹${netProfit.toFixed(2)}`;
+      document.getElementById("profitMargin").textContent = `${profitMargin}%`;
+      document.getElementById("dieselExpenses").textContent = `₹${dieselExpenses.toFixed(2)}`;
+      document.getElementById("tyreExpenses").textContent = `₹${tyreExpenses.toFixed(2)}`;
+      document.getElementById("otherTotalExpenses").textContent = `₹${otherExpenses.toFixed(2)}`;
+
+      document.getElementById("accountingSummary").style.display = "block";
+    }
+
+    // Charts: use global allExpensesData
+    let expenseChart, categoryChart, profitChart;
+    function createCharts() {
+      // destroy old charts if exist
+      if (expenseChart) expenseChart.destroy();
+      if (categoryChart) categoryChart.destroy();
+      if (profitChart) profitChart.destroy();
+
+      const labels = getMonthlyLabels();
+      const expensesData = getMonthlyExpenses();
+      const revenueData = getMonthlyRevenue();
+      const profitData = getMonthlyProfit();
+      const categoryTotals = getCategoryTotals();
+
+      // expense line
+      const ctx1 = document.getElementById('expenseChart');
+      if (ctx1) {
+        expenseChart = new Chart(ctx1.getContext('2d'), {
+          type: 'line',
+          data: { labels, datasets: [{ label:'Total Expenses', data: expensesData, borderColor:'#2E8B57', backgroundColor:'rgba(46,139,87,0.1)', tension:0.4 }] },
+          options: { responsive:true, scales:{ y:{ beginAtZero:true, ticks:{ callback: v => '₹'+v } } } }
+        });
+      }
+
+      // category doughnut
+      const ctx2 = document.getElementById('categoryChart');
+      if (ctx2) {
+        categoryChart = new Chart(ctx2.getContext('2d'), {
+          type:'doughnut',
+          data: { labels:['Diesel','Tyre','Food','Toll','Other'], datasets:[{ data: categoryTotals }]},
+          options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
+        });
+      }
+
+      // profit vs expense bar
+      const ctx3 = document.getElementById('profitChart');
+      if (ctx3) {
+        profitChart = new Chart(ctx3.getContext('2d'), {
+          type:'bar',
+          data:{ labels, datasets:[
+            { label:'Total Expenses', data: expensesData, backgroundColor:'#FF6384' },
+            { label:'Total Revenue', data: revenueData, backgroundColor:'#36A2EB' },
+            { label:'Net Profit', data: profitData, backgroundColor:'#4BC0C0' }
+          ]},
+          options:{ responsive:true, scales:{ y:{ beginAtZero:true, ticks:{ callback: v => '₹'+v } } } }
+        });
+      }
+    }
+
+    function getMonthlyLabels() {
+      const months = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        months.push(d.toLocaleDateString('en-US',{ month:'short', year:'2-digit' }));
+      }
+      return months;
+    }
+
+    function getMonthlyExpenses() {
+      const monthly = {};
+      allExpensesData.forEach(exp => {
+        const m = new Date(exp.date).toLocaleDateString('en-US',{ month:'short', year:'2-digit' });
+        monthly[m] = (monthly[m] || 0) + (Number(exp.total)||0);
+      });
+      return getMonthlyLabels().map(m => monthly[m] || 0);
+    }
+
+    function getMonthlyRevenue() {
+      const monthly = {};
+      allExpensesData.forEach(exp => {
+        const m = new Date(exp.date).toLocaleDateString('en-US',{ month:'short', year:'2-digit' });
+        monthly[m] = (monthly[m] || 0) + (Number(exp.gain)||0);
+      });
+      return getMonthlyLabels().map(m => monthly[m] || 0);
+    }
+
+    function getMonthlyProfit() {
+      const rev = getMonthlyRevenue();
+      const exp = getMonthlyExpenses();
+      return rev.map((r,i) => r - exp[i]);
+    }
+
+    function getCategoryTotals() {
+      const totals = { diesel:0, tyre:0, food:0, toll:0, other:0 };
+      allExpensesData.forEach(e => {
+        totals.diesel += Number(e.diesel)||0;
+        totals.tyre += Number(e.tyre)||0;
+        totals.food += Number(e.food)||0;
+        totals.toll += Number(e.toll)||0;
+        totals.other += (Number(e.advance)||0) + (Number(e.vehicler)||0) + (Number(e.other)||0);
+      });
+      return [totals.diesel, totals.tyre, totals.food, totals.toll, totals.other];
+    }
+
+    // Basic escaping for safety in rendering
+    function escapeHtml(str) {
+      if (str == null) return "";
+      return String(str).replace(/[&<>"'`=\/]/g, function(s){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'})[s]; });
+    }
+
+    // ---------------- Chat implementation ----------------
+    function listenChat() {
+      const chatRef = ref(db, `users/${currentUser.uid}/tripChat`);
+      onValue(chatRef, snapshot => {
+        chatBody.innerHTML = "";
+        if (!snapshot.exists()) {
+          chatBody.innerHTML = "<div class='small-muted'>No messages yet</div>";
+          return;
+        }
+        // show latest messages sorted by ts
+        const messages = [];
+        snapshot.forEach(child => {
+          messages.push(child.val());
+        });
+        messages.sort((a,b) => (a.ts||0) - (b.ts||0));
+        messages.forEach(msg => {
+          const div = document.createElement("div");
+          const who = (msg.senderUid === currentUser.uid) ? "me" : "other";
+          div.className = `chat-message ${who}`;
+          const senderName = msg.senderName ? escapeHtml(msg.senderName) : (msg.senderUid === currentUser.uid ? "You" : escapeHtml(msg.senderUid));
+          const timeStr = msg.ts ? new Date(msg.ts).toLocaleString() : "";
+          div.innerHTML = `<div style="font-size:13px;color:#333">${escapeHtml(msg.text)}</div><div class="small-muted">${senderName} • ${timeStr}</div>`;
+          chatBody.appendChild(div);
+        });
+        chatBody.scrollTop = chatBody.scrollHeight;
+      });
+    }
+
+    sendChatBtn.addEventListener("click", sendChatMessage);
+    chatInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendChatMessage(); });
+
+    function sendChatMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      const chatRef = ref(db, `users/${currentUser.uid}/tripChat`);
+      const newMsgRef = push(chatRef);
+      const senderName = currentUser.displayName || currentUser.email || currentUser.uid;
+      set(newMsgRef, { text, senderUid: currentUser.uid, senderName, ts: Date.now() });
+      chatInput.value = "";
+    }
+
+    // Load navbar (non-blocking)
+    fetch("navbar.html").then(r => r.text()).then(html => document.getElementById("navbar").innerHTML = html).catch(()=>{});
+
+    // Expose logout and toggleMenu globally
+    window.logout = function() { signOut(auth).then(()=> window.location.href="index.html").catch(e => alert("Logout error: "+e.message)); };
+    window.toggleMenu = function(){ const el=document.getElementById("navLinks"); if(el) el.classList.toggle("show"); };
+
+  </script>
+
+  <!-- Analytics charts section markup (keeps same styles) -->
+  <div class="container" style="margin-top:20px;">
+    <h2>Expense Analytics</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px;">
+      <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1);">
+        <h3>Monthly Expense Trend</h3>
+        <canvas id="expenseChart" width="400" height="200"></canvas>
+      </div>
+      <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1);">
+        <h3>Expense Categories</h3>
+        <canvas id="categoryChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+    <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1);margin-top:20px;">
+      <h3>Profit vs Expense Analysis</h3>
+      <canvas id="profitChart" width="800" height="300"></canvas>
+    </div>
+  </div>
+
+</body>
+</html>

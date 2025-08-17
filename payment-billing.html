@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Billing</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+  :root {
+    --primary: #2E8B57;
+    --primary-dark: #26734d;
+    --text: #111111;
+    --text-light: #6b7280;
+    --border: #e5e7eb;
+    --bg: #F5F5F5;
+    --card: #ffffff;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .main-content { max-width: 1200px; margin: 80px auto 2rem; padding: 0 20px; }
+  .container { background: var(--card); border-radius: 12px; box-shadow: var(--shadow); padding: 2rem; margin-bottom: 2rem; }
+  .container h1 { color: var(--primary); text-align: center; margin-bottom: 1.5rem; font-size: 1.8rem; font-weight: 700; }
+  .form-group { margin-bottom: 1.25rem; }
+  label { font-weight: 500; margin-bottom: 0.5rem; display: block; color: var(--text); }
+  input, select {
+    width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem;
+    transition: all 0.3s ease; background-color: #fff;
+  }
+  input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.15); outline: none; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem;
+    border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer;
+    transition: all 0.2s ease; text-decoration: none;
+  }
+  .btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+  .btn:active { transform: translateY(0); }
+  .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+  .btn-outline:hover { background: rgba(46, 139, 87, 0.1); }
+  #searchInput { padding: 0.6rem; border-radius: 8px; border: 1px solid #ccc; width: 100%; margin-top: 1rem; margin-bottom: 1rem; }
+  .table-responsive { width: 100%; overflow-x: auto; margin: 1.5rem 0; border-radius: 8px; box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; background: white; }
+  th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--primary); color: white; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover { background: rgba(0, 0, 0, 0.01); }
+  .action-btns button { background: #ff6b6b; padding: 5px 10px; font-size: 0.85rem; }
+  .action-btns button:first-child { background: #43B97F; }
+  .action-btns button:hover { opacity: 0.9; }
+  img.preview { max-width: 100px; max-height: 100px; border-radius: 6px; margin-top: 0.5rem; }
+  #header { margin-bottom: 15px; }
+  .container { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
+  @media (max-width: 768px) {
+    .main-content { margin-top: 70px; padding: 0 15px; }
+    .container { padding: 1.25rem; }
+    .btn { width: 100%; margin-bottom: 0.5rem; }
+    .action-buttons { display: flex; flex-direction: column; gap: 0.5rem; }
+  }
+  @media(max-width: 768px) {
+    table, thead, tbody, th, td, tr { display: block; }
+    th { position: absolute; top: -9999px; left: -9999px; }
+    td { padding-left: 50%; position: relative; text-align: right; border: none; border-bottom: 1px solid #eee; }
+    td::before { position: absolute; top: 0.6rem; left: 0.6rem; width: 45%; white-space: nowrap; font-weight: bold; color: #2E8B57; }
+    td:nth-of-type(1)::before { content: "Company"; }
+    td:nth-of-type(2)::before { content: "Amount"; }
+    td:nth-of-type(3)::before { content: "Date"; }
+    td:nth-of-type(4)::before { content: "Type"; }
+    td:nth-of-type(5)::before { content: "Proof"; }
+    td:nth-of-type(6)::before { content: "Actions"; }
+  }
+</style>
+</head>
+<body>
+  <div id="navbar"></div>
+  <div class="main-content">
+    <div class="container">
+      <h1><i class="fas fa-money-bill-wave"></i> Payment Records</h1>
+      <form id="paymentForm">
+        <label>Company Name: <input type="text" id="companyName" required /></label>
+        <label>Amount: <input type="number" id="amount" required /></label>
+        <label>Date: <input type="date" id="date" required /></label>
+        <label>Payment Type:
+          <select id="paymentType">
+            <option value="Tyre">Tyre</option>
+            <option value="Driver">Driver</option>
+            <option value="repair">repair</option>
+            <option value="diesel">diesel</option>
+            <option value="salary">salary</option>
+            <option value="other">other</option>
+          </select>
+        </label>
+        <label>Upload Proof:
+          <input type="file" id="proofFile" accept="image/*,application/pdf"/>
+        </label>
+        <img id="preview" class="preview" style="display:none;" />
+        <button type="submit" class="btn">Add Payment</button>
+        <button type="button" id="sortByDateBtn" class="btn">Sort by Date</button>
+      </form>
+      <input type="text" id="searchInput" placeholder="Search by company..." />
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Proof</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="paymentTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth();
+    let currentUserUID = null;
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        currentUserUID = user.uid;
+        loadPayments();
+      } else {
+        window.location.href = "index.html";
+      }
+      window.logout = function() {
+        signOut(auth).then(() => {
+          window.location.href = "index.html";
+        }).catch(error => {
+          alert("Error logging out: " + error.message);
+        });
+      };
+    });
+
+    const form = document.getElementById("paymentForm");
+    const companyName = document.getElementById("companyName");
+    const amount = document.getElementById("amount");
+    const date = document.getElementById("date");
+    const paymentType = document.getElementById("paymentType");
+    const proofFile = document.getElementById("proofFile");
+    const preview = document.getElementById("preview");
+    const searchInput = document.getElementById("searchInput");
+    const paymentTableBody = document.getElementById("paymentTableBody");
+    let payments = [];
+
+    proofFile.addEventListener("change", () => {
+      const file = proofFile.files[0];
+      if (file && file.type.startsWith("image")) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          preview.src = reader.result;
+          preview.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.style.display = "none";
+      }
+    });
+
+    async function resizeImage(file, maxWidth = 800) {
+      return new Promise((resolve) => {
+        const img = document.createElement("img");
+        const reader = new FileReader();
+        reader.onload = (e) => { img.src = e.target.result; };
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const scaleFactor = maxWidth / img.width;
+          canvas.width = maxWidth;
+          canvas.height = img.height * scaleFactor;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            resolve(new File([blob], file.name, { type: file.type }));
+          }, file.type, 0.85);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadToCloudinary(file) {
+      if (file.type.startsWith("image")) {
+        file = await resizeImage(file, 800);
+      }
+      const url = `https://api.cloudinary.com/v1_1/doqapn15f/auto/upload`;
+      const preset = "payment-billing";
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", preset);
+      const res = await fetch(url, { method: "POST", body: formData });
+      const data = await res.json();
+      return data.secure_url;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      let fileURL = "";
+      const file = proofFile.files[0];
+      if (file) fileURL = await uploadToCloudinary(file);
+      const paymentRef = push(ref(db, `users/${currentUserUID}/payments`));
+      await set(paymentRef, {
+        companyName: companyName.value,
+        amount: amount.value,
+        date: date.value,
+        type: paymentType.value,
+        proof: fileURL,
+        id: paymentRef.key
+      });
+      form.reset();
+      preview.style.display = "none";
+    });
+
+    function loadPayments() {
+      const paymentsRef = ref(db, `users/${currentUserUID}/payments`);
+      onValue(paymentsRef, (snapshot) => {
+        payments = [];
+        snapshot.forEach(child => { payments.push(child.val()); });
+        renderPayments(payments);
+      });
+    }
+
+    function renderPayments(list) {
+      paymentTableBody.innerHTML = "";
+      list.forEach(payment => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${payment.companyName}</td>
+          <td>${payment.amount}</td>
+          <td>${payment.date}</td>
+          <td>${payment.type}</td>
+          <td>${payment.proof ? `<a href="${payment.proof}" target="_blank">View</a>` : '—'}</td>
+          <td class="action-btns">
+            <button onclick="editPayment('${payment.id}')">Edit</button>
+            <button onclick="deletePayment('${payment.id}')">Delete</button>
+          </td>
+        `;
+        paymentTableBody.appendChild(tr);
+      });
+    }
+
+    window.editPayment = (id) => {
+      const p = payments.find(p => p.id === id);
+      if (p) {
+        companyName.value = p.companyName;
+        amount.value = p.amount;
+        date.value = p.date;
+        paymentType.value = p.type;
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const file = proofFile.files[0];
+          let fileURL = p.proof;
+          if (file) fileURL = await uploadToCloudinary(file);
+          await update(ref(db, `users/${currentUserUID}/payments/${id}`), {
+            companyName: companyName.value,
+            amount: amount.value,
+            date: date.value,
+            type: paymentType.value,
+            proof: fileURL
+          });
+          form.reset();
+          preview.style.display = "none";
+          form.onsubmit = defaultSubmit;
+        };
+      }
+    };
+
+    const defaultSubmit = form.onsubmit;
+
+    window.deletePayment = (id) => {
+      if (confirm("Delete this record?")) {
+        remove(ref(db, `users/${currentUserUID}/payments/${id}`));
+      }
+    };
+
+    searchInput.addEventListener("input", () => {
+      const value = searchInput.value.toLowerCase();
+      const filtered = payments.filter(p => p.companyName.toLowerCase().includes(value));
+      renderPayments(filtered);
+    });
+
+    document.getElementById("sortByDateBtn").addEventListener("click", () => {
+      const sorted = [...payments].sort((a, b) => new Date(a.date) - new Date(b.date));
+      renderPayments(sorted);
+    });
+
+    window.toggleMenu = function () {
+      document.getElementById("navLinks").classList.toggle("show");
+    };
+  </script>
+
+  <script>
+    fetch("navbar.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar").outerHTML = html;
+        const logoutBtn = document.querySelector('#logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
+              .then(({ getAuth, signOut }) => {
+                const auth = getAuth();
+                signOut(auth).then(() => {
+                  window.location.href = 'index.html';
+                }).catch((error) => {
+                  console.error('Logout error:', error);
+                });
+              });
+          });
+        }
+      });
+  </script>
+</body>
+</html>

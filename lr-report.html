@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LR Report</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    /* Navbar Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #F5F5F5;
+      color: #111111;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2E8B57;
+      padding: 14px 24px;
+      color: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo {
+      height: 50px;
+      width: 250px;
+      max-width: 400px;
+      transition: transform 0.3s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+    }
+
+    .tagline {
+      font-size: 12px;
+      font-style: italic;
+      color: #e0e0e0;
+      margin-top: -3px;
+      letter-spacing: 0.5px;
+    }
+
+    .navbar h1 {
+      font-size: 22px;
+      margin: 0;
+      color: white;
+    }
+
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      margin-left: 16px;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+
+    .nav-links a.active {
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
+    .logout {
+      margin-left: 16px;
+      background-color: #43B97F;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .logout:hover {
+      background-color: #3ba06f;
+      text-decoration: none;
+    }
+
+    .hamburger {
+      display: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        background-color: #26734d;
+        margin-top: 10px;
+        padding: 10px 0;
+      }
+
+      .nav-links.show {
+        display: flex;
+      }
+
+      .nav-links a,
+      .logout {
+        margin: 8px auto;
+        width: 90%;
+        text-align: center;
+        padding: 10px 0;
+        display: block;
+      }
+
+      .logout {
+        margin: 8px auto;
+        text-align: center;
+        max-width: 200px;
+      }
+
+      .hamburger {
+        display: block;
+      }
+    }
+    
+    /* Add padding to main content to account for fixed navbar */
+    body {
+      padding-top: 100px; /* Increased from 80px to 100px */
+      background: #F5F5F5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #111111;
+      margin: 0;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding-top: 90px; /* Increased from 70px to 90px for mobile */
+      }
+    }
+
+    /* Page Content */
+    .container h1 {
+      color: #2E8B57;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      margin-top: 0; /* Ensure no extra top margin */
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 20px auto; /* Added top margin for better spacing */
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #ccc;
+      margin-bottom: 2rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    button {
+      background-color: #43B97F;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 10px;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #3ba06f;
+    }
+
+    .btn-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .btn-actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      button {
+        width: 100%;
+        margin-right: 0;
+      }
+    }
+
+    #searchInput {
+      margin: 1rem 0;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    th, td {
+      padding: 0.8rem;
+      text-align: left;
+      border-bottom: 1px solid #ccc;
+    }
+
+    th {
+      background-color: #2E8B57;
+      color: white;
+    }
+
+    .action-btns button {
+      padding: 6px 10px;
+      font-size: 14px;
+      margin-right: 5px;
+    }
+
+    @media(max-width: 600px){
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      
+      thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+      
+      tr {
+        border: 1px solid #ccc;
+        margin-bottom: 1rem;
+      }
+      
+      td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+        text-align: right;
+      }
+      
+      td:before {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: bold;
+      }
+      
+      td:nth-of-type(1):before { content: "LR Number"; }
+      td:nth-of-type(2):before { content: "Vehicle Number"; }
+      td:nth-of-type(3):before { content: "Date"; }
+      td:nth-of-type(4):before { content: "From"; }
+      td:nth-of-type(5):before { content: "To"; }
+      td:nth-of-type(6):before { content: "Actions"; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="logo-container">
+      <img src="logo.jpg" alt="TransVortex" class="logo">
+    </div>
+    <div class="hamburger" onclick="toggleMenu()">☰</div>
+    <div class="nav-links" id="navLinks">
+      <a href="home.html">Home</a>
+      <a href="booking.html">Thread Booking</a>
+      <a href="add.html">Vehicle Info</a>
+      <a href="route-details.html">Route Details</a>
+      <a href="trip-expenses.html">Trip Expenses</a>
+      <a href="tyre.html">Tyres</a>
+      <a href="tyre_history.html">Tyre History</a>
+      <a href="payment-billing.html">Payments</a>
+      <a href="lr-report.html" class="active">LR Report</a>
+      <a href="invoice.html">Invoice</a>
+      <a href="alerts-system.html">Reminder</a>
+      <button class="logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>LR Report</h1>
+    <form id="lrForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lrNo">LR Number</label>
+          <input type="text" id="lrNo" placeholder="Enter LR Number" required>
+        </div>
+        <div class="form-group">
+          <label for="vehicleNo">Vehicle Number</label>
+          <input type="text" id="vehicleNo" placeholder="Enter Vehicle Number" required>
+        </div>
+        <div class="form-group">
+          <label for="lrDate">Date</label>
+          <input type="date" id="lrDate" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="from">From</label>
+          <input type="text" id="from" placeholder="Enter Origin" required>
+        </div>
+        <div class="form-group">
+          <label for="to">To</label>
+          <input type="text" id="to" placeholder="Enter Destination" required>
+        </div>
+      </div>
+      <div class="btn-actions">
+        <button type="submit">Add / Update Entry</button>
+        <button type="button" id="downloadExcelBtn">Download Excel</button>
+      </div>
+    </form>
+
+    <input type="text" id="searchInput" placeholder="Search...">
+
+    <table>
+      <thead>
+        <tr>
+          <th>LR Number</th>
+          <th>Vehicle Number</th>
+          <th>Date</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="lrTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Firebase + Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, set, remove, onValue, child, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    let editingKey = null;
+    let currentUser = null;
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+      currentUser = user;
+      loadData();
+      window.logout = function() {
+        signOut(auth).then(() => {
+          window.location.href = "index.html";
+        }).catch(error => {
+          alert("Error logging out: " + error.message);
+        });
+      };
+    });
+
+    document.getElementById("lrForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const lrNo = document.getElementById("lrNo").value.trim();
+      const vehicleNo = document.getElementById("vehicleNo").value.trim();
+      const lrDate = document.getElementById("lrDate").value;
+      const from = document.getElementById("from").value.trim();
+      const to = document.getElementById("to").value.trim();
+
+      const entry = { lrNo, vehicleNo, lrDate, from, to };
+      const userRef = ref(database, `users/${currentUser.uid}/lr-entries`);
+
+      if (editingKey) {
+        set(child(userRef, editingKey), entry);
+        editingKey = null;
+      } else {
+        push(userRef, entry);
+      }
+
+      document.getElementById("lrForm").reset();
+    });
+
+    window.editEntry = function (key) {
+      const refPath = ref(database, `users/${currentUser.uid}/lr-entries/${key}`);
+      get(refPath).then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          document.getElementById("lrNo").value = data.lrNo;
+          document.getElementById("vehicleNo").value = data.vehicleNo;
+          document.getElementById("lrDate").value = data.lrDate;
+          document.getElementById("from").value = data.from;
+          document.getElementById("to").value = data.to;
+          editingKey = key;
+        }
+      });
+    }
+
+    window.deleteEntry = function (key) {
+      if (confirm("Are you sure you want to delete this entry?")) {
+        const refPath = ref(database, `users/${currentUser.uid}/lr-entries/${key}`);
+        remove(refPath);
+      }
+    }
+
+    function loadData() {
+      const userRef = ref(database, `users/${currentUser.uid}/lr-entries`);
+      onValue(userRef, (snapshot) => {
+        const tbody = document.getElementById("lrTableBody");
+        tbody.innerHTML = "";
+
+        snapshot.forEach(childSnapshot => {
+          const key = childSnapshot.key;
+          const data = childSnapshot.val();
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${data.lrNo}</td>
+            <td>${data.vehicleNo}</td>
+            <td>${data.lrDate}</td>
+            <td>${data.from}</td>
+            <td>${data.to}</td>
+            <td class="action-btns">
+              <button onclick="editEntry('${key}')">Edit</button>
+              <button onclick="deleteEntry('${key}')">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", function () {
+      const value = this.value.toLowerCase();
+      document.querySelectorAll("#lrTableBody tr").forEach(row => {
+        row.style.display = [...row.children].some(td =>
+          td.textContent.toLowerCase().includes(value)
+        ) ? "" : "none";
+      });
+    });
+  </script>
+
+  <!-- Excel Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    document.getElementById("downloadExcelBtn").addEventListener("click", () => {
+      const table = document.querySelector("table");
+      const wb = XLSX.utils.table_to_book(table, { sheet: "LR Report" });
+      XLSX.writeFile(wb, `lr-report-${new Date().toISOString().slice(0,10)}.xlsx`);
+    });
+  </script>
+
+  <!-- Load Navbar -->
+  <script>
+    // Navbar toggle function
+    function toggleMenu() {
+      const navLinks = document.getElementById("navLinks");
+      if (navLinks) navLinks.classList.toggle("show");
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const navLinks = document.getElementById('navLinks');
+      const hamburger = document.querySelector('.hamburger');
+      
+      if (navLinks && navLinks.classList.contains('show') && 
+          !event.target.closest('.nav-links') && 
+          !event.target.closest('.hamburger')) {
+        navLinks.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

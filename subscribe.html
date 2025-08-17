@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscribe - Transport Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Using a different QR code library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary: #2E8B57;
+      --primary-dark: #1e6b41;
+      --secondary: #3CB371;
+      --text: #333;
+      --light-bg: #f5f7fa;
+      --white: #fff;
+      --border: #e1e4e8;
+      --danger: #ff6b6b;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      background: var(--light-bg);
+      color: var(--text);
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: var(--primary);
+      color: white;
+      padding: 30px 40px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+    
+    .header p {
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .content {
+      padding: 30px 40px;
+    }
+    
+    .plan-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 30px;
+      margin-bottom: 30px;
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .plan-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .plan-name {
+      font-size: 1.5rem;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    
+    .price {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 20px 0;
+    }
+    
+    .price span {
+      font-size: 1rem;
+      color: #666;
+      font-weight: normal;
+    }
+    
+    .features {
+      text-align: left;
+      margin: 25px 0 30px;
+    }
+    
+    .feature {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 8px 0;
+    }
+    
+    .feature i {
+      color: var(--primary);
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    .btn {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.3s;
+      width: 100%;
+      text-align: center;
+    }
+    
+    .btn:hover {
+      background: var(--primary-dark);
+    }
+    
+    .btn:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .qr-container {
+      text-align: center;
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: none;
+    }
+    
+    #qrcode {
+      margin: 0 auto;
+      padding: 10px;
+      background: white;
+      display: inline-block;
+    }
+    
+    .payment-status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+    
+    .payment-success {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+    
+    .payment-error {
+      background-color: #ffebee;
+      color: #c62828;
+      border: 1px solid #ef9a9a;
+    }
+    
+    .trial-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      text-align: center;
+      border: 1px dashed var(--border);
+    }
+    
+    .trial-info i {
+      color: var(--primary);
+      margin-right: 5px;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        margin: 20px 10px;
+      }
+      
+      .header, .content {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Subscription Status</h1>
+      <p id="statusMessage">Your subscription details are being loaded...</p>
+    </div>
+    
+    <div class="content">
+      <!-- Payment Form -->
+      <div id="paymentForm">
+        <div class="plan-card">
+          <h2 class="plan-name">Premium Plan</h2>
+          <div class="price">₹1999<span>/month</span></div>
+          <p>Full access to all features</p>
+          
+          <div class="features">
+            <div class="feature"><i class="fas fa-check"></i> Unlimited vehicle tracking</div>
+            <div class="feature"><i class="fas fa-check"></i> Real-time location updates</div>
+            <div class="feature"><i class="fas fa-check"></i> Route optimization</div>
+            <div class="feature"><i class="fas fa-check"></i> 24/7 customer support</div>
+            <div class="feature"><i class="fas fa-check"></i> All Basic Features</div>
+            <div class="feature"><i class="fas fa-check"></i> Regular Updates</div>
+            <div class="feature"><i class="fas fa-check"></i> Access to All Vehicles</div>
+          </div>
+          
+          <button id="subscribeBtn" class="btn">Subscribe Now</button>
+          
+          <!-- QR Code Container -->
+          <div id="qrContainer" class="qr-container">
+            <h3>Scan to Pay with UPI</h3>
+            <div id="qrcode"></div>
+            <p>Amount: <strong>₹1999</strong></p>
+            <p>UPI ID: <strong>yourbusiness@upi</strong></p>
+            <p>Reference: <strong id="paymentRef"></strong></p>
+            <p>After successful payment, click below to verify</p>
+            <button id="verifyPaymentBtn" class="btn" style="margin-top: 15px; background: #4CAF50;">I've Made the Payment</button>
+            <button id="cancelPaymentBtn" class="btn" style="margin-top: 10px; background: #f44336;">Cancel</button>
+          </div>
+          
+          <!-- Payment Status -->
+          <div id="paymentStatus" class="payment-status">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Verifying your payment...</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Pending Approval -->
+      <div id="pendingApproval" class="status-card" style="display: none;">
+        <div class="status-icon">
+          <i class="fas fa-clock" style="color: #ff9800; font-size: 48px;"></i>
+        </div>
+        <h2>Subscription Pending Approval</h2>
+        <p id="pendingMessage">Your subscription request is being reviewed by our team.</p>
+        <p>You will receive an email once your subscription is approved.</p>
+        <div class="action-buttons">
+          <button id="checkStatusBtn" class="btn">Check Status</button>
+          <button id="contactSupportBtn" class="btn btn-outline">Contact Support</button>
+        </div>
+      </div>
+      
+      <!-- Rejected -->
+      <div id="rejectedStatus" class="status-card" style="display: none;">
+        <div class="status-icon">
+          <i class="fas fa-times-circle" style="color: #f44336; font-size: 48px;"></i>
+        </div>
+        <h2>Subscription Declined</h2>
+        <p id="rejectionReason">Your payment was not approved.</p>
+        <div class="action-buttons">
+          <button id="tryAgainBtn" class="btn">Try Again</button>
+          <button id="contactSupportBtn2" class="btn btn-outline">Contact Support</button>
+        </div>
+      </div>
+      
+
+
+      <div class="trial-info">
+        <i class="fas fa-info-circle"></i>
+        <span>Your 30-day free trial has ended. Subscribe to continue using all features.</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+    
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531"
+    };
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+    const functions = getFunctions(app, 'asia-south1');
+    
+    // Generate a unique payment reference
+    function generatePaymentRef() {
+      return 'PAY-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+    }
+    
+    // Show payment status
+    function showStatus(message, isError = false) {
+      const statusDiv = document.getElementById('paymentStatus');
+      statusDiv.innerHTML = `<p style="color: ${isError ? 'red' : 'green'}">${message}</p>`;
+      statusDiv.style.display = 'block';
+    }
+    
+    // Add styles for status cards
+    const style = document.createElement('style');
+    style.textContent = `
+      .status-card {
+        text-align: center;
+        padding: 40px 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+      }
+      .status-icon {
+        margin-bottom: 20px;
+      }
+      .status-card h2 {
+        color: #333;
+        margin-bottom: 15px;
+      }
+      .status-card p {
+        color: #666;
+        margin-bottom: 20px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 25px;
+      }
+      .btn-outline {
+        background: white;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+      }
+      .btn-outline:hover {
+        background: #f5f5f5;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Get all elements
+      const paymentForm = document.getElementById('paymentForm');
+      const pendingApproval = document.getElementById('pendingApproval');
+      const rejectedStatus = document.getElementById('rejectedStatus');
+      const statusMessage = document.getElementById('statusMessage');
+      const pendingMessage = document.getElementById('pendingMessage');
+      const rejectionReason = document.getElementById('rejectionReason');
+      
+      const subscribeBtn = document.getElementById('subscribeBtn');
+      const qrContainer = document.getElementById('qrContainer');
+      const verifyPaymentBtn = document.getElementById('verifyPaymentBtn');
+      const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
+      const checkStatusBtn = document.getElementById('checkStatusBtn');
+      const tryAgainBtn = document.getElementById('tryAgainBtn');
+      const contactSupportBtn = document.getElementById('contactSupportBtn');
+      const contactSupportBtn2 = document.getElementById('contactSupportBtn2');
+      
+      // Check URL for status parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const status = urlParams.get('status') || sessionStorage.getItem('subscriptionStatus');
+      const message = sessionStorage.getItem('pendingMessage');
+      const reason = sessionStorage.getItem('rejectionReason');
+      
+      // Clear session storage after reading
+      sessionStorage.removeItem('subscriptionStatus');
+      sessionStorage.removeItem('pendingMessage');
+      sessionStorage.removeItem('rejectionReason');
+      
+      // Show appropriate view based on status
+      function showView(view) {
+        paymentForm.style.display = 'none';
+        pendingApproval.style.display = 'none';
+        rejectedStatus.style.display = 'none';
+        
+        switch(view) {
+          case 'payment':
+            paymentForm.style.display = 'block';
+            statusMessage.textContent = 'Your free trial has ended. Please subscribe to continue using our services';
+            break;
+          case 'pending':
+            pendingApproval.style.display = 'block';
+            statusMessage.textContent = 'Subscription Status';
+            if (message) pendingMessage.textContent = message;
+            break;
+          case 'rejected':
+            rejectedStatus.style.display = 'block';
+            statusMessage.textContent = 'Subscription Update';
+            if (reason) rejectionReason.textContent = reason;
+            break;
+        }
+      }
+      
+      // Initial view setup
+      if (status === 'pending') {
+        showView('pending');
+      } else if (status === 'rejected') {
+        showView('rejected');
+      } else {
+        showView('payment');
+      }
+      
+      // Button event listeners
+      checkStatusBtn?.addEventListener('click', () => {
+        // Refresh the page to check status
+        window.location.reload();
+      });
+      
+      tryAgainBtn?.addEventListener('click', () => {
+        showView('payment');
+      });
+      
+      const contactSupport = (e) => {
+        e.preventDefault();
+        window.location.href = 'contact.html';
+      };
+      
+      contactSupportBtn?.addEventListener('click', contactSupport);
+      contactSupportBtn2?.addEventListener('click', contactSupport);
+      const paymentStatus = document.getElementById('paymentStatus');
+      const qrCodeElement = document.getElementById('qrcode');
+      const paymentRefElement = document.getElementById('paymentRef');
+      
+      // Hide QR container and payment status by default
+      qrContainer.style.display = 'none';
+      paymentStatus.style.display = 'none';
+      
+      // When user clicks subscribe button
+      subscribeBtn.addEventListener('click', async () => {
+        try {
+          const user = auth.currentUser;
+          if (!user) {
+            throw new Error('Please log in to subscribe');
+          }
+          
+          // Generate a unique payment reference
+          const paymentRef = generatePaymentRef();
+          
+          // Store payment in database
+          await set(ref(db, `payments/${paymentRef}`), {
+            userId: user.uid,
+            amount: 1999,
+            status: 'pending',
+            timestamp: new Date().toISOString(),
+            plan: 'monthly'
+          });
+          
+          // Store payment reference in session storage
+          sessionStorage.setItem('currentPaymentRef', paymentRef);
+          
+          // Update UI
+          paymentRefElement.textContent = paymentRef;
+          qrContainer.style.display = 'block';
+          subscribeBtn.style.display = 'none';
+          
+          // Generate UPI payment link with reference
+          const upiId = 'singhvikram43210s@okhdfcbank';
+          const amount = '1999.00'; 
+          const note = `Payment Ref: ${paymentRef}`;
+          
+          // Format UPI payment link
+          const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=Your%20Business&am=${amount}&tn=${encodeURIComponent(note)}`;
+          
+          console.log('Generating QR code with UPI link:', upiLink);
+          
+          // Clear previous QR code if any
+          qrCodeElement.innerHTML = '';
+          
+          try {
+            // Generate new QR code
+            const qr = new QRCode(qrCodeElement, {
+              text: upiLink,
+              width: 200,
+              height: 200,
+              colorDark: '#000000',
+              colorLight: '#ffffff',
+              correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            console.log('QR code generated successfully');
+            
+            // Make sure to store the QR instance if needed later
+            window.currentQR = qr;
+            
+            // Show the QR container
+            qrContainer.style.display = 'block';
+            
+          } catch (error) {
+            console.error('Error generating QR code:', error);
+            showStatus('Error generating payment QR code. Please try again.', true);
+            subscribeBtn.style.display = 'block';
+          }
+          
+        } catch (error) {
+          console.error('Error creating payment:', error);
+          showStatus(error.message || 'Error creating payment. Please try again.', true);
+        }
+      });
+      
+      // When user clicks verify payment button
+      verifyPaymentBtn.addEventListener('click', async () => {
+        try {
+          const user = auth.currentUser;
+          if (!user) {
+            throw new Error('User not authenticated. Please log in again.');
+          }
+
+          // Get the payment reference from session
+          const paymentReference = sessionStorage.getItem('currentPaymentRef');
+          if (!paymentReference) {
+            throw new Error('No payment reference found. Please try subscribing again.');
+          }
+
+          // Show verifying message
+          qrContainer.style.display = 'none';
+          paymentStatus.style.display = 'block';
+          paymentStatus.innerHTML = `
+            <div class="status-message">
+              <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 20px;"></i>
+              <h3>Verifying Payment...</h3>
+              <p>Please wait while we verify your payment.</p>
+            </div>
+          `;
+
+          // Check payment status with polling
+          let paymentVerified = false;
+          let attempts = 0;
+          const maxAttempts = 30; // 30 attempts with 2s interval = 1 minute total
+          
+          // Function to update status message
+          const updateStatusMessage = (attempt) => {
+            paymentStatus.innerHTML = `
+              <div class="status-message">
+                <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 20px;"></i>
+                <h3>Checking Payment Status...</h3>
+                <p>Please wait while we verify your payment with our system.</p>
+                <p>This may take a moment. Please do not close this page.</p>
+                <p class="attempt-counter">Attempt ${attempt} of ${maxAttempts}</p>
+              </div>
+            `;
+          };
+          
+          // Initial status message
+          updateStatusMessage(1);
+          
+          // Check payment status with polling
+          while (attempts < maxAttempts && !paymentVerified) {
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+            
+            // Update attempt counter every 5 attempts
+            if (attempts % 5 === 0) {
+              updateStatusMessage(attempts);
+            }
+            
+            // Check payment status
+            const paymentSnap = await get(ref(db, `payments/${paymentReference}`));
+            if (!paymentSnap.exists()) continue;
+            
+            const paymentData = paymentSnap.val();
+            if (paymentData.status === 'verified') {
+              paymentVerified = true;
+              break;
+            } else if (paymentData.status === 'failed') {
+              throw new Error('Payment was rejected. Please contact support.');
+            }
+          }
+          
+          if (!paymentVerified) {
+            throw new Error('Payment verification timed out. Please contact support if your payment was successful.');
+          }
+
+          // ✅ Payment verified → update subscription in both root and profile nodes
+          const now = new Date();
+          const subscriptionEnd = new Date();
+          subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1); // 1 month from now
+          
+          // Get existing subscription data to preserve trial info
+          const userRef = ref(db, `users/${user.uid}`);
+          const userSnap = await get(userRef);
+          const existingData = userSnap.val() || {};
+          const existingSubscription = existingData.subscription || {};
+          
+          // Create subscription data
+          const subscriptionData = {
+            status: 'active',
+            plan: 'monthly',
+            startDate: now.toISOString(),
+            endDate: subscriptionEnd.toISOString(),
+            nextPayment: subscriptionEnd.toISOString(),
+            lastPayment: now.toISOString(),
+            paymentRef: paymentReference,
+            updatedAt: now.toISOString(),
+            // Preserve trial info for reference
+            trialStart: existingSubscription.trialStart || now.toISOString(),
+            trialEnd: existingSubscription.trialEnd || now.toISOString(),
+            // Add payment history
+            paymentHistory: {
+              ...(existingSubscription.paymentHistory || {}),
+              [paymentReference]: {
+                amount: 1999, // ₹1999
+                currency: 'INR',
+                date: now.toISOString(),
+                status: 'completed'
+              }
+            }
+          };
+          
+          // Update both root and profile nodes for consistency
+          const updates = {};
+          updates[`users/${user.uid}/subscription`] = subscriptionData;
+          updates[`users/${user.uid}/profile/subscription`] = subscriptionData;
+          updates[`users/${user.uid}/lastPayment`] = now.toISOString();
+          
+          // Apply all updates in a single transaction
+          await update(ref(db), updates);
+          
+          console.log('Subscription updated successfully:', {
+            ...subscriptionData,
+            // Don't log sensitive data
+            paymentHistory: '[...]',
+            paymentRef: paymentReference ? '[HIDDEN]' : null
+          });
+
+          // Clear payment ref
+          sessionStorage.removeItem('currentPaymentRef');
+
+          // Show success message + redirect
+          paymentStatus.innerHTML = `
+            <div class="status-message">
+              <i class="fas fa-check-circle" style="color: #4CAF50; font-size: 48px;"></i>
+              <h3>Payment Verified Successfully!</h3>
+              <p>Your subscription has been activated.</p>
+              <p>Redirecting to dashboard...</p>
+            </div>
+          `;
+
+          setTimeout(() => {
+            window.location.href = 'home.html';
+          }, 2000);
+          
+        } catch (error) {
+          console.error('Payment verification error:', error);
+          paymentStatus.innerHTML = `
+            <div class="status-message">
+              <i class="fas fa-exclamation-triangle" style="color: #f44336; font-size: 48px;"></i>
+              <h3>Verification Failed</h3>
+              <p>${error.message}</p>
+              <button onclick="window.location.reload()" class="btn" style="margin-top: 15px;">Try Again</button>
+            </div>
+          `;
+        }
+      });
+      
+      // Cancel payment button
+      // Cancel payment button
+      cancelPaymentBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('currentPaymentRef');
+        qrContainer.style.display = 'none';
+        subscribeBtn.style.display = 'block';
+        paymentStatus.style.display = 'none';
+      });
+      
+      // Check for existing payment in session storage
+      async function checkExistingPayment() {
+        try {
+          const paymentRef = sessionStorage.getItem('currentPaymentRef');
+          if (!paymentRef) return false;
+          
+          // Get payment data from Firebase
+          const paymentSnap = await get(ref(db, `payments/${paymentRef}`));
+          if (!paymentSnap.exists()) {
+            console.log('Payment not found in database');
+            return false;
+          }
+          
+          const paymentData = paymentSnap.val();
+          console.log('Payment data:', paymentData);
+          
+          // Check if payment is verified
+          if (paymentData.status === 'verified') {
+            // Payment already verified, update UI
+            showSuccessMessage('Your subscription is already active!');
+            return true;
+          }
+          
+          return false;
+          
+        } catch (error) {
+          console.error('Error checking existing payment:', error);
+          return false;
+        }
+      }
+      
+      // Show success message function
+      function showSuccessMessage(message, redirect = true) {
+        paymentStatus.innerHTML = `
+          <div class="status-message" style="text-align: center; padding: 20px;">
+            <div style="font-size: 60px; color: #4CAF50; margin-bottom: 15px;">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 style="color: #2E8B57; margin-bottom: 10px;">Payment Successful! 🎉</h3>
+            <p style="margin-bottom: 20px; font-size: 16px;">${message}</p>
+            <div style="margin-top: 20px; padding: 15px; background: #E8F5E9; border-radius: 8px; text-align: left;">
+              <p style="margin: 5px 0;"><strong>Amount:</strong> ₹10.00</p>
+              <p style="margin: 5px 0;"><strong>Status:</strong> Verified</p>
+              <p style="margin: 5px 0; color: #2E8B57;"><i class="fas fa-check"></i> Subscription Activated</p>
+            </div>
+            <p style="margin-top: 20px; color: #666;">Redirecting to dashboard...</p>
+          </div>
+        `;
+        
+        if (redirect) {
+          setTimeout(() => {
+            window.location.href = 'home.html';
+          }, 3000);
+        }
+      }
+
+      // Poll for payment verification
+      async function pollForPaymentVerification() {
+        const maxAttempts = 30; // 30 attempts with 2s interval = 1 minute total
+        let attempts = 0;
+        
+        while (attempts < maxAttempts) {
+          attempts++;
+          
+          // Show verifying status with animation
+          qrContainer.style.display = 'none';
+          paymentStatus.style.display = 'block';
+          paymentStatus.innerHTML = `
+            <div class="status-message" style="text-align: center; padding: 20px;">
+              <div style="font-size: 48px; color: #4CAF50; margin-bottom: 15px; animation: pulse 1.5s infinite;">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+              <h3>Verifying Payment</h3>
+              <p>Please wait while we verify your payment...</p>
+              <p>Attempt ${attempts} of ${maxAttempts}</p>
+            </div>
+          `;
+          
+          try {
+            const paymentRef = sessionStorage.getItem('currentPaymentRef');
+            if (!paymentRef) {
+              throw new Error('Payment reference not found. Please try again.');
+            }
+            
+            const paymentSnap = await get(ref(db, `payments/${paymentRef}`));
+            if (!paymentSnap.exists()) {
+              throw new Error('Payment not found. Please try again.');
+            }
+            
+            const paymentData = paymentSnap.val();
+            
+            if (paymentData.status === 'verified') {
+              // Update user subscription
+              const now = new Date();
+              const endDate = new Date();
+              endDate.setDate(now.getDate() + 30);
+              
+              // Update both the root user node and the profile node for consistency
+              const updates = {};
+              const subscriptionData = {
+                status: 'active',
+                startDate: now.toISOString(),
+                endDate: endDate.toISOString(),
+                paymentRef: paymentRef,
+                plan: paymentData.plan || 'monthly',
+                updatedAt: now.toISOString()
+              };
+              
+              // Update both locations where subscription data might be checked
+              updates[`users/${auth.currentUser.uid}/subscription`] = subscriptionData;
+              updates[`users/${auth.currentUser.uid}/profile/subscription`] = subscriptionData;
+              updates[`users/${auth.currentUser.uid}/lastPayment`] = now.toISOString();
+              
+              await update(ref(db), updates);
+              
+              // Force a small delay to ensure the database is updated
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+              // Show success message
+              paymentStatus.innerHTML = `
+                <div class="status-message">
+                  <i class="fas fa-check-circle" style="color: #4CAF50; font-size: 48px;"></i>
+                  <h3>Payment Verified Successfully!</h3>
+                  <p>Your subscription has been activated.</p>
+                  <p>Redirecting to dashboard...</p>
+                </div>
+              `;
+              
+              // Clear payment ref from session storage
+              sessionStorage.removeItem('currentPaymentRef');
+              
+              // Force reload of auth state and redirect to home page
+              setTimeout(() => {
+                // Force a hard redirect to ensure all state is reset
+                window.location.href = 'home.html?t=' + new Date().getTime();
+              }, 2000);
+              
+              return;
+            } else if (paymentData.status === 'failed') {
+              throw new Error('Payment was rejected. Please try again or contact support.');
+            }
+          } catch (error) {
+            handlePaymentError(error);
+            return;
+          }
+          
+          // Wait before next attempt
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+        // If we get here, all attempts were exhausted
+        throw new Error('Payment verification timed out. Please contact support if your payment was successful.');
+      }
+      
+      // Error handling function
+      function handlePaymentError(error) {
+        console.error('Payment verification error:', error);
+        paymentStatus.innerHTML = `
+          <div class="status-message" style="text-align: center; padding: 20px;">
+            <i class="fas fa-exclamation-triangle" style="color: #e74c3c; font-size: 48px;"></i>
+            <h3>Verification Error</h3>
+            <p>${error.message || 'An error occurred while verifying your payment.'}</p>
+            <button id="retryBtn" class="btn" style="margin-top: 15px;">Try Again</button>
+          </div>
+        `;
+        
+        document.getElementById('retryBtn').addEventListener('click', () => {
+          window.location.reload();
+        });
+      }
+      
+      // When user clicks verify payment button
+      verifyPaymentBtn.addEventListener('click', async () => {
+        try {
+          const user = auth.currentUser;
+          if (!user) {
+            throw new Error('User not authenticated. Please log in again.');
+          }
+          
+          // Start polling for payment verification
+          await pollForPaymentVerification();
+          
+        } catch (error) {
+          handlePaymentError(error);
+        }
+      });
+      
+      // When user clicks cancel button
+      cancelPaymentBtn.addEventListener('click', () => {
+        qrContainer.style.display = 'none';
+        subscribeBtn.style.display = 'block';
+        paymentStatus.style.display = 'none';
+      });
+    });
+  </script>
+</body>
+</html>

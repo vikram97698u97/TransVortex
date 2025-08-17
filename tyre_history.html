@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tyre Disposal History</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .container h1, h2, h3 {
+      color: #2E8B57;
+      margin-bottom: 20px;
+    }
+
+    .alert {
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      font-weight: 500;
+    }
+
+    .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+      border-left: 4px solid #28a745;
+    }
+
+    .alert-danger {
+      background-color: #f8d7da;
+      color: #721c24;
+      border-left: 4px solid #dc3545;
+    }
+
+    .form-section {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border: 1px solid #eee;
+    }
+
+    .search-box {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .search-box input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px 0 0 5px;
+      font-size: 16px;
+    }
+
+    .search-box button {
+      padding: 10px 15px;
+      background-color: #2E8B57;
+      color: white;
+      border: none;
+      border-radius: 0 5px 5px 0;
+      cursor: pointer;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .history-table th, .history-table td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .history-table th {
+      background-color: #2E8B57;
+      color: white;
+    }
+
+    .history-table tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    .history-table tr:hover {
+      background-color: #e9e9e9;
+    }
+
+    .stats-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 15px;
+      flex: 1;
+      min-width: 200px;
+      border-left: 4px solid #2E8B57;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2E8B57;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .filter-section {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-section select {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .btn {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background-color: #2E8B57;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #267349;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    .navbar {
+      background-color: #2E8B57;
+      padding: 15px 20px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .navbar-brand {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .navbar-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .navbar-links a {
+      color: white;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .navbar-links a:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .navbar-links a.active {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    @media (max-width: 768px) {
+      .stats-container {
+        flex-direction: column;
+      }
+      
+      .filter-section {
+        flex-direction: column;
+      }
+      
+      .navbar {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .navbar-links {
+        flex-direction: column;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar"></div>
+  
+  <div class="container">
+    <div id="alertContainer"></div>
+    
+    <h1>Tyre Disposal History</h1>
+    
+    <div class="form-section">
+      <div class="stats-container" id="statsContainer">
+        <!-- Stats will be populated dynamically -->
+      </div>
+      
+      <div class="filter-section">
+        <select id="vehicleFilter">
+          <option value="">All Vehicles</option>
+          <!-- Vehicle options will be populated dynamically -->
+        </select>
+        
+        <select id="reasonFilter">
+          <option value="">All Reasons</option>
+          <!-- Reason options will be populated dynamically -->
+        </select>
+        
+        <select id="timeFilter">
+          <option value="all">All Time</option>
+          <option value="week">Last Week</option>
+          <option value="month">Last Month</option>
+          <option value="quarter">Last 3 Months</option>
+          <option value="year">Last Year</option>
+        </select>
+        
+        <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+      </div>
+      
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search by tyre number, brand, size...">
+        <button onclick="searchHistory()">Search</button>
+      </div>
+      
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Disposal Date</th>
+            <th>Vehicle</th>
+            <th>Tyre Number</th>
+            <th>Brand</th>
+            <th>Size</th>
+            <th>Position</th>
+            <th>Age at Disposal</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <!-- History entries will be populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    let currentUser = null;
+    let allHistoryData = [];
+
+    // Make Firebase functions available globally
+    window.db = db;
+    window.ref = ref;
+    window.get = get;
+    window.currentUser = null; // Will be updated in onAuthStateChanged
+
+    // Load navbar
+    fetch('navbar.html')
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById('navbar').innerHTML = html;
+      });
+
+    // Check authentication
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+      currentUser = user;
+      window.currentUser = user; // Update the global reference
+      loadTyreHistory();
+    });
+
+    // Show alert message
+    window.showAlert = function(message, type) {
+      const alertContainer = document.getElementById('alertContainer');
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+      alertContainer.appendChild(alert);
+      
+      setTimeout(() => {
+        alert.remove();
+      }, 3000);
+    };
+
+    // Load tyre history
+    window.loadTyreHistory = function() {
+      const historyRef = ref(db, `users/${currentUser.uid}/tyre_history`);
+      
+      onValue(historyRef, (snapshot) => {
+        if (!snapshot.exists()) {
+          document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="8">No disposal history found</td></tr>';
+          updateStats([]);
+          populateFilters([]);
+          return;
+        }
+        
+        const historyData = [];
+        snapshot.forEach((childSnapshot) => {
+          const historyItem = childSnapshot.val();
+          historyItem.id = childSnapshot.key;
+          historyData.push(historyItem);
+        });
+        
+        // Sort by disposal date (newest first)
+        historyData.sort((a, b) => (b.disposedAt || 0) - (a.disposedAt || 0));
+        
+        // Store all data for filtering
+        allHistoryData = historyData;
+        
+        // Update UI
+        renderHistoryTable(historyData);
+        updateStats(historyData);
+        populateFilters(historyData);
+      });
+    };
+
+    // Render history table
+    window.renderHistoryTable = function(historyData) {
+      const tableBody = document.getElementById('historyTableBody');
+      
+      if (historyData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="8">No matching records found</td></tr>';
+        return;
+      }
+      
+      let tableHtml = '';
+      
+      for (const item of historyData) {
+        const disposalDate = item.disposedAt ? new Date(item.disposedAt).toLocaleDateString() : 'Unknown';
+        
+        // Calculate age at disposal
+        let ageText = 'Unknown';
+        if (item.addedAt && item.disposedAt) {
+          const ageInDays = Math.floor((item.disposedAt - item.addedAt) / (1000 * 60 * 60 * 24));
+          if (ageInDays < 30) {
+            ageText = `${ageInDays} days`;
+          } else if (ageInDays < 365) {
+            ageText = `${Math.floor(ageInDays / 30)} months`;
+          } else {
+            ageText = `${Math.floor(ageInDays / 365)} years, ${Math.floor((ageInDays % 365) / 30)} months`;
+          }
+        }
+        
+        tableHtml += `
+          <tr>
+            <td>${disposalDate}</td>
+            <td>${item.vehicleNumber} - ${item.vehicleModel}</td>
+            <td>${item.number}</td>
+            <td>${item.brand}</td>
+            <td>${item.size}</td>
+            <td>${item.position}</td>
+            <td>${ageText}</td>
+            <td>${item.disposalReason}</td>
+          </tr>
+        `;
+      }
+      
+      tableBody.innerHTML = tableHtml;
+    };
+
+    // Update statistics
+    window.updateStats = function(historyData) {
+      const statsContainer = document.getElementById('statsContainer');
+      
+      // Calculate statistics
+      const totalDisposed = historyData.length;
+      
+      // Count by reason
+      const reasonCounts = {};
+      for (const item of historyData) {
+        const reason = item.disposalReason || 'Unknown';
+        reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
+      }
+      
+      // Get top 3 reasons
+      const topReasons = Object.entries(reasonCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3);
+      
+      // Count by age groups
+      let newTyres = 0; // < 30 days
+      let usedTyres = 0; // 30-180 days
+      let oldTyres = 0; // > 180 days
+      
+      for (const item of historyData) {
+        if (item.addedAt && item.disposedAt) {
+          const ageInDays = Math.floor((item.disposedAt - item.addedAt) / (1000 * 60 * 60 * 24));
+          if (ageInDays <= 30) {
+            newTyres++;
+          } else if (ageInDays <= 180) {
+            usedTyres++;
+          } else {
+            oldTyres++;
+          }
+        }
+      }
+      
+      // Build stats HTML
+      let statsHtml = `
+        <div class="stat-card">
+          <div class="stat-value">${totalDisposed}</div>
+          <div class="stat-label">Total Disposed Tyres</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-value">${newTyres}</div>
+          <div class="stat-label">New Tyres (<30 days)</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-value">${usedTyres}</div>
+          <div class="stat-label">Used Tyres (1-6 months)</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-value">${oldTyres}</div>
+          <div class="stat-label">Old Tyres (>6 months)</div>
+        </div>
+      `;
+      
+      // Add top reasons if available
+      if (topReasons.length > 0) {
+        statsHtml += `
+          <div class="stat-card">
+            <div class="stat-value">${topReasons[0][0]}</div>
+            <div class="stat-label">Top Disposal Reason (${topReasons[0][1]} tyres)</div>
+          </div>
+        `;
+      }
+      
+      statsContainer.innerHTML = statsHtml;
+    };
+
+    // Populate filter dropdowns
+    window.populateFilters = function(historyData) {
+      const vehicleFilter = document.getElementById('vehicleFilter');
+      const reasonFilter = document.getElementById('reasonFilter');
+      
+      // Clear existing options except the first one
+      while (vehicleFilter.options.length > 1) {
+        vehicleFilter.remove(1);
+      }
+      
+      while (reasonFilter.options.length > 1) {
+        reasonFilter.remove(1);
+      }
+      
+      // Get unique vehicles and reasons
+      const vehicles = new Set();
+      const reasons = new Set();
+      
+      for (const item of historyData) {
+        if (item.vehicleNumber) {
+          vehicles.add(`${item.vehicleNumber} - ${item.vehicleModel}`);
+        }
+        
+        if (item.disposalReason) {
+          reasons.add(item.disposalReason);
+        }
+      }
+      
+      // Add vehicle options
+      for (const vehicle of Array.from(vehicles).sort()) {
+        const option = document.createElement('option');
+        option.value = vehicle;
+        option.textContent = vehicle;
+        vehicleFilter.appendChild(option);
+      }
+      
+      // Add reason options
+      for (const reason of Array.from(reasons).sort()) {
+        const option = document.createElement('option');
+        option.value = reason;
+        option.textContent = reason;
+        reasonFilter.appendChild(option);
+      }
+    };
+
+    // Apply filters
+    window.applyFilters = function() {
+      const vehicleFilter = document.getElementById('vehicleFilter').value;
+      const reasonFilter = document.getElementById('reasonFilter').value;
+      const timeFilter = document.getElementById('timeFilter').value;
+      
+      let filteredData = [...allHistoryData];
+      
+      // Apply vehicle filter
+      if (vehicleFilter) {
+        filteredData = filteredData.filter(item => 
+          `${item.vehicleNumber} - ${item.vehicleModel}` === vehicleFilter
+        );
+      }
+      
+      // Apply reason filter
+      if (reasonFilter) {
+        filteredData = filteredData.filter(item => 
+          item.disposalReason === reasonFilter
+        );
+      }
+      
+      // Apply time filter
+      if (timeFilter !== 'all') {
+        const now = Date.now();
+        let timeLimit;
+        
+        switch (timeFilter) {
+          case 'week':
+            timeLimit = now - (7 * 24 * 60 * 60 * 1000); // 7 days
+            break;
+          case 'month':
+            timeLimit = now - (30 * 24 * 60 * 60 * 1000); // 30 days
+            break;
+          case 'quarter':
+            timeLimit = now - (90 * 24 * 60 * 60 * 1000); // 90 days
+            break;
+          case 'year':
+            timeLimit = now - (365 * 24 * 60 * 60 * 1000); // 365 days
+            break;
+        }
+        
+        filteredData = filteredData.filter(item => 
+          item.disposedAt && item.disposedAt >= timeLimit
+        );
+      }
+      
+      // Update UI with filtered data
+      renderHistoryTable(filteredData);
+      updateStats(filteredData);
+    };
+
+    // Reset filters
+    window.resetFilters = function() {
+      document.getElementById('vehicleFilter').value = '';
+      document.getElementById('reasonFilter').value = '';
+      document.getElementById('timeFilter').value = 'all';
+      document.getElementById('searchInput').value = '';
+      
+      renderHistoryTable(allHistoryData);
+      updateStats(allHistoryData);
+    };
+
+    // Search history
+    window.searchHistory = function() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      
+      if (!searchTerm) {
+        renderHistoryTable(allHistoryData);
+        updateStats(allHistoryData);
+        return;
+      }
+      
+      const filteredData = allHistoryData.filter(item => 
+        (item.number && item.number.toLowerCase().includes(searchTerm)) ||
+        (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
+        (item.size && item.size.toLowerCase().includes(searchTerm)) ||
+        (item.position && item.position.toLowerCase().includes(searchTerm)) ||
+        (item.vehicleNumber && item.vehicleNumber.toLowerCase().includes(searchTerm)) ||
+        (item.disposalReason && item.disposalReason.toLowerCase().includes(searchTerm))
+      );
+      
+      renderHistoryTable(filteredData);
+      updateStats(filteredData);
+    };
+
+    // Logout function
+    window.logout = function() {
+      signOut(auth).then(() => {
+        window.location.href = "index.html";
+      }).catch(error => {
+        alert("Error logging out: " + error.message);
+      });
+    };
+
+    // Toggle menu function
+    window.toggleMenu = function() {
+      document.getElementById("navLinks").classList.toggle("show");
+    };
+  </script>
+</body>
+</html>

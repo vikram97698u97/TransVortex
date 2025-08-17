@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Services - Transport Data Handling</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #2E8B57;
+      --secondary-color: #3CB371;
+      --accent-color: #20B2AA;
+      --text-color: #111111;
+      --light-bg: #F5F5F5;
+      --white: #FFFFFF;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.6;color:var(--text-color);background-color:var(--light-bg)}
+    .container{max-width:1200px;margin:0 auto;padding:0 20px}
+    header{background-color:var(--white);box-shadow:var(--shadow);position:fixed;width:100%;top:0;z-index:1000}
+    nav{display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem}
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo {
+      height: 50px;
+      width: 250px;
+      max-width: 400px;
+      transition: transform 0.3s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    .nav-links{display:flex;gap:2rem}
+    .nav-links a{color:var(--text-color);text-decoration:none;font-weight:500;transition:color 0.3s ease}
+    .nav-links a:hover,.nav-links a.active{color:var(--primary-color)}
+    .cta-button{background-color:var(--primary-color);color:white;padding:0.6rem 1.5rem;border-radius:8px;text-decoration:none;font-weight:500;transition:all 0.3s ease}
+    .cta-button:hover{background-color:var(--secondary-color);transform:translateY(-2px)}
+    .page-hero{padding:8rem 0 5rem;text-align:center;background:linear-gradient(135deg,#f5f7fa 0%,#e4e8f0 100%)}
+    .page-hero h1{font-size:3rem;margin-bottom:1.5rem;color:var(--primary-color)}
+    .page-hero p{font-size:1.2rem;max-width:700px;margin:0 auto 2.5rem;color:#555}
+    .services-section{padding:5rem 0}
+    .section-title{text-align:center;margin-bottom:3rem;color:var(--primary-color)}
+    .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;margin-bottom:4rem}
+    .service-card{background:var(--white);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);transition:transform 0.3s ease}
+    .service-card:hover{transform:translateY(-10px)}
+    .service-image{height:200px;overflow:hidden}
+    .service-image img{width:100%;height:100%;object-fit:cover;transition:transform 0.5s ease}
+    .service-card:hover .service-image img{transform:scale(1.1)}
+    .service-content{padding:1.5rem}
+    .service-content h3{color:var(--primary-color);margin-bottom:1rem}
+    .service-content p{color:#666;margin-bottom:1.5rem}
+    .service-features{margin:1.5rem 0}
+    .feature-item{display:flex;align-items:center;margin-bottom:0.8rem}
+    .feature-item i{color:var(--primary-color);margin-right:0.8rem}
+    footer{background-color:#222;color:#aaa;padding:3rem 0;text-align:center}
+    .footer-content{max-width:800px;margin:0 auto}
+    .footer-links{display:flex;justify-content:center;gap:2rem;margin:1.5rem 0}
+    .footer-links a{color:#aaa;text-decoration:none;transition:color 0.3s ease}
+    .footer-links a:hover{color:var(--primary-color)}
+    .social-links{margin:2rem 0}
+    .social-links a{color:#aaa;font-size:1.5rem;margin:0 10px;transition:color 0.3s ease}
+    .social-links a:hover{color:var(--primary-color)}
+    @media(max-width:768px){
+      .nav-links{display:none}
+      .page-hero h1{font-size:2.2rem}
+      .services-grid{grid-template-columns:1fr;padding:0 1rem}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <nav>
+      <div class="logo-container">
+        <img src="logo1.jpg" alt="TransVortex" class="logo">
+      </div>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html" class="active">Services</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Our Services</h1>
+    <p>Comprehensive transport data management solutions to streamline your business operations.</p>
+  </div>
+</section>
+
+<section class="services-section">
+  <div class="container">
+    <h2 class="section-title">What We Offer</h2>
+    <div class="services-grid">
+      <!-- Service Cards -->
+      <div class="service-card">
+        <div class="service-image"><img src="tyre_management.png" alt="Tyre Management" style="object-fit: contain; background-color: #f5f5f5;"></div>
+        <div class="service-content">
+          <h3>Tyre Management</h3>
+          <p>Track tyre inventory, installation dates, and maintenance records for every vehicle.</p>
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-image"><img src="https://images.unsplash.com/photo-1502877338535-766e1452684a" alt="Diesel Management"></div>
+        <div class="service-content">
+          <h3>Diesel Management</h3>
+          <p>Monitor fuel usage, manage diesel purchase records, and reduce wastage.</p>
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-image"><img src="payment_management.png" alt="Payment Management" style="object-fit: contain; background-color: #f5f5f5;"></div>
+        <div class="service-content">
+          <h3>Payment Management</h3>
+          <p>Maintain records of payments to suppliers, drivers, and service providers with proof uploads.</p>
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-image"><img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3" alt="Invoice Management"></div>
+        <div class="service-content">
+          <h3>Invoice Management</h3>
+          <p>Create, store, and download professional invoices with GST and trip details.</p>
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-image"><img src="booking_management.png" alt="Booking Management" style="object-fit: contain; background-color: #f5f5f5;"></div>
+        <div class="service-content">
+          <h3>Booking Management</h3>
+          <p>Record and manage client bookings with instant updates across devices.</p>
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-image"><img src="https://images.unsplash.com/photo-1556761175-4b46a572b786" alt="LR Report"></div>
+        <div class="service-content">
+          <h3>LR Report Management</h3>
+          <p>Generate and maintain Lorry Receipt reports for all consignments.</p>
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-image"><img src="https://images.unsplash.com/photo-1521791136064-7986c2920216" alt="Driver Management"></div>
+        <div class="service-content">
+          <h3>Driver Management</h3>
+          <p>Store driver profiles, license copies, and performance history securely.</p>
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-image"><img src="https://images.unsplash.com/photo-1503736334956-4c8f8e92946d" alt="Vehicle Management"></div>
+        <div class="service-content">
+          <h3>Vehicle Management</h3>
+          <p>Maintain vehicle details, insurance, PUC, and service schedules in one place.</p>
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-image"><img src="per_trip_management.png" alt="Per Trip Vehicle Management" style="object-fit: contain; background-color: #f5f5f5;"></div>
+        <div class="service-content">
+          <h3>Per Trip Vehicle Management</h3>
+          <p>Track expenses, mileage, and trip-specific data for accurate costing.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-content">
+    <h3>Transvortex</h3>
+    <p>Smart Transport Data Solutions</p>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="social-links">
+      <a href="https://www.facebook.com/share/1JHnKAWbHd/" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook"></i></a>
+      <a href="https://share.google.com/p3aie9XuAD2dlUebw" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter"></i></a>
+      <a href="https://www.linkedin.com/in/vikram-singh-73319237b?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i></a>
+      <a href="https://www.instagram.com/transvortex?igsh=M3d6MWpieHYzajM5" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i></a>
+    </div>
+    <p>&copy; 2025 Transvortex. All rights reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>

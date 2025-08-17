@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vehicle & Driver Details</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    body { background: #f5f5f5; font-family: "Segoe UI", Tahoma, Verdana, sans-serif; color: #111; margin:0; padding:0; }
+    .container { max-width: 900px; margin: 40px auto; background:white; padding:30px; border-radius:12px; box-shadow:0 0 10px #ccc; }
+    h2,h3 { text-align:center; color:#2e8b57; }
+    form label { display:block; margin-bottom:6px; font-weight:500; }
+    form input, form textarea, form select { width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:6px; font-size:16px; box-sizing:border-box; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    .row > * { flex:1 1 200px; min-width:150px; }
+    button, .download-btn { background-color:#43b97f; color:white; padding:10px 16px; border:none; border-radius:8px; cursor:pointer; font-size:16px; }
+    button:hover, .download-btn:hover { background:#3ba06f; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; background:white; }
+    th, td { border-bottom:1px solid #ddd; padding:12px; text-align:left; vertical-align:middle; font-size:14px; }
+    th { background:#2e8b57; color:white; font-size:13px; }
+    .action-btn { background:#43b97f; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; }
+    .preview { max-width:120px; max-height:120px; border-radius:6px; display:block; margin-top:8px; }
+    .progress-wrap { font-size:13px; margin-top:6px; }
+    .small { font-size:13px; color:#666; }
+    @media (max-width:900px) {
+      table, thead, tbody, th, td, tr { display:block; }
+      td { margin-bottom:1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <div class="container">
+    <h2>Vehicle and Driver Entry Form</h2>
+
+    <form id="vehicleDriverForm">
+      <div class="row">
+        <div>
+          <label>Vehicle Number</label>
+          <input id="vehicleNumber" required />
+        </div>
+        <div>
+          <label>Vehicle Type</label>
+          <input id="vehicleType" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Driver Name</label>
+          <input id="driverName" />
+        </div>
+        <div>
+          <label>Driver License No.</label>
+          <input id="driverLicense" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Driver Contact Number</label>
+          <input id="contactNumber" type="tel" />
+        </div>
+        <div>
+          <label>License Image (photo)</label>
+          <input id="licenseImage" type="file" accept="image/*" />
+          <img id="licensePreview" class="preview" style="display:none" />
+          <div id="licenseProgress" class="progress-wrap small"></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>PUC Certificate (image/pdf)</label>
+          <input id="pucFile" type="file" accept="image/*,application/pdf" />
+          <div id="pucProgress" class="progress-wrap small"></div>
+        </div>
+        <div>
+          <label>Insurance Paper (image/pdf)</label>
+          <input id="insuranceFile" type="file" accept="image/*,application/pdf" />
+          <div id="insuranceProgress" class="progress-wrap small"></div>
+        </div>
+      </div>
+
+      <div>
+        <label>Fitness Certificate (image/pdf)</label>
+        <input id="fitnessFile" type="file" accept="image/*,application/pdf" />
+        <div id="fitnessProgress" class="progress-wrap small"></div>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+        <button type="submit">Save Entry</button>
+        <button type="button" id="cancelEdit" style="display:none;background:#f39c12">Cancel Edit</button>
+        <span id="formNote" class="small">Images will be resized (max width 1024px) and converted to WebP before upload.</span>
+      </div>
+    </form>
+
+    <h3 style="margin-top:26px">View Vehicle & Driver Info</h3>
+    <button class="download-btn" onclick="downloadExcel()">Download Excel</button>
+
+    <table id="vehicleDriverTable">
+      <thead>
+        <tr>
+          <th>Vehicle Number</th>
+          <th>Type</th>
+          <th>Driver</th>
+          <th>License No.</th>
+          <th>Contact</th>
+          <th>License Image</th>
+          <th>PUC</th>
+          <th>Insurance</th>
+          <th>Fitness</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- XLSX for Excel export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+  // Firebase modules
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getDatabase, ref, onValue, push, set, get, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // CLOUDINARY SETTINGS
+  const CLOUD_NAME = "doqapn15f";
+  const UPLOAD_PRESET = "payment-billing"; // unsigned preset
+  const CLOUD_FOLDER = "payment-billing";  // your single folder
+
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+    authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+    databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "transport-dashboard-ad69a",
+    storageBucket: "transport-dashboard-ad69a.appspot.com",
+    messagingSenderId: "526889676196",
+    appId: "1:526889676196:web:66032c80a4aede690ae531",
+    measurementId: "G-7F9R7HJYDH",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  // DOM
+  const form = document.getElementById("vehicleDriverForm");
+  const tbody = document.querySelector("#vehicleDriverTable tbody");
+  const licenseInput = document.getElementById("licenseImage");
+  const pucInput = document.getElementById("pucFile");
+  const insuranceInput = document.getElementById("insuranceFile");
+  const fitnessInput = document.getElementById("fitnessFile");
+  const licensePreview = document.getElementById("licensePreview");
+
+  let uid = null;
+  let editKey = null;
+  let currentEntryCache = {};
+
+  // Image preview
+  licenseInput.addEventListener("change", () => {
+    const f = licenseInput.files[0];
+    if (f && f.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        licensePreview.src = reader.result;
+        licensePreview.style.display = "block";
+      };
+      reader.readAsDataURL(f);
+    } else {
+      licensePreview.style.display = "none";
+    }
+  });
+
+  // Resize & convert image to WebP
+  function compressImageToWebP(file, maxWidth = 1024, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith("image/")) return resolve(file);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const scale = Math.min(1, maxWidth / img.width);
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error("Canvas conversion failed"));
+          const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", { type: "image/webp" });
+          resolve(newFile);
+        }, "image/webp", quality);
+      };
+      img.onerror = (e) => reject(e);
+      const reader = new FileReader();
+      reader.onload = () => (img.src = reader.result);
+      reader.onerror = (e) => reject(e);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Upload to Cloudinary
+  async function uploadToCloudinary(file) {
+    let uploadFile = file;
+    if (file.type.startsWith("image/")) {
+      uploadFile = await compressImageToWebP(file, 1024, 0.8);
+    }
+    const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
+    const formData = new FormData();
+    formData.append("file", uploadFile);
+    formData.append("upload_preset", UPLOAD_PRESET);
+    formData.append("folder", CLOUD_FOLDER);
+    const res = await fetch(url, { method: "POST", body: formData });
+    const data = await res.json();
+    return data.secure_url;
+  }
+
+  // Auth
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    uid = user.uid;
+    loadEntries();
+  });
+
+  // Load entries
+  function loadEntries() {
+    const vehicleRef = ref(db, `users/${uid}/vehicles`);
+    onValue(vehicleRef, (snap) => {
+      const data = snap.val() || {};
+      tbody.innerHTML = "";
+      for (const key in data) {
+        const entry = data[key];
+        const tr = document.createElement("tr");
+
+        const makeCell = (text) => {
+          const td = document.createElement("td");
+          td.textContent = text || "—";
+          return td;
+        };
+
+        tr.appendChild(makeCell(entry.vehicleNumber));
+        tr.appendChild(makeCell(entry.vehicleType));
+        tr.appendChild(makeCell(entry.driverName));
+        tr.appendChild(makeCell(entry.driverLicense));
+        tr.appendChild(makeCell(entry.contactNumber));
+
+        const makeLinkCell = (url) => {
+          const td = document.createElement("td");
+          if (url) {
+            const a = document.createElement("a");
+            a.href = url;
+            a.target = "_blank";
+            a.textContent = "View";
+            td.appendChild(a);
+          } else {
+            td.textContent = "—";
+          }
+          return td;
+        };
+
+        tr.appendChild(makeLinkCell(entry.licenseImageUrl));
+        tr.appendChild(makeLinkCell(entry.pucUrl));
+        tr.appendChild(makeLinkCell(entry.insuranceUrl));
+        tr.appendChild(makeLinkCell(entry.fitnessUrl));
+
+        const actionsTd = document.createElement("td");
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.className = "action-btn";
+        editBtn.onclick = () => loadEntryForEdit(key, entry);
+        actionsTd.appendChild(editBtn);
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Delete";
+        delBtn.className = "action-btn";
+        delBtn.style.background = "#db4437";
+        delBtn.onclick = () => {
+          if (confirm("Delete this entry?")) {
+            set(ref(db, `users/${uid}/vehicles/${key}`), null);
+          }
+        };
+        actionsTd.appendChild(delBtn);
+
+        tr.appendChild(actionsTd);
+        tbody.appendChild(tr);
+      }
+    });
+  }
+
+  // Load into form for edit
+  function loadEntryForEdit(key, entry) {
+    document.getElementById("vehicleNumber").value = entry.vehicleNumber || "";
+    document.getElementById("vehicleType").value = entry.vehicleType || "";
+    document.getElementById("driverName").value = entry.driverName || "";
+    document.getElementById("driverLicense").value = entry.driverLicense || "";
+    document.getElementById("contactNumber").value = entry.contactNumber || "";
+    if (entry.licenseImageUrl) {
+      licensePreview.src = entry.licenseImageUrl;
+      licensePreview.style.display = "block";
+    } else {
+      licensePreview.style.display = "none";
+    }
+    licenseInput.value = "";
+    pucInput.value = "";
+    insuranceInput.value = "";
+    fitnessInput.value = "";
+    editKey = key;
+    currentEntryCache = entry;
+  }
+
+  // Form submit
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!uid) return;
+
+    const vehicleNumber = document.getElementById("vehicleNumber").value.trim();
+    const vehicleType = document.getElementById("vehicleType").value.trim();
+    const driverName = document.getElementById("driverName").value.trim();
+    const driverLicense = document.getElementById("driverLicense").value.trim();
+    const contactNumber = document.getElementById("contactNumber").value.trim();
+
+    let licenseImageUrl = editKey ? currentEntryCache.licenseImageUrl : "";
+    let pucUrl = editKey ? currentEntryCache.pucUrl : "";
+    let insuranceUrl = editKey ? currentEntryCache.insuranceUrl : "";
+    let fitnessUrl = editKey ? currentEntryCache.fitnessUrl : "";
+
+    if (licenseInput.files[0]) licenseImageUrl = await uploadToCloudinary(licenseInput.files[0]);
+    if (pucInput.files[0]) pucUrl = await uploadToCloudinary(pucInput.files[0]);
+    if (insuranceInput.files[0]) insuranceUrl = await uploadToCloudinary(insuranceInput.files[0]);
+    if (fitnessInput.files[0]) fitnessUrl = await uploadToCloudinary(fitnessInput.files[0]);
+
+    const entry = {
+      vehicleNumber,
+      vehicleType,
+      driverName,
+      driverLicense,
+      contactNumber,
+      licenseImageUrl,
+      pucUrl,
+      insuranceUrl,
+      fitnessUrl,
+      timestamp: Date.now(),
+    };
+
+    const vehiclesRef = ref(db, `users/${uid}/vehicles`);
+    if (editKey) {
+      await set(child(vehiclesRef, editKey), entry);
+      editKey = null;
+      currentEntryCache = {};
+    } else {
+      await push(vehiclesRef, entry);
+    }
+    form.reset();
+    licensePreview.style.display = "none";
+  });
+
+  // Excel download
+  window.downloadExcel = function () {
+    const table = document.getElementById("vehicleDriverTable");
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Vehicle & Driver Details" });
+    XLSX.writeFile(wb, "vehicle-driver-details.xlsx");
+  };
+
+  // Navbar
+  fetch("navbar.html").then(r => r.text()).then(html => document.getElementById("navbar").innerHTML = html);
+  window.logout = function() { signOut(auth).then(()=> window.location.href="index.html").catch(e => alert("Logout error: "+e.message)); };
+  window.toggleMenu = function(){ const el=document.getElementById("navLinks"); if(el) el.classList.toggle("show"); };
+
+</script>
+
+
+  <!-- NOTE:
+       - This page uploads images to Cloudinary using the unsigned preset provided.
+       - If you need signed uploads, server-side changes are required.
+       - Cloudinary folder + preset names are used as you specified.
+  -->
+</body>
+</html>

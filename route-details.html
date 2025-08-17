@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Route & Diesel Tracker</title>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    :root{ --primary:#2E8B57; --accent:#43B97F; --dark:#1F1F1F; --bg:#F5F5F5; --card:#fff; }
+    body{ margin:0; font-family: "Segoe UI", Roboto, Arial, sans-serif; background:var(--bg); color:#111; }
+    #navbar{ margin-bottom:12px; }
+    .wrap { max-width:1100px; margin:18px auto; padding:16px; }
+    .header { display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .title { font-size:1.3rem; font-weight:700; color:var(--primary); }
+    .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .btn { background:var(--accent); color:#fff; border:none; padding:9px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
+    .btn.ghost { background:transparent; color:var(--dark); border:1px solid #ddd; }
+    .grid { display:grid; gap:12px; grid-template-columns: 1fr 360px; }
+    @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
+    .card { background:var(--card); padding:14px; border-radius:10px; box-shadow:0 6px 14px rgba(0,0,0,0.06); }
+    .card h3 { margin:0 0 10px 0; color:var(--primary); font-size:1.05rem; }
+    input[type=text], select, input[type=number], input[type=date], textarea { width:100%; padding:8px 10px; border-radius:8px; border:1px solid #ddd; font-size:14px; }
+    .table-wrap { overflow-x:auto; margin-top:10px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th, td { padding:10px 8px; text-align:left; border-bottom:1px solid #eee; vertical-align:middle; }
+    th { background:linear-gradient(180deg,#fff,#fbfbfb); cursor:pointer; user-select:none; }
+    th.sortable:hover{ background:#f2fff4; }
+    .activity-item { background:#e8f0fe; padding:10px; border-radius:6px; margin-bottom:6px; font-size:14px; border-left:5px solid #43B97F; }
+    .thumb { width:64px; height:48px; object-fit:cover; border-radius:6px; border:1px solid #ddd; }
+    .stats { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .stat { background:#f7fff7; padding:10px; border-radius:8px; border-left:4px solid var(--accent); min-width:160px; }
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:999; align-items:center; justify-content:center; }
+    .modal.show { display:flex; }
+    .modal-content { background:var(--card); padding:16px; border-radius:10px; width:100%; max-width:520px; box-shadow:0 12px 30px rgba(0,0,0,0.2); }
+    .chip { background:#eefaf1; color:var(--primary); padding:6px 8px; border-radius:8px; font-weight:600; display:inline-block; }
+    .small-note { font-size:12px; color:#666; margin-top:6px; }
+    td[contenteditable="true"]{ outline: 2px dashed rgba(67,185,127,0.2); padding:6px; border-radius:4px; }
+    @media (max-width:520px){ .header { flex-direction:column; align-items:flex-start; gap:8px; } .pumps-list { flex-direction:column; align-items:stretch; } }
+  </style>
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <div class="title">Route & Diesel Tracker</div>
+        <div class="small-note">Manage route entries, diesel expenses & proofs — photos stored on Cloudinary</div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="openAddRecordBtn"><i class="fa fa-plus"></i> New Record</button>
+        <button class="btn ghost" id="openManagePumps"><i class="fa fa-gas-pump"></i> Manage Pumps</button>
+        <button class="btn ghost" id="downloadXlsx"><i class="fa fa-file-excel"></i> Export Excel</button>
+        <button class="btn ghost" id="printReport"><i class="fa fa-print"></i> Print Report</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- main -->
+      <div class="card">
+        <h3>Records & Recent Activity</h3>
+
+        <!-- filters & presets -->
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+          <select id="filterPump"><option value="">-- All Petrol Pumps --</option></select>
+          <select id="filterPayment" style="max-width:150px;">
+            <option value="">-- All Payments --</option>
+            <option value="Paid">Paid</option>
+            <option value="Remaining">Remaining</option>
+          </select>
+          <input type="text" id="filterVehicle" placeholder="Vehicle No. (search)" style="max-width:180px;">
+          <input type="date" id="filterFrom" style="max-width:160px;">
+          <input type="date" id="filterTo" style="max-width:160px;">
+          <button class="btn" id="applyFilter">Apply</button>
+          <button class="btn ghost" id="clearFilter">Clear</button>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+          <div class="small-note">Date Preset:</div>
+          <button class="btn ghost" id="preset7">Last 7</button>
+          <button class="btn ghost" id="preset30">Last 30</button>
+          <button class="btn ghost" id="presetMonth">This Month</button>
+        </div>
+
+        <!-- pump stats -->
+        <div class="stats" id="pumpStats" style="margin-top:10px; display:none;">
+          <div class="stat"><div class="small">Diesel Taken (L)</div><div id="statDiesel">0</div></div>
+          <div class="stat"><div class="small">Paid Amount (₹)</div><div id="statPaid">0</div></div>
+          <div class="stat"><div class="small">Pending Amount (₹)</div><div id="statPending">0</div></div>
+        </div>
+
+        <!-- recent activity -->
+        <div style="margin-top:12px;">
+          <div style="font-weight:700; margin-bottom:6px;">Recent Activity</div>
+          <div id="recentList"></div>
+        </div>
+
+        <!-- table -->
+        <div class="table-wrap" style="margin-top:12px;">
+          <table id="recordsTable">
+            <thead>
+              <tr>
+                <th class="sortable" data-key="date">Date ▾</th>
+                <th class="sortable" data-key="vehicleNo">Vehicle</th>
+                <th>From → To</th>
+                <th class="sortable" data-key="distance">Distance (km)</th>
+                <th class="sortable" data-key="diesel">Diesel (L)</th>
+                <th>Petrol Pump</th>
+                <th class="sortable" data-key="amount">Amount (₹)</th>
+                <th>Payment</th>
+                <th>Proof</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recordsBody">
+              <tr><td colspan="10" class="small-note">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- right column -->
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <h3>Petrol Pumps (editable)</h3>
+          <div style="display:flex; gap:8px; margin-bottom:10px;">
+            <input type="text" id="newPumpName" placeholder="Add new petrol pump">
+            <button class="btn" id="addPumpBtn">Add</button>
+          </div>
+          <div id="pumpsContainer" style="max-height:320px; overflow:auto;"></div>
+        </div>
+
+        <div class="card">
+          <h3>Quick Stats</h3>
+          <div class="small-note">Total records: <span id="totalRecords">0</span></div>
+          <div style="margin-top:10px;">
+            <div class="small-note">Click column headers to sort. Use presets for quick date ranges.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Record Modal -->
+  <div class="modal" id="recordModal">
+    <div class="modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3 id="modalTitle">Add Record</h3>
+        <button class="btn ghost" id="closeModal"><i class="fa fa-times"></i></button>
+      </div>
+
+      <div style="display:grid; gap:8px;">
+        <div style="display:flex; gap:8px;">
+          <input type="date" id="recDate" style="flex:1;">
+          <input type="text" id="recVehicle" placeholder="Vehicle No." style="flex:1;">
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="recFrom" placeholder="From (place)" style="flex:1;">
+          <input type="text" id="recTo" placeholder="To (place)" style="flex:1;">
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <input type="number" id="recDistance" placeholder="Distance (km)" step="0.1" style="flex:1;">
+          <input type="number" id="recDiesel" placeholder="Diesel (L)" step="0.1" style="flex:1;">
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <select id="recPump" style="flex:1;"><option value="">-- Select Pump --</option></select>
+          <input type="number" id="recAmount" placeholder="Amount (₹)" step="0.01" style="flex:1;">
+        </div>
+
+        <div>
+          <select id="recPayment">
+            <option value="paid">Paid</option>
+            <option value="remaining">Remaining</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="small-note">Proof photo (optional) — will be resized and uploaded</label>
+          <input type="file" id="recProof" accept="image/*">
+          <img id="previewImg" style="max-width:120px;margin-top:8px;border-radius:6px;display:none;border:1px solid #ddd;">
+        </div>
+
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button class="btn ghost" id="cancelModal">Cancel</button>
+          <button class="btn" id="saveRecordBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, push, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+/* ---------- CONFIG (your real project values already here) ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+  authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+  databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "transport-dashboard-ad69a",
+  storageBucket: "transport-dashboard-ad69a.appspot.com",
+  messagingSenderId: "526889676196",
+  appId: "1:526889676196:web:66032c80a4aede690ae531",
+  measurementId: "G-7F9R7HJYDH"
+};
+
+let allData = []; // Make sure this is declared globally
+
+// Fetch data from Firebase (example)
+function fetchData() {
+  const dbRef = ref(database, `users/${userId}/routeDiesel`);
+  onValue(dbRef, (snapshot) => {
+    const data = [];
+    snapshot.forEach((childSnapshot) => {
+      const item = childSnapshot.val();
+      data.push(item);
+    });
+    allData = data; // Store full dataset
+    displayData(allData);
+  });
+}
+
+// Apply Filters
+document.getElementById("applyFilter").addEventListener("click", function () {
+    const pump = document.getElementById("filterPump").value.trim().toLowerCase();
+    const vehicle = document.getElementById("filterVehicle").value.trim().toLowerCase();
+    const fromDate = document.getElementById("filterFrom").value;
+    const toDate = document.getElementById("filterTo").value;
+    const payment = document.getElementById("filterPayment").value.trim().toLowerCase(); // Added payment filter
+
+    const filteredData = allData.filter(item => {
+        const pumpMatch = !pump || (item.pump && item.pump.toLowerCase().includes(pump));
+        const vehicleMatch = !vehicle || (item.vehicle && item.vehicle.toLowerCase().includes(vehicle));
+        
+        const dateMatch =
+            (!fromDate || new Date(item.date) >= new Date(fromDate)) &&
+            (!toDate || new Date(item.date) <= new Date(toDate));
+
+        const paymentMatch = !payment || 
+            (item.payment && item.payment.toLowerCase() === payment); // Checks exact match
+
+        return pumpMatch && vehicleMatch && dateMatch && paymentMatch;
+    });
+
+    renderRecords(filteredData);
+});
+
+
+// Clear Filters
+document.getElementById('clearFilter').addEventListener('click', () => {
+  document.getElementById('filterPump').value = '';
+  document.getElementById('filterVehicle').value = '';
+  document.getElementById('filterFrom').value = '';
+  document.getElementById('filterTo').value = '';
+  document.getElementById('filterPayment').value = '';
+  displayData(allData);
+});
+
+// Display Data (your existing table rendering function)
+function displayData(data) {
+  // render table here...
+}
+
+const paymentStatus = document.getElementById('filterPayment').value.trim().toLowerCase();
+
+const filteredData = allData.filter(entry => {
+  const matchesPump = !pump || entry.pumpName === pump;
+  const matchesVehicle = !vehicle || entry.vehicleNumber.toLowerCase().includes(vehicle);
+  const matchesDate =
+    (!fromDate || entry.date >= fromDate) &&
+    (!toDate || entry.date <= toDate);
+  const matchesPayment = !paymentStatus || (entry.paymentStatus && entry.paymentStatus.toLowerCase() === paymentStatus);
+
+  return matchesPump && matchesVehicle && matchesDate && matchesPayment;
+});
+
+const CLOUDINARY_CLOUD_NAME = "doqapn15f";
+const CLOUDINARY_UPLOAD_PRESET = "payment-billing";
+/* ------------------------------------------------------------------- */
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth();
+
+//// DOM elements
+const openAddRecordBtn = document.getElementById('openAddRecordBtn');
+const recordModal = document.getElementById('recordModal');
+const closeModalBtn = document.getElementById('closeModal');
+const cancelModal = document.getElementById('cancelModal');
+const saveRecordBtn = document.getElementById('saveRecordBtn');
+const recProof = document.getElementById('recProof');
+const previewImg = document.getElementById('previewImg');
+
+const recDate = document.getElementById('recDate');
+const recVehicle = document.getElementById('recVehicle');
+const recFrom = document.getElementById('recFrom');
+const recTo = document.getElementById('recTo');
+const recDistance = document.getElementById('recDistance');
+const recDiesel = document.getElementById('recDiesel');
+const recPump = document.getElementById('recPump');
+const recAmount = document.getElementById('recAmount');
+const recPayment = document.getElementById('recPayment');
+
+const addPumpBtn = document.getElementById('addPumpBtn');
+const newPumpName = document.getElementById('newPumpName');
+const pumpsContainer = document.getElementById('pumpsContainer');
+const filterPump = document.getElementById('filterPump');
+const applyFilter = document.getElementById('applyFilter');
+const clearFilter = document.getElementById('clearFilter');
+const recordsBody = document.getElementById('recordsBody');
+const recordsTable = document.getElementById('recordsTable');
+const pumpStats = document.getElementById('pumpStats');
+const statDiesel = document.getElementById('statDiesel');
+const statPaid = document.getElementById('statPaid');
+const statPending = document.getElementById('statPending');
+const totalRecords = document.getElementById('totalRecords');
+const downloadXlsx = document.getElementById('downloadXlsx');
+const printReport = document.getElementById('printReport');
+const preset7 = document.getElementById('preset7');
+const preset30 = document.getElementById('preset30');
+const presetMonth = document.getElementById('presetMonth');
+const recentList = document.getElementById('recentList');
+
+let currentUser = null;
+let editKey = null;
+let pumps = {};
+let records = {};
+let sortKey = 'date';
+let sortDir = -1;
+
+// ===== Auth (fixed to behave like other pages) =====
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    // not logged in → go to login
+    window.location.replace('index.html');
+    return;
+  }
+  currentUser = user;
+  // load UI + data after auth ready
+  fetch('navbar.html').then(r=>r.text()).then(t => document.getElementById('navbar').innerHTML = t);
+  loadPumps();
+  loadRecords();
+  attachUI();
+});
+
+// ---------- pumps ----------
+addPumpBtn.addEventListener('click', () => {
+  const name = newPumpName.value.trim();
+  if (!name) return alert('Enter pump name');
+  push(ref(db, `users/${currentUser.uid}/petrolPumps`), { name });
+  newPumpName.value = '';
+});
+
+function loadPumps(){
+  const node = ref(db, `users/${currentUser.uid}/petrolPumps`);
+  onValue(node, snap => {
+    pumps = snap.val() || {};
+    renderPumps();
+    populatePumpSelects();
+  });
+}
+
+function renderPumps(){
+  pumpsContainer.innerHTML = '';
+  Object.entries(pumps).forEach(([k,v]) => {
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.justifyContent = 'space-between';
+    div.style.alignItems = 'center';
+    div.style.marginBottom = '6px';
+    div.innerHTML = `<div class="chip">${escapeHtml(v.name)}</div>
+      <div>
+        <button class="btn ghost" data-k="${k}" onclick="editPump(event)">Edit</button>
+        <button class="btn ghost" data-k="${k}" onclick="deletePump(event)"><i class="fa fa-trash"></i></button>
+      </div>`;
+    pumpsContainer.appendChild(div);
+  });
+}
+
+window.editPump = function(e){
+  const k = e.currentTarget.dataset.k;
+  const newName = prompt('Rename petrol pump', pumps[k].name);
+  if (!newName) return;
+  set(ref(db, `users/${currentUser.uid}/petrolPumps/${k}`), { name: newName });
+};
+window.deletePump = function(e){
+  const k = e.currentTarget.dataset.k;
+  if (!confirm('Delete this petrol pump?')) return;
+  remove(ref(db, `users/${currentUser.uid}/petrolPumps/${k}`));
+};
+
+function populatePumpSelects(){
+  filterPump.innerHTML = '<option value="">-- All Petrol Pumps --</option>';
+  recPump.innerHTML = '<option value="">-- Select Pump --</option>';
+  Object.entries(pumps).forEach(([k,v]) => {
+    const opt = `<option value="${escapeHtml(v.name)}">${escapeHtml(v.name)}</option>`;
+    filterPump.insertAdjacentHTML('beforeend', opt);
+    recPump.insertAdjacentHTML('beforeend', opt);
+  });
+}
+
+// ---------- records ----------
+function loadRecords(){
+  const node = ref(db, `users/${currentUser.uid}/dieselRecords`);
+  onValue(node, snap => {
+    records = snap.val() || {};
+    renderRecords();
+    renderRecent();
+  });
+}
+
+// render recent activity (latest 8)
+function renderRecent(){
+  recentList.innerHTML = '';
+  const arr = Object.entries(records).map(([k,v]) => ({key:k, ...v})).sort((a,b)=> (b.createdAt||0) - (a.createdAt||0)).slice(0,8);
+  if (!arr.length) return recentList.innerHTML = '<div class="small-note">No recent activity</div>';
+  arr.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'activity-item';
+    div.innerHTML = `<strong>${escapeHtml(r.vehicleNo||'')}</strong> — ${escapeHtml(r.petrolPump||'')} — ${r.diesel||0} L — ${r.amount||0} ₹ <div class="small-note">${escapeHtml(r.from||'')} → ${escapeHtml(r.to||'')} • ${escapeHtml(r.date||'')}</div>`;
+    recentList.appendChild(div);
+  });
+}
+
+function renderRecords(){
+  const rows = Object.entries(records).map(([k,v])=>({key:k,...v}));
+  
+  // Filters
+  const pumpFilter = filterPump.value;
+  const vehicleFilter = document.getElementById('filterVehicle').value.trim().toLowerCase();
+  const fromDate = document.getElementById('filterFrom').value;
+  const toDate = document.getElementById('filterTo').value;
+  const paymentFilter = document.getElementById('filterPayment') 
+    ? document.getElementById('filterPayment').value.trim().toLowerCase()
+    : '';
+
+  let filtered = rows.filter(r => {
+    if (pumpFilter && r.petrolPump !== pumpFilter) return false;
+    if (vehicleFilter && !r.vehicleNo.toLowerCase().includes(vehicleFilter)) return false;
+    if (fromDate && r.date < fromDate) return false;
+    if (toDate && r.date > toDate) return false;
+    if (paymentFilter && (!r.payment || r.payment.toLowerCase() !== paymentFilter)) return false;
+    return true;
+  });
+
+  // Sorting
+  filtered.sort((a,b) => {
+    let A = a[sortKey], B = b[sortKey];
+    if (sortKey === 'distance' || sortKey === 'diesel' || sortKey === 'amount') {
+      A = parseFloat(A||0); B = parseFloat(B||0);
+    }
+    if (A < B) return -1 * sortDir;
+    if (A > B) return 1 * sortDir;
+    return 0;
+  });
+
+  // Render table
+  recordsBody.innerHTML = '';
+  if (!filtered.length) {
+    recordsBody.innerHTML = '<tr><td colspan="10" class="small-note">No records found</td></tr>';
+  } else {
+    filtered.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td contenteditable="true" data-field="date" data-key="${r.key}">${escapeHtml(r.date||'')}</td>
+        <td contenteditable="true" data-field="vehicleNo" data-key="${r.key}">${escapeHtml(r.vehicleNo||'')}</td>
+        <td>
+          <span contenteditable="true" data-field="from" data-key="${r.key}" class="small-note">${escapeHtml(r.from||'')}</span> →
+          <span contenteditable="true" data-field="to" data-key="${r.key}" class="small-note">${escapeHtml(r.to||'')}</span>
+        </td>
+        <td contenteditable="true" data-field="distance" data-key="${r.key}">${numberOrDash(r.distance)}</td>
+        <td contenteditable="true" data-field="diesel" data-key="${r.key}">${numberOrDash(r.diesel)}</td>
+        <td contenteditable="true" data-field="petrolPump" data-key="${r.key}">${escapeHtml(r.petrolPump||'')}</td>
+        <td contenteditable="true" data-field="amount" data-key="${r.key}">${numberOrDash(r.amount)}</td>
+        <td contenteditable="true" data-field="payment" data-key="${r.key}">${escapeHtml(r.payment||'')}</td>
+        <td>${r.proofUrl ? `<a href="${r.proofUrl}" target="_blank"><img class="thumb" src="${r.proofUrl}" alt="proof"></a>` : '—'}</td>
+        <td>
+          <button class="btn ghost" data-k="${r.key}" onclick="openEditModal(event)"><i class="fa fa-edit"></i></button>
+          <button class="btn ghost" data-k="${r.key}" onclick="deleteRecord(event)"><i class="fa fa-trash"></i></button>
+        </td>
+      `;
+      recordsBody.appendChild(tr);
+    });
+
+    // Inline edit save events
+    document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+      el.removeEventListener('keydown', handleEditableKeydown);
+      el.addEventListener('keydown', handleEditableKeydown);
+      el.removeEventListener('blur', handleEditableBlur);
+      el.addEventListener('blur', handleEditableBlur);
+    });
+  }
+
+  totalRecords.textContent = Object.keys(records).length;
+}
+
+
+// inline handlers
+function handleEditableKeydown(e){
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    e.target.blur();
+  }
+}
+function handleEditableBlur(e){
+  const el = e.target;
+  const key = el.dataset.key;
+  const field = el.dataset.field;
+  if (!key || !field) return;
+  let value = el.innerText.trim();
+  // normalize numeric fields
+  if (['distance','diesel','amount'].includes(field)) {
+    value = value === '' ? 0 : parseFloat(value.replace(/,/g,'')) || 0;
+  }
+  const updateObj = { [field]: value };
+  update(ref(db, `users/${currentUser.uid}/dieselRecords/${key}`), updateObj);
+}
+
+// open edit modal (with full form + ability to change photo)
+window.openEditModal = function(e){
+  const k = e.currentTarget.dataset.k;
+  const rec = records[k];
+  if (!rec) return alert('Record not found');
+  editKey = k;
+  openRecordModal(rec);
+};
+
+// delete record
+window.deleteRecord = function(e){
+  const k = e.currentTarget.dataset.k;
+  if (!confirm('Delete this record?')) return;
+  remove(ref(db, `users/${currentUser.uid}/dieselRecords/${k}`));
+};
+
+// ---------- UI attach ----------
+function attachUI(){
+  openAddRecordBtn.addEventListener('click', ()=> openRecordModal());
+  closeModalBtn.addEventListener('click', closeRecordModal);
+  cancelModal.addEventListener('click', closeRecordModal);
+
+  recProof.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) { previewImg.style.display='none'; return; }
+    const url = URL.createObjectURL(file);
+    previewImg.src = url;
+    previewImg.style.display = 'block';
+  });
+
+  saveRecordBtn.addEventListener('click', async () => {
+    if (!currentUser) return alert('Auth error');
+    const rec = {
+      date: recDate.value || isoDate(new Date()),
+      vehicleNo: recVehicle.value.trim(),
+      from: recFrom.value.trim(),
+      to: recTo.value.trim(),
+      distance: parseFloat(recDistance.value || 0),
+      diesel: parseFloat(recDiesel.value || 0),
+      petrolPump: recPump.value || '',
+      amount: parseFloat(recAmount.value || 0),
+      payment: recPayment.value || 'paid',
+      proofUrl: ''
+    };
+    if (!rec.vehicleNo) return alert('Enter vehicle no.');
+    const file = recProof.files && recProof.files[0];
+    if (file) {
+      try {
+        const resizedBlob = await resizeImage(file, 1200, 0.75);
+        const url = await uploadToCloudinary(resizedBlob);
+        rec.proofUrl = url;
+      } catch (err) {
+        console.error(err);
+        alert('Image upload failed — continuing without proof.');
+      }
+    } else if (editKey && records[editKey] && records[editKey].proofUrl) {
+      rec.proofUrl = records[editKey].proofUrl || '';
+    }
+
+    if (editKey) {
+      update(ref(db, `users/${currentUser.uid}/dieselRecords/${editKey}`), rec);
+    } else {
+      push(ref(db, `users/${currentUser.uid}/dieselRecords`), {...rec, createdAt: Date.now()});
+    }
+
+    closeRecordModal();
+  });
+
+  applyFilter.addEventListener('click', ()=>{
+    computePumpStats();
+    renderRecords();
+  });
+  clearFilter.addEventListener('click', ()=>{
+    filterPump.value = '';
+    document.getElementById('filterVehicle').value = '';
+    document.getElementById('filterFrom').value = '';
+    document.getElementById('filterTo').value = '';
+    pumpStats.style.display = 'none';
+    renderRecords();
+  });
+
+  preset7.addEventListener('click', ()=> { applyPresetDays(7); });
+  preset30.addEventListener('click', ()=> { applyPresetDays(30); });
+  presetMonth.addEventListener('click', ()=> { applyThisMonth(); });
+
+  // sorting columns
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      if (sortKey === key) sortDir *= -1;
+      else { sortKey = key; sortDir = -1; }
+      document.querySelectorAll('th.sortable').forEach(h => {
+        h.textContent = h.textContent.replace(' ▾','').replace(' ▴','');
+      });
+      th.textContent = th.textContent + (sortDir === -1 ? ' ▾' : ' ▴');
+      renderRecords();
+    });
+  });
+
+  downloadXlsx.addEventListener('click', () => exportExcel());
+  printReport.addEventListener('click', ()=> printFilteredReport());
+
+  // open pumps container
+  document.getElementById('openManagePumps').addEventListener('click', ()=> pumpsContainer.scrollIntoView({behavior:'smooth'}));
+}
+
+// ---------- modal open/close ----------
+function openRecordModal(data){
+  editKey = data ? data.key : null;
+  document.getElementById('modalTitle').textContent = editKey ? 'Edit Record' : 'Add Record';
+  recDate.value = data && data.date ? data.date : isoDate(new Date());
+  recVehicle.value = data ? data.vehicleNo : '';
+  recFrom.value = data ? data.from : '';
+  recTo.value = data ? data.to : '';
+  recDistance.value = data ? data.distance : '';
+  recDiesel.value = data ? data.diesel : '';
+  recPump.value = data ? data.petrolPump : '';
+  recAmount.value = data ? data.amount : '';
+  recPayment.value = data ? data.payment : 'paid';
+  previewImg.style.display = data && data.proofUrl ? 'block' : 'none';
+  previewImg.src = data && data.proofUrl ? data.proofUrl : '';
+  recProof.value = '';
+  recordModal.classList.add('show');
+}
+function closeRecordModal(){ recordModal.classList.remove('show'); editKey=null; previewImg.style.display='none'; }
+
+// ---------- image resize & upload ----------
+async function resizeImage(file, maxDim = 1200, quality = 0.8){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let { width, height } = img;
+      let scale = 1;
+      if (width > maxDim || height > maxDim) scale = Math.min(maxDim / width, maxDim / height);
+      const cw = Math.round(width * scale), ch = Math.round(height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = cw; canvas.height = ch;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, cw, ch);
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(url);
+        if (!blob) return reject(new Error('Canvas toBlob failed'));
+        resolve(blob);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
+  });
+}
+
+async function uploadToCloudinary(blob){
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) throw new Error('Cloudinary not configured');
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+  const fd = new FormData();
+  fd.append('file', blob, 'proof.jpg');
+  fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  const res = await fetch(url, { method:'POST', body:fd });
+  if (!res.ok) throw new Error('Cloudinary upload failed: ' + res.statusText);
+  const data = await res.json();
+  return data.secure_url;
+}
+
+// export currently filtered -> excel
+function exportExcel(){
+  const headers = ['Date','Vehicle','From','To','Distance(km)','Diesel(L)','PetrolPump','Amount','Payment','ProofURL'];
+  const rows = [headers];
+  const pumpFilter = filterPump.value;
+  const vehicleFilter = document.getElementById('filterVehicle').value.trim().toLowerCase();
+  const fromDate = document.getElementById('filterFrom').value;
+  const toDate = document.getElementById('filterTo').value;
+
+  Object.entries(records).forEach(([k,r])=>{
+    if (pumpFilter && r.petrolPump !== pumpFilter) return;
+    if (vehicleFilter && !r.vehicleNo.toLowerCase().includes(vehicleFilter)) return;
+    if (fromDate && r.date < fromDate) return;
+    if (toDate && r.date > toDate) return;
+    rows.push([r.date, r.vehicleNo, r.from, r.to, r.distance, r.diesel, r.petrolPump, r.amount, r.payment, r.proofUrl || '']);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "DieselRecords");
+  XLSX.writeFile(wb, `diesel-records-${isoDate(new Date())}.xlsx`);
+}
+
+// printable report
+function printFilteredReport(){
+  const pump = filterPump.value;
+  const vehicleFilter = document.getElementById('filterVehicle').value.trim().toLowerCase();
+  const fromDate = document.getElementById('filterFrom').value;
+  const toDate = document.getElementById('filterTo').value;
+
+  const rows = Object.entries(records).map(([k,r])=>({key:k,...r})).filter(r=>{
+    if (pump && r.petrolPump !== pump) return false;
+    if (vehicleFilter && !r.vehicleNo.toLowerCase().includes(vehicleFilter)) return false;
+    if (fromDate && r.date < fromDate) return false;
+    if (toDate && r.date > toDate) return false;
+    return true;
+  }).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+
+  let totalDiesel=0, paid=0, pending=0;
+  rows.forEach(r=>{ totalDiesel += parseFloat(r.diesel||0); const amt = parseFloat(r.amount||0); if (r.payment==='paid') paid += amt; else pending += amt; });
+
+  let html = `<html><head><title>Report</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f7fff7}.stat{padding:8px;background:#f7fff7;margin-bottom:10px;border-left:4px solid ${getComputedStyle(document.documentElement).getPropertyValue('--accent')}}</style></head><body>`;
+  html += `<h2>Report ${pump?('— '+escapeHtml(pump)) : ''}</h2>`;
+  html += `<div class="stat">Diesel Taken: ${totalDiesel.toFixed(2)} L &nbsp;&nbsp; Paid: ₹${paid.toFixed(2)} &nbsp;&nbsp; Pending: ₹${pending.toFixed(2)}</div>`;
+  html += `<table><thead><tr><th>Date</th><th>Vehicle</th><th>From</th><th>To</th><th>Diesel(L)</th><th>Amount</th><th>Payment</th></tr></thead><tbody>`;
+  rows.forEach(r=> html += `<tr><td>${escapeHtml(r.date||'')}</td><td>${escapeHtml(r.vehicleNo||'')}</td><td>${escapeHtml(r.from||'')}</td><td>${escapeHtml(r.to||'')}</td><td>${numberOrDash(r.diesel)}</td><td>${numberOrDash(r.amount)}</td><td>${escapeHtml(r.payment||'')}</td></tr>`);
+  html += `</tbody></table></body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html); w.document.close(); w.focus(); w.print();
+}
+
+// compute pump stats
+function computePumpStats(){
+  const pump = filterPump.value;
+  if (!pump) { pumpStats.style.display='none'; return; }
+  let totalDiesel=0, paid=0, pending=0;
+  Object.values(records).forEach(r=>{ if (r.petrolPump !== pump) return; totalDiesel += parseFloat(r.diesel||0); const amt = parseFloat(r.amount||0); if (r.payment === 'paid') paid += amt; else pending += amt; });
+  statDiesel.textContent = totalDiesel.toFixed(2);
+  statPaid.textContent = paid.toFixed(2);
+  statPending.textContent = pending.toFixed(2);
+  pumpStats.style.display = 'flex';
+}
+
+// presets
+function applyPresetDays(days){ const to = new Date(); const from = new Date(); from.setDate(from.getDate() - days + 1); document.getElementById('filterFrom').value = isoDate(from); document.getElementById('filterTo').value = isoDate(to); computePumpStats(); renderRecords(); }
+function applyThisMonth(){ const now = new Date(); const from = new Date(now.getFullYear(), now.getMonth(), 1); const to = new Date(now.getFullYear(), now.getMonth()+1, 0); document.getElementById('filterFrom').value = isoDate(from); document.getElementById('filterTo').value = isoDate(to); computePumpStats(); renderRecords(); }
+
+// utils
+function numberOrDash(v){ return (v || v === 0) ? (isNaN(v)? '—' : Number(v).toLocaleString(undefined, {maximumFractionDigits:2})) : '—'; }
+function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function isoDate(d){ return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+
+// expose inline functions used by buttons
+window.openEditModal = window.openEditModal;
+window.deleteRecord = window.deleteRecord;
+window.editPump = window.editPump;
+window.deletePump = window.deletePump;
+
+// initial sort arrow
+document.querySelector('th.sortable[data-key="date"]').textContent += ' ▾';
+
+// expose navbar functions globally
+window.logout = function() { signOut(auth).then(()=> window.location.href="index.html").catch(e => alert("Logout error: "+e.message)); };
+window.toggleMenu = function(){ const el=document.getElementById("navLinks"); if(el) el.classList.toggle("show"); };
+
+  </script>
+</body>
+</html>

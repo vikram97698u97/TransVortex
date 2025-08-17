@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+      width: 90%;
+      max-width: 400px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+      width: 100%;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 5px 0;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 16px;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    
+    input.invalid {
+      border-color: #ff4444;
+    }
+    
+    .error-message {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-top: 5px;
+      min-height: 18px;
+    }
+    
+    button:disabled {
+      background: #cccccc !important;
+      cursor: not-allowed;
+    }
+    
+    /* Hide number input spinners */
+    input[type=tel]::-webkit-inner-spin-button,
+    input[type=tel]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    input[type=tel] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+    input::placeholder { color: #eee; }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #00c9a7;
+      color: #fff;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover { background: #00b497; }
+    #user-status {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 15px;
+    }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+    }
+    .modal-content {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      margin: 10% auto;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 400px;
+      color: white;
+    }
+    @media (max-width: 480px) {
+      .container { padding: 30px 20px; }
+      h2 { font-size: 20px; }
+      input, button { font-size: 14px; padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Sign Up</h2>
+    <div class="form-group">
+      <input type="email" id="signup-email" placeholder="Email" oninput="validateEmail()">
+      <div id="email-error" class="error-message"></div>
+    </div>
+    <div class="form-group">
+      <input type="password" id="signup-password" placeholder="Password" oninput="validatePassword()">
+      <div id="password-error" class="error-message"></div>
+    </div>
+    <div class="form-group">
+      <button id="signup-button" onclick="signUp()" disabled>Sign Up</button>
+    </div>
+    <p id="user-status">Not logged in</p>
+  </div>
+
+  <!-- Profile Info Modal -->
+  <div id="profileModal" class="modal">
+    <div class="modal-content">
+      <h3>Complete Your Profile</h3>
+      <input type="text" id="transportName" placeholder="Transport Company Name">
+      <input type="text" id="ownerName" placeholder="Owner Name">
+      <div class="form-group">
+      <input type="tel" id="phoneNumber" placeholder="Phone Number (e.g., 9876543210)" pattern="[6-9]\d{9}" oninput="validatePhoneNumber()">
+      <div id="phone-error" class="error-message"></div>
+    </div>
+      <button onclick="saveProfileInfo()">Save & Continue</button>
+    </div>
+  </div>
+
+  <script>
+    // Global validation functions
+    function validateEmail() {
+      const email = document.getElementById("signup-email").value.trim();
+      const emailError = document.getElementById("email-error");
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      
+      if (!email) {
+        emailError.textContent = "Email is required";
+        document.getElementById("signup-email").classList.add("invalid");
+        updateSignupButton();
+        return false;
+      }
+      
+      if (!emailRegex.test(email)) {
+        emailError.textContent = "Please enter a valid email address";
+        document.getElementById("signup-email").classList.add("invalid");
+        updateSignupButton();
+        return false;
+      }
+      
+      emailError.textContent = "";
+      document.getElementById("signup-email").classList.remove("invalid");
+      updateSignupButton();
+      return true;
+    }
+    
+    function validatePassword() {
+      const password = document.getElementById("signup-password").value;
+      const passwordError = document.getElementById("password-error");
+      
+      if (!password) {
+        passwordError.textContent = "Password is required";
+        updateSignupButton();
+        return false;
+      }
+      
+      if (password.length < 6) {
+        passwordError.textContent = "Password must be at least 6 characters";
+        updateSignupButton();
+        return false;
+      }
+      
+      passwordError.textContent = "";
+      updateSignupButton();
+      return true;
+    }
+    
+    // Update signup button state based on form validity
+    function updateSignupButton() {
+      const emailValid = document.getElementById("signup-email").value.trim() && 
+                        !document.getElementById("signup-email").classList.contains("invalid");
+      const passwordValid = document.getElementById("signup-password").value.length >= 6;
+      
+      const signupButton = document.getElementById("signup-button");
+      if (emailValid && passwordValid) {
+        signupButton.disabled = false;
+        signupButton.style.cursor = "pointer";
+        signupButton.style.opacity = "1";
+      } else {
+        signupButton.disabled = true;
+        signupButton.style.cursor = "not-allowed";
+        signupButton.style.opacity = "0.7";
+      }
+    }
+    
+    // Add input event listeners for real-time validation
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById("signup-email").addEventListener('input', validateEmail);
+      document.getElementById("signup-password").addEventListener('input', validatePassword);
+    });
+    
+    function validatePhoneNumber() {
+      const phoneNumber = document.getElementById("phoneNumber").value.trim();
+      const phoneError = document.getElementById("phone-error");
+      const phoneRegex = /^[6-9]\d{9}$/;
+      
+      if (!phoneNumber) {
+        phoneError.textContent = "Phone number is required";
+        document.getElementById("phoneNumber").classList.add("invalid");
+        return false;
+      }
+      
+      if (!phoneRegex.test(phoneNumber)) {
+        phoneError.textContent = "Please enter a valid 10-digit Indian phone number starting with 6-9";
+        document.getElementById("phoneNumber").classList.add("invalid");
+        return false;
+      }
+      
+      phoneError.textContent = "";
+      document.getElementById("phoneNumber").classList.remove("invalid");
+      return true;
+    }
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    
+    // Sign up function
+    window.signUp = async function () {
+      const email = document.getElementById("signup-email").value.trim();
+      const password = document.getElementById("signup-password").value;
+      const signupButton = document.getElementById("signup-button");
+      
+      // Validate all fields
+      const isEmailValid = validateEmail();
+      const isPasswordValid = validatePassword();
+      
+      if (!isEmailValid || !isPasswordValid) {
+        return;
+      }
+      
+      // Disable button to prevent multiple submissions
+      signupButton.disabled = true;
+      signupButton.textContent = "Creating account...";
+      
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        document.getElementById("profileModal").style.display = "block";
+      } catch (err) {
+        const errorMessage = err.code === 'auth/email-already-in-use' 
+          ? 'This email is already registered. Please log in or use a different email.'
+          : 'Error creating account: ' + err.message;
+        alert(errorMessage);
+      } finally {
+        signupButton.disabled = false;
+        signupButton.textContent = "Sign Up";
+      }
+    };
+
+    // Function to check and reserve phone number
+    async function checkAndReservePhoneNumber(phoneNumber, userId) {
+      try {
+        const phoneRef = ref(db, `phoneNumbers/${phoneNumber}`);
+        const snapshot = await get(phoneRef);
+        
+        if (snapshot.exists()) {
+          // Phone number is already taken
+          return false;
+        } else {
+          // Reserve the phone number by creating an entry
+          await set(phoneRef, {
+            userId: userId,
+            reservedAt: new Date().toISOString()
+          });
+          return true;
+        }
+      } catch (error) {
+        console.error("Error with phone number reservation:", error);
+        throw error;
+      }
+    }
+
+    // Save profile
+    window.saveProfileInfo = async function () {
+      const transportName = document.getElementById("transportName").value.trim();
+      const ownerName = document.getElementById("ownerName").value.trim();
+      const phoneNumber = document.getElementById("phoneNumber").value.trim();
+      const saveButton = document.querySelector("#profileModal button");
+      
+      // Validate all fields
+      if (!transportName) {
+        document.getElementById("transportName").classList.add("invalid");
+        return alert("Please enter your transport company name");
+      }
+      
+      if (!ownerName) {
+        document.getElementById("ownerName").classList.add("invalid");
+        return alert("Please enter the owner's name");
+      }
+      
+      // Validate phone number format
+      if (!validatePhoneNumber()) {
+        return; // Error already shown by validatePhoneNumber
+      }
+      
+      // Disable button to prevent multiple submissions
+      saveButton.disabled = true;
+      saveButton.textContent = "Saving...";
+      
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          throw new Error("User not authenticated. Please try signing up again.");
+        }
+
+        // Try to reserve the phone number
+        const isAvailable = await checkAndReservePhoneNumber(phoneNumber, user.uid);
+        
+        if (!isAvailable) {
+          throw new Error("This phone number is already registered. Please use a different number or log in.");
+        }
+
+        const now = new Date();
+        const trialEndDate = new Date(now);
+        trialEndDate.setDate(trialEndDate.getDate() + 30); // 30-day trial
+        
+        // Save user profile with phone number and default role
+        const userData = {
+          profile: {
+            transportName,
+            ownerName,
+            phoneNumber,
+            email: user.email,
+            role: 'user', // Default role
+            createdAt: now.toISOString(),
+            subscription: {
+              status: 'trial',
+              trialStart: now.toISOString(),
+              trialEnd: trialEndDate.toISOString(),
+              isActive: true,
+              lastPayment: null,
+              nextPayment: trialEndDate.toISOString()
+            }
+          }
+        };
+        
+        await set(ref(db, `users/${user.uid}`), userData);
+        
+        document.getElementById("profileModal").style.display = "none";
+        window.location.href = "home.html";
+      } catch (error) {
+        console.error("Error saving profile:", error);
+        alert(error.message || "An error occurred while saving your profile. Please try again.");
+      } finally {
+        // Re-enable the button
+        if (saveButton) {
+          saveButton.disabled = false;
+          saveButton.textContent = "Save & Continue";
+        }
+      }
+    };
+
+    // Auth state
+    onAuthStateChanged(auth, (user) => {
+      document.getElementById("user-status").innerText =
+        user ? "Logged in as: " + user.email : "Not logged in";
+      if (user) {
+        get(ref(db, `users/${user.uid}/profile`)).then(snapshot => {
+          if (!snapshot.exists()) {
+            document.getElementById("profileModal").style.display = "block";
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

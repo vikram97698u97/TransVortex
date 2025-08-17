@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Transport Dashboard</title>
+  <style>
+    .forgot-password {
+      background: none !important;
+      color: #0ded6a !important;
+      text-decoration: underline;
+      margin-top: 5px !important;
+      padding: 5px !important;
+    }
+    .forgot-password:hover {
+      background: rgba(76, 175, 80, 0.1) !important;
+      transform: none !important;
+    }
+    .signup-link {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    .signup-link a {
+      color: #0ded6a;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 40px 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+      width: 90%;
+      max-width: 400px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 15px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      background-color: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+    input::placeholder {
+      color: #eee;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: #00c9a7;
+      color: #fff;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #00b497;
+    }
+    #user-status {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 15px;
+    }
+    .error-message {
+      color: #ff6b6b;
+      font-size: 14px;
+      margin-top: 5px;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Welcome Back</h2>
+    <input type="email" id="login-email" placeholder="Email">
+    <input type="password" id="login-password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button onclick="resetPassword()" class="forgot-password">Forgot Password?</button>
+    <div class="signup-link">
+      Don't have an account? <a href="signup.html">Sign up here</a>
+    </div>
+    <div id="user-status"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      get,
+      update
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // Show success message if redirected from signup
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('signup') === 'success') {
+      const successMessage = document.createElement('div');
+      successMessage.className = 'success-message';
+      successMessage.textContent = 'Account created successfully! Please log in to continue.';
+      successMessage.style.color = '#4CAF50';
+      successMessage.style.textAlign = 'center';
+      successMessage.style.marginBottom = '20px';
+      const container = document.querySelector('.container');
+      container.insertBefore(successMessage, container.firstChild);
+      
+      // Remove the signup success parameter from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Function to check if a date is valid
+    function isValidDate(d) {
+      return d instanceof Date && !isNaN(d);
+    }
+
+    // Function to calculate days between two dates
+    function daysBetween(date1, date2) {
+      const diffTime = Math.abs(date2 - date1);
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    // Login function
+    window.login = async function() {
+      console.log('Login function called');
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const loginButton = document.querySelector('button[onclick="login()"]');
+      const statusElement = document.getElementById("user-status");
+      
+      // Basic validation
+      if (!email || !password) {
+        showError("Please enter both email and password");
+        return;
+      }
+      
+      // Simple email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showError('Please enter a valid email address');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        loginButton.disabled = true;
+        loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+        
+        // Sign in with email and password
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Get user data from database
+        const userRef = ref(db, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          console.log('User data from database:', userData);
+          
+          // Debug: Log role information
+          console.log('Full user data:', JSON.stringify(userData, null, 2));
+          
+          // Check for admin role in various possible locations
+          const isAdmin = userData.role === 'admin' || 
+                         (userData.profile && userData.profile.role === 'admin') ||
+                         (userData.profile && userData.profile.isAdmin === true);
+          
+          console.log('Admin check result:', { 
+            userRole: userData.role,
+            profileRole: userData.profile?.role,
+            isAdmin: isAdmin 
+          });
+          
+          // Check subscription status for non-admin users
+          if (!isAdmin) {
+            const now = new Date();
+            let subscription = userData.subscription || (userData.profile?.subscription || null);
+            
+            // If no subscription exists, create a new trial
+            if (!subscription) {
+              console.log('No subscription found, creating new trial');
+              const trialStart = new Date();
+              const trialEnd = new Date();
+              trialEnd.setDate(trialStart.getDate() + 30); // 30-day trial
+              
+              const subscriptionData = {
+                status: 'trial',
+                trialStart: trialStart.toISOString(),
+                trialEnd: trialEnd.toISOString(),
+                isActive: true,
+                createdAt: trialStart.toISOString()
+              };
+              
+              // Update both root and profile subscription for backward compatibility
+              await update(ref(db, `users/${user.uid}`), {
+                subscription: subscriptionData,
+                lastLogin: now.toISOString()
+              });
+              
+              // Also update profile subscription
+              await update(ref(db, `users/${user.uid}/profile`), {
+                subscription: subscriptionData,
+                lastLogin: now.toISOString()
+              });
+              
+              console.log('Created new 30-day trial');
+              subscription = subscriptionData;
+            }
+            
+            // Check if subscription is active or in trial
+            if (subscription) {
+              const subscriptionEnd = subscription.endDate || subscription.trialEnd;
+              const endDate = new Date(subscriptionEnd);
+              
+              // Check if subscription is active
+              if (subscription.status === 'active' && subscriptionEnd) {
+                if (isValidDate(endDate) && endDate > now) {
+                  // Subscription is active and not expired
+                  console.log('Active subscription found, expires on:', endDate);
+                  // Update last login
+                  await update(ref(db, `users/${user.uid}/profile`), {
+                    lastLogin: now.toISOString()
+                  });
+                  // Redirect to home page after successful login
+                  window.location.href = 'home.html';
+                  return;
+                } else if (isValidDate(endDate) && endDate <= now) {
+                  // Subscription has expired
+                  console.log('Subscription has expired');
+                  subscription.status = 'expired';
+                  subscription.isActive = false;
+                }
+              }
+              
+              // Handle trial or expired subscription
+              if (subscription.status === 'trial' || subscription.status === 'expired') {
+                const trialEnd = new Date(subscription.trialEnd || subscription.endDate);
+                
+                if (isValidDate(trialEnd) && trialEnd < now) {
+                  // Trial/Subscription has ended
+                  const updates = {
+                    status: 'expired',
+                    isActive: false,
+                    lastUpdated: now.toISOString()
+                  };
+                  
+                  // Update both root and profile subscription
+                  await update(ref(db, `users/${user.uid}/subscription`), updates);
+                  await update(ref(db, `users/${user.uid}/profile/subscription`), updates);
+                  
+                  // Redirect to subscription page
+                  showError('Your subscription has expired. Please renew to continue.');
+                  loginButton.disabled = false;
+                  loginButton.textContent = 'Login';
+                  await auth.signOut();
+                  window.location.href = 'subscribe.html';
+                  return;
+                } else if (isValidDate(trialEnd)) {
+                  // Calculate remaining trial days
+                  const daysLeft = daysBetween(now, trialEnd);
+                  console.log(`Trial ends in ${daysLeft} days`);
+                  
+                  // Update last login time
+                  await update(ref(db, `users/${user.uid}/profile`), {
+                    lastLogin: now.toISOString()
+                  });
+                }
+              }
+            }
+          }
+          
+          // Redirect based on role
+          if (isAdmin) {
+            console.log('Admin user detected, redirecting to admin-payments.html');
+            // Ensure the role is properly set in the database
+            await update(ref(db, `users/${user.uid}`), { 
+              role: 'admin',
+              lastLogin: new Date().toISOString()
+            });
+            window.location.href = 'admin-payments.html';
+            return; // Ensure we don't continue execution
+          } else {
+            console.log('Regular user, redirecting to home.html');
+            window.location.href = 'home.html';
+          }
+        } else {
+          // If no profile data exists, redirect to home
+          window.location.href = 'home.html';
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        let errorMessage = "An error occurred. Please try again.";
+        
+        // Handle specific error cases
+        switch (error.code) {
+          case 'auth/user-not-found':
+            errorMessage = "No account found with this email.";
+            break;
+          case 'auth/wrong-password':
+            errorMessage = "Incorrect password. Please try again.";
+            break;
+          case 'auth/too-many-requests':
+            errorMessage = "Too many failed attempts. Please try again later.";
+            break;
+          case 'auth/invalid-email':
+            errorMessage = "Please enter a valid email address.";
+            break;
+        }
+        
+        showError(errorMessage);
+      } finally {
+        // Reset button state
+        if (loginButton) {
+          loginButton.disabled = false;
+          loginButton.textContent = 'Login';
+        }
+      }
+    };
+    
+    // Password reset function
+    window.resetPassword = async function() {
+      const email = document.getElementById("login-email").value.trim();
+      const statusElement = document.getElementById("user-status");
+      
+      if (!email) {
+        showError("Please enter your email address to reset your password.");
+        return;
+      }
+      
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showError("Password reset email sent. Please check your inbox.", 'success');
+      } catch (error) {
+        console.error("Password reset error:", error);
+        showError("Error sending password reset email. Please try again.");
+      }
+    };
+    
+    // Helper function to show error/success messages
+    function showError(message, type = 'error') {
+      const statusElement = document.getElementById("user-status");
+      if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.style.color = type === 'error' ? '#ff6b6b' : '#4CAF50';
+        statusElement.style.display = 'block';
+        
+        // Hide the message after 5 seconds
+        setTimeout(() => {
+          statusElement.style.display = 'none';
+        }, 5000);
+      }
+    }
+    
+    // Handle Enter key press
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        login();
+      }
+    });
+  </script>
+</body>
+</html>
