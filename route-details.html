@@ -51,7 +51,7 @@
     <div class="header">
       <div>
         <div class="title">Route & Diesel Tracker</div>
-        <div class="small-note">Manage route entries, diesel expenses & proofs — photos stored on Cloudinary</div>
+        <div class="small-note">Manage route entries, diesel expenses & proofs &mdash; photos stored on Cloudinary</div>
       </div>
 
       <div class="controls">
@@ -107,9 +107,9 @@
           <table id="recordsTable">
             <thead>
               <tr>
-                <th class="sortable" data-key="date">Date ▾</th>
+                <th class="sortable" data-key="date">Date &#x25BC;</th>
                 <th class="sortable" data-key="vehicleNo">Vehicle</th>
-                <th>From → To</th>
+                <th>From &#x2192; To</th>
                 <th class="sortable" data-key="distance">Distance (km)</th>
                 <th class="sortable" data-key="diesel">Diesel (L)</th>
                 <th>Petrol Pump</th>
@@ -129,12 +129,37 @@
       <!-- right column -->
       <div>
         <div class="card" style="margin-bottom:12px;">
+          <h3>Diesel Calculator</h3>
+          <div style="display:grid; gap:10px;">
+            <div>
+              <label class="small-note">Distance (km)</label>
+              <input type="number" id="calcDistance" placeholder="Enter distance" step="0.1" min="0">
+            </div>
+            <div>
+              <label class="small-note">Vehicle Average (km/liter)</label>
+              <input type="number" id="calcAverage" placeholder="Enter average" step="0.1" min="0.1">
+            </div>
+            <div>
+              <label class="small-note">Diesel Price (₹/liter)</label>
+              <input type="number" id="calcPrice" placeholder="Price per liter" step="0.01" min="0">
+            </div>
+            <button class="btn" id="calculateBtn">Calculate</button>
+            <div id="calcResult" style="margin-top:10px; padding:10px; background:#f7fff7; border-radius:6px; display:none;">
+              <div class="small-note">Diesel Required:</div>
+              <div style="font-size:1.2em; font-weight:bold;" id="dieselRequired">0</div>
+              <div class="small-note">Estimated Cost:</div>
+              <div style="font-size:1.2em; font-weight:bold;" id="estimatedCost">₹0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px;">
           <h3>Petrol Pumps (editable)</h3>
           <div style="display:flex; gap:8px; margin-bottom:10px;">
             <input type="text" id="newPumpName" placeholder="Add new petrol pump">
             <button class="btn" id="addPumpBtn">Add</button>
           </div>
-          <div id="pumpsContainer" style="max-height:320px; overflow:auto;"></div>
+          <div id="pumpsContainer" style="max-height:240px; overflow:auto;"></div>
         </div>
 
         <div class="card">
@@ -185,7 +210,7 @@
         </div>
 
         <div>
-          <label class="small-note">Proof photo (optional) — will be resized and uploaded</label>
+          <label class="small-note">Proof photo (optional) &mdash; will be resized and uploaded</label>
           <input type="file" id="recProof" accept="image/*">
           <img id="previewImg" style="max-width:120px;margin-top:8px;border-radius:6px;display:none;border:1px solid #ddd;">
         </div>
@@ -428,7 +453,7 @@ function renderRecent(){
   arr.forEach(r => {
     const div = document.createElement('div');
     div.className = 'activity-item';
-    div.innerHTML = `<strong>${escapeHtml(r.vehicleNo||'')}</strong> — ${escapeHtml(r.petrolPump||'')} — ${r.diesel||0} L — ${r.amount||0} ₹ <div class="small-note">${escapeHtml(r.from||'')} → ${escapeHtml(r.to||'')} • ${escapeHtml(r.date||'')}</div>`;
+    div.innerHTML = `<strong>${escapeHtml(r.vehicleNo||'')}</strong> &mdash; ${escapeHtml(r.petrolPump||'')} &mdash; ${r.diesel||0} L &mdash; ${r.amount||0} ₹ <div class="small-note">${escapeHtml(r.from||'')} → ${escapeHtml(r.to||'')} • ${escapeHtml(r.date||'')}</div>`;
     recentList.appendChild(div);
   });
 }
@@ -484,7 +509,7 @@ function renderRecords(){
         <td contenteditable="true" data-field="petrolPump" data-key="${r.key}">${escapeHtml(r.petrolPump||'')}</td>
         <td contenteditable="true" data-field="amount" data-key="${r.key}">${numberOrDash(r.amount)}</td>
         <td contenteditable="true" data-field="payment" data-key="${r.key}">${escapeHtml(r.payment||'')}</td>
-        <td>${r.proofUrl ? `<a href="${r.proofUrl}" target="_blank"><img class="thumb" src="${r.proofUrl}" alt="proof"></a>` : '—'}</td>
+        <td>${r.proofUrl ? `<a href="${r.proofUrl}" target="_blank"><img class="thumb" src="${r.proofUrl}" alt="proof"></a>` : '&mdash;'}</td>
         <td>
           <button class="btn ghost" data-k="${r.key}" onclick="openEditModal(event)"><i class="fa fa-edit"></i></button>
           <button class="btn ghost" data-k="${r.key}" onclick="deleteRecord(event)"><i class="fa fa-trash"></i></button>
@@ -557,8 +582,40 @@ function attachUI(){
     previewImg.style.display = 'block';
   });
 
+  let editKey = null; // Track the key of the record being edited
+
+  // Open edit modal with record data
+  window.openEditModal = function(e) {
+    editKey = e.currentTarget.dataset.k;
+    const rec = records[editKey];
+    if (!rec) return alert('Record not found');
+    
+    // Set form values
+    recDate.value = rec.date || '';
+    recVehicle.value = rec.vehicleNo || '';
+    recFrom.value = rec.from || '';
+    recTo.value = rec.to || '';
+    recDistance.value = rec.distance || '';
+    recDiesel.value = rec.diesel || '';
+    recPump.value = rec.petrolPump || '';
+    recAmount.value = rec.amount || '';
+    recPayment.value = rec.payment || 'paid';
+    
+    // Handle proof image
+    previewImg.style.display = 'none';
+    if (rec.proofUrl) {
+      previewImg.src = rec.proofUrl;
+      previewImg.style.display = 'block';
+    }
+    
+    // Show the modal
+    document.getElementById('modalTitle').textContent = 'Edit Record';
+    recordModal.classList.add('show');
+  };
+
   saveRecordBtn.addEventListener('click', async () => {
     if (!currentUser) return alert('Auth error');
+    
     const rec = {
       date: recDate.value || isoDate(new Date()),
       vehicleNo: recVehicle.value.trim(),
@@ -569,9 +626,12 @@ function attachUI(){
       petrolPump: recPump.value || '',
       amount: parseFloat(recAmount.value || 0),
       payment: recPayment.value || 'paid',
-      proofUrl: ''
+      proofUrl: editKey && records[editKey] ? (records[editKey].proofUrl || '') : ''
     };
+    
     if (!rec.vehicleNo) return alert('Enter vehicle no.');
+    
+    // Handle file upload if a new file is selected
     const file = recProof.files && recProof.files[0];
     if (file) {
       try {
@@ -582,17 +642,28 @@ function attachUI(){
         console.error(err);
         alert('Image upload failed — continuing without proof.');
       }
-    } else if (editKey && records[editKey] && records[editKey].proofUrl) {
-      rec.proofUrl = records[editKey].proofUrl || '';
     }
 
-    if (editKey) {
-      update(ref(db, `users/${currentUser.uid}/dieselRecords/${editKey}`), rec);
-    } else {
-      push(ref(db, `users/${currentUser.uid}/dieselRecords`), {...rec, createdAt: Date.now()});
+    try {
+      if (editKey) {
+        // Update existing record
+        await update(ref(db, `users/${currentUser.uid}/dieselRecords/${editKey}`), {
+          ...rec,
+          updatedAt: Date.now()
+        });
+      } else {
+        // Create new record
+        await push(ref(db, `users/${currentUser.uid}/dieselRecords`), {
+          ...rec,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        });
+      }
+      closeRecordModal();
+    } catch (error) {
+      console.error('Error saving record:', error);
+      alert('Error saving record. Please try again.');
     }
-
-    closeRecordModal();
   });
 
   applyFilter.addEventListener('click', ()=>{
@@ -619,9 +690,9 @@ function attachUI(){
       if (sortKey === key) sortDir *= -1;
       else { sortKey = key; sortDir = -1; }
       document.querySelectorAll('th.sortable').forEach(h => {
-        h.textContent = h.textContent.replace(' ▾','').replace(' ▴','');
+        h.textContent = h.textContent.replace(' ▼','').replace(' ▴','');
       });
-      th.textContent = th.textContent + (sortDir === -1 ? ' ▾' : ' ▴');
+      th.textContent = th.textContent + (sortDir === -1 ? ' ▼' : ' ▴');
       renderRecords();
     });
   });
@@ -732,7 +803,7 @@ function printFilteredReport(){
   rows.forEach(r=>{ totalDiesel += parseFloat(r.diesel||0); const amt = parseFloat(r.amount||0); if (r.payment==='paid') paid += amt; else pending += amt; });
 
   let html = `<html><head><title>Report</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f7fff7}.stat{padding:8px;background:#f7fff7;margin-bottom:10px;border-left:4px solid ${getComputedStyle(document.documentElement).getPropertyValue('--accent')}}</style></head><body>`;
-  html += `<h2>Report ${pump?('— '+escapeHtml(pump)) : ''}</h2>`;
+  html += `<h2>Report ${pump?('&mdash; '+escapeHtml(pump)) : ''}</h2>`;
   html += `<div class="stat">Diesel Taken: ${totalDiesel.toFixed(2)} L &nbsp;&nbsp; Paid: ₹${paid.toFixed(2)} &nbsp;&nbsp; Pending: ₹${pending.toFixed(2)}</div>`;
   html += `<table><thead><tr><th>Date</th><th>Vehicle</th><th>From</th><th>To</th><th>Diesel(L)</th><th>Amount</th><th>Payment</th></tr></thead><tbody>`;
   rows.forEach(r=> html += `<tr><td>${escapeHtml(r.date||'')}</td><td>${escapeHtml(r.vehicleNo||'')}</td><td>${escapeHtml(r.from||'')}</td><td>${escapeHtml(r.to||'')}</td><td>${numberOrDash(r.diesel)}</td><td>${numberOrDash(r.amount)}</td><td>${escapeHtml(r.payment||'')}</td></tr>`);
@@ -759,23 +830,41 @@ function applyPresetDays(days){ const to = new Date(); const from = new Date(); 
 function applyThisMonth(){ const now = new Date(); const from = new Date(now.getFullYear(), now.getMonth(), 1); const to = new Date(now.getFullYear(), now.getMonth()+1, 0); document.getElementById('filterFrom').value = isoDate(from); document.getElementById('filterTo').value = isoDate(to); computePumpStats(); renderRecords(); }
 
 // utils
-function numberOrDash(v){ return (v || v === 0) ? (isNaN(v)? '—' : Number(v).toLocaleString(undefined, {maximumFractionDigits:2})) : '—'; }
+function numberOrDash(v){ return (v || v === 0) ? (isNaN(v)? '&mdash;' : Number(v).toLocaleString(undefined, {maximumFractionDigits:2})) : '&mdash;'; }
 function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function isoDate(d){ return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
 
 // expose inline functions used by buttons
-window.openEditModal = window.openEditModal;
-window.deleteRecord = window.deleteRecord;
-window.editPump = window.editPump;
-window.deletePump = window.deletePump;
+window.deleteRecord = deleteRecord;
+window.editPump = editPump;
+window.deletePump = deletePump;
 
 // initial sort arrow
-document.querySelector('th.sortable[data-key="date"]').textContent += ' ▾';
+document.querySelector('th.sortable[data-key="date"]').textContent += ' ▼';
+
+// Diesel Calculator
+document.getElementById('calculateBtn').addEventListener('click', function() {
+const distance = parseFloat(document.getElementById('calcDistance').value);
+const average = parseFloat(document.getElementById('calcAverage').value);
+const price = parseFloat(document.getElementById('calcPrice').value);
+  
+if (!distance || !average || !price) {
+alert('Please fill in all fields');
+return;
+}
+  
+const dieselRequired = distance / average;
+const estimatedCost = dieselRequired * price;
+  
+document.getElementById('dieselRequired').textContent = dieselRequired.toFixed(2) + ' liters';
+document.getElementById('estimatedCost').textContent = '₹' + estimatedCost.toFixed(2);
+document.getElementById('calcResult').style.display = 'block';
+});
 
 // expose navbar functions globally
 window.logout = function() { signOut(auth).then(()=> window.location.href="index.html").catch(e => alert("Logout error: "+e.message)); };
 window.toggleMenu = function(){ const el=document.getElementById("navLinks"); if(el) el.classList.toggle("show"); };
 
-  </script>
+</script>
 </body>
 </html>
