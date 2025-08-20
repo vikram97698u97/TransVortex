@@ -819,7 +819,7 @@
     ${vehicle.vehicleNumber || 'N/A'}
   </span>
 </h3>
-                <span class="rotate-icon">▼</span>
+                <span class="rotate-icon">â–¼</span>
               </div>
               <div class="card-body">
                 <p><strong>Model:</strong> ${vehicle.vehicleModel || 'N/A'}</p>
@@ -1120,7 +1120,8 @@
               <div class="tyre-row">
                 <div class="form-group">
                   <label>Tyre Number:</label>
-                  <input type="text" class="tyre-number" value="${tyreToEdit.number}" required>
+                  <input type="text" class="tyre-number" value="${tyreToEdit.number}" readonly required>
+                  <input type="hidden" class="tyre-original-number" value="${tyreToEdit.number}">
                 </div>
                 <div class="form-group">
                   <label>Brand:</label>
@@ -1152,14 +1153,158 @@
       });
     };
 
-    // Delete specific tyre
+    // Show disposal modal
     window.disposeTyre = function(vehicleId, tyreNumber) {
-      // Create a prompt for disposal reason
-      const reason = prompt('Please enter the reason for disposing this tyre:', 'Worn out');
+      // Create disposal modal if it doesn't exist
+      let modal = document.getElementById('disposalModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'disposalModal';
+        modal.style.display = 'none';
+        modal.style.position = 'fixed';
+        modal.style.zIndex = '1000';
+        modal.style.left = '0';
+        modal.style.top = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        modal.style.flexDirection = 'column';
+        
+        const modalContent = document.createElement('div');
+        modalContent.style.backgroundColor = '#fff';
+        modalContent.style.padding = '20px';
+        modalContent.style.borderRadius = '8px';
+        modalContent.style.width = '90%';
+        modalContent.style.maxWidth = '500px';
+        modalContent.style.position = 'relative';
+        
+        const closeBtn = document.createElement('span');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.style.position = 'absolute';
+        closeBtn.style.right = '15px';
+        closeBtn.style.top = '5px';
+        closeBtn.style.fontSize = '24px';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.onclick = function() {
+          modal.style.display = 'none';
+        };
+        
+        const title = document.createElement('h3');
+        title.textContent = 'Dispose Tyre';
+        title.style.marginTop = '0';
+        title.style.color = '#2E8B57';
+        
+        const reasonLabel = document.createElement('label');
+        reasonLabel.textContent = 'Select disposal reason:';
+        reasonLabel.style.display = 'block';
+        reasonLabel.style.marginBottom = '10px';
+        
+        const select = document.createElement('select');
+        select.id = 'disposalReason';
+        select.style.width = '100%';
+        select.style.padding = '8px';
+        select.style.marginBottom = '15px';
+        select.style.borderRadius = '4px';
+        select.style.border = '1px solid #ddd';
+        
+        const reasons = [
+          'Worn out',
+          'Tyre burst',
+          'Change',
+          'Wrong tyre number',
+          'Other'
+        ];
+        
+        reasons.forEach(reason => {
+          const option = document.createElement('option');
+          option.value = reason;
+          option.textContent = reason;
+          select.appendChild(option);
+        });
+        
+        const otherInput = document.createElement('input');
+        otherInput.type = 'text';
+        otherInput.id = 'otherReason';
+        otherInput.placeholder = 'Please specify other reason';
+        otherInput.style.width = 'calc(100% - 20px)';
+        otherInput.style.padding = '8px';
+        otherInput.style.marginTop = '10px';
+        otherInput.style.borderRadius = '4px';
+        otherInput.style.border = '1px solid #ddd';
+        otherInput.style.display = 'none';
+        
+        select.onchange = function() {
+          otherInput.style.display = this.value === 'Other' ? 'block' : 'none';
+        };
+        
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.justifyContent = 'flex-end';
+        buttonContainer.style.gap = '10px';
+        buttonContainer.style.marginTop = '15px';
+        
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'btn btn-danger';
+        cancelBtn.onclick = function() {
+          modal.style.display = 'none';
+        };
+        
+        const confirmBtn = document.createElement('button');
+        confirmBtn.textContent = 'Confirm Disposal';
+        confirmBtn.className = 'btn btn-primary';
+        confirmBtn.onclick = function() {
+          const reason = select.value === 'Other' 
+            ? (document.getElementById('otherReason').value.trim() || 'Other')
+            : select.value;
+          
+          if (!reason) {
+            alert('Please enter a disposal reason');
+            return;
+          }
+          
+          // Close the modal
+          modal.style.display = 'none';
+          
+          // Proceed with disposal
+          proceedWithDisposal(vehicleId, tyreNumber, reason);
+        };
+        
+        buttonContainer.appendChild(cancelBtn);
+        buttonContainer.appendChild(confirmBtn);
+        
+        modalContent.appendChild(closeBtn);
+        modalContent.appendChild(title);
+        modalContent.appendChild(reasonLabel);
+        modalContent.appendChild(select);
+        modalContent.appendChild(otherInput);
+        modalContent.appendChild(buttonContainer);
+        
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+      }
       
-      // If user cancels the prompt, don't proceed
-      if (reason === null) return;
+      // Show the modal
+      modal.style.display = 'flex';
       
+      // Reset form
+      document.getElementById('disposalReason').value = 'Worn out';
+      const otherInput = document.getElementById('otherReason');
+      otherInput.value = '';
+      otherInput.style.display = 'none';
+      
+      // Close modal when clicking outside
+      modal.onclick = function(event) {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      };
+    };
+    
+    // Function to handle the actual disposal
+    function proceedWithDisposal(vehicleId, tyreNumber, reason) {
       get(ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`)).then((snapshot) => {
         if (snapshot.exists()) {
           const vehicle = snapshot.val();
