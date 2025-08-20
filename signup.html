@@ -1,158 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign Up</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - Transport Dashboard</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
+      background: linear-gradient(135deg, var(--primary-color), #764ba2);
+      color: var(--white);
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .container {
+
+    .auth-container {
       background: rgba(255, 255, 255, 0.1);
-      padding: 40px 30px;
-      border-radius: 15px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
       backdrop-filter: blur(10px);
-      width: 90%;
-      max-width: 400px;
+      border-radius: 12px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 450px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    h2 {
+
+    .auth-header {
       text-align: center;
-      margin-bottom: 20px;
-      font-size: 24px;
+      margin-bottom: 2rem;
     }
-    .form-group {
-      margin-bottom: 15px;
-      width: 100%;
+
+    .auth-header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: var(--white);
     }
-    
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 5px 0;
-      border: 2px solid transparent;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.2);
-      color: #fff;
-      font-size: 16px;
-      box-sizing: border-box;
-      transition: border-color 0.3s;
-    }
-    
-    input:focus {
-      outline: none;
-      border-color: #4CAF50;
-    }
-    
-    input.invalid {
-      border-color: #ff4444;
-    }
-    
-    .error-message {
-      color: #ff6b6b;
-      font-size: 12px;
-      margin-top: 5px;
-      min-height: 18px;
-    }
-    
-    button:disabled {
-      background: #cccccc !important;
-      cursor: not-allowed;
-    }
-    
-    /* Hide number input spinners */
-    input[type=tel]::-webkit-inner-spin-button,
-    input[type=tel]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
+
+    .auth-header p {
+      color: rgba(255, 255, 255, 0.8);
       margin: 0;
     }
-    
-    input[type=tel] {
-      -moz-appearance: textfield;
-      appearance: textfield;
+
+    .form-group {
+      margin-bottom: 1.5rem;
     }
-    input::placeholder { color: #eee; }
-    button {
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--white);
+    }
+
+    .form-control {
       width: 100%;
-      padding: 12px;
-      margin-top: 10px;
+      padding: 0.75rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--white);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--white);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+    }
+
+    .form-control::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      font-weight: 600;
       border: none;
       border-radius: 8px;
-      background: #00c9a7;
-      color: #fff;
-      font-weight: bold;
-      font-size: 16px;
       cursor: pointer;
+      transition: all 0.3s ease;
     }
-    button:hover { background: #00b497; }
-    #user-status {
+
+    .btn-primary {
+      background: var(--white);
+      color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .auth-footer {
       text-align: center;
-      margin-top: 15px;
-      font-size: 15px;
+      margin-top: 1.5rem;
+      color: rgba(255, 255, 255, 0.8);
     }
-    /* Modal */
+
+    .auth-footer a {
+      color: var(--white);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .error-message {
+      color: #ff6b6b;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      min-height: 1.25rem;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo img {
+      max-width: 150px;
+      height: auto;
+    }
+
+    /* Modal styles */
     .modal {
       display: none;
       position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
       z-index: 1000;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
     }
+    
     .modal-content {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      margin: 10% auto;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
       width: 90%;
-      max-width: 400px;
-      color: white;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      color: #333;
     }
+    
+    .modal h2 {
+      color: #333;
+      margin-bottom: 1.5rem;
+    }
+    
+    .modal .form-group {
+      margin-bottom: 1.2rem;
+    }
+    
+    .modal label {
+      color: #555;
+      margin-bottom: 0.5rem;
+    }
+    
+    .modal input {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      color: #333;
+    }
+    
+    .modal input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(74, 107, 255, 0.2);
+    }
+    
     @media (max-width: 480px) {
-      .container { padding: 30px 20px; }
-      h2 { font-size: 20px; }
-      input, button { font-size: 14px; padding: 10px; }
+      .auth-container, .modal-content {
+        padding: 1.5rem;
+      }
+      
+      .auth-header h1 {
+        font-size: 1.75rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Sign Up</h2>
-    <div class="form-group">
-      <input type="email" id="signup-email" placeholder="Email" oninput="validateEmail()">
-      <div id="email-error" class="error-message"></div>
+  <div class="auth-container">
+    <div class="logo">
+      <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
     </div>
-    <div class="form-group">
-      <input type="password" id="signup-password" placeholder="Password" oninput="validatePassword()">
-      <div id="password-error" class="error-message"></div>
+    <div class="auth-header">
+      <h1>Create an Account</h1>
+      <p>Join us to get started</p>
     </div>
-    <div class="form-group">
-      <button id="signup-button" onclick="signUp()" disabled>Sign Up</button>
+    
+    <form id="signup-form" onsubmit="event.preventDefault(); signUp();">
+      <div class="form-group">
+        <label for="signup-email">Email</label>
+        <input type="email" id="signup-email" class="form-control" placeholder="Enter your email" required>
+        <div class="error-message" id="email-error"></div>
+      </div>
+      <div class="form-group">
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" class="form-control" placeholder="Create a password" required>
+        <div class="error-message" id="password-error"></div>
+      </div>
+      <button type="submit" class="btn btn-primary" id="signup-button">
+        <i class="fas fa-arrow-right"></i> Continue
+      </button>
+    </form>
+    
+    <div class="auth-footer">
+      Already have an account? <a href="login.html">Sign in</a>
     </div>
-    <p id="user-status">Not logged in</p>
   </div>
 
-  <!-- Profile Info Modal -->
-  <div id="profileModal" class="modal">
+  <!-- Profile Modal -->
+  <div id="profileModal" class="modal" style="display: none;">
     <div class="modal-content">
-      <h3>Complete Your Profile</h3>
-      <input type="text" id="transportName" placeholder="Transport Company Name">
-      <input type="text" id="ownerName" placeholder="Owner Name">
-      <div class="form-group">
-      <input type="tel" id="phoneNumber" placeholder="Phone Number (e.g., 9876543210)" pattern="[6-9]\d{9}" oninput="validatePhoneNumber()">
-      <div id="phone-error" class="error-message"></div>
-    </div>
-      <button onclick="saveProfileInfo()">Save & Continue</button>
+      <div class="auth-header">
+        <h2>Complete Your Profile</h2>
+        <p>Just a few more details to get started</p>
+      </div>
+      
+      <form id="profile-form" onsubmit="event.preventDefault(); saveProfileInfo();">
+        <div class="form-group">
+          <label for="transportName">Transport Company Name</label>
+          <input type="text" id="transportName" class="form-control" placeholder="Enter your company name" required>
+          <div class="error-message" id="company-error"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="ownerName">Owner Name</label>
+          <input type="text" id="ownerName" class="form-control" placeholder="Enter owner's full name" required>
+          <div class="error-message" id="owner-error"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="phoneNumber">Phone Number</label>
+          <input type="tel" id="phoneNumber" class="form-control" 
+                 placeholder="e.g., 9876543210" 
+                 pattern="[6-9]\d{9}" 
+                 oninput="validatePhoneNumber()" 
+                 required>
+          <div class="error-message" id="phone-error"></div>
+          <small class="form-text text-muted">We'll send a verification code to this number</small>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+          <i class="fas fa-check"></i> Complete Sign Up
+        </button>
+      </form>
     </div>
   </div>
 
@@ -166,20 +273,17 @@
       if (!email) {
         emailError.textContent = "Email is required";
         document.getElementById("signup-email").classList.add("invalid");
-        updateSignupButton();
         return false;
       }
       
       if (!emailRegex.test(email)) {
         emailError.textContent = "Please enter a valid email address";
         document.getElementById("signup-email").classList.add("invalid");
-        updateSignupButton();
         return false;
       }
       
       emailError.textContent = "";
       document.getElementById("signup-email").classList.remove("invalid");
-      updateSignupButton();
       return true;
     }
     
@@ -189,37 +293,16 @@
       
       if (!password) {
         passwordError.textContent = "Password is required";
-        updateSignupButton();
         return false;
       }
       
       if (password.length < 6) {
         passwordError.textContent = "Password must be at least 6 characters";
-        updateSignupButton();
         return false;
       }
       
       passwordError.textContent = "";
-      updateSignupButton();
       return true;
-    }
-    
-    // Update signup button state based on form validity
-    function updateSignupButton() {
-      const emailValid = document.getElementById("signup-email").value.trim() && 
-                        !document.getElementById("signup-email").classList.contains("invalid");
-      const passwordValid = document.getElementById("signup-password").value.length >= 6;
-      
-      const signupButton = document.getElementById("signup-button");
-      if (emailValid && passwordValid) {
-        signupButton.disabled = false;
-        signupButton.style.cursor = "pointer";
-        signupButton.style.opacity = "1";
-      } else {
-        signupButton.disabled = true;
-        signupButton.style.cursor = "not-allowed";
-        signupButton.style.opacity = "0.7";
-      }
     }
     
     // Add input event listeners for real-time validation
@@ -271,13 +354,13 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
     
-    // Sign up function
+    // Show profile modal and collect profile info first
     window.signUp = async function () {
       const email = document.getElementById("signup-email").value.trim();
       const password = document.getElementById("signup-password").value;
       const signupButton = document.getElementById("signup-button");
       
-      // Validate all fields
+      // Validate email and password
       const isEmailValid = validateEmail();
       const isPasswordValid = validatePassword();
       
@@ -285,22 +368,26 @@
         return;
       }
       
-      // Disable button to prevent multiple submissions
+      // Show loading state
+      const originalButtonText = signupButton.innerHTML;
       signupButton.disabled = true;
-      signupButton.textContent = "Creating account...";
+      signupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Please wait...';
       
       try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        document.getElementById("profileModal").style.display = "block";
-      } catch (err) {
-        const errorMessage = err.code === 'auth/email-already-in-use' 
-          ? 'This email is already registered. Please log in or use a different email.'
-          : 'Error creating account: ' + err.message;
-        alert(errorMessage);
+        // Store credentials in session storage for later use
+        sessionStorage.setItem('signupEmail', email);
+        sessionStorage.setItem('signupPassword', password);
+        
+        // Show profile modal
+        document.getElementById('profileModal').style.display = 'flex';
+      } catch (error) {
+        console.error('Error during signup:', error);
+        alert('An error occurred. Please try again.');
       } finally {
         signupButton.disabled = false;
-        signupButton.textContent = "Sign Up";
+        signupButton.innerHTML = originalButtonText;
       }
+      
     };
 
     // Function to check and reserve phone number
@@ -326,38 +413,50 @@
       }
     }
 
-    // Save profile
-    window.saveProfileInfo = async function () {
+    // Save profile and create account
+    window.saveProfileInfo = async function (event = window.event) {
+      if (event) {
+        event.preventDefault();
+      }
+      event.preventDefault();
       const transportName = document.getElementById("transportName").value.trim();
       const ownerName = document.getElementById("ownerName").value.trim();
       const phoneNumber = document.getElementById("phoneNumber").value.trim();
-      const saveButton = document.querySelector("#profileModal button");
+      const saveButton = document.getElementById("saveProfileBtn");
       
       // Validate all fields
       if (!transportName) {
-        document.getElementById("transportName").classList.add("invalid");
-        return alert("Please enter your transport company name");
+        document.getElementById("company-error").textContent = "Company name is required";
+        return;
       }
       
       if (!ownerName) {
-        document.getElementById("ownerName").classList.add("invalid");
-        return alert("Please enter the owner's name");
+        document.getElementById("owner-error").textContent = "Owner name is required";
+        return;
       }
       
-      // Validate phone number format
       if (!validatePhoneNumber()) {
-        return; // Error already shown by validatePhoneNumber
+        return;
       }
       
-      // Disable button to prevent multiple submissions
+      const email = sessionStorage.getItem('signupEmail');
+      const password = sessionStorage.getItem('signupPassword');
+      
+      if (!email || !password) {
+        alert('Session expired. Please refresh the page and try again.');
+        window.location.reload();
+        return;
+      }
+      
+      // Show loading state
+      const originalButtonHTML = saveButton.innerHTML;
       saveButton.disabled = true;
-      saveButton.textContent = "Saving...";
+      saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
       
       try {
-        const user = auth.currentUser;
-        if (!user) {
-          throw new Error("User not authenticated. Please try signing up again.");
-        }
+        // Create the user account first
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
         // Try to reserve the phone number
         const isAvailable = await checkAndReservePhoneNumber(phoneNumber, user.uid);
@@ -403,20 +502,27 @@
         // Re-enable the button
         if (saveButton) {
           saveButton.disabled = false;
-          saveButton.textContent = "Save & Continue";
+          saveButton.innerHTML = originalButtonHTML;
         }
       }
     };
 
     // Auth state
     onAuthStateChanged(auth, (user) => {
-      document.getElementById("user-status").innerText =
-        user ? "Logged in as: " + user.email : "Not logged in";
+      const userStatus = document.getElementById("user-status");
+      if (userStatus) {
+        userStatus.innerText = user ? "Logged in as: " + user.email : "Not logged in";
+      }
       if (user) {
         get(ref(db, `users/${user.uid}/profile`)).then(snapshot => {
           if (!snapshot.exists()) {
-            document.getElementById("profileModal").style.display = "block";
+            const profileModal = document.getElementById("profileModal");
+            if (profileModal) {
+              profileModal.style.display = "flex";
+            }
           }
+        }).catch(error => {
+          console.error("Error checking user profile:", error);
         });
       }
     });
