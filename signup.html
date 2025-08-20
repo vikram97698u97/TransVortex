@@ -368,7 +368,7 @@
 
         const now = new Date();
         const trialEndDate = new Date(now);
-        trialEndDate.setDate(trialEndDate.getDate() + 30); // 30-day trial
+        trialEndDate.setDate(trialEndDate.getDate() + 14); // 14-day trial
         
         // Save user profile with phone number and default role
         const userData = {
@@ -384,8 +384,10 @@
               trialStart: now.toISOString(),
               trialEnd: trialEndDate.toISOString(),
               isActive: true,
+              isTrial: true,
               lastPayment: null,
-              nextPayment: trialEndDate.toISOString()
+              nextPayment: trialEndDate.toISOString(),
+              subscriptionType: 'trial'
             }
           }
         };
@@ -421,3 +423,4 @@
   </script>
 </body>
 </html>
+
