@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Invoice Generator</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     /* Navbar Styles */
     * {
@@ -187,22 +188,177 @@
       background-color: #219150;
     }
     
+    /* New Invoice Styling */
+    .invoice-container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    
     .invoice-header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #2E8B57;
+      padding-bottom: 20px;
     }
     
     .company-name {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: bold;
       color: #2d572c;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .invoice-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 15px 0;
+      color: #333;
     }
     
     .owner-name {
-      font-size: 18px;
-      color: #444;
+      font-size: 16px;
+      color: #666;
     }
-
+    
+    .invoice-details {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin-bottom: 25px;
+    }
+    
+    .invoice-from, .invoice-to {
+      width: 48%;
+      margin-bottom: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      .invoice-from, .invoice-to {
+        width: 100%;
+      }
+    }
+    
+    .detail-heading {
+      font-weight: bold;
+      color: #2E8B57;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+    
+    .invoice-info {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+    
+    .info-row {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    
+    .info-item {
+      flex: 1;
+      min-width: 200px;
+      margin-right: 15px;
+      margin-bottom: 10px;
+    }
+    
+    .info-label {
+      font-weight: bold;
+      color: #555;
+    }
+    
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 25px;
+    }
+    
+    .items-table th {
+      background-color: #2E8B57;
+      color: white;
+      padding: 12px 15px;
+      text-align: left;
+    }
+    
+    .items-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .items-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    
+    .item-number {
+      width: 60px;
+      text-align: center;
+    }
+    
+    .totals-section {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+    
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+    
+    .total-label {
+      font-weight: bold;
+    }
+    
+    .final-total {
+      font-size: 20px;
+      font-weight: bold;
+      color: #2E8B57;
+      border-top: 2px solid #ddd;
+      padding-top: 12px;
+    }
+    
+    .terms-section {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px dashed #ccc;
+    }
+    
+    .terms-heading {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #2E8B57;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+    
+    @media print {
+      .navbar, .no-print {
+        display: none !important;
+      }
+      
+      body {
+        padding-top: 0;
+      }
+      
+      .invoice-container {
+        box-shadow: none;
+        padding: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -211,12 +367,12 @@
     <div class="logo-container">
       <img src="logo.jpg" alt="TransVortex" class="logo">
     </div>
-    <div class="hamburger" onclick="toggleMenu()">☰</div>
+    <div class="hamburger" onclick="toggleMenu()">&#9776;</div>
     <div class="nav-links" id="navLinks">
       <a href="home.html">Home</a>
       <a href="booking.html">Thread Booking</a>
       <a href="add.html">Vehicle Info</a>
-      <a href="route-details.html">Fuel Tracker</a>
+      <a href="route-details.html">Route Details</a>
       <a href="trip-expenses.html">Trip Expenses</a>
       <a href="tyre.html">Tyres</a>
       <a href="tyre_history.html">Tyre History</a>
@@ -228,75 +384,144 @@
     </div>
   </div>
 
-  <div class="container" id="invoiceContent" style="margin-top: 80px;">
-    <h2>Invoice Generator</h2>
-    <div class="invoice-header">
-      <div class="company-name" id="companyName">Transport Company</div>
-      <div class="owner-name" id="companyOwner">Owner Name</div>
+  <div class="container">
+    <div class="invoice-container" id="invoiceContent">
+      <div class="invoice-header">
+        <div class="company-name" id="companyName">TRANSPORT COMPANY</div>
+        <div class="invoice-title">INVOICE</div>
+        <div class="owner-name" id="companyOwner">Owner Name</div>
+      </div>
+      
+      <div class="invoice-details">
+        <div class="invoice-from">
+          <div class="detail-heading">FROM:</div>
+          <div id="fromDetails">
+            <div id="companyNameDetail">Transport Company</div>
+            <div id="companyAddress">Address line 1</div>
+            <div id="companyLocation">City, State - Pincode</div>
+            <div id="companyContact">
+              <i class="fas fa-phone me-1"></i>
+              <span id="phoneNumber">+91 XXXXX XXXXX</span>
+            </div>
+            <div id="companyGST">GSTIN: XXXXXXXXXXXXXX</div>
+          </div>
+        </div>
+        
+        <div class="invoice-to">
+          <div class="detail-heading">TO:</div>
+          <input type="text" id="clientName" class="form-control mb-2" placeholder="Client Name" />
+          <textarea id="clientAddress" class="form-control mb-2" placeholder="Client Address" rows="3"></textarea>
+          <input type="text" id="clientGST" class="form-control" placeholder="GSTIN (Optional)" />
+        </div>
+      </div>
+      
+      <div class="invoice-info">
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Invoice Number:</span>
+            <input type="text" id="invoiceNumber" class="form-control form-control-sm" placeholder="INV-001" />
+          </div>
+          <div class="info-item">
+            <span class="info-label">Invoice Date:</span>
+            <input type="date" id="invoiceDate" class="form-control form-control-sm" />
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Vehicle Number:</span>
+            <input type="text" id="vehicleNumber" class="form-control form-control-sm" placeholder="UP32XXXX" />
+          </div>
+          <div class="info-item">
+            <span class="info-label">LR Number:</span>
+            <input type="text" id="lrNumber" class="form-control form-control-sm" placeholder="LR Number" />
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">From:</span>
+            <input type="text" id="from" class="form-control form-control-sm" placeholder="Source Location" />
+          </div>
+          <div class="info-item">
+            <span class="info-label">To:</span>
+            <input type="text" id="to" class="form-control form-control-sm" placeholder="Destination Location" />
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Loading Date:</span>
+            <input type="date" id="loadingDate" class="form-control form-control-sm" />
+          </div>
+          <div class="info-item">
+            <span class="info-label">Unloading Date:</span>
+            <input type="date" id="unloadingDate" class="form-control form-control-sm" />
+          </div>
+        </div>
+      </div>
+      
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th class="item-number">#</th>
+            <th>DESCRIPTION</th>
+            <th style="text-align: right;">AMOUNT (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="invoiceBody">
+          <tr>
+            <td class="item-number">1</td>
+            <td><input class="form-control form-control-sm item-name" placeholder="Item description" /></td>
+            <td><input class="form-control form-control-sm item-amount" type="number" placeholder="0.00" style="text-align: right;" /></td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <button class="btn btn-green mb-3 no-print" id="addItemBtn">
+        <i class="fas fa-plus"></i> Add Item
+      </button>
+      
+      <div class="totals-section">
+        <div class="total-row">
+          <div class="total-label">Subtotal:</div>
+          <div id="subtotalDisplay">₹0.00</div>
+        </div>
+        <div class="total-row">
+          <div>
+            <span class="total-label">GST:</span>
+            <input type="number" id="gst" class="form-control form-control-sm d-inline-block" style="width: 80px; margin-left: 10px;" value="18" placeholder="%" />
+          </div>
+          <div id="gstDisplay">₹0.00</div>
+        </div>
+        <div class="total-row final-total">
+          <div>Total Amount:</div>
+          <div id="finalDisplay">₹0.00</div>
+        </div>
+      </div>
+      
+      <div class="terms-section">
+        <div class="terms-heading">Terms & Conditions:</div>
+        <div id="termsText">
+          - Payment due within 15 days of invoice date<br>
+          - Late payment interest @ 1.5% per month<br>
+          - All disputes subject to [City] jurisdiction
+        </div>
+      </div>
+      
+      <div class="action-buttons no-print">
+        <button class="btn btn-success" onclick="saveInvoice()">
+          <i class="fas fa-save"></i> Save & Download PDF
+        </button>
+        <button class="btn btn-green" id="downloadExcelBtn">
+          <i class="fas fa-file-excel"></i> Download Excel
+        </button>
+        <button class="btn btn-secondary" onclick="window.print()">
+          <i class="fas fa-print"></i> Print
+        </button>
+      </div>
     </div>
-    
-    <div class="row g-3 mb-3">
-      <div class="col-md-4">
-        <label for="weight">Invoice No.</label>
-        <input type="text" id="invoiceNumber" class="form-control" placeholder="Invoice No." />
-      </div>
-      <div class="col-md-4">
-        <label for="weight">Client Name</label>
-        <input type="text" id="clientName" class="form-control" placeholder="Client Name" />
-      </div>
-      <div class="col-md-4">
-        <label for="weight">Vehicle No.</label>
-        <input type="text" id="vehicleNumber" class="form-control" placeholder="Vehicle No." />
-      </div>
-      <div class="col-md-4">
-        <label for="weight">From</label>
-        <input type="text" id="from" class="form-control" placeholder="From Location" />
-      </div>
-      <div class="col-md-4">
-        <label for="weight">To</label>
-        <input type="text" id="to" class="form-control" placeholder="To Location" />
-      </div>
-      <div class="col-md-4">
-        <label for="weight">Loading Date</label>
-        <input type="date" id="loadingDate" class="form-control" placeholder="Loading Date" />
-      </div>
-      <div class="col-md-4">
-        <label for="weight">Unloading Date</label>
-        <input type="date" id="unloadingDate" class="form-control" placeholder="Unloading Date" />
-      </div>
-      <div class="col-md-4">
-        <label for="weight">GST</label>
-        <input type="number" id="gst" class="form-control" value="18" placeholder="GST %" />
-      </div>
-    </div>
-
-    <table class="table table-bordered" id="itemTable">
-      <thead>
-        <tr><th>Item</th><th>Amount (₹)</th></tr>
-      </thead>
-      <tbody id="invoiceBody">
-        <tr>
-          <td><input class="form-control item-name" placeholder="Item name" /></td>
-          <td><input class="form-control item-amount" type="number" placeholder="Amount" /></td>
-        </tr>
-      </tbody>
-    </table>
-    <button class="btn btn-green mb-3 no-print" id="addItemBtn">Add Item</button>
-    <button class="btn btn-green mb-3 no-print" id="downloadExcelBtn">
-      <i class="fas fa-file-excel"></i> Download Excel
-    </button>
-
-
-    <h5 id="totalDisplay">Total: ₹0.00</h5>
-    <h5 id="gstDisplay">GST Amount: ₹0.00</h5>
-    <h4 id="finalDisplay"><strong>Final Amount: ₹0.00</strong></h4>
-
-    <button class="btn btn-success no-print" onclick="saveInvoice()">Save & Download PDF</button>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -327,13 +552,62 @@
         get(userProfileRef).then((snapshot) => {
           if (snapshot.exists()) {
             const profileData = snapshot.val();
-            document.getElementById("companyName").textContent = profileData.transportName || "Transport Company";
+            console.log('Profile Data:', profileData); // Debug log
+            
+            document.getElementById("companyName").textContent = profileData.transportName || "TRANSPORT COMPANY";
+            document.getElementById("companyNameDetail").textContent = profileData.transportName || "Transport Company";
             document.getElementById("companyOwner").textContent = profileData.ownerName || "Owner Name";
+            
+            // Set company details if available
+            if (profileData.address) {
+              document.getElementById("companyAddress").textContent = profileData.address;
+            } else {
+              console.log('No address found in profile');
+            }
+            
+            // Build location line with city and pincode
+            let locationLine = '';
+            if (profileData.city) {
+              locationLine = profileData.city;
+              if (profileData.pincode) {
+                locationLine += ` - ${profileData.pincode}`;
+              }
+              document.getElementById("companyLocation").textContent = locationLine;
+            } else if (profileData.pincode) {
+              document.getElementById("companyLocation").textContent = profileData.pincode;
+            } else {
+              console.log('No city or pincode found in profile');
+            }
+            
+            // Set GSTIN if available
+            if (profileData.gstin) {
+              document.getElementById("companyGST").textContent = `GSTIN: ${profileData.gstin}`;
+            } else {
+              document.getElementById("companyGST").style.display = 'none';
+            }
+            
+            // Ensure phone number is always shown with proper formatting
+            const phoneNumber = profileData.phoneNumber || profileData.phone || '';
+            console.log('Phone number from profile:', phoneNumber);
+            const phoneDisplay = phoneNumber ? 
+              `+91 ${phoneNumber.replace(/(\d{5})(\d{5})/, '$1 $2')}` : 'Not provided';
+            document.getElementById("phoneNumber").textContent = phoneDisplay;
+            
+            if (profileData.gstin) {
+              document.getElementById("companyGST").textContent = "GSTIN: " + profileData.gstin;
+            } else {
+              document.getElementById("companyGST").style.display = 'none';
+            }
           }
         }).catch(error => {
           console.error("Error loading profile:", error);
         });
+        
+        // Set today's date as default for invoice date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('invoiceDate').value = today;
       }
+      
       window.logout = function() {
         signOut(auth).then(() => {
           window.location.href = "index.html";
@@ -344,18 +618,18 @@
     });
 
     function calculateTotals() {
-      let total = 0;
+      let subtotal = 0;
       document.querySelectorAll(".item-amount").forEach(input => {
-        total += parseFloat(input.value) || 0;
+        subtotal += parseFloat(input.value) || 0;
       });
 
       const gstPercent = parseFloat(document.getElementById("gst").value) || 0;
-      const gstAmount = (total * gstPercent) / 100;
-      const finalAmount = total + gstAmount;
+      const gstAmount = (subtotal * gstPercent) / 100;
+      const finalAmount = subtotal + gstAmount;
 
-      document.getElementById("totalDisplay").textContent = `Total: ₹${total.toFixed(2)}`;
-      document.getElementById("gstDisplay").textContent = `GST Amount: ₹${gstAmount.toFixed(2)}`;
-      document.getElementById("finalDisplay").textContent = `Final Amount: ₹${finalAmount.toFixed(2)}`;
+      document.getElementById("subtotalDisplay").textContent = `₹${subtotal.toFixed(2)}`;
+      document.getElementById("gstDisplay").textContent = `₹${gstAmount.toFixed(2)}`;
+      document.getElementById("finalDisplay").textContent = `₹${finalAmount.toFixed(2)}`;
     }
 
     document.getElementById("invoiceBody").addEventListener("input", calculateTotals);
@@ -363,12 +637,19 @@
     calculateTotals();
 
     document.getElementById("addItemBtn").addEventListener("click", () => {
+      const rowCount = document.querySelectorAll("#invoiceBody tr").length + 1;
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td><input class="form-control item-name" placeholder="Item name" /></td>
-        <td><input class="form-control item-amount" type="number" placeholder="Amount" /></td>
+        <td class="item-number">${rowCount}</td>
+        <td><input class="form-control form-control-sm item-name" placeholder="Item description" /></td>
+        <td><input class="form-control form-control-sm item-amount" type="number" placeholder="0.00" style="text-align: right;" /></td>
       `;
       document.getElementById("invoiceBody").appendChild(row);
+      
+      // Update row numbers
+      document.querySelectorAll("#invoiceBody tr").forEach((row, index) => {
+        row.querySelector('.item-number').textContent = index + 1;
+      });
     });
 
     window.saveInvoice = function () {
@@ -387,8 +668,12 @@
 
       const invoiceData = {
         invoiceNumber: document.getElementById("invoiceNumber")?.value.trim(),
+        invoiceDate: document.getElementById("invoiceDate")?.value,
         clientName: document.getElementById("clientName")?.value.trim(),
+        clientAddress: document.getElementById("clientAddress")?.value.trim(),
+        clientGST: document.getElementById("clientGST")?.value.trim(),
         vehicleNumber: document.getElementById("vehicleNumber")?.value.trim(),
+        lrNumber: document.getElementById("lrNumber")?.value.trim(),
         from: document.getElementById("from")?.value.trim(),
         to: document.getElementById("to")?.value.trim(),
         loadingDate: document.getElementById("loadingDate")?.value,
@@ -418,25 +703,26 @@
         })
         .catch(err => alert("Failed to save invoice: " + err));
     };
+    
     document.getElementById('downloadExcelBtn').addEventListener('click', () => {
       const wb = XLSX.utils.book_new();
-      const wsData = [['Item Name', 'Amount (₹)']];
+      const wsData = [['Item #', 'Description', 'Amount (₹)']];
 
-      document.querySelectorAll('#itemTable tbody tr').forEach(row => {
+      document.querySelectorAll('#invoiceBody tr').forEach((row, index) => {
+        const itemNumber = index + 1;
         const itemName = row.querySelector('.item-name')?.value || '';
         const amount = row.querySelector('.item-amount')?.value || '';
-        wsData.push([itemName, amount]);
+        wsData.push([itemNumber, itemName, amount]);
       });
 
       const ws = XLSX.utils.aoa_to_sheet(wsData);
-      XLSX.utils.book_append_sheet(wb, ws, "Invoice");
+      XLSX.utils.book_append_sheet(wb, ws, "Invoice Items");
 
-      const fileName = `Invoice_${new Date().toISOString().slice(0,10)}.xlsx`;
+      const fileName = `Invoice_${document.getElementById('invoiceNumber').value || new Date().toISOString().slice(0,10)}.xlsx`;
       XLSX.writeFile(wb, fileName);
     });
-
-
   </script>
+  
   <script>
     // Navbar toggle function
     function toggleMenu() {
