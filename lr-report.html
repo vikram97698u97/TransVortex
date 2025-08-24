@@ -56,10 +56,20 @@
             <button class="btn btn-success" id="exportPdfBtn">PDF</button>
           </div>
         </div>
+        <div class="mb-3">
+          <button class="btn btn-primary" id="generateInvoiceBtn" onclick="showBankDetailsModal()" disabled>
+            <i class="fas fa-file-invoice me-2"></i>Generate Invoice
+          </button>
+        </div>
         <div class="table-responsive">
           <table id="lrTable" class="table table-striped">
             <thead>
               <tr>
+                <th>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllCheckbox">
+                  </div>
+                </th>
                 <th>Date</th>
                 <th>LR No</th>
                 <th>Truck No</th>
@@ -76,7 +86,9 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+              <!-- Rows will be populated by JavaScript -->
+            </tbody>
           </table>
         </div>
       </div>
@@ -191,6 +203,16 @@
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
+              <label class="form-label">Advance (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="advance" value="0" oninput="calculateAmount()">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Balance (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="balance" readonly>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
               <label class="form-label">Subtotal (Before GST) (₹)</label>
               <input type="number" step="0.01" class="form-control" id="subtotal" readonly>
             </div>
@@ -211,6 +233,290 @@
           </div>
           <button type="button" class="btn btn-primary" id="saveLRBtn">Save LR</button>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bank Details Modal -->
+  <div class="modal fade" id="bankDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">Enter Bank & Company Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="bankDetailsForm">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <h6>Company Details</h6>
+                <div class="mb-3">
+                  <label for="inputCompanyName" class="form-label">Company Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="inputCompanyName" required>
+                </div>
+                <div class="mb-3">
+                  <label for="inputCompanyAddress" class="form-label">Company Address</label>
+                  <textarea class="form-control" id="inputCompanyAddress" rows="2"></textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="inputGstNumber" class="form-label">GST Number</label>
+                  <input type="text" class="form-control" id="inputGstNumber">
+                </div>
+                <div class="mb-3">
+                  <label for="inputCompanyPhone" class="form-label">Phone Number</label>
+                  <input type="text" class="form-control" id="inputCompanyPhone">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <h6>Bank Details</h6>
+                <div class="mb-3">
+                  <label for="inputBankName" class="form-label">Bank Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="inputBankName" required>
+                </div>
+                <div class="mb-3">
+                  <label for="inputAccountHolder" class="form-label">Account Holder Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="inputAccountHolder" required>
+                </div>
+                <div class="mb-3">
+                  <label for="inputAccountNumber" class="form-label">Account Number <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="inputAccountNumber" required>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="inputIfscCode" class="form-label">IFSC Code <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="inputIfscCode" required>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="inputAccountType" class="form-label">Account Type</label>
+                      <select class="form-select" id="inputAccountType">
+                        <option value="Current">Current</option>
+                        <option value="Savings">Savings</option>
+                        <option value="CC">Cash Credit</option>
+                        <option value="OD">Overdraft</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="generateInvoice()">Generate Invoice</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Modal -->
+  <div class="modal fade" id="invoiceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title">Invoice Preview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4" id="invoiceContent">
+          <style>
+            @media print {
+              @page {
+                size: A4 portrait;
+                margin: 10mm;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                font-size: 10px;
+                line-height: 1.2;
+              }
+              body * {
+                visibility: hidden;
+              }
+              #printableInvoice, #printableInvoice * {
+                visibility: visible;
+              }
+              #printableInvoice {
+                position: relative;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+              }
+              .no-print {
+                display: none !important;
+              }
+              .table {
+                width: 100%;
+                font-size: 9px;
+                margin-bottom: 5px;
+                border-collapse: collapse;
+              }
+              .table th, .table td {
+                padding: 2px 4px;
+                border: 1px solid #dee2e6;
+              }
+              .text-end {
+                text-align: right !important;
+              }
+              .text-center {
+                text-align: center !important;
+              }
+              .fw-bold {
+                font-weight: bold !important;
+              }
+              .table-active {
+                background-color: #f8f9fa !important;
+              }
+              .table-light {
+                background-color: #f8f9fa !important;
+              }
+              .border-bottom {
+                border-bottom: 1px solid #dee2e6 !important;
+              }
+              .mt-4 {
+                margin-top: 1.5rem !important;
+              }
+              .mb-0 {
+                margin-bottom: 0 !important;
+              }
+              .mb-1 {
+                margin-bottom: 0.25rem !important;
+              }
+              .mb-4 {
+                margin-bottom: 1.5rem !important;
+              }
+              .me-2 {
+                margin-right: 0.5rem !important;
+              }
+              .p-4 {
+                padding: 1.5rem !important;
+              }
+              .small {
+                font-size: 80% !important;
+              }
+            }
+            .invoice-header {
+              border-bottom: 2px solid #dee2e6;
+              margin-bottom: 20px;
+              padding-bottom: 15px;
+            }
+            .invoice-table th {
+              white-space: nowrap;
+              background-color: #f8f9fa !important;
+            }
+          </style>
+          
+          <div id="printableInvoice">
+            <div class="row mb-4">
+              <div class="col-12 text-center">
+                <h3 class="mb-1">TRANSPORT INVOICE</h3>
+                <p class="mb-1" id="companyName">Loading company details...</p>
+                <p class="mb-1" id="companyAddress">Loading address...</p>
+                <p class="mb-0" id="companyGst">GST: Loading...</p>
+              </div>
+            </div>
+            
+            <div class="row mb-4">
+              <div class="col-6">
+                <p class="mb-1"><strong>Bill To:</strong></p>
+                <p id="billToAddress" class="mb-0">Consolidated Invoice</p>
+              </div>
+              <div class="col-6 text-end">
+                <p class="mb-1"><strong>Invoice #: </strong><span id="invoiceNumber">INV-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}</span></p>
+                <p class="mb-1"><strong>Date: </strong><span id="invoiceDate">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span></p>
+              </div>
+            </div>
+            
+            <div class="table-responsive" style="overflow-x: auto;">
+              <table class="table table-bordered table-sm invoice-table" style="width: 100%; table-layout: fixed;">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>LR No</th>
+                    <th>Truck No</th>
+                    <th>Consignor</th>
+                    <th>Consignee</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th class="text-end amount-column">Weight</th>
+                    <th class="text-end amount-column">Rate</th>
+                    <th class="text-end amount-column">GST %</th>
+                    <th class="text-end amount-column">GST Amt</th>
+                    <th class="text-end amount-column">Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="invoiceItems">
+                  <!-- Invoice items will be populated here -->
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="7" class="border-0"></td>
+                    <td class="text-end border-0"><strong>Subtotal:</strong></td>
+                    <td class="text-end border-0"></td>
+                    <td class="text-end border-0"></td>
+                    <td class="text-end border-0">-</td>
+                    <td class="text-end fw-bold border-0" id="subtotalAmount">₹0.00</td>
+                  </tr>
+                  <tr id="gstRow">
+                    <td colspan="7" class="border-0"></td>
+                    <td class="text-end border-0"><strong>GST (<span id="gstPercent">18</span>%):</strong></td>
+                    <td class="text-end border-0" colspan="3"></td>
+                    <td class="text-end fw-bold border-0" id="invoiceGstAmount">₹0.00</td>
+                  </tr>
+                  <tr class="table-active">
+                    <td colspan="7" class="border-0"></td>
+                    <td class="text-end border-0"><strong>Grand Total:</strong></td>
+                    <td class="text-end border-0" colspan="3">-</td>
+                    <td class="text-end fw-bold border-0" id="grandTotal">₹0.00</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            
+            <div class="row mt-4">
+              <div class="col-md-6">
+                <p class="mb-1"><strong>Bank Details:</strong></p>
+                <p class="mb-1">Bank: <span id="invoiceBankName">-</span></p>
+                <p class="mb-1">Account Number: <span id="invoiceAccountNumber">-</span></p>
+                <p class="mb-1">Account Holder: <span id="invoiceAccountHolder">-</span></p>
+                <p class="mb-1">IFSC: <span id="invoiceIfscCode">-</span></p>
+                <p class="mb-0">Account Type: <span id="invoiceAccountType">Current</span></p>
+              </div>
+              <div class="col-md-6 text-end">
+                <div class="mt-5">
+                  <p class="mb-4">For <span id="companyNameFooter">[Company Name]</span></p>
+                  <p class="mb-0">___________________</p>
+                  <p class="mb-0">Authorized Signatory</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row mt-4 text-center">
+              <div class="col-12">
+                <p class="mb-0"><small>This is a computer-generated invoice. No signature required.</small></p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-4 no-print text-center">
+            <button class="btn btn-primary me-2" onclick="printInvoice()">
+              <i class="fas fa-print me-2"></i>Print Invoice
+            </button>
+            
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="fas fa-times me-2"></i>Close
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="printInvoice()">
+            <i class="fas fa-print me-2"></i>Print Invoice
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -325,9 +631,13 @@
                 <label class="form-label">Other Expenses (₹)</label>
                 <input type="number" step="0.01" class="form-control" id="editOtherExpenses" value="0" oninput="calculateEditAmount()">
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-md-3 mb-3">
                 <label class="form-label">Diesel Cost (₹)</label>
-                <input type="number" step="0.01" class="form-control" id="editDieselCost" value="0" oninput="calculateEditAmount()">
+                <input type="number" step="0.01" class="form-control" id="editDieselCost" value="0" onchange="calculateEditAmount()">
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Advance (₹)</label>
+                <input type="number" step="0.01" class="form-control" id="editAdvance" value="0" onchange="calculateEditAmount()">
               </div>
             </div>
             <div class="row">
@@ -399,6 +709,458 @@
     let lrTable;
     let lrData = [];
     let currentEditId = null;
+    let selectedLRs = new Set();
+
+    // Function to update the generate invoice button state
+    function updateGenerateInvoiceButton() {
+      const btn = document.getElementById('generateInvoiceBtn');
+      btn.disabled = selectedLRs.size === 0;
+    }
+    
+    // Function to handle select all checkbox
+    function handleSelectAll(selectAll) {
+      const checkboxes = document.querySelectorAll('.lr-checkbox');
+      checkboxes.forEach(checkbox => {
+        const lrId = checkbox.value;
+        checkbox.checked = selectAll;
+        if (selectAll) {
+          selectedLRs.add(lrId);
+        } else {
+          selectedLRs.delete(lrId);
+        }
+      });
+      updateGenerateInvoiceButton();
+    }
+    
+    // Function to handle individual checkbox selection
+    function handleLRSelection(checkbox) {
+      const lrId = checkbox.value;
+      if (checkbox.checked) {
+        selectedLRs.add(lrId);
+      } else {
+        selectedLRs.delete(lrId);
+      }
+      
+      // Update select all checkbox
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      const allCheckboxes = document.querySelectorAll('.lr-checkbox');
+      const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+      selectAllCheckbox.checked = allChecked;
+      
+      updateGenerateInvoiceButton();
+    }
+    
+    // Function to load company details for invoice
+    function loadCompanyDetails() {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      // Get user profile data from Firebase
+      db.ref('users/' + user.uid).once('value').then((snapshot) => {
+        const userData = snapshot.val();
+        if (userData) {
+          // Update company details in the invoice
+          if (userData.companyName) {
+            document.getElementById('companyName').textContent = userData.companyName;
+            document.getElementById('companyNameFooter').textContent = userData.companyName;
+          }
+          if (userData.address) {
+            const addressParts = [
+              userData.address,
+              userData.city,
+              userData.state,
+              userData.pincode ? `- ${userData.pincode}` : ''
+            ].filter(Boolean).join(', ');
+            document.getElementById('companyAddress').textContent = addressParts;
+          }
+          if (userData.gstNumber) {
+            document.getElementById('companyGst').textContent = `GST: ${userData.gstNumber}`;
+          }
+          // Add phone number only if it doesn't already exist
+          if (userData.phone && !document.getElementById('companyPhone')) {
+            const phoneEl = document.createElement('p');
+            phoneEl.id = 'companyPhone';
+            phoneEl.className = 'mb-0';
+            phoneEl.textContent = `Ph: ${userData.phone}`;
+            document.getElementById('companyGst').insertAdjacentElement('afterend', phoneEl);
+          }
+          
+          // Update bank details if available
+          if (userData.bankName) {
+            document.getElementById('invoiceBankName').textContent = userData.bankName;
+          }
+          if (userData.accountNumber) {
+            document.getElementById('invoiceAccountNumber').textContent = userData.accountNumber;
+          }
+          if (userData.ifscCode) {
+            document.getElementById('invoiceIfscCode').textContent = userData.ifscCode;
+          }
+          if (userData.accountHolder) {
+            document.getElementById('invoiceAccountHolder').textContent = userData.accountHolder;
+          }
+          if (userData.accountType) {
+            document.getElementById('invoiceAccountType').textContent = userData.accountType;
+          }
+        }
+      }).catch((error) => {
+        console.error('Error loading company details:', error);
+      });
+    }
+    
+    // Function to show bank details modal
+    function showBankDetailsModal() {
+      // Check if we have any LRs selected
+      if (selectedLRs.size === 0) {
+        alert('Please select at least one LR to generate an invoice');
+        return;
+      }
+      
+      // Show the bank details modal
+      const bankModal = new bootstrap.Modal(document.getElementById('bankDetailsModal'));
+      bankModal.show();
+    }
+    
+    // Function to generate invoice after bank details are entered
+    function generateInvoice() {
+      // Get bank details from the form
+      const bankDetails = {
+        bankName: document.getElementById('inputBankName').value,
+        accountNumber: document.getElementById('inputAccountNumber').value,
+        accountHolder: document.getElementById('inputAccountHolder').value,
+        ifscCode: document.getElementById('inputIfscCode').value,
+        accountType: document.getElementById('inputAccountType').value,
+        gstNumber: document.getElementById('inputGstNumber').value,
+        companyName: document.getElementById('inputCompanyName').value,
+        companyAddress: document.getElementById('inputCompanyAddress').value,
+        companyPhone: document.getElementById('inputCompanyPhone').value
+      };
+      
+      // Validate required fields
+      if (!bankDetails.bankName || !bankDetails.accountNumber || !bankDetails.ifscCode) {
+        alert('Please fill in all required bank details');
+        return;
+      }
+      
+      // Hide the bank details modal
+      const bankModal = bootstrap.Modal.getInstance(document.getElementById('bankDetailsModal'));
+      if (bankModal) bankModal.hide();
+      
+      // Continue with invoice generation
+      generateInvoiceWithDetails(bankDetails);
+    }
+    
+    // Function to generate invoice with provided details
+    function generateInvoiceWithDetails(details) {
+      if (selectedLRs.size === 0) return;
+      
+      const selectedLRData = lrData.filter(lr => selectedLRs.has(lr.id));
+      let subtotal = 0;
+      let gstTotal = 0;
+      let grandTotal = 0;
+      
+      // Clear previous invoice items
+      const invoiceItems = document.getElementById('invoiceItems');
+      invoiceItems.innerHTML = '';
+      
+      // Add rows for each selected LR
+      console.log('Processing LRs:', selectedLRData);
+      selectedLRData.forEach((lr, index) => {
+        const row = document.createElement('tr');
+        const weight = parseFloat(lr.weight) || 0;
+        const rate = parseFloat(lr.billingRate) || 0;
+        const amount = weight * rate;
+        const gstPercent = parseFloat(lr.gstPercentage) || 18;
+        const gstAmt = amount * (gstPercent / 100);
+        const total = amount + gstAmt;
+        
+        console.log(`LR ${index + 1}:`, {
+          weight,
+          rate,
+          amount,
+          gstPercent,
+          gstAmt,
+          total,
+          lrData: lr
+        });
+        
+        // Update running totals
+        subtotal += amount;
+        gstTotal += gstAmt;
+        grandTotal += total;
+        
+        row.innerHTML = `
+          <td>${formatDate(lr.date)}</td>
+          <td>${lr.lrNumber || '-'}</td>
+          <td>${lr.truckNumber || '-'}</td>
+          <td>${lr.consignor || '-'}</td>
+          <td>${lr.consignee || '-'}</td>
+          <td>${lr.fromLocation || '-'}</td>
+          <td>${lr.toLocation || '-'}</td>
+          <td class="text-end">${weight.toFixed(2)}</td>
+          <td class="text-end">₹${rate.toFixed(2)}</td>
+          <td class="text-end">${gstPercent}%</td>
+          <td class="text-end">₹${gstAmt.toFixed(2)}</td>
+          <td class="text-end">₹${total.toFixed(2)}</td>
+        `;
+        invoiceItems.appendChild(row);
+      });
+      
+      // Calculate average GST percentage for display
+      const totalGSTPercent = selectedLRData.reduce((sum, lr) => {
+        return sum + (parseFloat(lr.gstPercentage) || 0);
+      }, 0) / selectedLRData.length;
+      
+      console.log('Final totals:', {
+        subtotal,
+        gstTotal,
+        totalGSTPercent,
+        grandTotal: subtotal + gstTotal
+      });
+      
+      // Update the GST percentage display with the average GST
+      const gstPercentElement = document.getElementById('gstPercent');
+      // Get the GST amount element from the invoice table
+      let gstAmountElement = document.getElementById('invoiceGstAmount');
+      if (!gstAmountElement) {
+        // Fallback to the input field if the invoice element is not found
+        gstAmountElement = document.getElementById('gstAmount');
+      }
+      
+      console.log('GST Elements:', {
+        gstPercentElement,
+        gstAmountElement,
+        gstPercentValue: gstPercentElement?.textContent,
+        gstAmountValue: gstAmountElement?.textContent,
+        elementHTML: gstAmountElement?.outerHTML
+      });
+      
+      // If we can't find the element, log an error
+      if (!gstAmountElement) {
+        console.error('Could not find the GST amount element in the invoice table');
+      }
+      
+      // Update the totals in the invoice
+      document.getElementById('subtotalAmount').textContent = `₹${subtotal.toFixed(2)}`;
+      
+      // Set the GST amount with detailed logging
+      console.log('Setting GST amount...', {
+        element: gstAmountElement,
+        currentValue: gstAmountElement?.textContent,
+        newValue: gstTotal.toFixed(2)
+      });
+
+      if (gstAmountElement) {
+        // Try different methods to set the value
+        const methods = [
+          () => { gstAmountElement.textContent = gstTotal.toFixed(2); },
+          () => { gstAmountElement.innerText = gstTotal.toFixed(2); },
+          () => { gstAmountElement.innerHTML = gstTotal.toFixed(2); }
+        ];
+        
+        // Try each method and log the result
+        methods.forEach((method, i) => {
+          try {
+            method();
+            console.log(`Method ${i + 1} executed. New value:`, gstAmountElement.textContent);
+          } catch (e) {
+            console.error(`Method ${i + 1} failed:`, e);
+          }
+        });
+        
+        // Force a re-render
+        gstAmountElement.style.display = 'none';
+        gstAmountElement.offsetHeight; // Trigger reflow
+        gstAmountElement.style.display = 'inline-block';
+      } else {
+        console.error('GST amount element not found!');
+        // Try alternative selectors as fallback
+        const selectors = [
+          'td#gstAmount',
+          'tfoot tr:nth-child(2) td:last-child',
+          '.invoice-table tfoot tr:nth-child(2) td:last-child'
+        ];
+        
+        for (const selector of selectors) {
+          const el = document.querySelector(selector);
+          if (el) {
+            el.textContent = gstTotal.toFixed(2);
+            console.log(`Set GST amount using selector '${selector}':`, gstTotal.toFixed(2));
+            break;
+          }
+        }
+      }
+      
+      // Update the GST percentage
+      if (gstPercentElement) {
+        gstPercentElement.textContent = totalGSTPercent.toFixed(0); // Remove decimal places for percentage
+      }
+      
+      // Update grand total (subtotal + total GST)
+      document.getElementById('grandTotal').textContent = `₹${(subtotal + gstTotal).toFixed(2)}`;
+      
+      // Update bill to address (use the first LR's consignor as default)
+      const billTo = selectedLRData[0]?.consignor || 'Consolidated Invoice';
+      document.getElementById('billToAddress').textContent = billTo;
+      
+      // Generate a unique invoice number
+      const invoiceNumber = `INV-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+      document.getElementById('invoiceNumber').textContent = invoiceNumber;
+      
+      // Format the invoice date
+      const invoiceDate = new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+      document.getElementById('invoiceDate').textContent = invoiceDate;
+      
+      // Update bank details in the invoice with the correct IDs
+      if (details.bankName) document.getElementById('invoiceBankName').textContent = details.bankName;
+      if (details.accountNumber) document.getElementById('invoiceAccountNumber').textContent = details.accountNumber;
+      if (details.accountHolder) document.getElementById('invoiceAccountHolder').textContent = details.accountHolder;
+      if (details.ifscCode) document.getElementById('invoiceIfscCode').textContent = details.ifscCode;
+      if (details.accountType) document.getElementById('invoiceAccountType').textContent = details.accountType;
+      
+      // Update company details
+      if (details.companyName) {
+        document.getElementById('companyName').textContent = details.companyName;
+        document.getElementById('companyNameFooter').textContent = details.companyName;
+      }
+      if (details.companyAddress) {
+        document.getElementById('companyAddress').textContent = details.companyAddress;
+      }
+      if (details.gstNumber) {
+        document.getElementById('companyGst').textContent = `GST: ${details.gstNumber}`;
+      }
+      if (details.companyPhone) {
+        // Remove existing phone element if it exists
+        const existingPhone = document.getElementById('companyPhone');
+        if (existingPhone) {
+          existingPhone.remove();
+        }
+        
+        const phoneEl = document.createElement('p');
+        phoneEl.id = 'companyPhone';
+        phoneEl.className = 'mb-0';
+        phoneEl.textContent = `Ph: ${details.companyPhone}`;
+        document.getElementById('companyGst').insertAdjacentElement('afterend', phoneEl);
+      }
+      
+      // Show the invoice modal
+      const invoiceModal = new bootstrap.Modal(document.getElementById('invoiceModal'));
+      invoiceModal.show();
+    }
+    
+    // Function to print the invoice
+    function printInvoice() {
+      const printWindow = window.open('', '_blank');
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Invoice</title>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            @page { 
+              size: A4;
+              margin: 10mm 5mm;
+            }
+            body { 
+              font-family: Arial, sans-serif; 
+              font-size: 10px;
+              line-height: 1.2;
+              margin: 0;
+              padding: 0;
+            }
+            .table { 
+              width: 100%; 
+              margin-bottom: 5px;
+              border-collapse: collapse;
+            }
+            .table th, .table td { 
+              padding: 3px 5px; 
+              border: 1px solid #dee2e6;
+              word-break: break-word;
+            }
+            .text-end { 
+              text-align: right !important;
+              white-space: nowrap;
+            }
+            .table-light {
+              background-color: #f8f9fa !important;
+            }
+            .table-active {
+              background-color: #f8f9fa !important;
+            }
+            .fw-bold {
+              font-weight: bold !important;
+            }
+            .text-center {
+              text-align: center !important;
+            }
+            .mb-0 { margin-bottom: 0 !important; }
+            .mb-1 { margin-bottom: 0.25rem !important; }
+            .mb-4 { margin-bottom: 1.5rem !important; }
+            .mt-4 { margin-top: 1.5rem !important; }
+            .table-bordered { border: 1px solid #dee2e6; }
+            .table-bordered th, .table-bordered td { border: 1px solid #dee2e6; }
+            .table-light { background-color: #f8f9fa; }
+            .table-active { background-color: rgba(0,0,0,.075); }
+            .fw-bold { font-weight: 700; }
+            .text-center { text-align: center; }
+            .mb-0 { margin-bottom: 0; }
+            .mb-1 { margin-bottom: 0.25rem; }
+            .mb-4 { margin-bottom: 1.5rem; }
+            .mt-4 { margin-top: 1.5rem; }
+            .p-4 { padding: 1.5rem; }
+            .border-bottom { border-bottom: 1px solid #dee2e6; }
+            .invoice-header { 
+              border-bottom: 2px solid #dee2e6; 
+              margin-bottom: 10px; 
+              padding-bottom: 8px;
+            }
+            .invoice-table {
+              table-layout: fixed;
+            }
+            .invoice-table th, 
+            .invoice-table td {
+              padding: 3px 5px;
+              font-size: 9px;
+            }
+            .amount-column {
+              width: 70px;
+              min-width: 70px;
+              max-width: 70px;
+            }
+            .small-text {
+              font-size: 9px;
+              margin: 2px 0;
+            }
+          </style>
+        </head>
+        <body class="p-4">
+          ${document.getElementById('printableInvoice').outerHTML}
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          <\/script>
+        </body>
+        </html>
+      `;
+      
+      printWindow.document.open();
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+    }
+    
+    // Function to download invoice as PDF (placeholder - requires jsPDF)
+    function downloadPDF() {
+      alert('PDF download functionality will be implemented with jsPDF library');
+      // Implementation will use jsPDF to generate PDF from the invoice content
+    }
 
     // Initialize the application
     document.addEventListener('DOMContentLoaded', function() {
@@ -425,6 +1187,13 @@
         pageLength: 25,
         responsive: true,
         columns: [
+          { data: null, render: function(data, type, row) {
+            return `
+              <div class="form-check">
+                <input class="form-check-input lr-checkbox" type="checkbox" value="${row.id}" onchange="handleLRSelection(this)">
+              </div>
+            `;
+          } },
           { data: 'date', render: formatDate },
           { data: 'lrNumber' },
           { data: 'truckNumber' },
@@ -468,6 +1237,10 @@
       document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
       document.getElementById('saveLRBtn').addEventListener('click', saveLR);
       document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
+      document.getElementById('generateInvoiceBtn').addEventListener('click', generateInvoice);
+      document.getElementById('selectAllCheckbox').addEventListener('change', function() {
+        handleSelectAll(this.checked);
+      });
 
       // Load data
       loadLRData();
@@ -491,8 +1264,16 @@
     }
 
     function setVal(id, val, prefix = '') {
-      const el = document.getElementById(prefix + id);
-      if (el) el.value = (typeof val === 'number' ? (+val).toFixed(2) : val);
+      const element = document.getElementById(prefix ? prefix + id : id);
+      if (element) {
+        if (element.type === 'number' && val !== undefined && val !== null) {
+          // For number fields, ensure we don't set to 0 if the value is falsy but not zero
+          const numVal = parseFloat(val);
+          element.value = !isNaN(numVal) ? numVal : '';
+        } else {
+          element.value = val !== undefined && val !== null ? val : '';
+        }
+      }
     }
 
     function formatDate(dateString) {
@@ -544,9 +1325,13 @@
       const shortage = getVal('shortage');
       const otherExpenses = getVal('otherExpenses');
       const dieselCost = getVal('dieselCost');
+      const advance = getVal('advance');
       
-      const subtotal = billingAmount + freightAmount - shortage - otherExpenses - dieselCost;
+      const subtotal = billingAmount + freightAmount - shortage + otherExpenses + dieselCost;
+      const balance = subtotal - advance;
+      
       setVal('subtotal', subtotal);
+      setVal('balance', balance);
       calculateGST();
     }
 
@@ -603,27 +1388,25 @@
       const shortage = getVal('Shortage', 'edit');
       const otherExpenses = getVal('OtherExpenses', 'edit');
       const dieselCost = getVal('DieselCost', 'edit');
-      
-      const subtotal = billingAmount + freightAmount - shortage - otherExpenses - dieselCost;
-      calculateEditGST(subtotal);
-    }
-
-    function calculateEditGST(subtotal = null) {
-      if (subtotal === null) {
-        const billingAmount = getVal('BillingAmount', 'edit');
-        const freightAmount = getVal('FreightAmount', 'edit');
-        const shortage = getVal('Shortage', 'edit');
-        const otherExpenses = getVal('OtherExpenses', 'edit');
-        const dieselCost = getVal('DieselCost', 'edit');
-        subtotal = billingAmount + freightAmount - shortage - otherExpenses - dieselCost;
-      }
+      const advance = getVal('Advance', 'edit');
       
       const gstPercentage = getVal('GstPercentage', 'edit');
-      const gstAmount = subtotal * (gstPercentage / 100);
-      const totalAmount = subtotal + gstAmount;
+      const gstAmount = (billingAmount * gstPercentage) / 100;
+      const totalAmount = (billingAmount + gstAmount) - (freightAmount + shortage + otherExpenses + dieselCost + advance);
       
       setVal('GstAmount', gstAmount, 'edit');
       setVal('TotalAmount', totalAmount, 'edit');
+    }
+
+    function calculateEditGST() {
+      const billingAmount = getVal('BillingAmount', 'edit');
+      const gstPercentage = getVal('GstPercentage', 'edit');
+      
+      const gstAmount = (billingAmount * gstPercentage) / 100;
+      setVal('GstAmount', gstAmount, 'edit');
+      
+      // Recalculate total after GST update
+      calculateEditAmount();
     }
 
     // Data operations
@@ -661,6 +1444,7 @@
               shortage: data.shortage ? parseFloat(data.shortage) : 0,
               otherExpenses: data.otherExpenses ? parseFloat(data.otherExpenses) : 0,
               dieselCost: data.dieselCost ? parseFloat(data.dieselCost) : 0,
+              advance: data.advance ? parseFloat(data.advance) : 0,
               gstPercentage: data.gstPercentage ? parseFloat(data.gstPercentage) : 0,
               gstAmount: data.gstAmount ? parseFloat(data.gstAmount) : 0,
               totalAmount: data.totalAmount ? parseFloat(data.totalAmount) : 0,
@@ -757,12 +1541,12 @@
         truckNumber: getStr('truckNumber'),
         consignor: getStr('consignor'),
         consignee: getStr('consignee'),
-        item: getStr('item'),
         fromLocation: getStr('fromLocation'),
         toLocation: getStr('toLocation'),
+        weight: getVal('weight'),
+        item: getStr('item'),
         shipmentNo: getStr('shipmentNo'),
         invoiceNo: getStr('invoiceNo'),
-        weight: getVal('weight'),
         billingRate: getVal('billingRate'),
         billingAmount: getVal('billingAmount'),
         freightRate: getVal('freightRate'),
@@ -772,6 +1556,7 @@
         shortage: getVal('shortage'),
         otherExpenses: getVal('otherExpenses'),
         dieselCost: getVal('dieselCost'),
+        advance: getVal('advance'),
         gstPercentage: getVal('gstPercentage'),
         gstAmount: getVal('gstAmount'),
         totalAmount: getVal('totalAmount'),
@@ -780,6 +1565,11 @@
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
+
+      // Ensure we don't overwrite the advance with undefined
+      if (isNaN(lrData.advance)) {
+        lrData.advance = 0;
+      }
 
       // Save to Firebase
       db.ref('lrReports').push(lrData)
@@ -829,6 +1619,12 @@
       setVal('Shortage', lr.shortage, 'edit');
       setVal('OtherExpenses', lr.otherExpenses, 'edit');
       setVal('DieselCost', lr.dieselCost, 'edit');
+      const advanceInput = document.getElementById('editAdvance');
+      if (advanceInput) {
+        advanceInput.value = parseFloat(lr.advance).toFixed(2);
+        // Store the original value
+        advanceInput.dataset.originalValue = lr.advance;
+      }
       setVal('GstPercentage', lr.gstPercentage, 'edit');
       setVal('GstAmount', lr.gstAmount, 'edit');
       setVal('TotalAmount', lr.totalAmount, 'edit');
