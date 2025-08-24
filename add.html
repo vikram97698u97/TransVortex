@@ -33,6 +33,14 @@
       padding-bottom: 10px;
       border-bottom: 2px solid #e0e0e0;
     }
+    html[data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #111827;
+      --text: #e5e7eb;
+      --border: #1f2937;
+      --muted: #9ca3af;
+      --shadow: 0 6px 18px rgba(0,0,0,.45);
+    }
     form label { 
       display: block; 
       margin-bottom: 8px; 
@@ -505,6 +513,11 @@
     const reportStatusText = document.getElementById("reportStatusText");
     const reportStatusModal = document.getElementById("reportStatusModal");
     const vehicleNumberInput = document.getElementById("vehicleNumber");
+
+    window.toggleMenu = function() {
+      const el = document.getElementById("navLinks");
+      if (el) el.classList.toggle("show");
+    };
     
     // Global variables
     let currentUser = null;
@@ -1524,3 +1537,4 @@
   </script>
 </body>
 </html>
+
