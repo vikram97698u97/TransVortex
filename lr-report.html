@@ -604,7 +604,7 @@
       const otherExpenses = getVal('OtherExpenses', 'edit');
       const dieselCost = getVal('DieselCost', 'edit');
       
-      const subtotal = billingAmount + freightAmount - shortage + otherExpenses + dieselCost;
+      const subtotal = billingAmount + freightAmount - shortage - otherExpenses - dieselCost;
       calculateEditGST(subtotal);
     }
 
@@ -615,7 +615,7 @@
         const shortage = getVal('Shortage', 'edit');
         const otherExpenses = getVal('OtherExpenses', 'edit');
         const dieselCost = getVal('DieselCost', 'edit');
-        subtotal = billingAmount + freightAmount - shortage + otherExpenses + dieselCost;
+        subtotal = billingAmount + freightAmount - shortage - otherExpenses - dieselCost;
       }
       
       const gstPercentage = getVal('GstPercentage', 'edit');
