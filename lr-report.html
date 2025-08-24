@@ -545,7 +545,7 @@
       const otherExpenses = getVal('otherExpenses');
       const dieselCost = getVal('dieselCost');
       
-      const subtotal = billingAmount + freightAmount - shortage + otherExpenses + dieselCost;
+      const subtotal = billingAmount + freightAmount - shortage - otherExpenses - dieselCost;
       setVal('subtotal', subtotal);
       calculateGST();
     }
