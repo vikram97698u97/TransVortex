@@ -16,142 +16,6 @@
       background-color: #F5F5F5;
       color: #111111;
     }
-
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #2E8B57;
-      padding: 14px 24px;
-      color: white;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      flex-wrap: wrap;
-    }
-
-    .logo-container {
-      display: flex;
-      align-items: center;
-    }
-
-    .logo {
-      height: 50px;
-      width: 250px;
-      max-width: 400px;
-      transition: transform 0.3s ease;
-    }
-
-    .logo:hover {
-      transform: scale(1.05);
-    }
-
-    .tagline {
-      font-size: 12px;
-      font-style: italic;
-      color: #e0e0e0;
-      margin-top: -3px;
-      letter-spacing: 0.5px;
-    }
-
-    .navbar h1 {
-      font-size: 22px;
-      margin: 0;
-      color: white;
-    }
-
-    .nav-links {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      margin-left: 16px;
-      font-weight: 500;
-    }
-
-    .nav-links a:hover {
-      text-decoration: underline;
-    }
-
-    .nav-links a.active {
-      font-weight: bold;
-      text-decoration: underline;
-    }
-
-    .logout {
-      margin-left: 16px;
-      background-color: #43B97F;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    .logout:hover {
-      background-color: #3ba06f;
-      text-decoration: none;
-    }
-
-    .hamburger {
-      display: none;
-      font-size: 24px;
-      cursor: pointer;
-    }
-
-    @media (max-width: 768px) {
-      .nav-links {
-        display: none;
-        flex-direction: column;
-        width: 100%;
-        background-color: #26734d;
-        margin-top: 10px;
-        padding: 10px 0;
-      }
-
-      .nav-links.show {
-        display: flex;
-      }
-
-      .nav-links a,
-      .logout {
-        margin: 8px auto;
-        width: 90%;
-        text-align: center;
-        padding: 10px 0;
-        display: block;
-      }
-
-      .logout {
-        margin: 8px auto;
-        text-align: center;
-        max-width: 200px;
-      }
-
-      .hamburger {
-        display: block;
-      }
-    }
-    
-    /* Add padding to main content to account for fixed navbar */
-    body {
-      padding-top: 100px;
-      margin: 0;
-    }
-    
-    @media (max-width: 768px) {
-      body {
-        padding-top: 90px;
-      }
-    }
     .container {
       max-width: 1000px;
       margin: 0 auto;
@@ -197,29 +61,9 @@
   </style>
 </head>
 <body>
-  <!-- Navbar -->
-  <div class="navbar">
-    <div class="logo-container">
-      <img src="logo.jpg" alt="TransVortex" class="logo">
-    </div>
-    <div class="hamburger" onclick="toggleMenu()">☰</div>
-    <div class="nav-links" id="navLinks">
-      <a href="home.html">Home</a>
-      <a href="booking.html">Thread Booking</a>
-      <a href="add.html">Vehicle Info</a>
-      <a href="route-details.html">Fuel Tracker</a>
-      <a href="trip-expenses.html">Trip Expenses</a>
-      <a href="tyre.html">Tyres</a>
-      <a href="tyre_history.html">Tyre History</a>
-      <a href="payment-billing.html">Payments</a>
-      <a href="lr-report.html">LR Report</a>
-      <a href="invoice.html">Invoice</a>
-      <a href="alerts-system.html" class="active">Reminder</a>
-      <button class="logout" onclick="logout()">Logout</button>
-    </div>
-  </div>
+  <script src="navbar-loader.js"></script>
 
-  <div class="container" style="margin-top: 80px;">
+  <div class="container">
     <h1>Alerts & Reminders System</h1>
     
     <!-- Set Reminders -->
@@ -281,6 +125,29 @@
       <h3>Active Alerts</h3>
       <!-- Alerts will be populated here -->
     </div>
+
+    <!-- Pagination Controls (Tab System) for Alerts -->
+    <div style="margin-top: 16px;">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+        <label for="entriesPerPageAlerts" style="font-weight:600;">Entries per page:</label>
+        <select id="entriesPerPageAlerts" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+        <div id="entriesInfoAlerts" style="color:#666; font-size:14px;"></div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+        <button class="tab-nav-control" id="prevAlerts" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="tab-navigation" id="tabNavigationAlerts" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+        <button class="tab-nav-control" id="nextAlerts" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
   </div>
 
   <script type="module">
@@ -304,6 +171,16 @@
     const db = getDatabase(app);
 
     let currentUser = null;
+    let allReminders = [];
+    // Pagination state
+    const entriesPerPageSelect = document.getElementById('entriesPerPageAlerts');
+    const entriesInfo = document.getElementById('entriesInfoAlerts');
+    const tabNavigation = document.getElementById('tabNavigationAlerts');
+    const prevBtn = document.getElementById('prevAlerts');
+    const nextBtn = document.getElementById('nextAlerts');
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let totalPages = 1;
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -336,48 +213,108 @@
     });
 
     function loadAlerts() {
-      const alertsList = document.getElementById('alertsList');
-      
-      onValue(ref(db, `users/${currentUser.uid}/reminders`), (snapshot) => {
+      const remindersRef = ref(db, `users/${currentUser.uid}/reminders`);
+      onValue(remindersRef, (snapshot) => {
         const reminders = snapshot.val() || {};
-        const alertsHtml = [];
-        
-        Object.entries(reminders).forEach(([key, reminder]) => {
-          const dueDate = new Date(reminder.dueDate);
-          const today = new Date();
-          const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-          
-          let alertClass = 'info';
-          let alertText = '';
-          
-          if (daysUntilDue < 0) {
-            alertClass = 'alert-card';
-            alertText = `OVERDUE: ${Math.abs(daysUntilDue)} days ago`;
-          } else if (daysUntilDue <= 7) {
-            alertClass = 'alert-card warning';
-            alertText = `DUE SOON: ${daysUntilDue} days remaining`;
-          } else {
-            alertClass = 'alert-card info';
-            alertText = `${daysUntilDue} days remaining`;
-          }
-          
-          alertsHtml.push(`
-            <div class="${alertClass}">
-              <h4>${reminder.type.toUpperCase()} - ${reminder.vehicleNumber}</h4>
-              <p><strong>${alertText}</strong></p>
-              <p>Due Date: ${reminder.dueDate}</p>
-              <p>Description: ${reminder.description || 'No description'}</p>
-              <small>Created: ${new Date(reminder.createdAt).toLocaleDateString()}</small>
-              <br>
-              <button class="btn-small" onclick="sendWhatsApp('${reminder.recipientPhone}', '${reminder.description}')">Send WhatsApp</button>
-              <button class="btn-small email" onclick="sendEmail('${reminder.recipientEmail}', '${reminder.description}')">Send Email</button>
-            </div>
-          `);
-        });
-        
-        alertsList.innerHTML = '<h3>Active Alerts</h3>' + (alertsHtml.length > 0 ? alertsHtml.join('') : '<p>No active alerts</p>');
+        // Normalize as array for stable pagination ordering (newest first by createdAt)
+        allReminders = Object.entries(reminders).map(([key, r]) => ({ id: key, ...r }))
+          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        currentPage = 1;
+        renderAlertsWithPagination();
       });
     }
+
+    function renderAlertsWithPagination() {
+      const alertsList = document.getElementById('alertsList');
+      const totalItems = allReminders.length;
+      totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+      updatePaginationControls(totalItems);
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = Math.min(start + itemsPerPage, totalItems);
+      const pageData = allReminders.slice(start, end);
+      const alertsHtml = pageData.map(reminder => {
+        const dueDate = new Date(reminder.dueDate);
+        const today = new Date();
+        const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+        let alertClass = 'alert-card info';
+        let alertText = '';
+        if (daysUntilDue < 0) { alertClass = 'alert-card'; alertText = `OVERDUE: ${Math.abs(daysUntilDue)} days ago`; }
+        else if (daysUntilDue <= 7) { alertClass = 'alert-card warning'; alertText = `DUE SOON: ${daysUntilDue} days remaining`; }
+        else { alertClass = 'alert-card info'; alertText = `${daysUntilDue} days remaining`; }
+        return `
+          <div class="${alertClass}">
+            <h4>${(reminder.type || '').toUpperCase()} - ${reminder.vehicleNumber || ''}</h4>
+            <p><strong>${alertText}</strong></p>
+            <p>Due Date: ${reminder.dueDate || ''}</p>
+            <p>Description: ${reminder.description || 'No description'}</p>
+            <small>Created: ${reminder.createdAt ? new Date(reminder.createdAt).toLocaleDateString() : ''}</small>
+            <br>
+            <button class="btn-small" onclick="sendWhatsApp('${reminder.recipientPhone || ''}', '${reminder.description || ''}')">Send WhatsApp</button>
+            <button class="btn-small email" onclick="sendEmail('${reminder.recipientEmail || ''}', '${reminder.description || ''}')">Send Email</button>
+          </div>`;
+      });
+      alertsList.innerHTML = '<h3>Active Alerts</h3>' + (alertsHtml.length > 0 ? alertsHtml.join('') : '<p>No active alerts</p>');
+    }
+
+    function updatePaginationControls(totalItems) {
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = currentPage === totalPages;
+      const startIndex = Math.min((currentPage - 1) * itemsPerPage + 1, totalItems);
+      const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+      entriesInfo.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+      generatePageTabs();
+    }
+
+    function generatePageTabs() {
+      tabNavigation.innerHTML = '';
+      if (totalPages <= 1) return;
+      addTab(1);
+      let startPage = Math.max(2, currentPage - 2);
+      let endPage = Math.min(totalPages - 1, currentPage + 2);
+      if (startPage > 2) addEllipsis();
+      for (let i = startPage; i <= endPage; i++) addTab(i);
+      if (endPage < totalPages - 1) addEllipsis();
+      addTab(totalPages);
+    }
+
+    function addTab(pageNumber) {
+      const tab = document.createElement('div');
+      tab.className = `tab ${pageNumber === currentPage ? 'active' : ''}`;
+      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
+      tab.textContent = pageNumber;
+      tab.addEventListener('click', () => {
+        currentPage = pageNumber;
+        renderAlertsWithPagination();
+      });
+      tabNavigation.appendChild(tab);
+    }
+
+    function addEllipsis() {
+      const ellipsis = document.createElement('div');
+      ellipsis.textContent = '...';
+      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
+      tabNavigation.appendChild(ellipsis);
+    }
+
+    // Hook up pagination controls
+    entriesPerPageSelect.addEventListener('change', function () {
+      itemsPerPage = parseInt(this.value, 10) || 10;
+      currentPage = 1;
+      renderAlertsWithPagination();
+    });
+    prevBtn.addEventListener('click', function () {
+      if (currentPage > 1) {
+        currentPage--;
+        renderAlertsWithPagination();
+      }
+    });
+    nextBtn.addEventListener('click', function () {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderAlertsWithPagination();
+      }
+    });
 
     // Send functions
     window.sendWhatsApp = function(phone, message) {
@@ -400,10 +337,7 @@
       }
   };
 
-  // Toggle mobile menu
-  window.toggleMenu = function() {
-    document.getElementById("navLinks").classList.toggle("show");
-  };
+  // No toggleMenu needed; sidebar toggle handled by navbar-loader.js
 </script>
 </body>
 </html>
