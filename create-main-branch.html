@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Main Branch - Transport Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #2E8B57;
+      --accent-color: #1F1F1F;
+      --background-color: #F5F5F5;
+      --text-color: #111111;
+      --highlight-color: #43B97F;
+      --white: #FFFFFF;
+      --error-color: #e74c3c;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--background-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .auth-container {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .auth-header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: var(--accent-color);
+    }
+
+    .auth-header p {
+      color: #666;
+      margin: 0;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--accent-color);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: var(--white);
+      color: var(--text-color);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.2);
+    }
+
+    .form-control.error {
+      border-color: var(--error-color);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: var(--white);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--highlight-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: #666;
+    }
+
+    .error-message {
+      color: var(--error-color);
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      min-height: 1.25rem;
+    }
+
+    .general-error {
+      background-color: #ffeeee;
+      color: var(--error-color);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo img {
+      max-width: 150px;
+      height: auto;
+    }
+
+    .progress-steps {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .progress-steps::before {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #ddd;
+      z-index: 1;
+    }
+
+    .step {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      flex: 1;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #ddd;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.5rem;
+      font-weight: 600;
+    }
+
+    .step.active .step-number {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .step.completed .step-number {
+      background: var(--highlight-color);
+      color: white;
+    }
+
+    .step-label {
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    .step.active .step-label {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    @media (max-width: 480px) {
+      .auth-container {
+        padding: 1.5rem;
+      }
+      
+      .auth-header h1 {
+        font-size: 1.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="logo">
+      <img src="logo.jpg" alt="Logo" onerror="this.style.display='none'">
+    </div>
+    
+    <div class="progress-steps">
+      <div class="step completed">
+        <div class="step-number">1</div>
+        <div class="step-label">Core Account</div>
+      </div>
+      <div class="step active">
+        <div class="step-number">2</div>
+        <div class="step-label">Main Branch</div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-label">Complete</div>
+      </div>
+    </div>
+    
+    <div class="auth-header">
+      <h1>Create Main Branch</h1>
+      <p>Set up your main branch account</p>
+    </div>
+
+    <div id="general-error" class="general-error"></div>
+    
+    <form id="branch-form">
+      <div class="form-group">
+        <label for="branch-name">Branch Name</label>
+        <input type="text" id="branch-name" class="form-control" placeholder="Enter branch name" required>
+        <div class="error-message" id="name-error"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="branch-email">Branch Email</label>
+        <input type="email" id="branch-email" class="form-control" placeholder="Enter branch email" required>
+        <div class="error-message" id="email-error"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="branch-password">Create Password</label>
+        <input type="password" id="branch-password" class="form-control" placeholder="Create a password" required>
+        <div class="error-message" id="password-error"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="confirm-password">Confirm Password</label>
+        <input type="password" id="confirm-password" class="form-control" placeholder="Confirm your password" required>
+        <div class="error-message" id="confirm-password-error"></div>
+      </div>
+      
+      <button type="submit" class="btn btn-primary" id="create-button">
+        <i class="fas fa-check"></i> Create Main Branch
+      </button>
+    </form>
+    
+    <div class="auth-footer">
+      <p>Step 2 of 3 - Setting up your main branch</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signOut,
+      fetchSignInMethodsForEmail
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { 
+      getDatabase, 
+      ref, 
+      set, 
+      update,
+      get
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // Initialize Firebase with your config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    
+    // Make auth and db available globally
+    window.auth = auth;
+    window.db = db;
+
+    // Initialize core account info
+    (function init() {
+      // Get core account info from session storage or URL params
+      let coreEmail = sessionStorage.getItem('coreEmail');
+      let corePassword = sessionStorage.getItem('corePassword');
+      
+      // Try to get from URL params if not in session storage
+      const urlParams = new URLSearchParams(window.location.search);
+      if (!coreEmail) coreEmail = urlParams.get('email');
+      
+      if (!coreEmail) {
+        // Redirect to signup if core account info is missing
+        window.location.href = 'signup.html';
+        return;
+      }
+      
+      // Store core account info in global scope
+      window.coreAccount = { email: coreEmail };
+    })();
+
+    // Validate email format
+    function validateEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(String(email).toLowerCase());
+    }
+
+    // Validate password strength
+    function validatePassword(password) {
+      return password.length >= 6;
+    }
+
+    // Show error message
+    function showError(fieldId, message) {
+      const errorElement = document.getElementById(`${fieldId}`);
+      if (errorElement) {
+        errorElement.textContent = message;
+        const input = document.getElementById(fieldId.replace('-error', ''));
+        if (input) input.classList.add('error');
+      }
+    }
+
+    // Show general error message
+    function showGeneralError(message) {
+      const errorElement = document.getElementById('general-error');
+      if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+      }
+    }
+    
+    // Clear error
+    function clearError(fieldId) {
+      const errorElement = document.getElementById(`${fieldId}`);
+      if (errorElement) {
+        errorElement.textContent = '';
+        const input = document.getElementById(fieldId.replace('-error', ''));
+        if (input) input.classList.remove('error');
+      }
+    }
+
+    // Clear general error
+    function clearGeneralError() {
+      const errorElement = document.getElementById('general-error');
+      if (errorElement) {
+        errorElement.textContent = '';
+        errorElement.style.display = 'none';
+      }
+    }
+    
+    // Form validation
+    function validateForm() {
+      clearGeneralError();
+      
+      // Get form elements
+      const nameEl = document.getElementById('branch-name');
+      const emailEl = document.getElementById('branch-email');
+      const passwordEl = document.getElementById('branch-password');
+      const confirmPasswordEl = document.getElementById('confirm-password');
+      
+      // Check if required elements exist
+      if (!nameEl || !emailEl || !passwordEl || !confirmPasswordEl) {
+        console.error('Required form elements not found');
+        return false;
+      }
+      
+      // Get values from form elements
+      const name = nameEl.value.trim();
+      const email = emailEl.value.trim();
+      const password = passwordEl.value;
+      const confirmPassword = confirmPasswordEl.value;
+      
+      // Reset error messages
+      document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+      document.querySelectorAll('.form-control').forEach(el => el.classList.remove('error'));
+      
+      let isValid = true;
+      
+      if (!name) {
+        showError('name-error', 'Please enter a branch name');
+        isValid = false;
+      }
+      
+      if (!email) {
+        showError('email-error', 'Please enter an email address');
+        isValid = false;
+      } else if (!validateEmail(email)) {
+        showError('email-error', 'Please enter a valid email address');
+        isValid = false;
+      }
+      
+      if (!password) {
+        showError('password-error', 'Please enter a password');
+        isValid = false;
+      } else if (!validatePassword(password)) {
+        showError('password-error', 'Password must be at least 6 characters');
+        isValid = false;
+      }
+      
+      if (!confirmPassword) {
+        showError('confirm-password-error', 'Please confirm your password');
+        isValid = false;
+      } else if (password !== confirmPassword) {
+        showError('confirm-password-error', 'Passwords do not match');
+        isValid = false;
+      }
+      
+      return isValid;
+    }
+
+    // Check if email already exists in Firebase Auth
+    async function checkEmailExists(email) {
+      try {
+        const methods = await fetchSignInMethodsForEmail(auth, email);
+        // If any sign-in methods exist, the email is in use
+        return methods && methods.length > 0;
+      } catch (error) {
+        // If user not found, the email is available
+        if (error.code === 'auth/user-not-found') {
+          return false;
+        }
+        console.error('Error checking email:', error);
+        throw error;
+      }
+    }
+
+    // Handle form submission
+    window.createMainBranch = async function() {
+      if (!validateForm()) return;
+      
+      const nameEl = document.getElementById('branch-name');
+      const emailEl = document.getElementById('branch-email');
+      const passwordEl = document.getElementById('branch-password');
+      
+      if (!nameEl || !emailEl || !passwordEl) {
+        console.error('Required form elements not found');
+        return;
+      }
+      
+      const name = nameEl.value.trim();
+      const email = emailEl.value.trim();
+      const password = passwordEl.value;
+      
+      const submitBtn = document.getElementById('create-button');
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Main Branch...';
+      
+      try {
+        let coreUserId = null;
+        
+        // Get core account credentials from session storage
+        const coreEmail = sessionStorage.getItem('coreEmail');
+        const corePassword = sessionStorage.getItem('corePassword');
+        
+        if (!coreEmail) {
+          window.location.href = 'signup.html';
+          return;
+        }
+        
+        // Sign in with core account to verify and get UID
+        let coreUserCredential;
+        try {
+          coreUserCredential = await signInWithEmailAndPassword(auth, coreEmail, corePassword);
+          coreUserId = coreUserCredential.user.uid;
+          
+          // Check if core account already has a main branch
+          const coreUserRef = ref(db, `users/${coreUserId}`);
+          const snapshot = await get(coreUserRef);
+          
+          if (snapshot.exists() && snapshot.val().hasMainBranch) {
+            throw new Error('This core account already has a main branch');
+          }
+        } catch (error) {
+          console.error('Error during core account verification:', error);
+          if (error.message.includes('already has a main branch')) {
+            throw error;
+          }
+          throw new Error('Failed to verify core account. Please try again.');
+        }
+        
+        // Check if email already exists, excluding the core user's email
+        const emailExists = await checkEmailExists(email, coreUserId);
+        if (emailExists) {
+          throw new Error('This email is already registered. Please use a different email.');
+        }
+        
+        // Sign out core user before creating branch user
+        await signOut(auth);
+        
+        // Create the branch user
+        const branchUserCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const branchUser = branchUserCredential.user;
+        
+        // Create branch data
+        const branchData = {
+          name: name,
+          email: email,
+          type: 'main',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          createdBy: coreUserId
+        };
+        
+        // Sign back in with core account to save data
+        coreUserCredential = await signInWithEmailAndPassword(auth, coreEmail, corePassword);
+        
+        // Save branch data under core account
+        const branchRef = ref(db, `users/${coreUserId}/branches/${branchUser.uid}`);
+        await set(branchRef, branchData);
+        
+        // Update branch user's profile with core account ID and type
+        const branchUserRef = ref(db, `users/${branchUser.uid}`);
+        await set(branchUserRef, {
+          accountType: 'branch',
+          branchType: 'main',
+          coreAccountId: coreUserId,
+          name: name,
+          email: email,
+          createdAt: new Date().toISOString(),
+          status: 'active'
+        });
+        
+        // Update core account to mark main branch as created
+        const coreUserRef = ref(db, `users/${coreUserId}`);
+        await update(coreUserRef, {
+          hasMainBranch: true,
+          mainBranchId: branchUser.uid,
+          mainBranchEmail: email,
+          updatedAt: new Date().toISOString()
+        });
+        
+        // Store branch info in session
+        sessionStorage.setItem('currentBranch', JSON.stringify({
+          id: branchUser.uid,
+          name: name,
+          type: 'main',
+          coreAccountId: coreUserId
+        }));
+        
+        // Store core account email for branch selection
+        sessionStorage.setItem('coreEmail', coreEmail);
+        
+        // Sign out and sign in with the new branch account
+        await signOut(auth);
+        await signInWithEmailAndPassword(auth, email, password);
+        
+        // Redirect to home page
+        window.location.href = 'home.html';
+        
+      } catch (error) {
+        console.error('Error creating main branch:', error);
+        
+        let errorMessage = 'Failed to create main branch. Please try again.';
+        
+        if (error.code === 'auth/email-already-in-use') {
+          errorMessage = 'This email is already registered. Please use a different email.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'Please enter a valid email address.';
+        } else if (error.code === 'auth/network-request-failed') {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        showGeneralError(errorMessage);
+        
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+        }
+      }
+    };
+    
+    // Add event listeners for form submission and validation
+    document.addEventListener('DOMContentLoaded', function() {
+      // Form submission
+      document.getElementById('branch-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        window.createMainBranch();
+      });
+      
+      // Validate on input
+      document.getElementById('branch-name').addEventListener('input', function() {
+        clearError('name-error');
+        this.classList.remove('error');
+      });
+      
+      document.getElementById('branch-email').addEventListener('input', function() {
+        clearError('email-error');
+        this.classList.remove('error');
+      });
+      
+      document.getElementById('branch-password').addEventListener('input', function() {
+        clearError('password-error');
+        this.classList.remove('error');
+      });
+      
+      document.getElementById('confirm-password').addEventListener('input', function() {
+        clearError('confirm-password-error');
+        this.classList.remove('error');
+      });
+      
+      // Pre-fill email with core account email if available
+      if (window.coreAccount && window.coreAccount.email) {
+        document.getElementById('branch-email').value = window.coreAccount.email;
+      }
+    });
+  </script>
+</body>
+</html>
