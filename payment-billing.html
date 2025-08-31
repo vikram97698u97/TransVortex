@@ -77,7 +77,7 @@
 </style>
 </head>
 <body>
-  <div id="navbar"></div>
+  <script src="navbar-loader.js"></script>
   <div class="main-content">
     <div class="container">
       <h1><i class="fas fa-money-bill-wave"></i> Payment Records</h1>
@@ -117,6 +117,29 @@
           </thead>
           <tbody id="paymentTableBody"></tbody>
         </table>
+      </div>
+
+      <!-- Pagination Controls (Tab System) -->
+      <div style="margin-top: 16px;">
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+          <label for="entriesPerPage" style="font-weight:600;">Entries per page:</label>
+          <select id="entriesPerPage" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+          <div id="entriesInfo" style="color:#666; font-size:14px;"></div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <button class="tab-nav-control" id="prevPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="tab-navigation" id="tabNavigation" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+          <button class="tab-nav-control" id="nextPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -168,6 +191,17 @@
     const searchInput = document.getElementById("searchInput");
     const paymentTableBody = document.getElementById("paymentTableBody");
     let payments = [];
+
+    // Pagination state
+    const entriesPerPageSelect = document.getElementById('entriesPerPage');
+    const entriesInfo = document.getElementById('entriesInfo');
+    const tabNavigation = document.getElementById('tabNavigation');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let totalPages = 1;
+    let filteredPayments = [];
 
     proofFile.addEventListener("change", () => {
       const file = proofFile.files[0];
@@ -240,7 +274,8 @@
       onValue(paymentsRef, (snapshot) => {
         payments = [];
         snapshot.forEach(child => { payments.push(child.val()); });
-        renderPayments(payments);
+        currentPage = 1;
+        renderPaymentsWithPagination();
       });
     }
 
@@ -261,6 +296,63 @@
         `;
         paymentTableBody.appendChild(tr);
       });
+    }
+
+    function computeFiltered() {
+      const value = (searchInput.value || '').toLowerCase();
+      return payments.filter(p => (p.companyName || '').toLowerCase().includes(value));
+    }
+
+    function updatePaginationControls(totalItems) {
+      prevPageBtn.disabled = currentPage === 1;
+      nextPageBtn.disabled = currentPage === totalPages;
+      const startIndex = Math.min((currentPage - 1) * itemsPerPage + 1, totalItems);
+      const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+      entriesInfo.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+      generatePageTabs();
+    }
+
+    function generatePageTabs() {
+      tabNavigation.innerHTML = '';
+      if (totalPages <= 1) return;
+      addTab(1);
+      let startPage = Math.max(2, currentPage - 2);
+      let endPage = Math.min(totalPages - 1, currentPage + 2);
+      if (startPage > 2) addEllipsis();
+      for (let i = startPage; i <= endPage; i++) addTab(i);
+      if (endPage < totalPages - 1) addEllipsis();
+      addTab(totalPages);
+    }
+
+    function addTab(pageNumber) {
+      const tab = document.createElement('div');
+      tab.className = `tab ${pageNumber === currentPage ? 'active' : ''}`;
+      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
+      tab.textContent = pageNumber;
+      tab.addEventListener('click', () => {
+        currentPage = pageNumber;
+        renderPaymentsWithPagination();
+      });
+      tabNavigation.appendChild(tab);
+    }
+
+    function addEllipsis() {
+      const ellipsis = document.createElement('div');
+      ellipsis.textContent = '...';
+      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
+      tabNavigation.appendChild(ellipsis);
+    }
+
+    function renderPaymentsWithPagination() {
+      filteredPayments = computeFiltered();
+      const totalItems = filteredPayments.length;
+      totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+      updatePaginationControls(totalItems);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+      const pageData = filteredPayments.slice(startIndex, endIndex);
+      renderPayments(pageData);
     }
 
     window.editPayment = (id) => {
@@ -298,42 +390,38 @@
     };
 
     searchInput.addEventListener("input", () => {
-      const value = searchInput.value.toLowerCase();
-      const filtered = payments.filter(p => p.companyName.toLowerCase().includes(value));
-      renderPayments(filtered);
+      currentPage = 1;
+      renderPaymentsWithPagination();
     });
 
     document.getElementById("sortByDateBtn").addEventListener("click", () => {
-      const sorted = [...payments].sort((a, b) => new Date(a.date) - new Date(b.date));
-      renderPayments(sorted);
+      payments.sort((a, b) => new Date(a.date) - new Date(b.date));
+      currentPage = 1;
+      renderPaymentsWithPagination();
+    });
+
+    // Hook up pagination controls
+    entriesPerPageSelect.addEventListener('change', function () {
+      itemsPerPage = parseInt(this.value, 10) || 10;
+      currentPage = 1;
+      renderPaymentsWithPagination();
+    });
+    prevPageBtn.addEventListener('click', function () {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPaymentsWithPagination();
+      }
+    });
+    nextPageBtn.addEventListener('click', function () {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderPaymentsWithPagination();
+      }
     });
 
     window.toggleMenu = function () {
       document.getElementById("navLinks").classList.toggle("show");
     };
-  </script>
-
-  <script>
-    fetch("navbar.html")
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("navbar").outerHTML = html;
-        const logoutBtn = document.querySelector('#logoutBtn');
-        if (logoutBtn) {
-          logoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
-              .then(({ getAuth, signOut }) => {
-                const auth = getAuth();
-                signOut(auth).then(() => {
-                  window.location.href = 'index.html';
-                }).catch((error) => {
-                  console.error('Logout error:', error);
-                });
-              });
-          });
-        }
-      });
   </script>
 </body>
 </html>
