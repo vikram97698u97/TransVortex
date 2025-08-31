@@ -283,6 +283,21 @@ a:hover {
   display: none !important;
 }
 
+/* Branch UI helpers */
+.branch-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow, 0 4px 20px rgba(0,0,0,0.08));
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
 @media (min-width: 768px) {
   .d-md-block {
     display: block !important;
