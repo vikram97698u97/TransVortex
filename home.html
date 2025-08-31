@@ -245,8 +245,7 @@
   </style>
 </head>
 <body>
-  <!-- Navbar will be loaded here -->
-  <div id="navbar"></div>
+  <script src="navbar-loader.js"></script>
 
   <div class="main-content">
     <!-- Welcome Section -->
@@ -424,7 +423,9 @@
   // Initialize the page after security checks
   async function initializePage() {
     try {
-      await loadNavbar();
+      // Load user profile first to show name as soon as possible
+      await loadUserProfile();
+      // Then load other dashboard components
       loadDashboard();
       loadBusinessSummary();
       loadSubscriptionStatus();
@@ -464,10 +465,18 @@
         get(ref(db, `users/${currentUser.uid}/profile`))
       ]);
       
-      // Get subscription from either location
+      // Get subscription and account type
       const userData = userSnapshot.val() || {};
       const profileData = profileSnapshot.val() || {};
+      const accountType = userData.accountType || profileData.accountType || null;
       const subscription = userData.subscription || profileData.subscription || null;
+      
+      // If this is a branch account, bypass subscription gating (owner controls subscription)
+      if (accountType === 'branch') {
+        console.log('Branch account detected, bypassing subscription checks');
+        initializePage();
+        return;
+      }
       
       const now = new Date();
       
@@ -476,7 +485,7 @@
         console.log('No subscription found, creating new trial...');
         const trialStart = new Date();
         const trialEnd = new Date();
-        trialEnd.setDate(trialStart.getDate() + 30); // 30-day trial
+        trialEnd.setDate(trialStart.getDate() + 14); // 14-day trial
         
         const updates = {};
         updates[`users/${currentUser.uid}/subscription`] = {
@@ -490,7 +499,7 @@
         updates[`users/${currentUser.uid}/profile/subscription`] = updates[`users/${currentUser.uid}/subscription`];
         
         await update(ref(db), updates);
-        console.log('Created new 30-day trial');
+        console.log('Created new 14-day trial');
         
         // Continue to the home page
         initializePage();
@@ -552,114 +561,65 @@
     }
   });
 
-  // Load navbar and initialize it
-  async function loadNavbar() {
-    const navbarContainer = document.getElementById("navbar");
+  // Load user profile information - Enhanced version
+  async function loadUserProfile() {
+    console.log('Loading user profile...');
+    if (!currentUser) {
+      console.log('No current user');
+      return;
+    }
     
-    if (!navbarContainer) {
-      console.error('Navbar container element not found in the DOM');
+    const nameElement = document.getElementById('ownerName');
+    if (!nameElement) {
+      console.log('Name element not found');
       return;
     }
     
     try {
-      console.log('Loading navbar.html...');
-      const res = await fetch("navbar.html");
+      // Try to get user data from database
+      const userRef = ref(db, `users/${currentUser.uid}`);
+      const userSnap = await get(userRef);
       
-      if (!res.ok) {
-        throw new Error(`Failed to load navbar: ${res.status} ${res.statusText}`);
-      }
+      let userName = '';
       
-      const html = await res.text();
-      console.log('Navbar HTML loaded, injecting into DOM...');
-      
-      // Inject the navbar HTML
-      navbarContainer.innerHTML = html;
-      
-      // The navbar now has its own script that handles its functionality
-      console.log('Navbar loaded successfully');
-      
-      // Check if Font Awesome is loaded, if not, load it
-      if (!document.querySelector('link[href*="font-awesome"]') && 
-          !document.querySelector('link[href*="fontawesome"]')) {
-        const fontAwesome = document.createElement('link');
-        fontAwesome.rel = 'stylesheet';
-        fontAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
-        document.head.appendChild(fontAwesome);
-        console.log('Font Awesome loaded dynamically');
-      }
-      
-      // Set active link based on current page
-      const currentPage = window.location.pathname.split("/").pop() || 'home.html';
-      const navLinks = document.querySelectorAll('.nav-links a');
-      
-      navLinks.forEach(link => {
-        const linkHref = link.getAttribute('href');
-        if (linkHref === currentPage) {
-          link.classList.add('active');
-        } else {
-          link.classList.remove('active');
-        }
-      });
-      
-      // Handle logout - this will be used if the navbar's own logout handler doesn't work
-      const logoutBtn = document.getElementById('logoutBtn');
-      if (logoutBtn && !logoutBtn.onclick) {
-        logoutBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          if (window.logout) {
-            window.logout();
-          } else if (auth) {
-            signOut(auth).then(() => {
-              window.location.href = 'index.html';
-            }).catch(error => {
-              console.error('Error signing out:', error);
-            });
+      if (userSnap.exists()) {
+        const userData = userSnap.val();
+        console.log('User data from database:', userData);
+        
+        // Check if this is a branch user
+        if (userData.userType === 'branch') {
+          // For branch users, check profile or root for name
+          if (userData.profile) {
+            userName = userData.profile.name || userData.profile.ownerName || '';
           } else {
-            window.location.href = 'index.html';
+            userName = userData.name || userData.branchName || '';
           }
-        });
+        } else {
+          // For main users, check profile for name
+          if (userData.profile) {
+            userName = userData.profile.name || userData.profile.ownerName || '';
+          }
+        }
       }
       
-    } catch (e) {
-      console.error("Failed to load navbar:", e);
-    }
-  }
-  await loadNavbar();
-
-  // Load user profile information
-  async function loadUserProfile() {
-    if (!currentUser) return;
-    
-    try {
-      const userRef = ref(db, `users/${currentUser.uid}/profile`);
-      const snapshot = await get(userRef);
-      
-      if (snapshot.exists()) {
-        const userData = snapshot.val();
-        // Update any UI elements that display user info
-        const userNameElement = document.getElementById('userName');
-        if (userNameElement && userData.name) {
-          userNameElement.textContent = userData.name;
-        }
-        
-        const userEmailElement = document.getElementById('userEmail');
-        if (userEmailElement) {
-          userEmailElement.textContent = currentUser.email || 'No email';
-        }
-        
-        console.log('User profile loaded:', userData);
-      } else {
-        console.log('No profile data found, creating default profile');
-        // Create default profile if it doesn't exist
-        await update(ref(db, `users/${currentUser.uid}/profile`), {
-          name: currentUser.displayName || 'User',
-          email: currentUser.email || '',
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString()
-        });
+      // Fallback to displayName or email
+      if (!userName) {
+        userName = currentUser.displayName || currentUser.email.split('@')[0] || 'User';
       }
+      
+      // Update UI and localStorage
+      const firstName = userName.split(' ')[0];
+      nameElement.textContent = firstName;
+      localStorage.setItem('userName', userName);
+      
+      console.log('Displaying name:', firstName);
+      
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      console.error('Error in loadUserProfile:', error);
+      // Final fallback
+      const defaultName = currentUser.displayName || currentUser.email?.split('@')[0] || 'User';
+      nameElement.textContent = defaultName.split(' ')[0];
+      localStorage.setItem('userName', defaultName);
     }
   }
 
@@ -732,7 +692,7 @@
     loadBusinessSummary();
     loadRecentActivity();
     loadReminders();
-    loadNavbar();
+    
     loadSubscriptionStatus();
   });
   
@@ -766,6 +726,16 @@
         get(ref(db, `users/${currentUser.uid}/profile`))
       ]);
       
+      // Hide subscription card for branch accounts
+      const userRoot = userSnapshot.val() || {};
+      const profileRoot = profileSnapshot.val() || {};
+      const accountTypeForUI = userRoot.accountType || profileRoot.accountType || null;
+      if (accountTypeForUI === 'branch') {
+        if (statusContainer) statusContainer.style.display = 'none';
+        console.log('Branch account detected: hiding subscription status UI');
+        return;
+      }
+
       const now = new Date();
       const userCreationDate = new Date(parseInt(currentUser.metadata.createdAt));
       
@@ -784,7 +754,7 @@
       if (!subscription) {
         console.log('No subscription data found, creating default trial...');
         const trialEndDate = new Date(userCreationDate);
-        trialEndDate.setDate(trialEndDate.getDate() + 30);
+        trialEndDate.setDate(trialEndDate.getDate() + 14);
         
         const newSubscription = {
           status: 'trial',
@@ -818,7 +788,7 @@
       
       // Set default values for subscription status
       const status = sub.status || 'trial';
-      const trialEnd = sub.trialEnd ? new Date(sub.trialEnd) : new Date(userCreationDate.getTime() + (30 * 24 * 60 * 60 * 1000));
+      const trialEnd = sub.trialEnd ? new Date(sub.trialEnd) : new Date(userCreationDate.getTime() + (14 * 24 * 60 * 60 * 1000));
       const nextPayment = sub.nextPayment ? new Date(sub.nextPayment) : null;
       
       console.log('Processed subscription:', {
@@ -941,7 +911,7 @@
       arr.forEach(v => {
         const when = v.addedAt ? new Date(v.addedAt).toLocaleDateString('en-GB') : "";
         box.insertAdjacentHTML("beforeend",
-          `<div class="activity-item"><span>${v.vehicleNo || "—"}</span><span class="activity-sub">${when}</span></div>`);
+          `<div class="activity-item"><span>${(v.vehicleNumber || v.vehicleNo || "—")}</span><span class="activity-sub">${when}</span></div>`);
       });
     });
 
@@ -1221,6 +1191,7 @@
     setupReminderForm();
     loadSubscriptionStatus();
     loadReminders();
+    loadRecentActivity();
   }
   
   // Run initialization when the page loads
