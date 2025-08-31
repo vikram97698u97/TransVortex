@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Branch</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2E8B57; /* Sea Green */
+      --primary-dark: #24704a; /* darker Sea Green */
+      --accent: #1F1F1F; /* Dark Charcoal */
+      --background: #F5F5F5; /* Light Gray */
+      --text: #111111; /* Almost Black */
+      --highlight: #43B97F; /* Bright Mint Green */
+      --card-bg: #FFFFFF;
+      --border: rgba(0, 0, 0, 0.08);
+      --text-light: #555555;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --gradient: linear-gradient(135deg, var(--primary) 0%, var(--highlight) 100%);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      margin: 0;
+      background: var(--background);
+      min-height: 100vh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 20px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+      color: var(--accent);
+    }
+    
+    .header h1 {
+      margin: 0 0 12px 0;
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: inline-block;
+    }
+    
+    .header p {
+      color: var(--text-light);
+      font-size: 1.1rem;
+      font-weight: 400;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .card-container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    
+    .top-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 32px;
+      color: var(--text);
+      box-shadow: 0 10px 25px var(--shadow);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(0, 0, 0, 0.03);
+    }
+    
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: var(--gradient);
+      border-radius: 16px 16px 0 0;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(46, 139, 87, 0.12);
+    }
+    
+    .card h3 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--accent);
+    }
+    
+    .card h3 i {
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-size: 1.5rem;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background-color: rgba(46, 139, 87, 0.1);
+    }
+    
+    .muted {
+      color: var(--text-light);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 24px;
+      flex-grow: 1;
+    }
+    
+    .btn {
+      background: var(--gradient);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      width: 100%;
+      font-size: 0.95rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn::after {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+      transform: rotate(30deg);
+      transform-origin: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(46, 139, 87, 0.3);
+    }
+    
+    .btn:hover::after {
+      opacity: 1;
+    }
+    
+    .btn-block {
+      width: 100%;
+      margin-top: 16px;
+    }
+    
+    .tag {
+      display: inline-block;
+      background: rgba(46, 139, 87, 0.1);
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid rgba(46, 139, 87, 0.2);
+    }
+    
+    .branch-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(248, 250, 252, 0.8);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    
+    .branch-card:hover {
+      background: rgba(248, 250, 252, 1);
+      transform: translateX(4px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+    }
+    
+    .branch-title {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+    
+    .branch-email {
+      color: var(--text-light);
+      font-size: 0.85rem;
+    }
+    
+    /* Modal styles */
+    .modal-content {
+      background: #fff;
+      color: var(--text);
+      width: 95%;
+      max-width: 700px;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    
+    .modal-content h3 {
+      margin: 0 0 20px 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .form-group label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    
+    .form-control {
+      padding: 12px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.2);
+      background: #fff;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+    
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        padding: 40px 16px;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .header p {
+        font-size: 1rem;
+      }
+      
+      .top-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Animation for branch list loading */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .branch-card {
+      animation: fadeIn 0.3s ease forwards;
+    }
+    
+    /* Loading state */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(31, 31, 31, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--accent);
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .setup-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      display: block;
+      margin-top: 12px;
+      transition: color 0.2s;
+      text-align: center;
+    }
+    
+    .setup-link:hover {
+      color: var(--primary-dark);
+      text-decoration: underline;
+    }
+    
+    .branches-container {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    
+    .branches-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .branches-container::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+    
+    .branches-container::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    
+    .branches-container::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    /* Search bar styling */
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .search-wrapper i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+    }
+    .search-input {
+      width: 100%;
+      padding: 12px 14px 12px 38px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #fff;
+      transition: box-shadow 0.2s, border-color 0.2s;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Choose your branch</h1>
+      <p class="muted">Login to Main Branch or create/select a different branch.</p>
+    </div>
+
+    <div class="card-container">
+      <div class="top-row">
+        <div class="card">
+          <h3><i class="fas fa-building"></i> Main Branch</h3>
+          <p class="muted">Full access to all features with administrative privileges.</p>
+          <button id="btnMain" class="btn btn-primary btn-block" style="display:none">Login to Main</button>
+          <a id="linkSetupMain" class="setup-link" href="create-branch-account.html">Set Main Branch credentials</a>
+          <a id="linkLoginMain" class="btn btn-primary btn-block" style="display:none; margin-top:16px">Login to Main</a>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-code-branch"></i> Create New Branch</h3>
+          <p class="muted">Limited access for branch teams. Tyres and Vehicle Info restricted.</p>
+          <button id="btnCreateBranch" class="btn btn-primary btn-block">Create Branch</button>
+        </div>
+      </div>
+      
+      <div class="bottom-row">
+        <div class="card">
+          <h3 style="margin-top:0"><i class="fas fa-list"></i> Your Branches</h3>
+          <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input id="branchSearch" class="search-input" type="text" placeholder="Search branches by name or email..." />
+          </div>
+          <div class="branches-container">
+            <div id="branchList" class="muted">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Firebase code remains exactly the same as in the original
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getAuth, 
+      onAuthStateChanged, 
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { 
+      getDatabase, 
+      ref, 
+      get, 
+      push, 
+      set, 
+      update,
+      query,
+      orderByChild,
+      equalTo
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const branchListEl = document.getElementById('branchList');
+    const btnMain = document.getElementById('btnMain');
+    const btnCreate = document.getElementById('btnCreateBranch');
+    const branchSearch = document.getElementById('branchSearch');
+
+    function debounce(fn, delay = 200) {
+      let t;
+      return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+    }
+
+    function applyBranchFilter() {
+      if (!branchListEl) return;
+      const term = (branchSearch?.value || '').trim().toLowerCase();
+      const cards = branchListEl.querySelectorAll('.branch-card');
+      let visible = 0;
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        const show = !term || text.includes(term);
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      let empty = branchListEl.querySelector('.no-matches');
+      if (cards.length > 0 && visible === 0) {
+        if (!empty) {
+          empty = document.createElement('div');
+          empty.className = 'muted no-matches';
+          empty.textContent = 'No matching branches';
+          branchListEl.appendChild(empty);
+        }
+      } else {
+        if (empty) empty.remove();
+      }
+    }
+
+    function gotoDashboard(branchKey, isMain) {
+      localStorage.setItem('selectedBranch', isMain ? 'main' : branchKey);
+      if (isMain) {
+        window.location.href = 'home.html';
+      } else {
+        window.location.href = 'branch-dashboard.html?branch=' + encodeURIComponent(branchKey);
+      }
+    }
+
+    async function ensureMainBranch(user) {
+      // Only check existence; do not auto-write here (creation handled elsewhere)
+      try {
+        const mainRef = ref(db, `users/${user.uid}/branches/main`);
+        const snap = await get(mainRef);
+        return snap.exists();
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function loadBranches(coreAccountId) {
+      try {
+        const listRef = ref(db, `users/${coreAccountId}/branches`);
+        const snap = await get(listRef);
+        if (!snap.exists()) {
+          branchListEl.textContent = 'No branches yet.';
+          return;
+        }
+        const data = snap.val();
+        const entries = Object.entries(data);
+        if (entries.length === 0) {
+          branchListEl.textContent = 'No branches yet.';
+          return;
+        }
+        branchListEl.innerHTML = '';
+        // Do not render branches from meta/list here to avoid duplication
+
+        // Show branch login links (email prefill) if branchAccounts exist
+        try {
+          let showMainLogin = false;
+          let mainEmail = '';
+
+          const accSnap = await get(ref(db, `users/${coreAccountId}/branchAccounts`));
+          if (accSnap.exists()) {
+            const accounts = accSnap.val();
+            // Render only non-main branch accounts as cards with limited access
+            Object.entries(accounts).forEach(([key, acc]) => {
+              if (acc && acc.email) {
+                if ((acc.branchKey || key) === 'main') {
+                  showMainLogin = true;
+                  mainEmail = acc.email;
+                  return; // skip rendering main in list
+                }
+                const item = document.createElement('div');
+                item.className = 'branch-card';
+                const title = document.createElement('div');
+                title.className = 'branch-title';
+                title.textContent = `${acc.name || key} (Limited)`;
+                const email = document.createElement('div');
+                email.className = 'branch-email';
+                email.textContent = acc.email;
+                item.appendChild(title);
+                item.appendChild(email);
+                const link = document.createElement('a');
+                link.className = 'btn';
+                link.href = `login.html?email=${encodeURIComponent(acc.email)}&branch=${encodeURIComponent(acc.branchKey || key)}`;
+                link.textContent = 'Login';
+                item.appendChild(link);
+                branchListEl.appendChild(item);
+              }
+            });
+
+            // Configure Main Branch card login link if we found email in branchAccounts
+            const linkLoginMain = document.getElementById('linkLoginMain');
+            const linkSetupMain = document.getElementById('linkSetupMain');
+            if (showMainLogin && mainEmail) {
+              linkLoginMain.href = `login.html?email=${encodeURIComponent(mainEmail)}&branch=main`;
+              linkLoginMain.style.display = 'inline-block';
+              linkSetupMain.style.display = 'none';
+            } else {
+              // If no email mapping, fallback: check branches/main exists and still show login
+              const mainBranchSnap = await get(ref(db, `users/${coreAccountId}/branches/main`));
+              if (mainBranchSnap.exists()) {
+                linkLoginMain.removeAttribute('href');
+                linkLoginMain.onclick = () => { window.location.href = 'login.html?branch=main'; };
+                linkLoginMain.style.display = 'inline-block';
+                linkSetupMain.style.display = 'none';
+              } else {
+                linkLoginMain.style.display = 'none';
+                linkSetupMain.style.display = 'inline-block';
+              }
+            }
+          } else {
+            // No branchAccounts node; fallback to branches/main
+            const linkLoginMain = document.getElementById('linkLoginMain');
+            const linkSetupMain = document.getElementById('linkSetupMain');
+            const mainBranchSnap = await get(ref(db, `users/${coreAccountId}/branches/main`));
+            if (mainBranchSnap.exists()) {
+              linkLoginMain.removeAttribute('href');
+              linkLoginMain.onclick = () => { window.location.href = 'login.html?branch=main'; };
+              linkLoginMain.style.display = 'inline-block';
+              linkSetupMain.style.display = 'none';
+            } else {
+              linkLoginMain.style.display = 'none';
+              linkSetupMain.style.display = 'inline-block';
+            }
+          }
+          // Apply active filter after rendering
+          applyBranchFilter();
+        } catch (_) {
+          applyBranchFilter();
+        }
+      } catch (e) {
+        branchListEl.textContent = 'Failed to load branches';
+      }
+    }
+
+    // Check if user is logged in and is a core account
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      // Get user data to verify account type
+      const userRef = ref(db, `users/${user.uid}`);
+      let userSnapshot = await get(userRef);
+      let userData = userSnapshot.exists() ? userSnapshot.val() : null;
+
+      // If missing, auto-provision minimal core profile to satisfy rules
+      if (!userData) {
+        const minimal = {
+          accountType: 'core',
+          email: user.email || '',
+          name: user.displayName || 'Core Account',
+          createdAt: new Date().toISOString(),
+          uid: user.uid
+        };
+        try {
+          await set(userRef, minimal);
+          userSnapshot = await get(userRef);
+          userData = userSnapshot.val();
+        } catch (e) {
+          console.error('Failed to provision core user record:', e);
+          alert('Unable to initialize your account. Please retry.');
+          return;
+        }
+      }
+
+      // Verify this is a core account
+      if (userData.accountType !== 'core') {
+        console.error('Not a core account');
+        alert('Error: This page is only accessible to core accounts.');
+        window.location.href = 'index.html';
+        return;
+      }
+      
+      // Store core account info
+      const coreAccount = {
+        id: user.uid,
+        email: user.email,
+        name: userData.name || 'Core Account'
+      };
+      
+      // Update UI to show core account info
+      const coreEmailEl = document.getElementById('core-account-email');
+      if (coreEmailEl) coreEmailEl.textContent = coreAccount.email;
+      await ensureMainBranch(user);
+      await loadBranches(coreAccount.id);
+
+      // Owner-session Main access is disabled; use branch credentials link instead
+      btnMain.style.display = 'none';
+      if (branchSearch) {
+        branchSearch.addEventListener('input', debounce(applyBranchFilter, 150));
+      }
+      
+      // Handle create branch button click
+      btnCreate.onclick = async () => {
+        // Build a modal form
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.inset = '0';
+        modal.style.background = 'rgba(0,0,0,0.5)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '1000';
+        modal.style.backdropFilter = 'blur(5px)';
+        modal.innerHTML = `
+          <div class="modal-content">
+            <h3>Create New Branch</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="b_name">Branch Name</label>
+                <input id="b_name" class="form-control" placeholder="e.g., Jaipur Branch" />
+              </div>
+              <div class="form-group">
+                <label for="b_email">Branch Email</label>
+                <input id="b_email" type="email" class="form-control" placeholder="branch@example.com" />
+              </div>
+              <div class="form-group">
+                <label for="b_pass">Password</label>
+                <input id="b_pass" type="password" class="form-control" placeholder="********" />
+              </div>
+              <div class="form-group">
+                <label for="b_confirm_pass">Confirm Password</label>
+                <input id="b_confirm_pass" type="password" class="form-control" placeholder="********" />
+              </div>
+              <div class="form-group">
+                <label for="b_tname">Transport Name</label>
+                <input id="b_tname" class="form-control" placeholder="Transport Co." />
+              </div>
+              <div class="form-group">
+                <label for="b_oname">Owner Name</label>
+                <input id="b_oname" class="form-control" placeholder="Owner full name" />
+              </div>
+              <div class="form-group">
+                <label for="b_phone">Phone</label>
+                <input id="b_phone" class="form-control" placeholder="9876543210" />
+              </div>
+              <div class="form-group">
+                <label for="b_addr">Address</label>
+                <input id="b_addr" class="form-control" placeholder="Address line" />
+              </div>
+              <div class="form-group">
+                <label for="b_city">City</label>
+                <input id="b_city" class="form-control" placeholder="City" />
+              </div>
+              <div class="form-group">
+                <label for="b_pin">Pincode</label>
+                <input id="b_pin" class="form-control" placeholder="110001" />
+              </div>
+              <div class="form-group">
+                <label for="b_gst">GSTIN (optional)</label>
+                <input id="b_gst" class="form-control" placeholder="22AAAAA0000A1Z5" />
+              </div>
+              <!-- Branch type selection removed; new branches are sub by default -->
+            </div>
+            <div class="modal-actions">
+              <button id="b_cancel" class="btn btn-secondary">Cancel</button>
+              <button id="b_create" class="btn btn-primary">Create Branch</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('#b_cancel').onclick = () => modal.remove();
+        modal.querySelector('#b_create').onclick = async () => {
+          const name = modal.querySelector('#b_name').value.trim();
+          const email = modal.querySelector('#b_email').value.trim();
+          const password = modal.querySelector('#b_pass').value;
+          const confirmPassword = modal.querySelector('#b_confirm_pass').value;
+          const transportName = modal.querySelector('#b_tname').value.trim();
+          const branchType = 'sub';
+          
+          // Validate inputs
+          if (!name || !email || !password || !confirmPassword || !transportName) {
+            alert('Please fill in all fields');
+            return;
+          }
+          
+          if (password !== confirmPassword) {
+            alert('Passwords do not match');
+            return;
+          }
+          
+          if (password.length < 6) {
+            alert('Password must be at least 6 characters');
+            return;
+          }
+          const ownerName = modal.querySelector('#b_oname').value.trim();
+          const phoneNumber = modal.querySelector('#b_phone').value.trim();
+          const address = modal.querySelector('#b_addr').value.trim();
+          const city = modal.querySelector('#b_city').value.trim();
+          const pincode = modal.querySelector('#b_pin').value.trim();
+          const gstin = (modal.querySelector('#b_gst').value || '').trim().toUpperCase();
+          if (!name || !email || !password || !transportName || !ownerName || !phoneNumber || !address || !city || !pincode) { alert('Please fill all required fields'); return; }
+          // Create branch auth using a secondary app so owner session is unaffected
+          let branchApp;
+          try {
+            const { initializeApp: init2, deleteApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+            const { getAuth: getAuth2, createUserWithEmailAndPassword: create2 } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+            const { getDatabase: getDb2, ref: ref2, set: set2 } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+            branchApp = init2(firebaseConfig, 'branchCreateApp');
+            const branchAuth = getAuth2(branchApp);
+            // Create the branch account on secondary app so owner session remains intact
+            try {
+              // Create user in Firebase Auth using secondary auth
+              const userCredential = await create2(branchAuth, email, password);
+              const branchUser = userCredential.user;
+              
+              // Create branch data in the database
+              const branchData = {
+                name: name,
+                email: email,
+                type: branchType,
+                transportName: transportName,
+                createdAt: new Date().toISOString(),
+                status: 'active',
+                createdBy: coreAccount.id
+              };
+              
+              // Save branch data under the core account
+              const branchRef = ref(db, `users/${coreAccount.id}/branches/${branchUser.uid}`);
+              await set(branchRef, branchData);
+              
+              // Map branch account under branchAccounts for quick login
+              const branchMapRef = ref(db, `users/${coreAccount.id}/branchAccounts/${branchUser.uid}`);
+              await set(branchMapRef, {
+                email: email,
+                name: name,
+                branchKey: branchUser.uid,
+                createdAt: new Date().toISOString()
+              });
+
+              // Update the branch user's profile with core account ID
+              const branchUserRef = ref(db, `users/${branchUser.uid}`);
+              await set(branchUserRef, {
+                accountType: 'branch',
+                branchType: branchType,
+                coreAccountId: coreAccount.id,
+                createdAt: new Date().toISOString(),
+                email: email,
+                name: name
+              });
+              
+              // Show success message
+              alert('Branch account created successfully!');
+              modal.remove();
+              
+              // Reload branches
+              await loadBranches(coreAccount.id);
+              
+            } catch (error) {
+              console.error('Error creating branch:', error);
+              alert(`Error creating branch: ${error.message}`);
+            } finally {
+              try { if (branchApp) { const { deleteApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'); await deleteApp(branchApp); } } catch (_) {}
+            }
+          } catch (error) {
+            console.error('Error creating branch:', error);
+            alert(`Error creating branch: ${error.message}`);
+          }
+        };
+      };
+    });
+  </script>
+</body>
+</html>
