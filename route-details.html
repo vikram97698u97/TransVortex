@@ -45,7 +45,8 @@
   </style>
 </head>
 <body>
-  <div id="navbar"></div>
+  <script src="navbar-loader.js"></script>
+  <script src="table-pager.js"></script>
 
   <div class="wrap">
     <div class="header">
@@ -104,7 +105,7 @@
 
         <!-- table -->
         <div class="table-wrap" style="margin-top:12px;">
-          <table id="recordsTable">
+          <table id="recordsTable" data-paginate="true" data-page-sizes="10,20,50,100">
             <thead>
               <tr>
                 <th class="sortable" data-key="date">Date &#x25BC;</th>
@@ -199,6 +200,10 @@
 
         <div style="display:flex; gap:8px;">
           <select id="recPump" style="flex:1;"><option value="">-- Select Pump --</option></select>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <input type="number" id="recDieselPrice" placeholder="Diesel Price (₹/L)" step="0.01" style="flex:1;">
           <input type="number" id="recAmount" placeholder="Amount (₹)" step="0.01" style="flex:1;">
         </div>
 
@@ -333,6 +338,7 @@ const recFrom = document.getElementById('recFrom');
 const recTo = document.getElementById('recTo');
 const recDistance = document.getElementById('recDistance');
 const recDiesel = document.getElementById('recDiesel');
+const recDieselPrice = document.getElementById('recDieselPrice');
 const recPump = document.getElementById('recPump');
 const recAmount = document.getElementById('recAmount');
 const recPayment = document.getElementById('recPayment');
@@ -373,7 +379,6 @@ onAuthStateChanged(auth, (user) => {
   }
   currentUser = user;
   // load UI + data after auth ready
-  fetch('navbar.html').then(r=>r.text()).then(t => document.getElementById('navbar').innerHTML = t);
   loadPumps();
   loadRecords();
   attachUI();
@@ -597,6 +602,7 @@ function attachUI(){
     recTo.value = rec.to || '';
     recDistance.value = rec.distance || '';
     recDiesel.value = rec.diesel || '';
+    recDieselPrice.value = rec.dieselPrice || '';
     recPump.value = rec.petrolPump || '';
     recAmount.value = rec.amount || '';
     recPayment.value = rec.payment || 'paid';
@@ -613,6 +619,16 @@ function attachUI(){
     recordModal.classList.add('show');
   };
 
+  // Auto-calc amount whenever diesel or price changes
+  function updateCalculatedAmount(){
+    const liters = parseFloat(recDiesel.value || 0);
+    const price = parseFloat(recDieselPrice.value || 0);
+    const amt = +(liters * price).toFixed(2);
+    if (!isNaN(amt)) recAmount.value = amt;
+  }
+  recDiesel.addEventListener('input', updateCalculatedAmount);
+  recDieselPrice.addEventListener('input', updateCalculatedAmount);
+
   saveRecordBtn.addEventListener('click', async () => {
     if (!currentUser) return alert('Auth error');
     
@@ -623,6 +639,7 @@ function attachUI(){
       to: recTo.value.trim(),
       distance: parseFloat(recDistance.value || 0),
       diesel: parseFloat(recDiesel.value || 0),
+      dieselPrice: parseFloat(recDieselPrice.value || 0),
       petrolPump: recPump.value || '',
       amount: parseFloat(recAmount.value || 0),
       payment: recPayment.value || 'paid',
@@ -714,6 +731,7 @@ function openRecordModal(data){
   recTo.value = data ? data.to : '';
   recDistance.value = data ? data.distance : '';
   recDiesel.value = data ? data.diesel : '';
+  recDieselPrice.value = data ? (data.dieselPrice || '') : '';
   recPump.value = data ? data.petrolPump : '';
   recAmount.value = data ? data.amount : '';
   recPayment.value = data ? data.payment : 'paid';
