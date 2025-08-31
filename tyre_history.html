@@ -172,41 +172,6 @@
       background-color: #5a6268;
     }
 
-    .navbar {
-      background-color: #2E8B57;
-      padding: 15px 20px;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .navbar-brand {
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .navbar-links {
-      display: flex;
-      gap: 20px;
-    }
-
-    .navbar-links a {
-      color: white;
-      text-decoration: none;
-      padding: 8px 12px;
-      border-radius: 5px;
-      transition: background-color 0.3s;
-    }
-
-    .navbar-links a:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .navbar-links a.active {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-
     @media (max-width: 768px) {
       .stats-container {
         flex-direction: column;
@@ -215,21 +180,11 @@
       .filter-section {
         flex-direction: column;
       }
-      
-      .navbar {
-        flex-direction: column;
-        gap: 10px;
-      }
-      
-      .navbar-links {
-        flex-direction: column;
-        width: 100%;
-      }
     }
   </style>
 </head>
 <body>
-  <div id="navbar"></div>
+  <script src="navbar-loader.js"></script>
   
   <div class="container">
     <div id="alertContainer"></div>
@@ -286,6 +241,29 @@
           <!-- History entries will be populated dynamically -->
         </tbody>
       </table>
+
+      <!-- Pagination Controls (Tab System) -->
+      <div style="margin-top: 16px;">
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+          <label for="entriesPerPage" style="font-weight:600;">Entries per page:</label>
+          <select id="entriesPerPage" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+          <div id="entriesInfo" style="color:#666; font-size:14px;"></div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <button class="tab-nav-control" id="prevPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="tab-navigation" id="tabNavigation" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+          <button class="tab-nav-control" id="nextPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -310,6 +288,17 @@
     const db = getDatabase(app);
     let currentUser = null;
     let allHistoryData = [];
+    let filteredHistoryData = [];
+
+    // Pagination state
+    const entriesPerPageSelect = document.getElementById('entriesPerPage');
+    const entriesInfo = document.getElementById('entriesInfo');
+    const tabNavigation = document.getElementById('tabNavigation');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let totalPages = 1;
 
     // Make Firebase functions available globally
     window.db = db;
@@ -317,17 +306,37 @@
     window.get = get;
     window.currentUser = null; // Will be updated in onAuthStateChanged
 
-    // Load navbar
-    fetch('navbar.html')
-      .then(response => response.text())
-      .then(html => {
-        document.getElementById('navbar').innerHTML = html;
-      });
+    // Navbar is injected via navbar-loader.js
 
     // Check authentication
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "index.html";
+        return;
+      }
+      // Enforce main-branch only access
+      const selectedBranch = localStorage.getItem('selectedBranch');
+      if (selectedBranch && selectedBranch !== 'main') {
+        console.error('Not allowed to use Tyre History in limited branch');
+        if (confirm('This feature is only available in Main Branch. Go to Home?')) {
+          window.location.href = 'home.html';
+        }
+        return;
+      }
+      // Role-based access: block normal users
+      try {
+        const profileSnap = await get(ref(db, `users/${user.uid}/profile`));
+        const profile = profileSnap.exists() ? profileSnap.val() : {};
+        const role = (profile.role || profile.userRole || 'normal').toLowerCase();
+        if (role === 'normal') {
+          showAlert('Access restricted: your role cannot view Tyre History. Redirecting to Home...', 'danger');
+          setTimeout(() => { window.location.href = 'home.html'; }, 1200);
+          return;
+        }
+      } catch (e) {
+        console.warn('Failed to read user role, defaulting to restricted', e);
+        showAlert('Access restricted. Redirecting to Home...', 'danger');
+        setTimeout(() => { window.location.href = 'home.html'; }, 1200);
         return;
       }
       currentUser = user;
@@ -357,6 +366,8 @@
           document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="8">No disposal history found</td></tr>';
           updateStats([]);
           populateFilters([]);
+          filteredHistoryData = [];
+          renderHistoryWithPagination();
           return;
         }
         
@@ -372,11 +383,11 @@
         
         // Store all data for filtering
         allHistoryData = historyData;
-        
-        // Update UI
-        renderHistoryTable(historyData);
-        updateStats(historyData);
+        // Update UI with pagination
         populateFilters(historyData);
+        currentPage = 1;
+        renderHistoryWithPagination();
+        updateStats(computeFilteredData());
       });
     };
 
@@ -548,50 +559,9 @@
       const reasonFilter = document.getElementById('reasonFilter').value;
       const timeFilter = document.getElementById('timeFilter').value;
       
-      let filteredData = [...allHistoryData];
-      
-      // Apply vehicle filter
-      if (vehicleFilter) {
-        filteredData = filteredData.filter(item => 
-          `${item.vehicleNumber} - ${item.vehicleModel}` === vehicleFilter
-        );
-      }
-      
-      // Apply reason filter
-      if (reasonFilter) {
-        filteredData = filteredData.filter(item => 
-          item.disposalReason === reasonFilter
-        );
-      }
-      
-      // Apply time filter
-      if (timeFilter !== 'all') {
-        const now = Date.now();
-        let timeLimit;
-        
-        switch (timeFilter) {
-          case 'week':
-            timeLimit = now - (7 * 24 * 60 * 60 * 1000); // 7 days
-            break;
-          case 'month':
-            timeLimit = now - (30 * 24 * 60 * 60 * 1000); // 30 days
-            break;
-          case 'quarter':
-            timeLimit = now - (90 * 24 * 60 * 60 * 1000); // 90 days
-            break;
-          case 'year':
-            timeLimit = now - (365 * 24 * 60 * 60 * 1000); // 365 days
-            break;
-        }
-        
-        filteredData = filteredData.filter(item => 
-          item.disposedAt && item.disposedAt >= timeLimit
-        );
-      }
-      
-      // Update UI with filtered data
-      renderHistoryTable(filteredData);
-      updateStats(filteredData);
+      currentPage = 1;
+      renderHistoryWithPagination();
+      updateStats(computeFilteredData());
     };
 
     // Reset filters
@@ -600,33 +570,126 @@
       document.getElementById('reasonFilter').value = '';
       document.getElementById('timeFilter').value = 'all';
       document.getElementById('searchInput').value = '';
-      
-      renderHistoryTable(allHistoryData);
-      updateStats(allHistoryData);
+      currentPage = 1;
+      renderHistoryWithPagination();
+      updateStats(computeFilteredData());
     };
 
     // Search history
     window.searchHistory = function() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      
-      if (!searchTerm) {
-        renderHistoryTable(allHistoryData);
-        updateStats(allHistoryData);
-        return;
-      }
-      
-      const filteredData = allHistoryData.filter(item => 
-        (item.number && item.number.toLowerCase().includes(searchTerm)) ||
-        (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
-        (item.size && item.size.toLowerCase().includes(searchTerm)) ||
-        (item.position && item.position.toLowerCase().includes(searchTerm)) ||
-        (item.vehicleNumber && item.vehicleNumber.toLowerCase().includes(searchTerm)) ||
-        (item.disposalReason && item.disposalReason.toLowerCase().includes(searchTerm))
-      );
-      
-      renderHistoryTable(filteredData);
-      updateStats(filteredData);
+      currentPage = 1;
+      renderHistoryWithPagination();
+      updateStats(computeFilteredData());
     };
+
+    // Compute filtered dataset based on current UI controls
+    function computeFilteredData() {
+      const vehicleValue = document.getElementById('vehicleFilter').value;
+      const reasonValue = document.getElementById('reasonFilter').value;
+      const timeValue = document.getElementById('timeFilter').value;
+      const searchTerm = (document.getElementById('searchInput').value || '').toLowerCase();
+      let data = [...allHistoryData];
+      if (vehicleValue) {
+        data = data.filter(item => `${item.vehicleNumber} - ${item.vehicleModel}` === vehicleValue);
+      }
+      if (reasonValue) {
+        data = data.filter(item => item.disposalReason === reasonValue);
+      }
+      if (timeValue !== 'all') {
+        const now = Date.now();
+        let timeLimit = 0;
+        switch (timeValue) {
+          case 'week': timeLimit = now - 7 * 24 * 60 * 60 * 1000; break;
+          case 'month': timeLimit = now - 30 * 24 * 60 * 60 * 1000; break;
+          case 'quarter': timeLimit = now - 90 * 24 * 60 * 60 * 1000; break;
+          case 'year': timeLimit = now - 365 * 24 * 60 * 60 * 1000; break;
+        }
+        data = data.filter(item => item.disposedAt && item.disposedAt >= timeLimit);
+      }
+      if (searchTerm) {
+        data = data.filter(item =>
+          (item.number && item.number.toLowerCase().includes(searchTerm)) ||
+          (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
+          (item.size && item.size.toLowerCase().includes(searchTerm)) ||
+          (item.position && item.position.toLowerCase().includes(searchTerm)) ||
+          (item.vehicleNumber && item.vehicleNumber.toLowerCase().includes(searchTerm)) ||
+          (item.disposalReason && item.disposalReason.toLowerCase().includes(searchTerm))
+        );
+      }
+      return data;
+    }
+
+    function updatePaginationControls(totalItems) {
+      prevPageBtn.disabled = currentPage === 1;
+      nextPageBtn.disabled = currentPage === totalPages;
+      const startIndex = Math.min((currentPage - 1) * itemsPerPage + 1, totalItems);
+      const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+      entriesInfo.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+      generatePageTabs();
+    }
+
+    function generatePageTabs() {
+      tabNavigation.innerHTML = '';
+      if (totalPages <= 1) return;
+      addTab(1);
+      let startPage = Math.max(2, currentPage - 2);
+      let endPage = Math.min(totalPages - 1, currentPage + 2);
+      if (startPage > 2) addEllipsis();
+      for (let i = startPage; i <= endPage; i++) addTab(i);
+      if (endPage < totalPages - 1) addEllipsis();
+      addTab(totalPages);
+    }
+
+    function addTab(pageNumber) {
+      const tab = document.createElement('div');
+      tab.className = `tab ${pageNumber === currentPage ? 'active' : ''}`;
+      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
+      tab.textContent = pageNumber;
+      tab.addEventListener('click', () => {
+        currentPage = pageNumber;
+        renderHistoryWithPagination();
+      });
+      tabNavigation.appendChild(tab);
+    }
+
+    function addEllipsis() {
+      const ellipsis = document.createElement('div');
+      ellipsis.textContent = '...';
+      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
+      tabNavigation.appendChild(ellipsis);
+    }
+
+    function renderHistoryWithPagination() {
+      filteredHistoryData = computeFilteredData();
+      const totalItems = filteredHistoryData.length;
+      totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+      updatePaginationControls(totalItems);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+      const pageData = filteredHistoryData.slice(startIndex, endIndex);
+      renderHistoryTable(pageData);
+    }
+
+    // Hook up pagination controls
+    entriesPerPageSelect.addEventListener('change', function () {
+      itemsPerPage = parseInt(this.value, 10) || 10;
+      currentPage = 1;
+      renderHistoryWithPagination();
+    });
+    prevPageBtn.addEventListener('click', function () {
+      if (currentPage > 1) {
+        currentPage--;
+        renderHistoryWithPagination();
+      }
+    });
+    nextPageBtn.addEventListener('click', function () {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderHistoryWithPagination();
+      }
+    });
 
     // Logout function
     window.logout = function() {
@@ -637,10 +700,7 @@
       });
     };
 
-    // Toggle menu function
-    window.toggleMenu = function() {
-      document.getElementById("navLinks").classList.toggle("show");
-    };
+    // No toggle menu here; sidebar toggle handled by navbar-loader.js
   </script>
 </body>
 </html>
