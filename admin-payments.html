@@ -596,6 +596,15 @@
                 </tbody>
             </table>
         </div>
+        <!-- Pagination Controls (tab-based) -->
+        <div class="pagination" style="justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span id="entriesInfo">Showing 0 to 0 of 0 entries</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <button id="prevPage">Prev</button>
+                <div id="pageTabs" style="display:flex; gap:4px;"></div>
+                <button id="nextPage">Next</button>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase and other scripts -->
@@ -640,7 +649,17 @@
         
         let currentFilter = 'all';
         let allPayments = [];
+        let filteredPayments = [];
         let searchTimeout;
+
+        // Pagination state
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let totalPages = 1;
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageTabs = document.getElementById('pageTabs');
+        const entriesInfo = document.getElementById('entriesInfo');
 
         // Check if user is admin
         async function checkAdmin() {
@@ -953,6 +972,59 @@
             paymentsBody.appendChild(fragment);
         }
 
+        function generatePageTabs() {
+            if (!pageTabs) return;
+            pageTabs.innerHTML = '';
+            // For many pages, show first, last, and around current
+            const maxTabs = 7;
+            const addBtn = (num) => {
+                const b = document.createElement('button');
+                b.textContent = num;
+                if (num === currentPage) b.classList.add('active');
+                b.addEventListener('click', () => {
+                    currentPage = num;
+                    renderTableWithPagination();
+                });
+                pageTabs.appendChild(b);
+            };
+            if (totalPages <= maxTabs) {
+                for (let i = 1; i <= totalPages; i++) addBtn(i);
+            } else {
+                const pages = new Set([1, 2, totalPages-1, totalPages, currentPage-1, currentPage, currentPage+1]);
+                const sorted = [...pages].filter(p => p >= 1 && p <= totalPages).sort((a,b)=>a-b);
+                let prev = 0;
+                for (const p of sorted) {
+                    if (p - prev > 1) {
+                        const ell = document.createElement('span');
+                        ell.textContent = '…';
+                        pageTabs.appendChild(ell);
+                    }
+                    addBtn(p);
+                    prev = p;
+                }
+            }
+        }
+
+        function updatePaginationControls(totalItems) {
+            if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
+            if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
+            const startIndex = Math.min((currentPage - 1) * itemsPerPage + 1, totalItems);
+            const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+            if (entriesInfo) entriesInfo.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+            generatePageTabs();
+        }
+
+        function renderTableWithPagination() {
+            const totalItems = filteredPayments.length;
+            totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+            if (currentPage > totalPages) currentPage = totalPages;
+            updatePaginationControls(totalItems);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            const pageData = filteredPayments.slice(startIndex, endIndex);
+            renderPayments(pageData);
+        }
+
         // Load payments from Firebase
         async function loadPayments() {
             // Re-initialize event listeners in case DOM was recreated
@@ -1216,7 +1288,8 @@
                 return;
             }
             
-            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const searchEl = document.getElementById('searchInput');
+            const searchTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
             console.log('Search term:', searchTerm);
             
             // Filter by status
@@ -1268,7 +1341,8 @@
                     const clearSearchBtn = document.getElementById('clearSearchBtn');
                     if (clearSearchBtn) {
                         clearSearchBtn.addEventListener('click', () => {
-                            if (searchInput) searchInput.value = '';
+                            const input = document.getElementById('searchInput');
+                            if (input) input.value = '';
                             document.querySelectorAll('.filter-btn').forEach(btn => {
                                 if (btn.getAttribute('data-filter') === 'all') {
                                     btn.click();
@@ -1283,10 +1357,13 @@
                 }
                 return;
             }
-            
-            // Render the filtered results
-            console.log('Rendering filtered payments:', filtered.length);
-            renderPayments(filtered);
+            // Results exist: update filtered list and render current page
+            filteredPayments = filtered;
+            // Ensure currentPage is valid relative to total pages
+            const newTotalPages = Math.max(1, Math.ceil(filteredPayments.length / itemsPerPage));
+            if (!currentPage || currentPage < 1) currentPage = 1;
+            if (currentPage > newTotalPages) currentPage = newTotalPages;
+            renderTableWithPagination();
         }
         
         // Filter payments based on search and filter
