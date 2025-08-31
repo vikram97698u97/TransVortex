@@ -44,7 +44,7 @@
   </style>
 </head>
 <body>
-  <div id="navbar"></div>
+  <script src="navbar-loader.js"></script>
 
   <div class="container">
     <h1>Trip Expenses Manager</h1>
@@ -518,9 +518,6 @@
       set(newMsgRef, { text, senderUid: currentUser.uid, senderName, ts: Date.now() });
       chatInput.value = "";
     }
-
-    // Load navbar (non-blocking)
-    fetch("navbar.html").then(r => r.text()).then(html => document.getElementById("navbar").innerHTML = html).catch(()=>{});
 
     // Expose logout and toggleMenu globally
     window.logout = function() { signOut(auth).then(()=> window.location.href="index.html").catch(e => alert("Logout error: "+e.message)); };
