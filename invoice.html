@@ -7,7 +7,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* Navbar Styles */
+    /* Previous styles remain the same */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -20,141 +20,6 @@
       color: #111111;
     }
 
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #2E8B57;
-      padding: 14px 24px;
-      color: white;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      flex-wrap: wrap;
-    }
-
-    .logo-container {
-      display: flex;
-      align-items: center;
-    }
-
-    .logo {
-      height: 50px;
-      width: 250px;
-      max-width: 400px;
-      transition: transform 0.3s ease;
-    }
-
-    .logo:hover {
-      transform: scale(1.05);
-    }
-
-    .tagline {
-      font-size: 12px;
-      font-style: italic;
-      color: #e0e0e0;
-      margin-top: -3px;
-      letter-spacing: 0.5px;
-    }
-
-    .navbar h1 {
-      font-size: 22px;
-      margin: 0;
-      color: white;
-    }
-
-    .nav-links {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      margin-left: 16px;
-      font-weight: 500;
-    }
-
-    .nav-links a:hover {
-      text-decoration: underline;
-    }
-
-    .nav-links a.active {
-      font-weight: bold;
-    }
-
-    .logout {
-      margin-left: 16px;
-      background-color: #43B97F;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    .logout:hover {
-      background-color: #3ba06f;
-      text-decoration: none;
-    }
-
-    .hamburger {
-      display: none;
-      font-size: 24px;
-      cursor: pointer;
-    }
-
-    @media (max-width: 768px) {
-      .nav-links {
-        display: none;
-        flex-direction: column;
-        width: 100%;
-        background-color: #26734d;
-        margin-top: 10px;
-        padding: 10px 0;
-      }
-
-      .nav-links.show {
-        display: flex;
-      }
-
-      .nav-links a,
-      .logout {
-        margin: 8px auto;
-        width: 90%;
-        text-align: center;
-        padding: 10px 0;
-        display: block;
-      }
-
-      .logout {
-        margin: 8px auto;
-        text-align: center;
-        max-width: 200px;
-      }
-
-      .hamburger {
-        display: block;
-      }
-    }
-    
-    /* Add padding to main content to account for fixed navbar */
-    body {
-      padding-top: 100px;
-    }
-    
-    @media (max-width: 768px) {
-      body {
-        padding-top: 90px;
-      }
-    }
-
-    /* Page Content */
     body {
       background-color: #f3fff3;
     }
@@ -188,7 +53,6 @@
       background-color: #219150;
     }
     
-    /* New Invoice Styling */
     .invoice-container {
       background: white;
       border-radius: 10px;
@@ -345,6 +209,46 @@
       margin-top: 30px;
     }
     
+    /* New styles for the setup card */
+    .setup-card {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 600px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+      padding: 30px;
+      z-index: 1000;
+    }
+    
+    .setup-card h3 {
+      color: #2d572c;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .setup-card .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .setup-card .form-label {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+    
     @media print {
       .navbar, .no-print {
         display: none !important;
@@ -358,34 +262,84 @@
         box-shadow: none;
         padding: 0;
       }
+      
+      .setup-card, .overlay {
+        display: none !important;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- Navbar -->
-  <div class="navbar">
-    <div class="logo-container">
-      <img src="logo.jpg" alt="TransVortex" class="logo">
+  <script src="navbar-loader.js"></script>
+
+  <!-- Setup Card Overlay -->
+  <div id="setupOverlay" class="overlay" style="display: none;"></div>
+  
+  <!-- Setup Card -->
+  <div id="setupCard" class="setup-card" style="display: none;">
+    <h3>Complete Your Company Profile</h3>
+    <p class="text-muted mb-4">Please provide your company details to generate invoices.</p>
+    
+    <div class="form-group mb-3">
+      <label class="form-label">Company Name</label>
+      <input type="text" id="setupCompanyName" class="form-control" placeholder="Enter company name">
     </div>
-    <div class="hamburger" onclick="toggleMenu()">&#9776;</div>
-    <div class="nav-links" id="navLinks">
-      <a href="home.html">Home</a>
-      <a href="booking.html">Thread Booking</a>
-      <a href="add.html">Vehicle Info</a>
-      <a href="route-details.html">Route Details</a>
-      <a href="trip-expenses.html">Trip Expenses</a>
-      <a href="tyre.html">Tyres</a>
-      <a href="tyre_history.html">Tyre History</a>
-      <a href="payment-billing.html">Payments</a>
-      <a href="lr-report.html">LR Report</a>
-      <a href="invoice.html" class="active">Invoice</a>
-      <a href="alerts-system.html">Reminder</a>
-      <button class="logout" onclick="logout()">Logout</button>
+    
+    <div class="form-group mb-3">
+      <label class="form-label">Owner Name</label>
+      <input type="text" id="setupOwnerName" class="form-control" placeholder="Enter owner name">
+    </div>
+    
+    <div class="form-group mb-3">
+      <label class="form-label">Address</label>
+      <input type="text" id="setupAddress" class="form-control" placeholder="Enter address">
+    </div>
+    
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group mb-3">
+          <label class="form-label">City</label>
+          <input type="text" id="setupCity" class="form-control" placeholder="Enter city">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group mb-3">
+          <label class="form-label">State</label>
+          <input type="text" id="setupState" class="form-control" placeholder="Enter state">
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group mb-3">
+          <label class="form-label">Pincode</label>
+          <input type="text" id="setupPincode" class="form-control" placeholder="Enter pincode">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group mb-3">
+          <label class="form-label">Phone Number</label>
+          <input type="text" id="setupPhone" class="form-control" placeholder="Enter phone number">
+        </div>
+      </div>
+    </div>
+    
+    <div class="form-group mb-4">
+      <label class="form-label">GSTIN (Optional)</label>
+      <input type="text" id="setupGST" class="form-control" placeholder="Enter GSTIN">
+    </div>
+    
+    <div class="d-flex justify-content-end">
+      <button class="btn btn-green" onclick="saveCompanyDetails()">
+        <i class="fas fa-save me-2"></i>Save Details
+      </button>
     </div>
   </div>
 
   <div class="container">
     <div class="invoice-container" id="invoiceContent">
+      <!-- Invoice content remains the same -->
       <div class="invoice-header">
         <div class="company-name" id="companyName">TRANSPORT COMPANY</div>
         <div class="invoice-title">INVOICE</div>
@@ -543,66 +497,212 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
 
+    // Make renderProfile globally accessible
+    window.renderProfile = function(profileData) {
+      if (!profileData) return;
+      
+      console.log("Rendering profile with data:", profileData);
+      
+      // Set company name
+      document.getElementById("companyName").textContent = 
+        profileData.transportName || profileData.name || "TRANSPORT COMPANY";
+      
+      document.getElementById("companyNameDetail").textContent = 
+        profileData.transportName || profileData.name || "Transport Company";
+      
+      // Set owner name
+      document.getElementById("companyOwner").textContent = 
+        profileData.ownerName || profileData.name || "Owner Name";
+      
+      // Set address
+      if (profileData.address) {
+        document.getElementById("companyAddress").textContent = profileData.address;
+      } else {
+        document.getElementById("companyAddress").textContent = "Address line 1";
+      }
+      
+      // Set location (city, state, pincode)
+      let locationLine = '';
+      if (profileData.city) {
+        locationLine = profileData.city;
+        if (profileData.state) locationLine += `, ${profileData.state}`;
+        if (profileData.pincode) locationLine += ` - ${profileData.pincode}`;
+        document.getElementById("companyLocation").textContent = locationLine;
+      } else if (profileData.pincode) {
+        document.getElementById("companyLocation").textContent = profileData.pincode;
+      } else {
+        document.getElementById("companyLocation").textContent = "City, State - Pincode";
+      }
+      
+      // Set phone number
+      const phoneNumber = profileData.phoneNumber || profileData.phone || profileData.mobile || '';
+      const phoneDisplay = phoneNumber ? `+91 ${phoneNumber}` : 'Not provided';
+      document.getElementById("phoneNumber").textContent = phoneDisplay;
+      
+      // Set GSTIN
+      if (profileData.gstin || profileData.gst) {
+        const gstValue = profileData.gstin || profileData.gst;
+        document.getElementById("companyGST").textContent = `GSTIN: ${gstValue}`;
+        document.getElementById("companyGST").style.display = '';
+      } else {
+        document.getElementById("companyGST").style.display = 'none';
+      }
+    };
+
     onAuthStateChanged(auth, user => {
       if (!user) {
         window.location.href = "index.html";
       } else {
-        // Load user profile information
-        const userProfileRef = ref(db, `users/${user.uid}/profile`);
-        get(userProfileRef).then((snapshot) => {
-          if (snapshot.exists()) {
-            const profileData = snapshot.val();
-            console.log('Profile Data:', profileData); // Debug log
+        // Check if user needs to complete profile
+        const checkAndShowSetupCard = async () => {
+          try {
+            // Check if user has profile data
+            const userProfileSnap = await get(ref(db, `users/${user.uid}/profile`));
             
-            document.getElementById("companyName").textContent = profileData.transportName || "TRANSPORT COMPANY";
-            document.getElementById("companyNameDetail").textContent = profileData.transportName || "Transport Company";
-            document.getElementById("companyOwner").textContent = profileData.ownerName || "Owner Name";
+            // Check if this is a branch user
+            const userDataSnap = await get(ref(db, `users/${user.uid}`));
+            const userData = userDataSnap.exists() ? userDataSnap.val() : {};
+            const isBranchUser = userData.accountType === 'branch' || userData.userType === 'branch';
             
-            // Set company details if available
-            if (profileData.address) {
-              document.getElementById("companyAddress").textContent = profileData.address;
+            // Show setup card if no profile data exists and it's a branch user
+            if (!userProfileSnap.exists() && isBranchUser) {
+              document.getElementById('setupOverlay').style.display = 'block';
+              document.getElementById('setupCard').style.display = 'block';
             } else {
-              console.log('No address found in profile');
+              // Load profile data as usual
+              loadCurrentOrBranchProfile();
             }
-            
-            // Build location line with city and pincode
-            let locationLine = '';
-            if (profileData.city) {
-              locationLine = profileData.city;
-              if (profileData.pincode) {
-                locationLine += ` - ${profileData.pincode}`;
-              }
-              document.getElementById("companyLocation").textContent = locationLine;
-            } else if (profileData.pincode) {
-              document.getElementById("companyLocation").textContent = profileData.pincode;
-            } else {
-              console.log('No city or pincode found in profile');
-            }
-            
-            // Set GSTIN if available
-            if (profileData.gstin) {
-              document.getElementById("companyGST").textContent = `GSTIN: ${profileData.gstin}`;
-            } else {
-              document.getElementById("companyGST").style.display = 'none';
-            }
-            
-            // Ensure phone number is always shown with proper formatting
-            const phoneNumber = profileData.phoneNumber || profileData.phone || '';
-            console.log('Phone number from profile:', phoneNumber);
-            const phoneDisplay = phoneNumber ? 
-              `+91 ${phoneNumber.replace(/(\d{5})(\d{5})/, '$1 $2')}` : 'Not provided';
-            document.getElementById("phoneNumber").textContent = phoneDisplay;
-            
-            if (profileData.gstin) {
-              document.getElementById("companyGST").textContent = "GSTIN: " + profileData.gstin;
-            } else {
-              document.getElementById("companyGST").style.display = 'none';
-            }
+          } catch (error) {
+            console.error('Error checking profile:', error);
           }
-        }).catch(error => {
-          console.error("Error loading profile:", error);
-        });
-        
+        };
+
+        checkAndShowSetupCard();
+
+        // Load profile for invoice
+        const loadCurrentOrBranchProfile = async () => {
+          console.log('Loading profile for user:', user.uid);
+          
+          try {
+            // First try to get the user's profile directly
+            const userProfileSnap = await get(ref(db, `users/${user.uid}/profile`));
+            if (userProfileSnap.exists()) {
+              console.log('Found user profile:', userProfileSnap.val());
+              window.renderProfile(userProfileSnap.val());
+              return;
+            }
+            
+            // Check if this is a branch user by looking at accountType or userType
+            const userDataSnap = await get(ref(db, `users/${user.uid}`));
+            const userData = userDataSnap.exists() ? userDataSnap.val() : {};
+            
+            const isBranchUser = userData.accountType === 'branch' || userData.userType === 'branch';
+            console.log('Is branch user:', isBranchUser, userData);
+            
+            if (isBranchUser) {
+              // For branch users, try to get the branch data from the parent account
+              const coreAccountId = userData.coreAccountId || userData.parentUid;
+              
+              if (coreAccountId) {
+                console.log('Looking for branch data in parent account:', coreAccountId);
+                
+                // Try to get the branch data from the parent's branches list
+                const branchDataSnap = await get(ref(db, `users/${coreAccountId}/branches/${user.uid}`));
+                if (branchDataSnap.exists()) {
+                  console.log('Found branch data in parent branches:', branchDataSnap.val());
+                  window.renderProfile(branchDataSnap.val());
+                  return;
+                }
+                
+                // If not found in branches, try to get from branchAccounts
+                const branchAccountSnap = await get(ref(db, `users/${coreAccountId}/branchAccounts/${user.uid}`));
+                if (branchAccountSnap.exists()) {
+                  console.log('Found branch data in branchAccounts:', branchAccountSnap.val());
+                  window.renderProfile(branchAccountSnap.val());
+                  return;
+                }
+                
+                // If still not found, try to get the parent's profile
+                const parentProfileSnap = await get(ref(db, `users/${coreAccountId}/profile`));
+                if (parentProfileSnap.exists()) {
+                  console.log('Found parent profile:', parentProfileSnap.val());
+                  window.renderProfile(parentProfileSnap.val());
+                  return;
+                }
+              }
+              
+              // If no parent data found, try to get the branch's own data
+              console.log('Using branch user data as profile:', userData);
+              window.renderProfile(userData);
+              return;
+            } else {
+              // For main accounts, check for selected branch
+              let selectedBranch = null;
+              try { 
+                selectedBranch = localStorage.getItem('selectedBranch');
+                console.log('Selected branch from localStorage:', selectedBranch);
+              } catch (e) {
+                console.error('Error reading selectedBranch from localStorage:', e);
+              }
+              
+              if (selectedBranch && selectedBranch !== 'main') {
+                console.log('Getting branch account info for:', selectedBranch);
+                
+                // Try to get the branch data from branches list
+                const branchDataSnap = await get(ref(db, `users/${user.uid}/branches/${selectedBranch}`));
+                if (branchDataSnap.exists()) {
+                  console.log('Found branch data in branches:', branchDataSnap.val());
+                  window.renderProfile(branchDataSnap.val());
+                  return;
+                }
+                
+                // If not found in branches, try to get from branchAccounts
+                const branchAccountSnap = await get(ref(db, `users/${user.uid}/branchAccounts/${selectedBranch}`));
+                if (branchAccountSnap.exists()) {
+                  console.log('Found branch data in branchAccounts:', branchAccountSnap.val());
+                  
+                  // Try to get the branch user's profile
+                  const branchAuthUid = branchAccountSnap.val().branchAuthUid || selectedBranch;
+                  const brProfileSnap = await get(ref(db, `users/${branchAuthUid}/profile`));
+                  if (brProfileSnap.exists()) {
+                    console.log('Found branch profile:', brProfileSnap.val());
+                    window.renderProfile(brProfileSnap.val());
+                    return;
+                  }
+                  
+                  // If no profile, use the branch account data
+                  window.renderProfile(branchAccountSnap.val());
+                  return;
+                }
+              }
+              
+              // If no branch selected or not found, use the main account's profile
+              const mainProfileSnap = await get(ref(db, `users/${user.uid}/profile`));
+              if (mainProfileSnap.exists()) {
+                console.log('Found main profile:', mainProfileSnap.val());
+                window.renderProfile(mainProfileSnap.val());
+                return;
+              }
+              
+              // If no profile found, use the user data
+              console.log('Using main user data as profile:', userData);
+              window.renderProfile(userData);
+              return;
+            }
+          } catch (error) {
+            console.error('Error loading profile:', error);
+            // Fallback to default values on error
+            window.renderProfile({
+              transportName: 'TRANSPORT COMPANY',
+              ownerName: 'Owner Name',
+              address: 'Your Address',
+              city: 'Your City',
+              pincode: '000000',
+              phoneNumber: '0000000000'
+            });
+          }
+        };
+
         // Set today's date as default for invoice date
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('invoiceDate').value = today;
@@ -616,6 +716,38 @@
         });
       };
     });
+
+    // Function to save company details from the setup card
+    window.saveCompanyDetails = async function() {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      const companyData = {
+        transportName: document.getElementById('setupCompanyName').value,
+        ownerName: document.getElementById('setupOwnerName').value,
+        address: document.getElementById('setupAddress').value,
+        city: document.getElementById('setupCity').value,
+        state: document.getElementById('setupState').value,
+        pincode: document.getElementById('setupPincode').value,
+        phoneNumber: document.getElementById('setupPhone').value,
+        gstin: document.getElementById('setupGST').value
+      };
+      
+      try {
+        // Save to the user's profile
+        await set(ref(db, `users/${user.uid}/profile`), companyData);
+        
+        // Hide the setup card
+        document.getElementById('setupOverlay').style.display = 'none';
+        document.getElementById('setupCard').style.display = 'none';
+        
+        // Update the invoice with the new data
+        window.renderProfile(companyData);
+      } catch (error) {
+        console.error('Error saving company details:', error);
+        alert('Failed to save company details. Please try again.');
+      }
+    };
 
     function calculateTotals() {
       let subtotal = 0;
@@ -720,26 +852,6 @@
 
       const fileName = `Invoice_${document.getElementById('invoiceNumber').value || new Date().toISOString().slice(0,10)}.xlsx`;
       XLSX.writeFile(wb, fileName);
-    });
-  </script>
-  
-  <script>
-    // Navbar toggle function
-    function toggleMenu() {
-      const navLinks = document.getElementById("navLinks");
-      if (navLinks) navLinks.classList.toggle("show");
-    }
-
-    // Close menu when clicking outside
-    document.addEventListener('click', function(event) {
-      const navLinks = document.getElementById('navLinks');
-      const hamburger = document.querySelector('.hamburger');
-      
-      if (navLinks && navLinks.classList.contains('show') && 
-          !event.target.closest('.nav-links') && 
-          !event.target.closest('.hamburger')) {
-        navLinks.classList.remove('show');
-      }
     });
   </script>
 </body>
