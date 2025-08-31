@@ -431,7 +431,8 @@
   </style>
 </head>
 <body>
-  <div id="navbar"></div>
+  <script src="navbar-loader.js"></script>
+  <script src="table-pager.js"></script>
 
   <div class="container">
     <h1>Tyre Management System</h1>
@@ -495,6 +496,28 @@
     <div class="form-section">
       <h3>Vehicle List</h3>
       <div id="vehicleList"></div>
+      <!-- Pagination Controls (Tab System) for Vehicle Cards -->
+      <div style="margin-top: 16px;">
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+          <label for="entriesPerPageVehicles" style="font-weight:600;">Entries per page:</label>
+          <select id="entriesPerPageVehicles" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+          <div id="entriesInfoVehicles" style="color:#666; font-size:14px;"></div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <button class="tab-nav-control" id="prevVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="tab-navigation" id="tabNavigationVehicles" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+          <button class="tab-nav-control" id="nextVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -527,17 +550,49 @@
     window.get = get;
     window.currentUser = null; // Will be updated in onAuthStateChanged
 
-    // Load navbar
-    fetch('navbar.html')
-      .then(response => response.text())
-      .then(html => {
-        document.getElementById('navbar').innerHTML = html;
-      });
+    // Navbar is now injected via navbar-loader.js
+
+    // Pagination state for vehicle cards
+    const entriesPerPageVehicles = document.getElementById('entriesPerPageVehicles');
+    const entriesInfoVehicles = document.getElementById('entriesInfoVehicles');
+    const tabNavigationVehicles = document.getElementById('tabNavigationVehicles');
+    const prevVehiclesBtn = document.getElementById('prevVehicles');
+    const nextVehiclesBtn = document.getElementById('nextVehicles');
+    let currentPageVehicles = 1;
+    let itemsPerPageVehicles = 10;
+    let totalPagesVehicles = 1;
+    let allVehiclesData = {}; // keyed by id
+    let searchTermVehicles = '';
 
     // Check authentication
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "index.html";
+        return;
+      }
+      // Enforce main-branch only access
+      const selectedBranch = localStorage.getItem('selectedBranch');
+      if (selectedBranch && selectedBranch !== 'main') {
+        console.error('Not allowed to use Tyre module in limited branch');
+        if (confirm('This feature is only available in Main Branch. Go to Home?')) {
+          window.location.href = 'home.html';
+        }
+        return;
+      }
+      // Role-based access: block normal users
+      try {
+        const profileSnap = await get(ref(db, `users/${user.uid}/profile`));
+        const profile = profileSnap.exists() ? profileSnap.val() : {};
+        const role = (profile.role || profile.userRole || 'normal').toLowerCase();
+        if (role === 'normal') {
+          showAlert('Access restricted: your role cannot use Tyre Management. Redirecting to Home...', 'danger');
+          setTimeout(() => { window.location.href = 'home.html'; }, 1200);
+          return;
+        }
+      } catch (e) {
+        console.warn('Failed to read user role, defaulting to restricted', e);
+        showAlert('Access restricted. Redirecting to Home...', 'danger');
+        setTimeout(() => { window.location.href = 'home.html'; }, 1200);
         return;
       }
       currentUser = user;
@@ -780,91 +835,140 @@
       }
     };
 
-    // Load vehicles from database with card deck layout
-    window.loadVehicles = function(searchTerm = '') {
+    // Load vehicles from database with card deck layout (single realtime listener)
+    window.loadVehicles = function() {
       const vehicleListContainer = document.getElementById('vehicleList');
       vehicleListContainer.innerHTML = '<p>Loading vehicles...</p>';
-      
       const vehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
-      
       onValue(vehiclesRef, (snapshot) => {
-        const vehicles = snapshot.val() || {};
-        
-        if (Object.keys(vehicles).length === 0) {
-          vehicleListContainer.innerHTML = '<p>No vehicles found. Add a vehicle to get started.</p>';
-          return;
-        }
-        
-        let html = '';
-        let vehicleCount = 0;
-        
-        Object.entries(vehicles).forEach(([id, vehicle]) => {
-          // Filter vehicles based on search term
-          const searchLower = searchTerm.toLowerCase();
-          if (searchTerm && 
-              !vehicle.vehicleNumber.toLowerCase().includes(searchLower) && 
-              !(vehicle.vehicleModel && vehicle.vehicleModel.toLowerCase().includes(searchLower))) {
-            return;
-          }
-          
-          vehicleCount++;
-          const tyreCount = vehicle.tyres ? Object.keys(vehicle.tyres).length : 0;
-          
-          html += `
-            <div class="card" id="vehicle-${id}">
-              <div class="card-header" onclick="toggleVehicleCard('${id}')">
-                <h3>
-  <span class="vehicle-number">
-    <i class="fas fa-truck vehicle-icon"></i>
-    ${vehicle.vehicleNumber || 'N/A'}
-  </span>
-</h3>
-                <span class="rotate-icon">▼</span>
-              </div>
-              <div class="card-body">
-                <p><strong>Model:</strong> ${vehicle.vehicleModel || 'N/A'}</p>
-                <p><strong>Tyres:</strong> ${tyreCount}</p>
-                
-                ${tyreCount > 0 ? `
-                  <h4>Tyre Details</h4>
-                  <ul class="tyre-list">
-                    ${Object.entries(vehicle.tyres || {}).map(([tyreId, tyre]) => `
-                      <li class="tyre-item">
-                        <div class="tyre-details">
-                          <div><strong>#${tyre.number || 'N/A'}</strong> - ${tyre.brand || ''} ${tyre.size || ''}</div>
-                          <div>Position: ${tyre.position || 'N/A'}</div>
-                          <div>Status: <span class="status-badge ${tyre.status ? tyre.status.toLowerCase() : 'active'}">${tyre.status || 'Active'}</span></div>
-                        </div>
-                        <div class="tyre-actions">
-                          <button onclick="event.stopPropagation(); editTyre('${id}', '${tyre.number}')" class="btn btn-primary" title="Edit Tyre">
-                            <i class="fas fa-edit"></i>
-                          </button>
-                          <button onclick="event.stopPropagation(); if(confirm('Are you sure you want to dispose this tyre? This action cannot be undone.')) { disposeTyre('${id}', '${tyre.number}') }" class="btn btn-danger" title="Dispose Tyre">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </div>
-                      </li>
-                    `).join('')}
-                  </ul>
-                ` : '<p>No tyres added yet.</p>'}
-                
-                <div class="vehicle-actions" style="margin-top: 15px;">
-                  <button onclick="event.stopPropagation(); addTyreToVehicle('${id}')" class="btn btn-primary">Add Tyre</button>
-                  <button onclick="event.stopPropagation(); editVehicle('${id}')" class="btn btn-secondary">Edit Vehicle</button>
-                  <button onclick="event.stopPropagation(); deleteVehicle('${id}')" class="btn btn-danger">Delete</button>
-                </div>
-              </div>
-            </div>
-          `;
-        });
-        
-        if (vehicleCount === 0) {
-          vehicleListContainer.innerHTML = '<p>No vehicles match your search criteria.</p>';
-        } else {
-          vehicleListContainer.innerHTML = html;
-        }
+        allVehiclesData = snapshot.val() || {};
+        currentPageVehicles = 1;
+        renderVehiclesWithPagination();
       });
     };
+
+    function computeFilteredVehicles() {
+      const term = (searchTermVehicles || '').toLowerCase();
+      const entries = Object.entries(allVehiclesData);
+      if (!term) return entries;
+      return entries.filter(([id, vehicle]) => {
+        const vnum = (vehicle.vehicleNumber || '').toLowerCase();
+        const vmodel = (vehicle.vehicleModel || '').toLowerCase();
+        const tyres = vehicle.tyres || {};
+        const tyreMatch = Object.values(tyres).some(t =>
+          ((t.number || '').toLowerCase().includes(term)) ||
+          ((t.brand || '').toLowerCase().includes(term)) ||
+          ((t.size || '').toLowerCase().includes(term)) ||
+          ((t.position || '').toLowerCase().includes(term))
+        );
+        return vnum.includes(term) || vmodel.includes(term) || tyreMatch;
+      });
+    }
+
+    function renderVehiclesWithPagination() {
+      const vehicleListContainer = document.getElementById('vehicleList');
+      const filtered = computeFilteredVehicles();
+      const totalItems = filtered.length;
+      totalPagesVehicles = Math.max(1, Math.ceil(totalItems / itemsPerPageVehicles));
+      if (currentPageVehicles > totalPagesVehicles) currentPageVehicles = totalPagesVehicles;
+      updateVehiclePaginationControls(totalItems);
+      const start = (currentPageVehicles - 1) * itemsPerPageVehicles;
+      const end = Math.min(start + itemsPerPageVehicles, totalItems);
+      const pageEntries = filtered.slice(start, end);
+      if (pageEntries.length === 0) {
+        vehicleListContainer.innerHTML = '<p>No vehicles found. Add a vehicle to get started.</p>';
+        return;
+      }
+      let html = '';
+      pageEntries.forEach(([id, vehicle]) => {
+        const tyreCountLocal = vehicle.tyres ? Object.keys(vehicle.tyres).length : 0;
+        html += `
+          <div class="card" id="vehicle-${id}">
+            <div class="card-header" onclick="toggleVehicleCard('${id}')">
+              <h3>
+                <span class="vehicle-number">
+                  <i class="fas fa-truck vehicle-icon"></i>
+                  ${vehicle.vehicleNumber || 'N/A'}
+                </span>
+              </h3>
+              <span class="rotate-icon">▼</span>
+            </div>
+            <div class="card-body">
+              <p><strong>Model:</strong> ${vehicle.vehicleModel || 'N/A'}</p>
+              <p><strong>Tyres:</strong> ${tyreCountLocal}</p>
+              ${tyreCountLocal > 0 ? `
+                <h4>Tyre Details</h4>
+                <ul class="tyre-list">
+                  ${Object.entries(vehicle.tyres || {}).map(([tyreId, tyre]) => `
+                    <li class="tyre-item">
+                      <div class="tyre-details">
+                        <div><strong>#${tyre.number || 'N/A'}</strong> - ${tyre.brand || ''} ${tyre.size || ''}</div>
+                        <div>Position: ${tyre.position || 'N/A'}</div>
+                        <div>Status: <span class="status-badge ${tyre.status ? tyre.status.toLowerCase() : 'active'}">${tyre.status || 'Active'}</span></div>
+                      </div>
+                      <div class="tyre-actions">
+                        <button onclick="event.stopPropagation(); editTyre('${id}', '${tyre.number}')" class="btn btn-primary" title="Edit Tyre">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); if(confirm('Are you sure you want to dispose this tyre? This action cannot be undone.')) { disposeTyre('${id}', '${tyre.number}') }" class="btn btn-danger" title="Dispose Tyre">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </li>
+                  `).join('')}
+                </ul>
+              ` : '<p>No tyres added yet.</p>'}
+              <div class="vehicle-actions" style="margin-top: 15px;">
+                <button onclick="event.stopPropagation(); addTyreToVehicle('${id}')" class="btn btn-primary">Add Tyre</button>
+                <button onclick="event.stopPropagation(); editVehicle('${id}')" class="btn btn-secondary">Edit Vehicle</button>
+                <button onclick="event.stopPropagation(); deleteVehicle('${id}')" class="btn btn-danger">Delete</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      vehicleListContainer.innerHTML = html;
+    }
+
+    function updateVehiclePaginationControls(totalItems) {
+      prevVehiclesBtn.disabled = currentPageVehicles === 1;
+      nextVehiclesBtn.disabled = currentPageVehicles === totalPagesVehicles;
+      const startIndex = Math.min((currentPageVehicles - 1) * itemsPerPageVehicles + 1, totalItems);
+      const endIndex = Math.min(currentPageVehicles * itemsPerPageVehicles, totalItems);
+      entriesInfoVehicles.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+      generateVehicleTabs();
+    }
+
+    function generateVehicleTabs() {
+      tabNavigationVehicles.innerHTML = '';
+      if (totalPagesVehicles <= 1) return;
+      addVehicleTab(1);
+      let startPage = Math.max(2, currentPageVehicles - 2);
+      let endPage = Math.min(totalPagesVehicles - 1, currentPageVehicles + 2);
+      if (startPage > 2) addVehicleEllipsis();
+      for (let i = startPage; i <= endPage; i++) addVehicleTab(i);
+      if (endPage < totalPagesVehicles - 1) addVehicleEllipsis();
+      addVehicleTab(totalPagesVehicles);
+    }
+
+    function addVehicleTab(pageNumber) {
+      const tab = document.createElement('div');
+      tab.className = `tab ${pageNumber === currentPageVehicles ? 'active' : ''}`;
+      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
+      tab.textContent = pageNumber;
+      tab.addEventListener('click', () => {
+        currentPageVehicles = pageNumber;
+        renderVehiclesWithPagination();
+      });
+      tabNavigationVehicles.appendChild(tab);
+    }
+
+    function addVehicleEllipsis() {
+      const ellipsis = document.createElement('div');
+      ellipsis.textContent = '...';
+      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
+      tabNavigationVehicles.appendChild(ellipsis);
+    }
 
     // Toggle vehicle card expansion
     window.toggleVehicleCard = function(vehicleId) {
@@ -876,95 +980,12 @@
 
     // Search vehicles function
     window.searchVehicles = function() {
-      const searchTerm = document.getElementById('searchInput').value.trim();
-      loadVehicles(searchTerm);
+      searchTermVehicles = document.getElementById('searchInput').value.trim();
+      currentPageVehicles = 1;
+      renderVehiclesWithPagination();
     };
 
-    // Search vehicles
-    window.searchVehicles = function() {
-      const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
-      
-      if (!searchTerm) {
-        loadVehicles();
-        return;
-      }
-      
-      const vehicleListContainer = document.getElementById('vehicleList');
-      vehicleListContainer.innerHTML = '<p>Searching...</p>';
-      
-      const vehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
-      
-      onValue(vehiclesRef, (snapshot) => {
-        if (!snapshot.exists()) {
-          vehicleListContainer.innerHTML = '<p>No vehicles found</p>';
-          return;
-        }
-        
-        const vehicles = snapshot.val();
-        let vehicleHtml = '';
-        let resultsFound = false;
-        
-        for (const vehicleId in vehicles) {
-          const vehicle = vehicles[vehicleId];
-          const tyres = vehicle.tyres || [];
-          
-          // Check if vehicle details match search term
-          const vehicleMatches = 
-            vehicle.vehicleNumber.toLowerCase().includes(searchTerm) || 
-            vehicle.vehicleModel.toLowerCase().includes(searchTerm);
-          
-          // Check if any tyre details match search term
-          const tyreMatches = tyres.some(tyre => 
-            tyre.number.toLowerCase().includes(searchTerm) || 
-            tyre.brand.toLowerCase().includes(searchTerm) || 
-            tyre.size.toLowerCase().includes(searchTerm) || 
-            tyre.position.toLowerCase().includes(searchTerm)
-          );
-          
-          if (vehicleMatches || tyreMatches) {
-            resultsFound = true;
-            
-            let tyresHtml = '';
-            for (const tyre of tyres) {
-              tyresHtml += `
-                <div class="tyre-card">
-                  <div class="tyre-actions">
-                    <button class="action-btn edit-btn" onclick="editTyre('${vehicleId}', '${tyre.number}')">Edit</button>
-                    <button class="action-btn delete-btn" onclick="deleteTyre('${vehicleId}', '${tyre.number}')">Delete</button>
-                  </div>
-                  <p><strong>Number:</strong> ${tyre.number}</p>
-                  <p><strong>Brand:</strong> ${tyre.brand}</p>
-                  <p><strong>Size:</strong> ${tyre.size}</p>
-                  <p><strong>Position:</strong> ${tyre.position}</p>
-                </div>
-              `;
-            }
-            
-            vehicleHtml += `
-              <div class="vehicle-card">
-                <div class="vehicle-header">
-                  <div>${vehicle.vehicleNumber} - ${vehicle.vehicleModel}</div>
-                  <div class="vehicle-actions">
-                    <button class="btn btn-primary" onclick="addTyreToVehicle('${vehicleId}')">Add Tyre</button>
-                    <button class="btn btn-warning" onclick="editVehicle('${vehicleId}')">Edit Vehicle</button>
-                    <button class="btn btn-danger" onclick="deleteVehicle('${vehicleId}')">Delete Vehicle</button>
-                  </div>
-                </div>
-                <div class="tyre-grid">
-                  ${tyresHtml}
-                </div>
-              </div>
-            `;
-          }
-        }
-        
-        if (resultsFound) {
-          vehicleListContainer.innerHTML = vehicleHtml;
-        } else {
-          vehicleListContainer.innerHTML = '<p>No matching vehicles found</p>';
-        }
-      });
-    };
+    // Remove duplicate searchVehicles; handled above with pagination
 
     // Edit vehicle
     window.editVehicle = function(vehicleId) {
@@ -1399,6 +1420,25 @@
     window.toggleMenu = function () {
       document.getElementById("navLinks").classList.toggle("show");
     };
+
+    // Hook up pagination controls
+    entriesPerPageVehicles.addEventListener('change', function () {
+      itemsPerPageVehicles = parseInt(this.value, 10) || 10;
+      currentPageVehicles = 1;
+      renderVehiclesWithPagination();
+    });
+    prevVehiclesBtn.addEventListener('click', function () {
+      if (currentPageVehicles > 1) {
+        currentPageVehicles--;
+        renderVehiclesWithPagination();
+      }
+    });
+    nextVehiclesBtn.addEventListener('click', function () {
+      if (currentPageVehicles < totalPagesVehicles) {
+        currentPageVehicles++;
+        renderVehiclesWithPagination();
+      }
+    });
   </script>
 </body>
 </html>
@@ -1544,7 +1584,7 @@
       <!-- Stats will be populated dynamically -->
     </div>
     
-    <table class="history-table" id="historyTable">
+    <table class="history-table" id="historyTable" data-paginate="true" data-page-sizes="10,20,50,100">
       <thead>
         <tr>
           <th>Date</th>
