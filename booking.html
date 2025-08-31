@@ -291,7 +291,7 @@
 </head>
 
 <body>
-  <div id="navbar"></div>
+  <script src="navbar-loader.js"></script>
 
   <div class="container">
     <h1>Thread Booking Management</h1>
@@ -329,7 +329,11 @@
     <!-- Toolbar -->
     <div class="toolbar">
       <input type="text" id="searchInput" placeholder="Search by Vehicle No, Company, or Size..." />
+      <input type="date" id="dateFrom" placeholder="From date" />
+      <input type="date" id="dateTo" placeholder="To date" />
       <div>
+        <button id="applyDateFilter">Apply</button>
+        <button id="clearDateFilter" style="background:#888;">Clear</button>
         <button id="sortBtn">Sort by Date ↓</button>
         <button id="downloadExcel">Export to Excel</button>
       </div>
@@ -352,6 +356,29 @@
 
     <!-- Total Weight Summary -->
     <div id="totalWeightSummary" style="margin-top: 15px; font-weight: 700;"></div>
+
+    <!-- Pagination Controls (Tab System) -->
+    <div style="margin-top: 16px;">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+        <label for="entriesPerPage" style="font-weight:600;">Entries per page:</label>
+        <select id="entriesPerPage" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+        <div id="entriesInfo" style="color:#666; font-size:14px;"></div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+        <button class="tab-nav-control" id="prevPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="tab-navigation" id="tabNavigation" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+        <button class="tab-nav-control" id="nextPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Edit Booking Modal -->
@@ -420,6 +447,10 @@
     const exportBtn = document.getElementById("downloadExcel");
     const messageBox = document.getElementById("message");
     const loadingDiv = document.getElementById("loading");
+    const dateFromInput = document.getElementById("dateFrom");
+    const dateToInput = document.getElementById("dateTo");
+    const applyDateFilterBtn = document.getElementById("applyDateFilter");
+    const clearDateFilterBtn = document.getElementById("clearDateFilter");
 
     const editModal = document.getElementById("editModal");
     const editForm = document.getElementById("editForm");
@@ -428,6 +459,17 @@
     let bookingData = [];
     let sortAsc = false;
     let currentEditKey = null;
+
+    // Pagination state
+    const entriesPerPageSelect = document.getElementById("entriesPerPage");
+    const entriesInfo = document.getElementById("entriesInfo");
+    const tabNavigation = document.getElementById("tabNavigation");
+    const prevPageBtn = document.getElementById("prevPage");
+    const nextPageBtn = document.getElementById("nextPage");
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let totalPages = 1;
+    let filteredBookingData = [];
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -443,8 +485,8 @@
         snapshot.forEach((child) => {
           bookingData.push({ ...child.val(), key: child.key });
         });
-        renderTable(bookingData);
         loadingDiv.style.display = "none";
+        renderTableWithPagination();
       });
 
       bookingForm.addEventListener("submit", (e) => {
@@ -494,6 +536,84 @@
         });
       }
       updateTotalWeight(dataArr);
+    }
+
+    // Filtering and pagination
+    function filterData() {
+      const value = (searchInput.value || '').toLowerCase();
+      const from = dateFromInput.value ? new Date(dateFromInput.value) : null;
+      const to = dateToInput.value ? new Date(dateToInput.value) : null;
+      if (to) { to.setHours(23,59,59,999); }
+
+      filteredBookingData = bookingData.filter((item) => {
+        const matchesText = (
+          item.vehicleNo?.toLowerCase().includes(value) ||
+          item.threadCompany?.toLowerCase().includes(value) ||
+          item.threadSize?.toLowerCase().includes(value)
+        );
+        if (!matchesText) return false;
+
+        if (!from && !to) return true;
+        const d = item.bookingDate ? new Date(item.bookingDate) : null;
+        if (!d) return false;
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+        return true;
+      });
+    }
+
+    function updatePaginationControls(totalItems) {
+      prevPageBtn.disabled = currentPage === 1;
+      nextPageBtn.disabled = currentPage === totalPages;
+      const startIndex = Math.min((currentPage - 1) * itemsPerPage + 1, totalItems);
+      const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+      entriesInfo.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+      generatePageTabs();
+    }
+
+    function generatePageTabs() {
+      tabNavigation.innerHTML = '';
+      if (totalPages <= 1) return;
+      addTab(1);
+      let startPage = Math.max(2, currentPage - 2);
+      let endPage = Math.min(totalPages - 1, currentPage + 2);
+      if (startPage > 2) addEllipsis();
+      for (let i = startPage; i <= endPage; i++) addTab(i);
+      if (endPage < totalPages - 1) addEllipsis();
+      addTab(totalPages);
+    }
+
+    function addTab(pageNumber) {
+      const tab = document.createElement('div');
+      tab.className = `tab ${pageNumber === currentPage ? 'active' : ''}`;
+      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
+      tab.textContent = pageNumber;
+      tab.addEventListener('click', () => {
+        currentPage = pageNumber;
+        renderTableWithPagination();
+      });
+      tabNavigation.appendChild(tab);
+    }
+
+    function addEllipsis() {
+      const ellipsis = document.createElement('div');
+      ellipsis.textContent = '...';
+      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
+      tabNavigation.appendChild(ellipsis);
+    }
+
+    function renderTableWithPagination() {
+      filterData();
+      const totalItems = filteredBookingData.length;
+      totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+      updatePaginationControls(totalItems);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+      const pageData = filteredBookingData.slice(startIndex, endIndex);
+      renderTable(pageData);
+      // Update total weight for filtered results (not just the page)
+      updateTotalWeight(filteredBookingData);
     }
 
     function showMessage(text, type = "success") {
@@ -559,14 +679,20 @@
     };
 
     searchInput.addEventListener("input", () => {
-      const value = searchInput.value.toLowerCase();
-      const filtered = bookingData.filter(
-        (item) =>
-          item.vehicleNo.toLowerCase().includes(value) ||
-          item.threadCompany.toLowerCase().includes(value) ||
-          item.threadSize.toLowerCase().includes(value)
-      );
-      renderTable(filtered);
+      currentPage = 1;
+      renderTableWithPagination();
+    });
+
+    applyDateFilterBtn.addEventListener('click', () => {
+      currentPage = 1;
+      renderTableWithPagination();
+    });
+
+    clearDateFilterBtn.addEventListener('click', () => {
+      dateFromInput.value = '';
+      dateToInput.value = '';
+      currentPage = 1;
+      renderTableWithPagination();
     });
 
     sortBtn.addEventListener("click", () => {
@@ -576,8 +702,28 @@
           ? new Date(a.bookingDate) - new Date(b.bookingDate)
           : new Date(b.bookingDate) - new Date(a.bookingDate)
       );
-      renderTable(bookingData);
+      currentPage = 1;
+      renderTableWithPagination();
       sortBtn.textContent = `Sort by Date ${sortAsc ? "↑" : "↓"}`;
+    });
+
+    // Init pagination controls
+    entriesPerPageSelect.addEventListener('change', function () {
+      itemsPerPage = parseInt(this.value, 10) || 10;
+      currentPage = 1;
+      renderTableWithPagination();
+    });
+    prevPageBtn.addEventListener('click', function () {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTableWithPagination();
+      }
+    });
+    nextPageBtn.addEventListener('click', function () {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTableWithPagination();
+      }
     });
 
     exportBtn.addEventListener("click", () => {
@@ -609,14 +755,6 @@
     };
   </script>
 
-  <!-- Load Navbar -->
-  <script>
-    fetch("navbar.html")
-      .then((res) => res.text())
-      .then((html) => {
-        document.getElementById("navbar").innerHTML = html;
-      });
-  </script>
 </body>
 
 </html>
