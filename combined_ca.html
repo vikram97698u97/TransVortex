@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monthly Trip Reports</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body { 
+      font-family: 'Segoe UI', sans-serif; 
+      background-color:#F5F5F5; 
+      margin:0; 
+      padding:0; 
+    }
+    .container { 
+      max-width:1200px; 
+      margin:20px auto; 
+      background:#fff; 
+      padding:20px; 
+      border-radius:10px; 
+      box-shadow:0 0 10px rgba(0,0,0,0.1); 
+    }
+    .container h1 { 
+      text-align:center; 
+      color:#2E8B57; 
+      margin-bottom: 30px;
+    }
+    
+    /* Tab navigation */
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #2E8B57;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 12px 20px;
+      cursor: pointer;
+      background: #f0f8f4;
+      margin-right: 5px;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      font-weight: 600;
+    }
+    .tab.active {
+      background: #2E8B57;
+      color: white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Filter section */
+    .date-filter { 
+      display:flex; 
+      gap:10px; 
+      align-items:center; 
+      margin-bottom:20px; 
+      padding:15px; 
+      background:#f0f8f4; 
+      border-radius:8px; 
+      flex-wrap:wrap; 
+    }
+    .date-filter div {
+      display: flex;
+      flex-direction: column;
+    }
+    .date-filter label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    /* Vehicle cards grid */
+    .vehicles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .vehicle-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      transition: transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .vehicle-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #2E8B57, #43B97F);
+    }
+    .vehicle-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    .vehicle-card h3 {
+      margin-top: 0;
+      color: #2E8B57;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .trip-count {
+      background: #2E8B57;
+      color: white;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+    .vehicle-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 15px 0;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      padding: 8px;
+      background: #f9f9f9;
+      border-radius: 6px;
+    }
+    .stat-value {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .positive {
+      color: #2E8B57;
+    }
+    .negative {
+      color: #e74c3c;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+    }
+    .download-btn {
+      background: #2E8B57;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .download-btn:hover {
+      background: #43B97F;
+    }
+    
+    /* Summary section */
+    .accounting-summary {
+      margin-top:30px; 
+      padding:20px; 
+      background:#f0f8f4; 
+      border-radius:8px; 
+    }
+    .summary-grid { 
+      display:grid; 
+      grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); 
+      gap:15px; 
+      margin-top:15px; 
+    }
+    .summary-card { 
+      background:white; 
+      padding:15px; 
+      border-radius:8px; 
+      box-shadow:0 2px 4px rgba(0,0,0,0.1); 
+      text-align: center;
+    }
+    .summary-card h3 { 
+      margin-top:0; 
+      color:#2E8B57; 
+      font-size:16px; 
+    }
+    .summary-card p { 
+      font-size:20px; 
+      font-weight:bold; 
+      margin:5px 0; 
+    }
+    
+    /* Full range report card */
+    .full-range-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .full-range-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #4361ee, #3a0ca3);
+    }
+    .full-range-card h3 {
+      margin-top: 0;
+      color: #4361ee;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    /* No data message */
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-style: italic;
+      grid-column: 1 / -1;
+    }
+    
+    /* Loading indicator */
+    .loading {
+      display: flex;
+      justify-content: center;
+      padding: 30px;
+      grid-column: 1 / -1;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #2E8B57;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Print styles */
+    @media print {
+      .date-filter, .download-btn, .tabs {
+        display: none !important;
+      }
+      .container {
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .tabs {
+        flex-direction: column;
+      }
+      .tab {
+        margin-bottom: 5px;
+        border-radius: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script src="navbar-loader.js"></script>
+
+  <div class="container">
+    <h1><i class="fas fa-file-invoice-dollar"></i> Trip Reports & Analytics</h1>
+    
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <div class="tab active" data-tab="vehicle-reports">Vehicle Reports</div>
+      <div class="tab" data-tab="monthly-reports">Monthly Reports</div>
+      <div class="tab" data-tab="full-range-reports">Full Range Reports</div>
+    </div>
+
+    <!-- Vehicle Reports Tab -->
+    <div class="tab-content active" id="vehicle-reports">
+      <h2><i class="fas fa-truck"></i> Vehicle Trip Reports</h2>
+      
+      <!-- Date Filter -->
+      <div class="date-filter">
+        <div>
+          <label for="startDate"><i class="fas fa-calendar-alt"></i> Start Date:</label>
+          <input type="date" id="startDate">
+        </div>
+        <div>
+          <label for="endDate"><i class="fas fa-calendar-alt"></i> End Date:</label>
+          <input type="date" id="endDate">
+        </div>
+        <div style="margin-left:auto; display: flex; align-items: flex-end; gap: 10px;">
+          <button id="applyFilter" style="padding: 10px 20px;"><i class="fas fa-filter"></i> Apply Filter</button>
+          <button id="resetFilter" style="padding: 10px 20px; background: #666;"><i class="fas fa-sync-alt"></i> Reset</button>
+        </div>
+      </div>
+
+      <!-- Vehicle Cards -->
+      <div id="vehiclesContainer" class="vehicles-grid">
+        <div class="no-data">Select a date range to view vehicle reports</div>
+      </div>
+
+      <!-- Accounting summary -->
+      <div id="accountingSummary" class="accounting-summary" style="display:none;">
+        <h2><i class="fas fa-chart-pie"></i> Overall Accounting Summary</h2>
+        <div class="summary-grid">
+          <div class="summary-card"><h3>Total Trips</h3><p id="totalTrips">0</p></div>
+          <div class="summary-card"><h3>Total Revenue</h3><p id="totalRevenue">₹0</p></div>
+          <div class="summary-card"><h3>Total Expenses</h3><p id="totalExpenses">₹0</p></div>
+          <div class="summary-card"><h3>Net Profit</h3><p id="netProfit">₹0</p></div>
+          <div class="summary-card"><h3>Profit Margin</h3><p id="profitMargin">0%</p></div>
+          <div class="summary-card"><h3>Diesel Expenses</h3><p id="dieselExpenses">₹0</p></div>
+          <div class="summary-card"><h3>Tyre Expenses</h3><p id="tyreExpenses">₹0</p></div>
+          <div class="summary-card"><h3>Other Expenses</h3><p id="otherTotalExpenses">₹0</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Reports Tab -->
+    <div class="tab-content" id="monthly-reports">
+      <h2><i class="fas fa-calendar"></i> Monthly Reports</h2>
+      
+      <div class="date-filter">
+        <div>
+          <label for="monthSelect"><i class="fas fa-calendar"></i> Select Month:</label>
+          <select id="monthSelect" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+            <option value="0">January</option>
+            <option value="1">February</option>
+            <option value="2">March</option>
+            <option value="3">April</option>
+            <option value="4">May</option>
+            <option value="5">June</option>
+            <option value="6">July</option>
+            <option value="7">August</option>
+            <option value="8">September</option>
+            <option value="9">October</option>
+            <option value="10">November</option>
+            <option value="11">December</option>
+          </select>
+        </div>
+        <div>
+          <label for="yearSelect"><i class="fas fa-calendar"></i> Select Year:</label>
+          <select id="yearSelect" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+            <!-- Years will be populated by JavaScript -->
+          </select>
+        </div>
+        <div style="margin-left:auto; display: flex; align-items: flex-end; gap: 10px;">
+          <button id="applyMonthFilter" style="padding: 10px 20px;"><i class="fas fa-filter"></i> Generate Report</button>
+          <button id="downloadMonthlyReport" style="padding: 10px 20px; background: #4361ee;"><i class="fas fa-download"></i> Download PDF</button>
+        </div>
+      </div>
+      
+      <div id="monthlyReportContainer">
+        <div class="no-data">Select a month and year to generate report</div>
+      </div>
+    </div>
+
+    <!-- Full Range Reports Tab -->
+    <div class="tab-content" id="full-range-reports">
+      <h2><i class="fas fa-chart-line"></i> Full Range Reports</h2>
+      
+      <div class="date-filter">
+        <div>
+          <label for="fullRangeStartDate"><i class="fas fa-calendar-alt"></i> Start Date:</label>
+          <input type="date" id="fullRangeStartDate">
+        </div>
+        <div>
+          <label for="fullRangeEndDate"><i class="fas fa-calendar-alt"></i> End Date:</label>
+          <input type="date" id="fullRangeEndDate">
+        </div>
+        <div style="margin-left:auto; display: flex; align-items: flex-end; gap: 10px;">
+          <button id="applyFullRangeFilter" style="padding: 10px 20px;"><i class="fas fa-filter"></i> Generate Report</button>
+          <button id="downloadFullRangeReport" style="padding: 10px 20px; background: #4361ee;"><i class="fas fa-download"></i> Download PDF</button>
+        </div>
+      </div>
+      
+      <div id="fullRangeReportContainer">
+        <div class="no-data">Select a date range to generate full report</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase and main script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+    let allExpensesData = [];
+    let filteredData = [];
+
+    // UI elements
+    const vehiclesContainer = document.getElementById("vehiclesContainer");
+    const applyFilterBtn = document.getElementById("applyFilter");
+    const resetFilterBtn = document.getElementById("resetFilter");
+    const startDateInput = document.getElementById("startDate");
+    const endDateInput = document.getElementById("endDate");
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const monthSelect = document.getElementById('monthSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    const applyMonthFilter = document.getElementById('applyMonthFilter');
+    const downloadMonthlyReport = document.getElementById('downloadMonthlyReport');
+    const monthlyReportContainer = document.getElementById('monthlyReportContainer');
+    const fullRangeStartDate = document.getElementById('fullRangeStartDate');
+    const fullRangeEndDate = document.getElementById('fullRangeEndDate');
+    const applyFullRangeFilter = document.getElementById('applyFullRangeFilter');
+    const downloadFullRangeReport = document.getElementById('downloadFullRangeReport');
+    const fullRangeReportContainer = document.getElementById('fullRangeReportContainer');
+
+    // Set default date range to current month
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    startDateInput.value = formatDate(firstDayOfMonth);
+    endDateInput.value = formatDate(lastDayOfMonth);
+    fullRangeStartDate.value = formatDate(firstDayOfMonth);
+    fullRangeEndDate.value = formatDate(lastDayOfMonth);
+
+    // Set current month and year as default
+    monthSelect.value = today.getMonth();
+    populateYearDropdown();
+    yearSelect.value = today.getFullYear();
+
+    // Tab functionality
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.getAttribute('data-tab');
+        
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Show active tab content
+        tabContents.forEach(content => content.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+      currentUser = user;
+      showLoading();
+      listenExpenses();
+    });
+
+    // Listen expenses
+    function listenExpenses() {
+      const expensesRef = ref(db, `users/${currentUser.uid}/tripExpenses`);
+      onValue(expensesRef, (snapshot) => {
+        allExpensesData = [];
+        snapshot.forEach(child => {
+          const data = child.val();
+          data.key = child.key;
+          allExpensesData.push(data);
+        });
+        
+        // Apply initial filter with current month
+        applyDateFilter();
+      });
+    }
+
+    // Apply date filter
+    applyFilterBtn.addEventListener("click", applyDateFilter);
+    resetFilterBtn.addEventListener("click", () => {
+      startDateInput.value = formatDate(firstDayOfMonth);
+      endDateInput.value = formatDate(lastDayOfMonth);
+      applyDateFilter();
+    });
+
+    // Apply month filter
+    applyMonthFilter.addEventListener("click", generateMonthlyReport);
+    downloadMonthlyReport.addEventListener("click", downloadMonthlyPDF);
+    
+    // Apply full range filter
+    applyFullRangeFilter.addEventListener("click", generateFullRangeReport);
+    downloadFullRangeReport.addEventListener("click", downloadFullRangePDF);
+
+    function applyDateFilter() {
+      const startDate = startDateInput.value;
+      const endDate = endDateInput.value;
+      
+      if (!startDate || !endDate) {
+        alert("Please select both start and end dates");
+        return;
+      }
+      
+      showLoading();
+      
+      // Small delay to allow UI to update
+      setTimeout(() => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59); // Include the entire end day
+        
+        filteredData = allExpensesData.filter(item => {
+          const itemDate = new Date(item.date);
+          return itemDate >= start && itemDate <= end;
+        });
+        
+        renderVehicleCards();
+        calculateAccountingSummary();
+      }, 100);
+    }
+
+    // Generate monthly report
+    function generateMonthlyReport() {
+      const month = parseInt(monthSelect.value);
+      const year = parseInt(yearSelect.value);
+      
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+      endDate.setHours(23, 59, 59);
+      
+      const monthlyData = allExpensesData.filter(item => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
+      
+      renderMonthlyReport(monthlyData, startDate, endDate);
+    }
+    
+    // Generate full range report
+    function generateFullRangeReport() {
+      const startDate = new Date(fullRangeStartDate.value);
+      const endDate = new Date(fullRangeEndDate.value);
+      endDate.setHours(23, 59, 59);
+      
+      if (!fullRangeStartDate.value || !fullRangeEndDate.value) {
+        alert("Please select both start and end dates");
+        return;
+      }
+      
+      const rangeData = allExpensesData.filter(item => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
+      
+      renderFullRangeReport(rangeData, startDate, endDate);
+    }
+
+    // Render vehicle cards
+    function renderVehicleCards() {
+      vehiclesContainer.innerHTML = "";
+      
+      if (filteredData.length === 0) {
+        vehiclesContainer.innerHTML = '<div class="no-data">No trips found for the selected date range</div>';
+        document.getElementById("accountingSummary").style.display = "none";
+        return;
+      }
+      
+      // Group data by vehicle
+      const vehicles = {};
+      filteredData.forEach(trip => {
+        if (!vehicles[trip.vehicle]) {
+          vehicles[trip.vehicle] = [];
+        }
+        vehicles[trip.vehicle].push(trip);
+      });
+      
+      // Create a card for each vehicle
+      Object.keys(vehicles).forEach(vehicle => {
+        const trips = vehicles[vehicle];
+        const totalTrips = trips.length;
+        
+        // Calculate totals
+        const totalRevenue = trips.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
+        const totalExpenses = trips.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
+        const netProfit = totalRevenue - totalExpenses;
+        const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) : 0;
+        
+        const dieselExpenses = trips.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
+        const tyreExpenses = trips.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
+        const advanceExpenses = trips.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
+        const tollExpenses = trips.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
+        const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicler) || 0), 0);
+        const otherExpenses = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
+        const foodExpenses = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+        
+        const card = document.createElement("div");
+        card.className = "vehicle-card";
+        card.innerHTML = `
+          <h3>${escapeHtml(vehicle)} <span class="trip-count">${totalTrips} ${totalTrips === 1 ? 'Trip' : 'Trips'}</span></h3>
+          <div class="vehicle-stats">
+            <div class="stat-item">
+              <span class="stat-value">₹${totalRevenue.toFixed(2)}</span>
+              <span class="stat-label">Total Revenue</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">₹${totalExpenses.toFixed(2)}</span>
+              <span class="stat-label">Total Expenses</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value ${netProfit >= 0 ? 'positive' : 'negative'}">₹${netProfit.toFixed(2)}</span>
+              <span class="stat-label">Net Profit</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value ${profitMargin >= 0 ? 'positive' : 'negative'}">${profitMargin}%</span>
+              <span class="stat-label">Profit Margin</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">₹${dieselExpenses.toFixed(2)}</span>
+              <span class="stat-label">Diesel Cost</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">₹${tyreExpenses.toFixed(2)}</span>
+              <span class="stat-label">Tyre Cost</span>
+            </div>
+          </div>
+          <button class="download-btn" data-vehicle="${escapeHtml(vehicle)}">
+            <i class="fas fa-download"></i> Download PDF Report
+          </button>
+        `;
+        
+        vehiclesContainer.appendChild(card);
+      });
+      
+      // Add event listeners to download buttons
+      document.querySelectorAll('.download-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const vehicle = this.getAttribute('data-vehicle');
+          generateVehiclePDF(vehicle, vehicles[vehicle]);
+        });
+      });
+      
+      document.getElementById("accountingSummary").style.display = "block";
+    }
+    
+    // Render monthly report
+    function renderMonthlyReport(data, startDate, endDate) {
+      if (data.length === 0) {
+        monthlyReportContainer.innerHTML = '<div class="no-data">No trips found for the selected month</div>';
+        return;
+      }
+      
+      // Calculate totals
+      const totalTrips = data.length;
+      const totalRevenue = data.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
+      const totalExpenses = data.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
+      const netProfit = totalRevenue - totalExpenses;
+      const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) : 0;
+      
+      const dieselExpenses = data.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
+      const tyreExpenses = data.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
+      const advanceExpenses = data.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
+      const tollExpenses = data.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
+      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicler) || 0), 0);
+      const otherExpenses = data.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
+      const foodExpenses = data.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+      
+      // Group by vehicle
+      const vehicles = {};
+      data.forEach(trip => {
+        if (!vehicles[trip.vehicle]) {
+          vehicles[trip.vehicle] = [];
+        }
+        vehicles[trip.vehicle].push(trip);
+      });
+      
+      const monthName = startDate.toLocaleString('default', { month: 'long' });
+      const year = startDate.getFullYear();
+      
+      monthlyReportContainer.innerHTML = `
+        <div class="full-range-card">
+          <h3>${monthName} ${year} Report <span class="trip-count">${totalTrips} Trips</span></h3>
+          <div class="vehicle-stats">
+            <div class="stat-item">
+              <span class="stat-value">₹${totalRevenue.toFixed(2)}</span>
+              <span class="stat-label">Total Revenue</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">₹${totalExpenses.toFixed(2)}</span>
+              <span class="stat-label">Total Expenses</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value ${netProfit >= 0 ? 'positive' : 'negative'}">₹${netProfit.toFixed(2)}</span>
+              <span class="stat-label">Net Profit</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value ${profitMargin >= 0 ? 'positive' : 'negative'}">${profitMargin}%</span>
+              <span class="stat-label">Profit Margin</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">${Object.keys(vehicles).length}</span>
+              <span class="stat-label">Vehicles</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">₹${dieselExpenses.toFixed(2)}</span>
+              <span class="stat-label">Diesel Cost</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="accounting-summary">
+          <h2><i class="fas fa-chart-pie"></i> Detailed Breakdown</h2>
+          <div class="summary-grid">
+            <div class="summary-card"><h3>Total Trips</h3><p>${totalTrips}</p></div>
+            <div class="summary-card"><h3>Total Revenue</h3><p>₹${totalRevenue.toFixed(2)}</p></div>
+            <div class="summary-card"><h3>Total Expenses</h3><p>₹${totalExpenses.toFixed(2)}</p></div>
+            <div class="summary-card"><h3>Net Profit</h3><p class="${netProfit >= 0 ? 'positive' : 'negative'}">₹${netProfit.toFixed(2)}</p></div>
+            <div class="summary-card"><h3>Profit Margin</h3><p class="${profitMargin >= 0 ? 'positive' : 'negative'}">${profitMargin}%</p></div>
+            <div class="summary-card"><h3>Diesel Expenses</h3><p>₹${dieselExpenses.toFixed(2)}</p></div>
+            <div class="summary-card"><h3>Tyre Expenses</h3><p>₹${tyreExpenses.toFixed(2)}</p></div>
+            <div class="summary-card"><h3>Other Expenses</h3><p>₹${otherExpenses.toFixed(2)}</p></div>
+          </div>
+        </div>
+        
+        <h3>Vehicles Summary</h3>
+        <div class="vehicles-grid">
+          ${Object.keys(vehicles).map(vehicle => {
+            const vehicleTrips = vehicles[vehicle];
+            const vehicleTotalTrips = vehicleTrips.length;
+            const vehicleTotalRevenue = vehicleTrips.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
+            const vehicleTotalExpenses = vehicleTrips.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
+            const vehicleNetProfit = vehicleTotalRevenue - vehicleTotalExpenses;
+            const vehicleProfitMargin = vehicleTotalRevenue > 0 ? ((vehicleNetProfit / vehicleTotalRevenue) * 100).toFixed(2) : 0;
+            
+            return `
+              <div class="vehicle-card">
+                <h3>${escapeHtml(vehicle)} <span class="trip-count">${vehicleTotalTrips} Trips</span></h3>
+                <div class="vehicle-stats">
+                  <div class="stat-item">
+                    <span class="stat-value">₹${vehicleTotalRevenue.toFixed(2)}</span>
+                    <span class="stat-label">Revenue</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-value">₹${vehicleTotalExpenses.toFixed(2)}</span>
+                    <span class="stat-label">Expenses</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-value ${vehicleNetProfit >= 0 ? 'positive' : 'negative'}">₹${vehicleNetProfit.toFixed(2)}</span>
+                    <span class="stat-label">Profit</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-value ${vehicleProfitMargin >= 0 ? 'positive' : 'negative'}">${vehicleProfitMargin}%</span>
+                    <span class="stat-label">Margin</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+    
+    // Render full range report
+    function renderFullRangeReport(data, startDate, endDate) {
+      if (data.length === 0) {
+        fullRangeReportContainer.innerHTML = '<div class="no-data">No trips found for the selected date range</div>';
+        return;
+      }
+      
+      // Calculate totals
+      const totalTrips = data.length;
+      const totalRevenue = data.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
+      const totalExpenses = data.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
+      const netProfit = totalRevenue - totalExpenses;
+      const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) : 0;
+      
+      const dieselExpenses = data.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
+      const tyreExpenses = data.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
+      const advanceExpenses = data.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
+      const tollExpenses = data.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
+      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicler) || 0), 0);
+      const otherExpenses = data.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
+      const foodExpenses = data.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+      
+      // Group by vehicle
+      const vehicles = {};
+      data.forEach(trip => {
+        if (!vehicles[trip.vehicle]) {
+          vehicles[trip.vehicle] = [];
+        }
+        vehicles[trip.vehicle].push(trip);
+      });
+      
+      fullRangeReportContainer.innerHTML = `
+        <div class="full-range-card">
+          <h3>${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)} Report <span class="trip-count">${totalTrips} Trips</span></h3>
+          <div class="vehicle-stats">
+            <div class="stat-item">
+              <span class="stat-value">₹${totalRevenue.toFixed(2)}</span>
+              <span class="stat-label">Total Revenue</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">₹${totalExpenses.toFixed(2)}</span>
+              <span class="stat-label">Total Expenses</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value ${netProfit >= 0 ? 'positive' : 'negative'}">₹${netProfit.toFixed(2)}</span>
+              <span class="stat-label">Net Profit</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value ${profitMargin >= 0 ? 'positive' : 'negative'}">${profitMargin}%</span>
+              <span class="stat-label">Profit Margin</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">${Object.keys(vehicles).length}</span>
+              <span class="stat-label">Vehicles</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">₹${dieselExpenses.toFixed(2)}</span>
+              <span class="stat-label">Diesel Cost</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="accounting-summary">
+          <h2><i class="fas fa-chart-pie"></i> Detailed Breakdown</h2>
+          <div class="summary-grid">
+            <div class="summary-card"><h3>Total Trips</h3><p>${totalTrips}</p></div>
+            <div class="summary-card"><h3>Total Revenue</h3><p>₹${totalRevenue.toFixed(2)}</p></div>
+            <div class="summary-card"><h3>Total Expenses</h3><p>₹${totalExpenses.toFixed(2)}</p></div>
+            <div class="summary-card"><h3>Net Profit</h3><p class="${netProfit >= 0 ? 'positive' : 'negative'}">₹${netProfit.toFixed(2)}</p></div>
+            <div class="summary-card"><h3>Profit Margin</h3><p class="${profitMargin >= 0 ? 'positive' : 'negative'}">${profitMargin}%</p></div>
+            <div class="summary-card"><h3>Diesel Expenses</h3><p>₹${dieselExpenses.toFixed(2)}</p></div>
+            <div class="summary-card"><h3>Tyre Expenses</h3><p>₹${tyreExpenses.toFixed(2)}</p></div>
+            <div class="summary-card"><h3>Other Expenses</h3><p>₹${otherExpenses.toFixed(2)}</p></div>
+          </div>
+        </div>
+        
+        <h3>Vehicles Summary</h3>
+        <div class="vehicles-grid">
+          ${Object.keys(vehicles).map(vehicle => {
+            const vehicleTrips = vehicles[vehicle];
+            const vehicleTotalTrips = vehicleTrips.length;
+            const vehicleTotalRevenue = vehicleTrips.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
+            const vehicleTotalExpenses = vehicleTrips.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
+            const vehicleNetProfit = vehicleTotalRevenue - vehicleTotalExpenses;
+            const vehicleProfitMargin = vehicleTotalRevenue > 0 ? ((vehicleNetProfit / vehicleTotalRevenue) * 100).toFixed(2) : 0;
+            
+            return `
+              <div class="vehicle-card">
+                <h3>${escapeHtml(vehicle)} <span class="trip-count">${vehicleTotalTrips} Trips</span></h3>
+                <div class="vehicle-stats">
+                  <div class="stat-item">
+                    <span class="stat-value">₹${vehicleTotalRevenue.toFixed(2)}</span>
+                    <span class="stat-label">Revenue</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-value">₹${vehicleTotalExpenses.toFixed(2)}</span>
+                    <span class="stat-label">Expenses</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-value ${vehicleNetProfit >= 0 ? 'positive' : 'negative'}">₹${vehicleNetProfit.toFixed(2)}</span>
+                    <span class="stat-label">Profit</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-value ${vehicleProfitMargin >= 0 ? 'positive' : 'negative'}">${vehicleProfitMargin}%</span>
+                    <span class="stat-label">Margin</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    // Calculate overall accounting summary
+    function calculateAccountingSummary() {
+      const totalTrips = filteredData.length;
+      const totalRevenue = filteredData.reduce((s, it) => s + (Number(it.gain)||0), 0);
+      const totalExpenses = filteredData.reduce((s, it) => s + (Number(it.total)||0), 0);
+      const netProfit = totalRevenue - totalExpenses;
+      const profitMargin = totalRevenue > 0 ? ((netProfit/totalRevenue)*100).toFixed(2) : "0";
+
+      const dieselExpenses = filteredData.reduce((s, it) => s + (Number(it.diesel)||0), 0);
+      const tyreExpenses = filteredData.reduce((s, it) => s + (Number(it.tyre)||0), 0);
+      const otherExpenses = totalExpenses - dieselExpenses - tyreExpenses;
+
+      document.getElementById("totalTrips").textContent = totalTrips;
+      document.getElementById("totalRevenue").textContent = `₹${totalRevenue.toFixed(2)}`;
+      document.getElementById("totalExpenses").textContent = `₹${totalExpenses.toFixed(2)}`;
+      document.getElementById("netProfit").textContent = `₹${netProfit.toFixed(2)}`;
+      document.getElementById("profitMargin").textContent = `${profitMargin}%`;
+      document.getElementById("dieselExpenses").textContent = `₹${dieselExpenses.toFixed(2)}`;
+      document.getElementById("tyreExpenses").textContent = `₹${tyreExpenses.toFixed(2)}`;
+      document.getElementById("otherTotalExpenses").textContent = `₹${otherExpenses.toFixed(2)}`;
+    }
+
+    // Generate PDF for a specific vehicle
+    function generateVehiclePDF(vehicleNumber, trips) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Add title and header
+      doc.setFontSize(20);
+      doc.setTextColor(46, 139, 87);
+      doc.text(`TRIP REPORT: ${vehicleNumber}`, 14, 15);
+      
+      // Add date range
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Date Range: ${formatDisplayDate(new Date(startDateInput.value))} to ${formatDisplayDate(new Date(endDateInput.value))}`, 14, 22);
+      doc.text(`Report Generated: ${formatDisplayDate(new Date())}`, 14, 27);
+      
+      // Draw a line under header
+      doc.setDrawColor(46, 139, 87);
+      doc.line(14, 30, 196, 30);
+      
+      // Prepare table data
+      const tableData = trips.map(trip => [
+        formatDisplayDate(new Date(trip.date)),
+        trip.driver,
+        `₹${(Number(trip.gain) || 0).toFixed(2)}`,
+        `₹${(Number(trip.diesel) || 0).toFixed(2)}`,
+        `₹${(Number(trip.tyre) || 0).toFixed(2)}`,
+        `₹${(Number(trip.advance) || 0).toFixed(2)}`,
+        `₹${(Number(trip.toll) || 0).toFixed(2)}`,
+        `₹${(Number(trip.vehicler) || 0).toFixed(2)}`,
+        `₹${(Number(trip.other) || 0).toFixed(2)}`,
+        `₹${(Number(trip.food) || 0).toFixed(2)}`,
+        `₹${(Number(trip.total) || 0).toFixed(2)}`,
+        `₹${(Number(trip.profitt) || 0).toFixed(2)}`
+      ]);
+      
+      // Add table
+      doc.autoTable({
+        startY: 35,
+        head: [['Date', 'Driver', 'Revenue', 'Diesel', 'Tyre', 'Advance', 'Toll', 'Vehicle Work', 'Other', 'Food', 'Total Expenses', 'Profit']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [46, 139, 87],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [240, 248, 244]
+        },
+        styles: {
+          fontSize: 7,
+          cellPadding: 2,
+          overflow: 'linebreak'
+        },
+        margin: { top: 35 },
+        tableWidth: 'wrap'
+      });
+      
+      // Calculate summary
+      const totalTrips = trips.length;
+      const totalRevenue = trips.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
+      const totalExpenses = trips.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
+      const netProfit = totalRevenue - totalExpenses;
+      const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) : 0;
+      
+      const dieselExpenses = trips.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
+      const tyreExpenses = trips.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
+      const advanceExpenses = trips.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
+      const tollExpenses = trips.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
+      const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicler) || 0), 0);
+      const otherExpenses = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
+      const foodExpenses = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+      
+      // Add summary section
+      const finalY = doc.lastAutoTable.finalY + 10;
+      
+      // Add a new page if summary doesn't fit
+      if (finalY > 240) {
+        doc.addPage();
+      }
+      
+      doc.setFontSize(16);
+      doc.setTextColor(46, 139, 87);
+      doc.text('FINANCIAL SUMMARY', 14, finalY);
+      
+      // Draw a line under summary title
+      doc.setDrawColor(46, 139, 87);
+      doc.line(14, finalY + 2, 60, finalY + 2);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      
+      // Create summary table
+      doc.autoTable({
+        startY: finalY + 5,
+        body: [
+          ['Total Trips', totalTrips],
+          ['Total Revenue', `₹${totalRevenue.toFixed(2)}`],
+          ['Total Expenses', `₹${totalExpenses.toFixed(2)}`],
+          ['Net Profit', `₹${netProfit.toFixed(2)}`],
+          ['Profit Margin', `${profitMargin}%`],
+          ['', ''],
+          ['Diesel Expenses', `₹${dieselExpenses.toFixed(2)}`],
+          ['Tyre Expenses', `₹${tyreExpenses.toFixed(2)}`],
+          ['Advance Paid', `₹${advanceExpenses.toFixed(2)}`],
+          ['Toll Expenses', `₹${tollExpenses.toFixed(2)}`],
+          ['Vehicle Work', `₹${vehicleWorkExpenses.toFixed(2)}`],
+          ['Other Expenses', `₹${otherExpenses.toFixed(2)}`],
+          ['Food Expenses', `₹${foodExpenses.toFixed(2)}`]
+        ],
+        theme: 'grid',
+        tableLineWidth: 0.1,
+        tableLineColor: [200, 200, 200],
+        styles: {
+          fontSize: 10,
+          cellPadding: 3
+        },
+        headStyles: {
+          fillColor: [240, 248, 244],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 70 },
+          1: { cellWidth: 40, halign: 'right' }
+        }
+      });
+      
+      // Add footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+        doc.text(`Generated by Transport Dashboard`, doc.internal.pageSize.width - 14, doc.internal.pageSize.height - 10, { align: 'right' });
+      }
+      
+      // Save the PDF
+      const fileName = `Trip_Report_${vehicleNumber}_${formatDateForFile(new Date())}.pdf`;
+      doc.save(fileName);
+    }
+    
+    // Download monthly PDF
+    function downloadMonthlyPDF() {
+      const month = parseInt(monthSelect.value);
+      const year = parseInt(yearSelect.value);
+      
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+      endDate.setHours(23, 59, 59);
+      
+      const monthlyData = allExpensesData.filter(item => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
+      
+      if (monthlyData.length === 0) {
+        alert("No data available for the selected month");
+        return;
+      }
+      
+      const monthName = startDate.toLocaleString('default', { month: 'long' });
+      generateFullRangePDF(monthlyData, startDate, endDate, `${monthName}_${year}_Report`);
+    }
+    
+    // Download full range PDF
+    function downloadFullRangePDF() {
+      const startDate = new Date(fullRangeStartDate.value);
+      const endDate = new Date(fullRangeEndDate.value);
+      endDate.setHours(23, 59, 59);
+      
+      if (!fullRangeStartDate.value || !fullRangeEndDate.value) {
+        alert("Please select both start and end dates");
+        return;
+      }
+      
+      const rangeData = allExpensesData.filter(item => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
+      
+      if (rangeData.length === 0) {
+        alert("No data available for the selected date range");
+        return;
+      }
+      
+      generateFullRangePDF(rangeData, startDate, endDate, `Report_${formatDateForFile(startDate)}_to_${formatDateForFile(endDate)}`);
+    }
+    
+    // Generate full range PDF
+    function generateFullRangePDF(data, startDate, endDate, fileName) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Add title and header
+      doc.setFontSize(20);
+      doc.setTextColor(46, 139, 87);
+      doc.text(`COMPREHENSIVE TRIP REPORT`, 14, 15);
+      
+      // Add date range
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Date Range: ${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)}`, 14, 22);
+      doc.text(`Report Generated: ${formatDisplayDate(new Date())}`, 14, 27);
+      
+      // Draw a line under header
+      doc.setDrawColor(46, 139, 87);
+      doc.line(14, 30, 196, 30);
+      
+      // Calculate totals
+      const totalTrips = data.length;
+      const totalRevenue = data.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
+      const totalExpenses = data.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
+      const netProfit = totalRevenue - totalExpenses;
+      const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) : 0;
+      
+      const dieselExpenses = data.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
+      const tyreExpenses = data.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
+      const advanceExpenses = data.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
+      const tollExpenses = data.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
+      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicler) || 0), 0);
+      const otherExpenses = data.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
+      const foodExpenses = data.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+      
+      // Add summary section
+      doc.setFontSize(16);
+      doc.setTextColor(46, 139, 87);
+      doc.text('FINANCIAL SUMMARY', 14, 40);
+      
+      // Draw a line under summary title
+      doc.setDrawColor(46, 139, 87);
+      doc.line(14, 42, 60, 42);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      
+      // Create summary table
+      doc.autoTable({
+        startY: 45,
+        body: [
+          ['Total Trips', totalTrips],
+          ['Total Revenue', `₹${totalRevenue.toFixed(2)}`],
+          ['Total Expenses', `₹${totalExpenses.toFixed(2)}`],
+          ['Net Profit', `₹${netProfit.toFixed(2)}`],
+          ['Profit Margin', `${profitMargin}%`],
+          ['', ''],
+          ['Diesel Expenses', `₹${dieselExpenses.toFixed(2)}`],
+          ['Tyre Expenses', `₹${tyreExpenses.toFixed(2)}`],
+          ['Advance Paid', `₹${advanceExpenses.toFixed(2)}`],
+          ['Toll Expenses', `₹${tollExpenses.toFixed(2)}`],
+          ['Vehicle Work', `₹${vehicleWorkExpenses.toFixed(2)}`],
+          ['Other Expenses', `₹${otherExpenses.toFixed(2)}`],
+          ['Food Expenses', `₹${foodExpenses.toFixed(2)}`]
+        ],
+        theme: 'grid',
+        tableLineWidth: 0.1,
+        tableLineColor: [200, 200, 200],
+        styles: {
+          fontSize: 10,
+          cellPadding: 3
+        },
+        headStyles: {
+          fillColor: [240, 248, 244],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 70 },
+          1: { cellWidth: 40, halign: 'right' }
+        }
+      });
+      
+      // Group by vehicle
+      const vehicles = {};
+      data.forEach(trip => {
+        if (!vehicles[trip.vehicle]) {
+          vehicles[trip.vehicle] = [];
+        }
+        vehicles[trip.vehicle].push(trip);
+      });
+      
+      // Add vehicle summary
+      const finalY = doc.lastAutoTable.finalY + 10;
+      
+      // Add a new page if needed
+      if (finalY > 200) {
+        doc.addPage();
+      }
+      
+      doc.setFontSize(16);
+      doc.setTextColor(46, 139, 87);
+      doc.text('VEHICLE SUMMARY', 14, finalY);
+      
+      // Draw a line under vehicle summary title
+      doc.setDrawColor(46, 139, 87);
+      doc.line(14, finalY + 2, 60, finalY + 2);
+      
+      // Prepare vehicle summary data
+      const vehicleSummaryData = [];
+      Object.keys(vehicles).forEach(vehicle => {
+        const trips = vehicles[vehicle];
+        const totalTrips = trips.length;
+        const totalRevenue = trips.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
+        const totalExpenses = trips.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
+        const netProfit = totalRevenue - totalExpenses;
+        const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) : 0;
+        
+        vehicleSummaryData.push([
+          vehicle,
+          totalTrips,
+          `₹${totalRevenue.toFixed(2)}`,
+          `₹${totalExpenses.toFixed(2)}`,
+          `₹${netProfit.toFixed(2)}`,
+          `${profitMargin}%`
+        ]);
+      });
+      
+      // Add vehicle summary table
+      doc.autoTable({
+        startY: finalY + 5,
+        head: [['Vehicle', 'Trips', 'Revenue', 'Expenses', 'Profit', 'Margin']],
+        body: vehicleSummaryData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [46, 139, 87],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [240, 248, 244]
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        }
+      });
+      
+      // Add footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+        doc.text(`Generated by Transport Dashboard`, doc.internal.pageSize.width - 14, doc.internal.pageSize.height - 10, { align: 'right' });
+      }
+      
+      // Save the PDF
+      doc.save(`${fileName}.pdf`);
+    }
+
+    // Utility functions
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    function formatDisplayDate(date) {
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+    
+    function formatDateForFile(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}${month}${day}`;
+    }
+    
+    function populateYearDropdown() {
+      const currentYear = new Date().getFullYear();
+      yearSelect.innerHTML = '';
+      
+      for (let year = currentYear - 5; year <= currentYear + 1; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+      }
+    }
+    
+    function showLoading() {
+      vehiclesContainer.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+        </div>
+      `;
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return "";
+      return String(str).replace(/[&<>"'`=\/]/g, function(s){ 
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'})[s]; 
+      });
+    }
+
+    // Expose logout and toggleMenu globally
+    window.logout = function() { 
+      import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js")
+        .then(({ getAuth, signOut }) => {
+          const auth = getAuth();
+          signOut(auth).then(() => window.location.href = "index.html")
+            .catch(e => alert("Logout error: " + e.message));
+        });
+    };
+    
+    window.toggleMenu = function(){ 
+      const el = document.getElementById("navLinks"); 
+      if(el) el.classList.toggle("show"); 
+    };
+  </script>
+</body>
+</html>
