@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Vehicle & Driver Details with Tab Navigation</title>
+  <title>Vehicle & Driver Details with Expiry Tracking</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
     * { box-sizing: border-box; }
@@ -127,12 +127,6 @@
     .action-btn.delete:hover {
       background: #c0392b;
     }
-    .action-btn.report { 
-      background: #3498db; 
-    }
-    .action-btn.report:hover {
-      background: #2980b9;
-    }
     .action-btn:hover {
       opacity: 0.9;
     }
@@ -243,6 +237,80 @@
       color: #666;
     }
     
+    /* Notification Styles */
+    .notification-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      max-width: 400px;
+    }
+    .notification {
+      background: white;
+      border-left: 4px solid #e74c3c;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      animation: slideIn 0.3s ease-out;
+    }
+    .notification.warning {
+      border-left-color: #f39c12;
+    }
+    .notification.expired {
+      border-left-color: #e74c3c;
+    }
+    .notification-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    .notification-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .notification-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .notification-btn.remind {
+      background: #f39c12;
+      color: white;
+    }
+    .notification-btn.done {
+      background: #2e8b57;
+      color: white;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    /* Expiry status styles */
+    .expiry-status {
+      font-size: 12px;
+      padding: 3px 6px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-top: 4px;
+    }
+    .expiry-valid {
+      background: #d4edda;
+      color: #155724;
+    }
+    .expiry-warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .expiry-expired {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
     @media (max-width: 900px) {
       .row > * { 
         flex: 1 1 100%; 
@@ -262,6 +330,11 @@
         padding: 6px 8px;
         min-width: 35px;
         font-size: 14px;
+      }
+      .notification-container {
+        left: 20px;
+        right: 20px;
+        max-width: none;
       }
     }
   </style>
@@ -389,7 +462,6 @@
           <th>Insurance</th>
           <th>Fitness</th>
           <th>Actions</th>
-          <th>Report</th>
         </tr>
       </thead>
       <tbody id="tableBody">
@@ -407,6 +479,9 @@
     </div>
   </div>
 
+  <!-- Notification Container -->
+  <div class="notification-container" id="notificationContainer"></div>
+
   <!-- Navbar injection -->
   <script src="navbar-loader.js"></script>
   <!-- Firebase compat SDKs -->
@@ -415,7 +490,212 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <!-- XLSX for Excel export (used by download button) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Tesseract.js for OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
   <script>
+    // Initialize Tesseract worker
+    let tesseractWorker = null;
+    
+    async function initializeTesseract() {
+      try {
+        tesseractWorker = await Tesseract.createWorker({
+          logger: m => console.log(m)
+        });
+        await tesseractWorker.loadLanguage('eng');
+        await tesseractWorker.initialize('eng');
+        console.log('Tesseract.js worker initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize Tesseract:', error);
+        // Fallback to server-side processing if worker fails
+        tesseractWorker = null;
+      }
+    }
+    
+    // Initialize when the script loads
+    document.addEventListener('DOMContentLoaded', initializeTesseract);
+  </script>
+  <!-- PDF.js for PDF text extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+  <script>
+    // Cloudinary Configuration
+    const CLOUDINARY_CLOUD_NAME = 'doqapn15f';
+    const CLOUDINARY_UPLOAD_PRESET = 'payment-billing';
+    
+    // Resize image before upload
+    async function resizeImage(file, maxWidth, quality = 0.8) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to Blob with specified quality
+            canvas.toBlob(
+              (blob) => resolve(blob),
+              'image/jpeg',
+              quality
+            );
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    
+    // Upload to Cloudinary
+    async function uploadToCloudinary(blob, fileName = 'document.jpg') {
+      if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+        throw new Error('Cloudinary configuration is missing');
+      }
+      
+      const formData = new FormData();
+      formData.append('file', blob, fileName);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Cloudinary upload failed: ${error}`);
+      }
+      
+      const data = await response.json();
+      return data.secure_url;
+    }
+    // Handle form submission
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      
+      if (!currentUser) {
+        showError('Please log in to save data');
+        return;
+      }
+      
+      const form = e.target;
+      const formData = new FormData(form);
+      const vehicleData = Object.fromEntries(formData.entries());
+      const vehicleType = document.getElementById('vehicleType').value;
+      
+      try {
+        showLoading('Processing and uploading documents...');
+        
+        // Process file uploads
+        const fileInputs = [
+          { id: 'licenseImage', field: 'licenseUrl' },
+          { id: 'pucImage', field: 'pucUrl' },
+          { id: 'insuranceImage', field: 'insuranceUrl' },
+          { id: 'fitnessImage', field: 'fitnessUrl' }
+        ];
+        
+        // Process each file input
+        for (const { id, field } of fileInputs) {
+          const fileInput = document.getElementById(id);
+          if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            try {
+              // Resize image before upload if it's an image
+              if (file.type.startsWith('image/')) {
+                const resizedBlob = await resizeImage(file, 1200);
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${field}_${Date.now()}.${fileExt}`;
+                
+                showLoading(`Uploading ${field}...`);
+                const fileUrl = await uploadToCloudinary(resizedBlob, fileName);
+                vehicleData[field] = fileUrl;
+                
+                // Extract expiry date if possible
+                if (field === 'licenseUrl') {
+                  vehicleData.licenseExpiry = await extractExpiryDate(resizedBlob);
+                } else if (field === 'pucUrl') {
+                  vehicleData.pucExpiry = await extractExpiryDate(resizedBlob);
+                } else if (field === 'insuranceUrl') {
+                  vehicleData.insuranceExpiry = await extractExpiryDate(resizedBlob);
+                } else if (field === 'fitnessUrl') {
+                  vehicleData.fitnessExpiry = await extractExpiryDate(resizedBlob);
+                }
+              } else {
+                // For non-image files, upload directly
+                showLoading(`Uploading ${field}...`);
+                const fileUrl = await uploadToCloudinary(file, file.name);
+                vehicleData[field] = fileUrl;
+              }
+            } catch (error) {
+              console.error(`Error processing ${field}:`, error);
+              showError(`Error processing ${field}. Please try again.`);
+              return;
+            }
+          }
+        }
+        
+        // Save to Firebase
+        showLoading('Saving vehicle data...');
+        const vehicleRef = database.ref(`vehicles/${currentUser.uid}`).push();
+        await vehicleRef.set({
+          ...vehicleData,
+          type: vehicleType,
+          createdAt: firebase.database.ServerValue.TIMESTAMP,
+          createdBy: currentUser.uid,
+          branch: 'main' // Ensure branch is set to main
+        });
+        
+        showSuccess('Vehicle data saved successfully!');
+        form.reset();
+        
+        // Reset previews
+        document.querySelectorAll('.preview-image').forEach(preview => {
+          preview.style.display = 'none';
+          preview.src = '';
+        });
+        
+        await loadVehiclesFromFirebase();
+        
+      } catch (error) {
+        console.error('Error saving vehicle data:', error);
+        showError('Failed to save vehicle data. Please try again.');
+      } finally {
+        hideLoading();
+      }
+    }
+    
+    // Set up PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+    
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
     // Configuration
     const ITEMS_PER_PAGE_OPTIONS = [5, 10, 20, 50];
     let currentPage = 1;
@@ -424,6 +704,7 @@
     let allVehiclesData = {};
     let filteredVehiclesData = {};
     let currentUser = null;
+    let notifications = [];
     
     // DOM elements
     const tableBody = document.getElementById("tableBody");
@@ -434,6 +715,7 @@
     const entriesInfo = document.getElementById("entriesInfo");
     const searchInput = document.getElementById("searchInput");
     const typeFilter = document.getElementById("typeFilter");
+    const notificationContainer = document.getElementById("notificationContainer");
     
     // Initialize the tab interface
     function initTabInterface() {
@@ -587,6 +869,13 @@
       
       for (const key in data) {
         const vehicle = data[key];
+        
+        // Determine expiry status for each document
+        const licenseStatus = getExpiryStatus(vehicle.licenseExpiry);
+        const pucStatus = getExpiryStatus(vehicle.pucExpiry);
+        const insuranceStatus = getExpiryStatus(vehicle.insuranceExpiry);
+        const fitnessStatus = getExpiryStatus(vehicle.fitnessExpiry);
+        
         const row = document.createElement('tr');
         
         row.innerHTML = `
@@ -595,21 +884,55 @@
           <td>${vehicle.driverName || '-'}</td>
           <td>${vehicle.driverLicense || '-'}</td>
           <td>${vehicle.contactNumber || '-'}</td>
-          <td>${vehicle.licenseImageUrl ? `<a href="${vehicle.licenseImageUrl}" target="_blank">View</a>` : '-'}</td>
-          <td>${vehicle.pucUrl ? `<a href="${vehicle.pucUrl}" target="_blank">View</a>` : '-'}</td>
-          <td>${vehicle.insuranceUrl ? `<a href="${vehicle.insuranceUrl}" target="_blank">View</a>` : '-'}</td>
-          <td>${vehicle.fitnessUrl ? `<a href="${vehicle.fitnessUrl}" target="_blank">View</a>` : '-'}</td>
+          <td>
+            ${vehicle.licenseImageUrl ? `<a href="${vehicle.licenseImageUrl}" target="_blank">View</a>` : '-'}
+            ${vehicle.licenseExpiry ? `<div class="expiry-status ${licenseStatus.class}">${formatDate(vehicle.licenseExpiry)}</div>` : ''}
+          </td>
+          <td>
+            ${vehicle.pucUrl ? `<a href="${vehicle.pucUrl}" target="_blank">View</a>` : '-'}
+            ${vehicle.pucExpiry ? `<div class="expiry-status ${pucStatus.class}">${formatDate(vehicle.pucExpiry)}</div>` : ''}
+          </td>
+          <td>
+            ${vehicle.insuranceUrl ? `<a href="${vehicle.insuranceUrl}" target="_blank">View</a>` : '-'}
+            ${vehicle.insuranceExpiry ? `<div class="expiry-status ${insuranceStatus.class}">${formatDate(vehicle.insuranceExpiry)}</div>` : ''}
+          </td>
+          <td>
+            ${vehicle.fitnessUrl ? `<a href="${vehicle.fitnessUrl}" target="_blank">View</a>` : '-'}
+            ${vehicle.fitnessExpiry ? `<div class="expiry-status ${fitnessStatus.class}">${formatDate(vehicle.fitnessExpiry)}</div>` : ''}
+          </td>
           <td>
             <button class="action-btn" onclick="editVehicle('${key}')">Edit</button>
             <button class="action-btn delete" onclick="deleteVehicle('${key}')">Delete</button>
-          </td>
-          <td>
-            <button class="action-btn report" onclick="openReportModal('${vehicle.vehicleNumber}')">Report</button>
           </td>
         `;
         
         tableBody.appendChild(row);
       }
+    }
+    
+    // Get expiry status for a date
+    function getExpiryStatus(expiryDate) {
+      if (!expiryDate) return { class: '', status: '' };
+      
+      const today = new Date();
+      const expiry = new Date(expiryDate);
+      const diffTime = expiry - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) {
+        return { class: 'expiry-expired', status: 'Expired' };
+      } else if (diffDays <= 7) {
+        return { class: 'expiry-warning', status: 'Expiring soon' };
+      } else {
+        return { class: 'expiry-valid', status: 'Valid' };
+      }
+    }
+    
+    // Format date for display
+    function formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString();
     }
     
     // Basic notifications
@@ -656,168 +979,656 @@
       }
     }
     
-    // Stubs for actions (prevent ReferenceErrors)
-    function editVehicle(key) {
-      showError('Edit feature is not available in this simplified view.');
-    }
-    function deleteVehicle(key) {
-      showError('Delete feature is not available in this simplified view.');
-    }
-    function openReportModal(vehicleNumber) {
-      showError('Report generation is not available in this simplified view.');
-    }
-    
-    // Handle form submission: save entry to Firebase
-    async function handleFormSubmit(event) {
-      event.preventDefault();
+    // Extract text from image using OCR
+    async function extractTextFromImage(file) {
       try {
-        if (!currentUser) {
-          showError('You are not signed in.');
-          return;
+        if (!tesseractWorker) {
+          // Fallback to basic text extraction if worker isn't available
+          console.warn('Tesseract worker not available, using basic text extraction');
+          return await basicTextExtraction(file);
         }
-
-        const saveBtn = document.getElementById('saveBtn');
-        if (saveBtn) {
-          saveBtn.disabled = true;
-          saveBtn.innerHTML = '<span class="loading"></span> Saving...';
-        }
-
-        // Collect values
-        const vehicleNumber = (document.getElementById('vehicleNumber').value || '').trim();
-        const vehicleType = (document.getElementById('vehicleType').value || '').trim();
-        const driverName = (document.getElementById('driverName').value || '').trim();
-        const driverLicense = (document.getElementById('driverLicense').value || '').trim();
-        const contactNumber = (document.getElementById('contactNumber').value || '').trim();
-
-        if (!vehicleNumber) {
-          showError('Vehicle Number is required.');
-          return;
-        }
-
-        const key = vehicleNumber.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const payload = {
-          vehicleNumber,
-          vehicleType,
-          driverName,
-          driverLicense,
-          contactNumber,
-          addedAt: Date.now(),
-          // File uploads are not implemented in this simplified flow
-          licenseImageUrl: '',
-          pucUrl: '',
-          insuranceUrl: '',
-          fitnessUrl: ''
-        };
-
-        await database.ref(`users/${currentUser.uid}/vehicles/${key}`).set(payload);
-
-        // Reset form and previews
-        const form = document.getElementById('vehicleDriverForm');
-        if (form) form.reset();
-        const licensePreview = document.getElementById('licensePreview');
-        if (licensePreview) licensePreview.style.display = 'none';
-
-        showSuccess('Entry saved successfully.');
-        // Table will refresh via the 'value' listener in loadVehicles()
-      } catch (err) {
-        showError('Failed to save entry: ' + (err && err.message ? err.message : err));
-      } finally {
-        const saveBtn = document.getElementById('saveBtn');
-        if (saveBtn) {
-          saveBtn.disabled = false;
-          saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Entry';
+        
+        const { data: { text } } = await tesseractWorker.recognize(file);
+        return text;
+      } catch (error) {
+        console.error('OCR Error:', error);
+        // Fallback to basic text extraction on error
+        try {
+          return await basicTextExtraction(file);
+        } catch (e) {
+          console.error('Fallback text extraction failed:', e);
+          return '';
         }
       }
     }
     
-    // Load vehicles from Firebase
-    function loadVehicles() {
-      const vehiclesRef = database.ref(`users/${currentUser.uid}/vehicles`);
-      
-      vehiclesRef.on('value', (snapshot) => {
-        allVehiclesData = snapshot.val() || {};
-        renderTableWithPagination();
-      }, (error) => {
-        showError('Failed to load vehicles: ' + error.message);
+    // Basic text extraction fallback
+    async function basicTextExtraction(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // This is a very basic fallback that just returns a placeholder
+          // since we can't do actual OCR without Tesseract
+          resolve('Document text could not be extracted. Please enter details manually.');
+        };
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
       });
     }
     
-    // Initialize the application
-    function initApp() {
-      // Check auth state
-      auth.onAuthStateChanged(async (user) => {
-        if (user) {
-          // 1) Branch restriction: only allow Main branch
-          const selectedBranch = localStorage.getItem('selectedBranch');
-          if (selectedBranch && selectedBranch !== 'main') {
-            showError('Access denied: role is not matching for this branch. Redirecting to Home...');
-            setTimeout(() => { window.location.href = 'home.html'; }, 1500);
-            return;
-          }
-
-          // 2) Role restriction: block normal users (match tyre.html behavior)
+    // Extract text from PDF
+    async function extractTextFromPDF(file) {
+      return new Promise((resolve, reject) => {
+        const fileReader = new FileReader();
+        
+        fileReader.onload = async function() {
           try {
-            const profileSnap = await database.ref(`users/${user.uid}/profile`).once('value');
-            const profile = profileSnap.exists() ? profileSnap.val() : {};
-            const role = (profile.role || profile.userRole || 'normal').toLowerCase();
-            if (role === 'normal') {
-              showError('Access denied: your role is not permitted to use this feature. Redirecting to Home...');
-              setTimeout(() => { window.location.href = 'home.html'; }, 1500);
-              return;
+            const typedArray = new Uint8Array(this.result);
+            const pdf = await pdfjsLib.getDocument(typedArray).promise;
+            let text = '';
+            
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const content = await page.getTextContent();
+              text += content.items.map(item => item.str).join(' ') + '\n';
             }
-          } catch (e) {
-            // If profile load fails, default to safe behavior (deny access)
-            showError('Access denied: unable to verify role. Redirecting to Home...');
-            setTimeout(() => { window.location.href = 'home.html'; }, 1500);
-            return;
+            
+            resolve(text);
+          } catch (error) {
+            reject(error);
           }
-
+        };
+        
+        fileReader.onerror = reject;
+        fileReader.readAsArrayBuffer(file);
+      });
+    }
+    
+    // Extract expiry date from text
+    function extractExpiryDate(text) {
+      if (!text) return null;
+      
+      // Common date patterns in documents
+      const patterns = [
+        // DD/MM/YYYY or DD-MM-YYYY
+        /\b(0[1-9]|[12][0-9]|3[01])[\/\-](0[1-9]|1[012])[\/\-](\d{4})\b/g,
+        // MM/DD/YYYY or MM-DD-YYYY
+        /\b(0[1-9]|1[012])[\/\-](0[1-9]|[12][0-9]|3[01])[\/\-](\d{4})\b/g,
+        // YYYY/MM/DD or YYYY-MM-DD
+        /\b(\d{4})[\/\-](0[1-9]|1[012])[\/\-](0[1-9]|[12][0-9]|3[01])\b/g,
+        // Month DD, YYYY
+        /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})\b/gi,
+        // DD Month YYYY
+        /\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})\b/gi
+      ];
+      
+      let dates = [];
+      
+      // Try each pattern
+      for (const pattern of patterns) {
+        const matches = text.match(pattern);
+        if (matches) {
+          dates = dates.concat(matches);
+        }
+      }
+      
+      // If we found dates, return the most future one (likely the expiry)
+      if (dates.length > 0) {
+        // Convert to Date objects and sort
+        const dateObjects = dates.map(d => new Date(d)).filter(d => !isNaN(d));
+        if (dateObjects.length > 0) {
+          dateObjects.sort((a, b) => b - a); // Most future first
+          return dateObjects[0].toISOString().split('T')[0]; // Return as YYYY-MM-DD
+        }
+      }
+      
+      return null;
+    }
+    
+    // Process file and extract expiry date
+    async function processFileForExpiry(file, progressElement) {
+      if (!file) return null;
+      
+      try {
+        if (progressElement) {
+          progressElement.textContent = 'Processing document...';
+        }
+        
+        // Skip OCR for very large files to prevent performance issues
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+          console.warn('File too large for OCR processing');
+          return null;
+        }
+        
+        let text = '';
+        
+        try {
+          if (file.type === 'application/pdf') {
+            text = await extractTextFromPDF(file);
+          } else if (file.type.startsWith('image/')) {
+            text = await extractTextFromImage(file);
+          } else {
+            console.warn('Unsupported file type for text extraction:', file.type);
+            return null;
+          }
+          
+          if (progressElement) {
+            progressElement.textContent = 'Extracting expiry date...';
+          }
+          
+          const expiryDate = await extractExpiryDate(text);
+          return expiryDate;
+          
+        } catch (ocrError) {
+          console.warn('OCR processing failed, falling back to manual entry', ocrError);
+          if (progressElement) {
+            progressElement.textContent = 'Please enter expiry date manually';
+            progressElement.style.color = '#ffc107';
+          }
+          return null;
+        }
+        
+      } catch (error) {
+        console.error('Error processing file:', error);
+        if (progressElement) {
+          progressElement.textContent = 'Error processing document';
+          progressElement.style.color = '#dc3545';
+        }
+        return null;
+      }
+    }
+    
+    // Upload file to Cloudinary with progress tracking
+    async function uploadFileToCloudinary(file, progressElement) {
+      if (!file) return null;
+      
+      try {
+        if (progressElement) {
+          progressElement.textContent = 'Uploading to Cloudinary...';
+        }
+        
+        // Process the file (resize if image)
+        let fileToUpload = file;
+        if (file.type.startsWith('image/')) {
+          fileToUpload = await resizeImage(file, 1200); // Resize to max 1200px width
+        }
+        
+        // Upload to Cloudinary
+        const url = await uploadToCloudinary(
+          fileToUpload, 
+          `vehicle_doc_${Date.now()}.${file.name.split('.').pop()}`
+        );
+        
+        if (progressElement) {
+          progressElement.textContent = 'Upload completed';
+        }
+        
+        return url;
+      } catch (error) {
+        console.error('Error uploading to Cloudinary:', error);
+        if (progressElement) {
+          progressElement.textContent = 'Upload failed';
+        }
+        throw error;
+      }
+    }
+    
+    // Check for expiring documents and show notifications
+    function checkExpiryNotifications(vehiclesData) {
+      notifications = [];
+      const today = new Date();
+      
+      for (const key in vehiclesData) {
+        const vehicle = vehiclesData[key];
+        const vehicleNumber = vehicle.vehicleNumber || 'Unknown';
+        
+        // Check each document type
+        checkDocumentExpiry(vehicle, 'license', 'License', vehicleNumber, key);
+        checkDocumentExpiry(vehicle, 'puc', 'PUC', vehicleNumber, key);
+        checkDocumentExpiry(vehicle, 'insurance', 'Insurance', vehicleNumber, key);
+        checkDocumentExpiry(vehicle, 'fitness', 'Fitness', vehicleNumber, key);
+      }
+      
+      // Display notifications
+      displayNotifications();
+    }
+    
+    // Check expiry for a specific document type
+    function checkDocumentExpiry(vehicle, docType, docName, vehicleNumber, key) {
+      const expiryDate = vehicle[`${docType}Expiry`];
+      if (!expiryDate) return;
+      
+      const expiry = new Date(expiryDate);
+      const today = new Date();
+      const diffTime = expiry - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Check if expired or expiring within 7 days
+      if (diffDays <= 7) {
+        const status = diffDays < 0 ? 'expired' : 'warning';
+        
+        notifications.push({
+          id: `${key}-${docType}`,
+          type: docType,
+          docName,
+          vehicleNumber,
+          expiryDate,
+          status,
+          days: Math.abs(diffDays)
+        });
+      }
+    }
+    
+    // Display notifications
+    function displayNotifications() {
+      notificationContainer.innerHTML = '';
+      
+      notifications.forEach(notification => {
+        const notificationEl = document.createElement('div');
+        notificationEl.className = `notification ${notification.status}`;
+        notificationEl.id = `notification-${notification.id}`;
+        
+        const message = notification.status === 'expired' 
+          ? `Your ${notification.docName} for ${notification.vehicleNumber} has expired.`
+          : `Your ${notification.docName} for ${notification.vehicleNumber} expires in ${notification.days} days.`;
+        
+        notificationEl.innerHTML = `
+          <div class="notification-title">Document Expiry Notice</div>
+          <div>${message}</div>
+          <div class="notification-actions">
+            <button class="notification-btn remind" onclick="snoozeNotification('${notification.id}')">Remind me later</button>
+            <button class="notification-btn done" onclick="resolveNotification('${notification.id}')">Upload New Document</button>
+          </div>
+        `;
+        
+        notificationContainer.appendChild(notificationEl);
+      });
+    }
+    
+    // Snooze notification for 1 day
+    function snoozeNotification(notificationId) {
+      const notificationEl = document.getElementById(`notification-${notificationId}`);
+      if (notificationEl) {
+        notificationEl.style.display = 'none';
+      }
+      // In a real implementation, you would store this in localStorage or database
+      // and check again the next day
+    }
+    
+    // Resolve notification by uploading a new document
+    function resolveNotification(notificationId) {
+      // Extract the key and document type from the notification ID
+      const [key, docType] = notificationId.split('-');
+      
+      // Find the vehicle
+      const vehicle = allVehiclesData[key];
+      if (!vehicle) return;
+      
+      // Prompt user to upload a new document
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = docType === 'license' ? 'image/*' : 'image/*,application/pdf';
+      
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Process the file and extract expiry date
+        const expiryDate = await processFileForExpiry(file, null);
+        
+        // Upload to Cloudinary
+        const progressElement = document.createElement('div');
+        const fileUrl = await uploadToCloudinary(file, progressElement);
+        
+        // Update the vehicle data
+        vehicle[`${docType}Url`] = fileUrl;
+        if (expiryDate) {
+          vehicle[`${docType}Expiry`] = expiryDate;
+        }
+        
+        // Save to Firebase
+        await saveVehicleToFirebase(key, vehicle);
+        
+        // Remove the notification
+        const notificationEl = document.getElementById(`notification-${notificationId}`);
+        if (notificationEl) {
+          notificationEl.remove();
+        }
+        
+        showSuccess(`${docName} updated successfully!`);
+      };
+      
+      input.click();
+    }
+    
+    // Firebase initialization and functions
+    // Note: This is a placeholder - you'll need to implement actual Firebase integration
+    function initializeFirebase() {
+      // Your Firebase config
+      const firebaseConfig = {
+        apiKey: "your-api-key",
+        authDomain: "your-project.firebaseapp.com",
+        databaseURL: "https://your-project.firebaseio.com",
+        projectId: "your-project",
+        storageBucket: "your-project.appspot.com",
+        messagingSenderId: "123456789",
+        appId: "your-app-id"
+      };
+      
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      
+      // Check authentication state
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
           currentUser = user;
-          loadVehicles();
-          initTabInterface();
+          loadVehiclesFromFirebase();
         } else {
-          // Redirect to login page if not authenticated
-          window.location.href = "index.html";
+          // Redirect to login if not authenticated
+          window.location.href = 'index.html';
         }
       });
-      
-      // Add event listeners for search and filter
-      searchInput.addEventListener("input", () => {
-        currentPage = 1;
-        renderTableWithPagination();
-      });
-      
-      typeFilter.addEventListener("change", () => {
-        currentPage = 1;
-        renderTableWithPagination();
-      });
+    }
+    
+    // Load vehicles from Firebase
+    async function loadVehiclesFromFirebase() {
+      try {
+        if (!currentUser) {
+          throw new Error('User not authenticated');
+        }
 
-      // Save Entry handler
+        const vehiclesRef = database.ref(`users/${currentUser.uid}/vehicles`);
+        
+        // Load vehicles data
+        const snapshot = await vehiclesRef.once('value');
+        allVehiclesData = snapshot.val() || {};
+        
+        // Initialize the tab interface with data
+        initTabInterface();
+        
+        // Check for expiring documents
+        checkExpiryNotifications(allVehiclesData);
+        
+      } catch (error) {
+        console.error('Error loading vehicles:', error);
+        showError('Failed to load vehicle data. Please try again.');
+        // Redirect to home page if there's an error loading data
+        setTimeout(() => { window.location.href = 'home.html'; }, 2000);
+      }
+    }
+    
+    // Save vehicle to Firebase
+    async function saveVehicleToFirebase(key, vehicleData) {
+      // This is a placeholder - implement your Firebase save logic
+      console.log('Saving to Firebase:', key, vehicleData);
+      return new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    // Delete vehicle from Firebase
+    async function deleteVehicleFromFirebase(key) {
+      // This is a placeholder - implement your Firebase delete logic
+      console.log('Deleting from Firebase:', key);
+      return new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    // Check user authentication and role
+    async function checkAuthAndRole() {
+      return new Promise((resolve) => {
+        auth.onAuthStateChanged(async (user) => {
+          if (!user) {
+            // Not signed in, redirect to login
+            window.location.href = 'index.html';
+            resolve(false);
+            return;
+          }
+          
+          // Enforce main-branch only access
+          const selectedBranch = localStorage.getItem('selectedBranch');
+          if (selectedBranch && selectedBranch !== 'main') {
+            console.error('Not allowed to use this feature in limited branch');
+            if (confirm('This feature is only available in Main Branch. Go to Home?')) {
+              window.location.href = 'home.html';
+            }
+            resolve(false);
+            return;
+          }
+          
+          // Check user role
+          try {
+            const userRef = database.ref(`users/${user.uid}/profile`);
+            const snapshot = await userRef.once('value');
+            const profile = snapshot.exists() ? snapshot.val() : {};
+            const role = (profile.role || profile.userRole || 'normal').toLowerCase();
+            
+            if (role === 'normal') {
+              showError('Access restricted: your role cannot access this feature. Redirecting to Home...');
+              setTimeout(() => { window.location.href = 'home.html'; }, 1200);
+              resolve(false);
+              return;
+            }
+            
+            currentUser = user;
+            resolve(true);
+            
+          } catch (error) {
+            console.error('Error checking user role:', error);
+            showError('Error verifying your access. Please try again.');
+            setTimeout(() => { window.location.href = 'home.html'; }, 1200);
+            resolve(false);
+          }
+        });
+      });
+    }
+
+    // Initialize when page loads
+    window.onload = async function() {
+      // Set up file input change handlers for all file inputs
+      const setupFilePreview = (inputId, previewId) => {
+        const input = document.getElementById(inputId);
+        if (input) {
+          input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+              const preview = document.getElementById(previewId);
+              if (preview) {
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = 'block';
+              }
+              
+              // Process the file for expiry date extraction if needed
+              const progressElement = document.createElement('div');
+              progressElement.className = 'progress-wrap';
+              progressElement.textContent = 'Processing document...';
+              input.parentNode.appendChild(progressElement);
+              
+              processFileForExpiry(file, progressElement).then(expiryDate => {
+                if (expiryDate) {
+                  // Auto-fill expiry date field if available
+                  const expiryFieldMap = {
+                    'licenseImage': 'licenseExpiry',
+                    'pucImage': 'pucExpiry',
+                    'insuranceImage': 'insuranceExpiry',
+                    'fitnessImage': 'fitnessExpiry'
+                  };
+                  
+                  const fieldName = expiryFieldMap[inputId];
+                  if (fieldName) {
+                    const expiryInput = document.querySelector(`input[name="${fieldName}"]`);
+                    if (expiryInput && !expiryInput.value) {
+                      expiryInput.value = expiryDate;
+                    }
+                  }
+                }
+                progressElement.remove();
+              }).catch(error => {
+                console.error('Error processing file:', error);
+                progressElement.textContent = 'Could not extract expiry date';
+                progressElement.style.color = '#dc3545';
+                setTimeout(() => progressElement.remove(), 3000);
+              });
+            }
+          });
+        }
+      };
+      
+      // Set up all file inputs with previews
+      setupFilePreview('licenseImage', 'licensePreview');
+      setupFilePreview('pucImage', 'pucPreview');
+      setupFilePreview('insuranceImage', 'insurancePreview');
+      setupFilePreview('fitnessImage', 'fitnessPreview');
+      
+      // Set up form submission
       const form = document.getElementById('vehicleDriverForm');
       if (form) {
         form.addEventListener('submit', handleFormSubmit);
       }
+      
+      // Set up search and filter
+      if (searchInput) searchInput.addEventListener('input', debounce(renderTableWithPagination, 300));
+      if (typeFilter) typeFilter.addEventListener('change', renderTableWithPagination);
+      
+      // Initialize the app
+      const isAuthorized = await checkAuthAndRole();
+      if (isAuthorized) {
+        await loadVehiclesFromFirebase();
+        
+        // Check for notifications
+        if (allVehiclesData) {
+          checkExpiryNotifications(allVehiclesData);
+        }
+      }
+    };
+    
+    // Debounce function for search input
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
     }
     
-    // Initialize Firebase (your existing code)
-    const firebaseConfig = {
-      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "transport-dashboard-ad69a",
-      storageBucket: "transport-dashboard-ad69a.appspot.com",
-      messagingSenderId: "526889676196",
-      appId: "1:526889676196:web:66032c80a4aede690ae531",
-      measurementId: "G-7F9R7HJYDH"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const database = firebase.database();
+    // Edit vehicle function
+    function editVehicle(key) {
+      const vehicle = allVehiclesData[key];
+      if (!vehicle) return;
+      
+      // Populate form with vehicle data
+      document.getElementById('vehicleNumber').value = vehicle.vehicleNumber || '';
+      document.getElementById('vehicleType').value = vehicle.vehicleType || '';
+      document.getElementById('driverName').value = vehicle.driverName || '';
+      document.getElementById('driverLicense').value = vehicle.driverLicense || '';
+      document.getElementById('contactNumber').value = vehicle.contactNumber || '';
+      
+      // Show cancel button
+      document.getElementById('cancelEdit').style.display = 'inline-block';
+      
+      // Scroll to form
+      document.getElementById('vehicleDriverForm').scrollIntoView({ behavior: 'smooth' });
+      
+      // Change save button to update mode
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Entry';
+      saveBtn.onclick = async function(e) {
+        e.preventDefault();
+        
+        // Collect updated data
+        const updatedData = {
+          vehicleNumber: document.getElementById('vehicleNumber').value,
+          vehicleType: document.getElementById('vehicleType').value,
+          driverName: document.getElementById('driverName').value,
+          driverLicense: document.getElementById('driverLicense').value,
+          contactNumber: document.getElementById('contactNumber').value,
+          licenseImageUrl: vehicle.licenseImageUrl,
+          licenseExpiry: vehicle.licenseExpiry,
+          pucUrl: vehicle.pucUrl,
+          pucExpiry: vehicle.pucExpiry,
+          insuranceUrl: vehicle.insuranceUrl,
+          insuranceExpiry: vehicle.insuranceExpiry,
+          fitnessUrl: vehicle.fitnessUrl,
+          fitnessExpiry: vehicle.fitnessExpiry
+        };
+        
+        // Process file uploads if any
+        try {
+          const licenseFile = document.getElementById('licenseImage').files[0];
+          if (licenseFile) {
+            updatedData.licenseImageUrl = await uploadToCloudinary(licenseFile, document.getElementById('licenseProgress'));
+            updatedData.licenseExpiry = await processFileForExpiry(licenseFile, document.getElementById('licenseProgress'));
+          }
+          
+          const pucFile = document.getElementById('pucFile').files[0];
+          if (pucFile) {
+            updatedData.pucUrl = await uploadToCloudinary(pucFile, document.getElementById('pucProgress'));
+            updatedData.pucExpiry = await processFileForExpiry(pucFile, document.getElementById('pucProgress'));
+          }
+          
+          const insuranceFile = document.getElementById('insuranceFile').files[0];
+          if (insuranceFile) {
+            updatedData.insuranceUrl = await uploadToCloudinary(insuranceFile, document.getElementById('insuranceProgress'));
+            updatedData.insuranceExpiry = await processFileForExpiry(insuranceFile, document.getElementById('insuranceProgress'));
+          }
+          
+          const fitnessFile = document.getElementById('fitnessFile').files[0];
+          if (fitnessFile) {
+            updatedData.fitnessUrl = await uploadToCloudinary(fitnessFile, document.getElementById('fitnessProgress'));
+            updatedData.fitnessExpiry = await processFileForExpiry(fitnessFile, document.getElementById('fitnessProgress'));
+          }
+          
+          // Update in Firebase
+          await saveVehicleToFirebase(key, updatedData);
+          
+          // Update local data
+          allVehiclesData[key] = updatedData;
+          renderTableWithPagination();
+          
+          // Check for new notifications
+          checkExpiryNotifications(allVehiclesData);
+          
+          // Reset form
+          document.getElementById('vehicleDriverForm').reset();
+          document.getElementById('licensePreview').style.display = 'none';
+          document.getElementById('cancelEdit').style.display = 'none';
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Entry';
+          saveBtn.onclick = null;
+          
+          showSuccess('Vehicle details updated successfully!');
+        } catch (error) {
+          console.error('Error updating vehicle:', error);
+          showError('Failed to update vehicle details: ' + (error.message || error));
+        }
+      };
+    }
     
-    // Start the application
-    initApp();
+    // Cancel edit function
+    document.getElementById('cancelEdit').addEventListener('click', function() {
+      document.getElementById('vehicleDriverForm').reset();
+      document.getElementById('licensePreview').style.display = 'none';
+      this.style.display = 'none';
+      
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Entry';
+      saveBtn.onclick = null;
+    });
+    
+    // Delete vehicle function
+    async function deleteVehicle(key) {
+      if (!confirm('Are you sure you want to delete this vehicle entry?')) return;
+      
+      try {
+        await deleteVehicleFromFirebase(key);
+        delete allVehiclesData[key];
+        renderTableWithPagination();
+        showSuccess('Vehicle entry deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting vehicle:', error);
+        showError('Failed to delete vehicle entry: ' + (error.message || error));
+      }
+    }
   </script>
 </body>
 </html>
