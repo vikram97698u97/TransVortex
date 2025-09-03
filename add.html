@@ -1325,6 +1325,21 @@
       });
     }
 
+    // Check if vehicle number already exists
+    async function isVehicleNumberExists(vehicleNumber, excludeKey = null) {
+      try {
+        const snapshot = await database.ref(`users/${currentUser.uid}/vehicles`).once('value');
+        const vehicles = snapshot.val() || {};
+        
+        return Object.entries(vehicles).some(([key, vehicle]) => {
+          return vehicle.vehicleNumber === vehicleNumber && key !== excludeKey;
+        });
+      } catch (error) {
+        console.error('Error checking vehicle number:', error);
+        return false; // Don't block on error, let the save operation handle it
+      }
+    }
+    
     // Handle form submission
     async function handleFormSubmit(e) {
       e.preventDefault();
@@ -1334,7 +1349,17 @@
         return;
       }
       
-      const vehicleNumber = document.getElementById('vehicleNumber').value;
+      const vehicleNumber = document.getElementById('vehicleNumber').value.trim();
+      
+      // Check for existing vehicle number if it's a new entry
+      if (!isEditing) {
+        const exists = await isVehicleNumberExists(vehicleNumber);
+        if (exists) {
+          showError('A vehicle with this number already exists. Please use a different vehicle number.');
+          document.getElementById('vehicleNumber').focus();
+          return;
+        }
+      }
       const vehicleType = document.getElementById('vehicleType').value;
       const driverName = document.getElementById('driverName').value;
       const driverLicense = document.getElementById('driverLicense').value;
