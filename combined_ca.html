@@ -397,7 +397,7 @@
   <!-- Firebase and main script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -479,17 +479,47 @@
 
     // Listen expenses
     function listenExpenses() {
-      const expensesRef = ref(db, `users/${currentUser.uid}/tripExpenses`);
+      const expensesRef = query(ref(db, 'lrReports'), orderByChild('userId'), equalTo(currentUser.uid));
       onValue(expensesRef, (snapshot) => {
         allExpensesData = [];
-        snapshot.forEach(child => {
-          const data = child.val();
-          data.key = child.key;
-          allExpensesData.push(data);
-        });
-        
-        // Apply initial filter with current month
-        applyDateFilter();
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const lr = child.val();
+            lr.key = child.key;
+
+            // Calculate total expenses and profit from the LR report data
+            const totalExpenses = 
+              (parseFloat(lr.tyreExpenses) || 0) +
+              (parseFloat(lr.dieselExpenses) || 0) +
+              (parseFloat(lr.advance) || 0) +
+              (parseFloat(lr.tollExpenses) || 0) +
+              (parseFloat(lr.vehicleWork) || 0) +
+              (parseFloat(lr.otherExpenses) || 0) +
+              (parseFloat(lr.foodExpenses) || 0) +
+              (parseFloat(lr.shortage) || 0);
+            
+            const profit = (parseFloat(lr.freightAmount) || 0) - totalExpenses;
+
+            // Map to the structure expected by the rest of the page
+            allExpensesData.push({
+              key: lr.key,
+              date: lr.date,
+              vehicle: lr.truckNumber,
+              driver: lr.driverName || 'N/A',
+              gain: parseFloat(lr.freightAmount) || 0,
+              diesel: parseFloat(lr.dieselExpenses) || 0,
+              tyre: parseFloat(lr.tyreExpenses) || 0,
+              advance: parseFloat(lr.advance) || 0,
+              toll: parseFloat(lr.tollExpenses) || 0,
+              vehicleWork: parseFloat(lr.vehicleWork) || 0,
+              other: parseFloat(lr.otherExpenses) || 0,
+              food: parseFloat(lr.foodExpenses) || 0,
+              total: totalExpenses,
+              profit: profit
+            });
+          });
+        }
+        applyDateFilter(); // Apply initial filter
       });
     }
 
@@ -605,8 +635,8 @@
         const dieselExpenses = trips.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
         const tyreExpenses = trips.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
         const advanceExpenses = trips.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
-        const tollExpenses = trips.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
-        const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicler) || 0), 0);
+        const tollExpenses = trips.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0); 
+        const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
         const otherExpenses = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
         const foodExpenses = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
         
@@ -677,7 +707,7 @@
       const tyreExpenses = data.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
       const advanceExpenses = data.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
       const tollExpenses = data.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
-      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicler) || 0), 0);
+      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
       const otherExpenses = data.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
       const foodExpenses = data.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
       
@@ -794,7 +824,7 @@
       const tyreExpenses = data.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
       const advanceExpenses = data.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
       const tollExpenses = data.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
-      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicler) || 0), 0);
+      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
       const otherExpenses = data.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
       const foodExpenses = data.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
       
@@ -941,11 +971,11 @@
         `₹${(Number(trip.tyre) || 0).toFixed(2)}`,
         `₹${(Number(trip.advance) || 0).toFixed(2)}`,
         `₹${(Number(trip.toll) || 0).toFixed(2)}`,
-        `₹${(Number(trip.vehicler) || 0).toFixed(2)}`,
+        `₹${(Number(trip.vehicleWork) || 0).toFixed(2)}`,
         `₹${(Number(trip.other) || 0).toFixed(2)}`,
         `₹${(Number(trip.food) || 0).toFixed(2)}`,
         `₹${(Number(trip.total) || 0).toFixed(2)}`,
-        `₹${(Number(trip.profitt) || 0).toFixed(2)}`
+        `₹${(Number(trip.profit) || 0).toFixed(2)}`
       ]);
       
       // Add table
@@ -982,7 +1012,7 @@
       const tyreExpenses = trips.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
       const advanceExpenses = trips.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
       const tollExpenses = trips.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
-      const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicler) || 0), 0);
+      const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
       const otherExpenses = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
       const foodExpenses = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
       
@@ -1134,7 +1164,7 @@
       const tyreExpenses = data.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
       const advanceExpenses = data.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
       const tollExpenses = data.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
-      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicler) || 0), 0);
+      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
       const otherExpenses = data.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
       const foodExpenses = data.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
       
