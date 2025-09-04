@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1529,40 +1530,38 @@
       calculateGST();
 
       // Get user's complete data
+      // Get user's complete data
       const userSnapshot = await db.ref('users').child(user.uid).once('value');
       const userData = userSnapshot.val();
-      
+
       // Debug: Log the complete user data structure
       console.log('Complete user data:', JSON.stringify(userData, null, 2));
-      
-      // Try to get the first branch ID from userData.branches
+
+      // Try to get the branch ID from userData
       let branchId = null;
-      
-      // 1. Check if user has branches and get the first one
-      if (userData.branches && Object.keys(userData.branches).length > 0) {
-        const firstBranchKey = Object.keys(userData.branches)[0];
-        branchId = firstBranchKey; // Use the branch key as branchId
-        console.log('Using branch ID from user branches:', branchId);
+
+      // 1. Check if user has a profile with branchId
+      if (userData.profile && userData.profile.branchId) {
+          branchId = userData.profile.branchId;
+          console.log('Using branchId from user profile:', branchId);
       }
-      
-      // 2. If still not found, check if the user has a branchId in their profile
-      if (!branchId && userData.profile && userData.profile.branchId) {
-        branchId = userData.profile.branchId;
-        console.log('Using branchId from user profile:', branchId);
+      // 2. Check if user has branches (for core accounts)
+      else if (userData.branches && Object.keys(userData.branches).length > 0) {
+          const firstBranchKey = Object.keys(userData.branches)[0];
+          branchId = firstBranchKey;
+          console.log('Using first branch ID from user branches:', branchId);
       }
-      
-      // 3. If still not found, check if user is a branch account (using UID as branchId)
-      if (!branchId && userData.accountType === 'branch') {
-        branchId = user.uid;
-        console.log('Using user UID as branchId:', branchId);
-      }
-      
-      if (!branchId) {
-        console.error('User data structure:', JSON.stringify(userData, null, 2));
-        alert('Error: Could not determine your branch. Please check the console for user data and contact support.');
-        return;
+      // 3. Use user UID as fallback (for single account users)
+      else {
+          branchId = user.uid;
+          console.log('Using user UID as branchId:', branchId);
       }
 
+      if (!branchId) {
+          console.error('Could not determine branch ID. User data:', JSON.stringify(userData, null, 2));
+          alert('Error: Could not determine your branch. Using default branch ID.');
+          branchId = user.uid; // Fallback to user ID
+      }
       const lrData = {
         date: getStr('lrDate'),
         lrNumber: getStr('lrNumber'),
