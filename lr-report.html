@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,7 +81,6 @@
                 <th>Weight</th>
                 <th>Billing Amount</th>
                 <th>Freight Amount</th>
-                <th>Total Amount</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -104,7 +102,7 @@
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">LR Number <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="lrNumber" required>
+              <input type="text" class="form-control" id="lrNumber" readonly>
             </div>
           </div>
           <div class="row">
@@ -149,29 +147,58 @@
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Invoice No.</label>
-              <input type="text" class="form-control" id="invoiceNo">
-            </div>
-            <div class="col-md-6 mb-3">
               <label class="form-label">Billing Rate (₹/tonne)</label>
               <input type="number" step="0.01" class="form-control" id="billingRate" oninput="calculateBillingAmount()">
             </div>
-          </div>
-          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Billing Amount (₹)</label>
               <input type="number" step="0.01" class="form-control" id="billingAmount" oninput="calculateBillingRate()">
             </div>
+          </div>
+          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Freight Rate (₹/tonne)</label>
               <input type="number" step="0.01" class="form-control" id="freightRate" oninput="calculateFreightAmount()">
             </div>
-          </div>
-          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Freight Amount (₹)</label>
               <input type="number" step="0.01" class="form-control" id="freightAmount" oninput="calculateFreightRate()">
             </div>
+          </div>
+          
+          <!-- NEW EXPENSE FIELDS -->
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Tyre Expenses (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="tyreExpenses" value="0">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Diesel Expenses (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="dieselExpenses" value="0">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Toll Expenses (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="tollExpenses" value="0">
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Vehicle Work (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="vehicleWork" value="0">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Food Expenses (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="foodExpenses" value="0">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Other Expenses (₹)</label>
+              <input type="number" step="0.01" class="form-control" id="otherExpenses" value="0" oninput="calculateAmount()">
+            </div>
+          </div>
+          <!-- END NEW EXPENSE FIELDS -->
+          
+          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Payment Type</label>
               <select class="form-select" id="paymentType">
@@ -181,52 +208,42 @@
                 <option value="Bank Transfer">Bank Transfer</option>
               </select>
             </div>
-          </div>
-          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Bank Name</label>
               <input type="text" class="form-control" id="bankName">
             </div>
+          </div>
+          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Shortage (₹)</label>
               <input type="number" step="0.01" class="form-control" id="shortage" value="0" oninput="calculateAmount()">
             </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Other Expenses (₹)</label>
-              <input type="number" step="0.01" class="form-control" id="otherExpenses" value="0" oninput="calculateAmount()">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Diesel Cost (₹)</label>
-              <input type="number" step="0.01" class="form-control" id="dieselCost" value="0" oninput="calculateAmount()">
-            </div>
-          </div>
-          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Advance (₹)</label>
               <input type="number" step="0.01" class="form-control" id="advance" value="0" oninput="calculateAmount()">
             </div>
+          </div>
+          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Balance (₹)</label>
               <input type="number" step="0.01" class="form-control" id="balance" readonly>
             </div>
-          </div>
-          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Subtotal (Before GST) (₹)</label>
               <input type="number" step="0.01" class="form-control" id="subtotal" readonly>
             </div>
+          </div>
+          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">GST %</label>
               <input type="number" step="0.01" class="form-control" id="gstPercentage" value="18" oninput="calculateGST()">
             </div>
-          </div>
-          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">GST Amount (₹)</label>
               <input type="number" step="0.01" class="form-control" id="gstAmount" readonly>
             </div>
+          </div>
+          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Total Amount (₹)</label>
               <input type="number" step="0.01" class="form-control" id="totalAmount" readonly>
@@ -325,41 +342,80 @@
           <style>
             @media print {
               @page {
-                size: A4 portrait;
-                margin: 10mm;
+                size: A4 landscape;
+                margin: 0.5cm;
               }
               body {
-                margin: 0;
-                padding: 0;
-                font-size: 10px;
-                line-height: 1.2;
-              }
-              body * {
-                visibility: hidden;
-              }
-              #printableInvoice, #printableInvoice * {
-                visibility: visible;
-              }
-              #printableInvoice {
-                position: relative;
-                width: 100%;
-                margin: 0;
-                padding: 0;
+                font-family: Arial, sans-serif;
+                font-size: 9px;
+                line-height: 1.3;
+                color: #333;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
               }
               .no-print {
                 display: none !important;
               }
               .table {
-                width: 100%;
-                font-size: 9px;
-                margin-bottom: 5px;
+                page-break-inside: auto;
                 border-collapse: collapse;
+                width: 100% !important;
+                margin: 0;
+                table-layout: fixed;
+                width: 100%;
+                margin-bottom: 1rem;
               }
               .table th, .table td {
-                padding: 2px 4px;
-                border: 1px solid #dee2e6;
+                padding: 3px 5px;
+                border: 1px solid #dee2e6 !important;
+                vertical-align: middle;
+                word-wrap: break-word;
+                font-size: 8px;
+              }
+              .table thead th {
+                background-color: #f8f9fa;
+                font-weight: 600;
+                text-align: center;
+              }
+              .table tbody td {
+                padding: 4px 6px;
               }
               .text-end {
+                text-align: right !important;
+              }
+              .text-center {
+                text-align: center !important;
+              }
+              .invoice-header {
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #dee2e6;
+              }
+              .company-details {
+                margin-bottom: 15px;
+              }
+              .invoice-details {
+                margin-bottom: 15px;
+              }
+              .bank-details {
+                margin-top: 15px;
+                padding: 10px;
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                background-color: #f8f9fa;
+              }
+              .signature-area {
+                margin-top: 40px;
+                padding-top: 20px;
+                border-top: 1px solid #dee2e6;
+              }
+              .signature-line {
+                display: inline-block;
+                width: 200px;
+                border-top: 1px solid #333;
+                margin-top: 30px;
+                padding-top: 5px;
+              }  .text-end {
                 text-align: right !important;
               }
               .text-center {
@@ -431,22 +487,22 @@
               </div>
             </div>
             
-            <div class="table-responsive" style="overflow-x: auto;">
-              <table class="table table-bordered table-sm invoice-table" style="width: 100%; table-layout: fixed;">
-                <thead class="table-light">
+            <div class="table-responsive">
+              <table class="table table-bordered table-sm invoice-table">
+                <thead class="table-light" style="background-color: #f8f9fa !important;">
                   <tr>
-                    <th>Date</th>
-                    <th>LR No</th>
-                    <th>Truck No</th>
-                    <th>Consignor</th>
-                    <th>Consignee</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th class="text-end amount-column">Weight</th>
-                    <th class="text-end amount-column">Rate</th>
-                    <th class="text-end amount-column">GST %</th>
-                    <th class="text-end amount-column">GST Amt</th>
-                    <th class="text-end amount-column">Amount</th>
+                    <th style="width: 70px;">Date</th>
+                    <th style="width: 90px;">LR No</th>
+                    <th style="width: 70px;">Truck No</th>
+                    <th style="width: 100px;">Consignor</th>
+                    <th style="width: 100px;">Consignee</th>
+                    <th style="width: 80px;">From</th>
+                    <th style="width: 80px;">To</th>
+                    <th class="text-end" style="width: 60px;">Weight</th>
+                    <th class="text-end" style="width: 60px;">Rate</th>
+                    <th class="text-end" style="width: 45px;">GST %</th>
+                    <th class="text-end" style="width: 70px;">GST Amt</th>
+                    <th class="text-end" style="width: 80px;">Amount</th>
                   </tr>
                 </thead>
                 <tbody id="invoiceItems">
@@ -539,7 +595,7 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label">LR Number <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="editLrNumber" required>
+                <input type="text" class="form-control" id="editLrNumber" readonly>
               </div>
             </div>
             <div class="row">
@@ -584,29 +640,58 @@
             </div>
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label class="form-label">Invoice No.</label>
-                <input type="text" class="form-control" id="editInvoiceNo">
-              </div>
-              <div class="col-md-6 mb-3">
                 <label class="form-label">Billing Rate (₹/tonne)</label>
                 <input type="number" step="0.01" class="form-control" id="editBillingRate" oninput="calculateEditBillingAmount()">
               </div>
-            </div>
-            <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Billing Amount (₹)</label>
                 <input type="number" step="0.01" class="form-control" id="editBillingAmount" oninput="calculateEditBillingRate()">
               </div>
+            </div>
+            <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Freight Rate (₹/tonne)</label>
                 <input type="number" step="0.01" class="form-control" id="editFreightRate" oninput="calculateEditFreightAmount()">
               </div>
-            </div>
-            <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Freight Amount (₹)</label>
                 <input type="number" step="0.01" class="form-control" id="editFreightAmount" oninput="calculateEditFreightRate()">
               </div>
+            </div>
+            
+            <!-- NEW EXPENSE FIELDS FOR EDIT MODAL -->
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Tyre Expenses (₹)</label>
+                <input type="number" step="0.01" class="form-control" id="editTyreExpenses" value="0">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Diesel Expenses (₹)</label>
+                <input type="number" step="0.01" class="form-control" id="editDieselExpenses" value="0">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Toll Expenses (₹)</label>
+                <input type="number" step="0.01" class="form-control" id="editTollExpenses" value="0">
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Vehicle Work (₹)</label>
+                <input type="number" step="0.01" class="form-control" id="editVehicleWork" value="0">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Food Expenses (₹)</label>
+                <input type="number" step="0.01" class="form-control" id="editFoodExpenses" value="0">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Other Expenses (₹)</label>
+                <input type="number" step="0.01" class="form-control" id="editOtherExpenses" value="0" oninput="calculateEditAmount()">
+              </div>
+            </div>
+            <!-- END NEW EXPENSE FIELDS FOR EDIT MODAL -->
+            
+            <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Payment Type</label>
                 <select class="form-select" id="editPaymentType">
@@ -616,29 +701,19 @@
                   <option value="Bank Transfer">Bank Transfer</option>
                 </select>
               </div>
-            </div>
-            <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Bank Name</label>
                 <input type="text" class="form-control" id="editBankName">
               </div>
+            </div>
+            <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Shortage (₹)</label>
                 <input type="number" step="0.01" class="form-control" id="editShortage" value="0" oninput="calculateEditAmount()">
               </div>
-            </div>
-            <div class="row">
               <div class="col-md-6 mb-3">
-                <label class="form-label">Other Expenses (₹)</label>
-                <input type="number" step="0.01" class="form-control" id="editOtherExpenses" value="0" oninput="calculateEditAmount()">
-              </div>
-              <div class="col-md-3 mb-3">
-                <label class="form-label">Diesel Cost (₹)</label>
-                <input type="number" step="0.01" class="form-control" id="editDieselCost" value="0" onchange="calculateEditAmount()">
-              </div>
-              <div class="col-md-3 mb-3">
                 <label class="form-label">Advance (₹)</label>
-                <input type="number" step="0.01" class="form-control" id="editAdvance" value="0" onchange="calculateEditAmount()">
+                <input type="number" step="0.01" class="form-control" id="editAdvance" value="0" oninput="calculateEditAmount()">
               </div>
             </div>
             <div class="row">
@@ -666,19 +741,16 @@
   </div>
 
   <!-- Scripts -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="navbar-loader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-  
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script>
     // Firebase configuration
     const firebaseConfig = {
@@ -691,1148 +763,713 @@
       appId: "1:526889676196:web:66032c80a4aede690ae531"
     };
 
-    // Initialize Firebase
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-
-    const db = firebase.database();
-    const auth = firebase.auth();
-
     // Global variables
-    let lrTable;
     let lrData = [];
+    let selectedLRs = [];
     let currentEditId = null;
-    let selectedLRs = new Set();
+    let lrTableInstance = null;
+    let auth = null;
+    let db = null;
 
-    // Function to update the generate invoice button state
-    function updateGenerateInvoiceButton() {
-      const btn = document.getElementById('generateInvoiceBtn');
-      btn.disabled = selectedLRs.size === 0;
-    }
-    
-    // Function to handle select all checkbox
-    function handleSelectAll(selectAll) {
-      const checkboxes = document.querySelectorAll('.lr-checkbox');
-      checkboxes.forEach(checkbox => {
-        const lrId = checkbox.value;
-        checkbox.checked = selectAll;
-        if (selectAll) {
-          selectedLRs.add(lrId);
-        } else {
-          selectedLRs.delete(lrId);
-        }
-      });
-      updateGenerateInvoiceButton();
-    }
-    
-    // Function to handle individual checkbox selection
-    function handleLRSelection(checkbox) {
-      const lrId = checkbox.value;
-      if (checkbox.checked) {
-        selectedLRs.add(lrId);
-      } else {
-        selectedLRs.delete(lrId);
-      }
-      
-      // Update select all checkbox
-      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-      const allCheckboxes = document.querySelectorAll('.lr-checkbox');
-      const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
-      selectAllCheckbox.checked = allChecked;
-      
-      updateGenerateInvoiceButton();
-    }
-    
-    // Function to load company details for invoice
-    function loadCompanyDetails() {
-      const user = auth.currentUser;
-      if (!user) return;
-      
-      // Get user profile data from Firebase
-      db.ref('users/' + user.uid).once('value').then((snapshot) => {
-        const userData = snapshot.val();
-        if (userData) {
-          // Update company details in the invoice
-          if (userData.companyName) {
-            document.getElementById('companyName').textContent = userData.companyName;
-            document.getElementById('companyNameFooter').textContent = userData.companyName;
-          }
-          if (userData.address) {
-            const addressParts = [
-              userData.address,
-              userData.city,
-              userData.state,
-              userData.pincode ? `- ${userData.pincode}` : ''
-            ].filter(Boolean).join(', ');
-            document.getElementById('companyAddress').textContent = addressParts;
-          }
-          if (userData.gstNumber) {
-            document.getElementById('companyGst').textContent = `GST: ${userData.gstNumber}`;
-          }
-          // Add phone number only if it doesn't already exist
-          if (userData.phone && !document.getElementById('companyPhone')) {
-            const phoneEl = document.createElement('p');
-            phoneEl.id = 'companyPhone';
-            phoneEl.className = 'mb-0';
-            phoneEl.textContent = `Ph: ${userData.phone}`;
-            document.getElementById('companyGst').insertAdjacentElement('afterend', phoneEl);
-          }
-          
-          // Update bank details if available
-          if (userData.bankName) {
-            document.getElementById('invoiceBankName').textContent = userData.bankName;
-          }
-          if (userData.accountNumber) {
-            document.getElementById('invoiceAccountNumber').textContent = userData.accountNumber;
-          }
-          if (userData.ifscCode) {
-            document.getElementById('invoiceIfscCode').textContent = userData.ifscCode;
-          }
-          if (userData.accountHolder) {
-            document.getElementById('invoiceAccountHolder').textContent = userData.accountHolder;
-          }
-          if (userData.accountType) {
-            document.getElementById('invoiceAccountType').textContent = userData.accountType;
-          }
-        }
-      }).catch((error) => {
-        console.error('Error loading company details:', error);
-      });
-    }
-    
-    // Function to show bank details modal
-    function showBankDetailsModal() {
-      // Check if we have any LRs selected
-      if (selectedLRs.size === 0) {
-        alert('Please select at least one LR to generate an invoice');
-        return;
-      }
-      
-      // Show the bank details modal
-      const bankModal = new bootstrap.Modal(document.getElementById('bankDetailsModal'));
-      bankModal.show();
-    }
-    
-    // Function to generate invoice after bank details are entered
-    function generateInvoice() {
-      // Get bank details from the form
-      const bankDetails = {
-        bankName: document.getElementById('inputBankName').value,
-        accountNumber: document.getElementById('inputAccountNumber').value,
-        accountHolder: document.getElementById('inputAccountHolder').value,
-        ifscCode: document.getElementById('inputIfscCode').value,
-        accountType: document.getElementById('inputAccountType').value,
-        gstNumber: document.getElementById('inputGstNumber').value,
-        companyName: document.getElementById('inputCompanyName').value,
-        companyAddress: document.getElementById('inputCompanyAddress').value,
-        companyPhone: document.getElementById('inputCompanyPhone').value
-      };
-      
-      // Validate required fields
-      if (!bankDetails.bankName || !bankDetails.accountNumber || !bankDetails.ifscCode) {
-        alert('Please fill in all required bank details');
-        return;
-      }
-      
-      // Hide the bank details modal
-      const bankModal = bootstrap.Modal.getInstance(document.getElementById('bankDetailsModal'));
-      if (bankModal) bankModal.hide();
-      
-      // Continue with invoice generation
-      generateInvoiceWithDetails(bankDetails);
-    }
-    
-    // Function to generate invoice with provided details
-    function generateInvoiceWithDetails(details) {
-      if (selectedLRs.size === 0) return;
-      
-      const selectedLRData = lrData.filter(lr => selectedLRs.has(lr.id));
-      let subtotal = 0;
-      let gstTotal = 0;
-      let grandTotal = 0;
-      
-      // Clear previous invoice items
-      const invoiceItems = document.getElementById('invoiceItems');
-      invoiceItems.innerHTML = '';
-      
-      // Add rows for each selected LR
-      console.log('Processing LRs:', selectedLRData);
-      selectedLRData.forEach((lr, index) => {
-        const row = document.createElement('tr');
-        const weight = parseFloat(lr.weight) || 0;
-        const rate = parseFloat(lr.billingRate) || 0;
-        const amount = weight * rate;
-        const gstPercent = parseFloat(lr.gstPercentage) || 18;
-        const gstAmt = amount * (gstPercent / 100);
-        const total = amount + gstAmt;
-        
-        console.log(`LR ${index + 1}:`, {
-          weight,
-          rate,
-          amount,
-          gstPercent,
-          gstAmt,
-          total,
-          lrData: lr
-        });
-        
-        // Update running totals
-        subtotal += amount;
-        gstTotal += gstAmt;
-        grandTotal += total;
-        
-        row.innerHTML = `
-          <td>${formatDate(lr.date)}</td>
-          <td>${lr.lrNumber || '-'}</td>
-          <td>${lr.truckNumber || '-'}</td>
-          <td>${lr.consignor || '-'}</td>
-          <td>${lr.consignee || '-'}</td>
-          <td>${lr.fromLocation || '-'}</td>
-          <td>${lr.toLocation || '-'}</td>
-          <td class="text-end">${weight.toFixed(2)}</td>
-          <td class="text-end">₹${rate.toFixed(2)}</td>
-          <td class="text-end">${gstPercent}%</td>
-          <td class="text-end">₹${gstAmt.toFixed(2)}</td>
-          <td class="text-end">₹${total.toFixed(2)}</td>
-        `;
-        invoiceItems.appendChild(row);
-      });
-      
-      // Calculate average GST percentage for display
-      const totalGSTPercent = selectedLRData.reduce((sum, lr) => {
-        return sum + (parseFloat(lr.gstPercentage) || 0);
-      }, 0) / selectedLRData.length;
-      
-      console.log('Final totals:', {
-        subtotal,
-        gstTotal,
-        totalGSTPercent,
-        grandTotal: subtotal + gstTotal
-      });
-      
-      // Update the GST percentage display with the average GST
-      const gstPercentElement = document.getElementById('gstPercent');
-      // Get the GST amount element from the invoice table
-      let gstAmountElement = document.getElementById('invoiceGstAmount');
-      if (!gstAmountElement) {
-        // Fallback to the input field if the invoice element is not found
-        gstAmountElement = document.getElementById('gstAmount');
-      }
-      
-      console.log('GST Elements:', {
-        gstPercentElement,
-        gstAmountElement,
-        gstPercentValue: gstPercentElement?.textContent,
-        gstAmountValue: gstAmountElement?.textContent,
-        elementHTML: gstAmountElement?.outerHTML
-      });
-      
-      // If we can't find the element, log an error
-      if (!gstAmountElement) {
-        console.error('Could not find the GST amount element in the invoice table');
-      }
-      
-      // Update the totals in the invoice
-      document.getElementById('subtotalAmount').textContent = `₹${subtotal.toFixed(2)}`;
-      
-      // Set the GST amount with detailed logging
-      console.log('Setting GST amount...', {
-        element: gstAmountElement,
-        currentValue: gstAmountElement?.textContent,
-        newValue: gstTotal.toFixed(2)
-      });
-
-      if (gstAmountElement) {
-        // Try different methods to set the value
-        const methods = [
-          () => { gstAmountElement.textContent = gstTotal.toFixed(2); },
-          () => { gstAmountElement.innerText = gstTotal.toFixed(2); },
-          () => { gstAmountElement.innerHTML = gstTotal.toFixed(2); }
-        ];
-        
-        // Try each method and log the result
-        methods.forEach((method, i) => {
-          try {
-            method();
-            console.log(`Method ${i + 1} executed. New value:`, gstAmountElement.textContent);
-          } catch (e) {
-            console.error(`Method ${i + 1} failed:`, e);
-          }
-        });
-        
-        // Force a re-render
-        gstAmountElement.style.display = 'none';
-        gstAmountElement.offsetHeight; // Trigger reflow
-        gstAmountElement.style.display = 'inline-block';
-      } else {
-        console.error('GST amount element not found!');
-        // Try alternative selectors as fallback
-        const selectors = [
-          'td#gstAmount',
-          'tfoot tr:nth-child(2) td:last-child',
-          '.invoice-table tfoot tr:nth-child(2) td:last-child'
-        ];
-        
-        for (const selector of selectors) {
-          const el = document.querySelector(selector);
-          if (el) {
-            el.textContent = gstTotal.toFixed(2);
-            console.log(`Set GST amount using selector '${selector}':`, gstTotal.toFixed(2));
-            break;
-          }
-        }
-      }
-      
-      // Update the GST percentage
-      if (gstPercentElement) {
-        gstPercentElement.textContent = totalGSTPercent.toFixed(0); // Remove decimal places for percentage
-      }
-      
-      // Update grand total (subtotal + total GST)
-      document.getElementById('grandTotal').textContent = `₹${(subtotal + gstTotal).toFixed(2)}`;
-      
-      // Update bill to address (use the first LR's consignor as default)
-      const billTo = selectedLRData[0]?.consignor || 'Consolidated Invoice';
-      document.getElementById('billToAddress').textContent = billTo;
-      
-      // Generate a unique invoice number
-      const invoiceNumber = `INV-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
-      document.getElementById('invoiceNumber').textContent = invoiceNumber;
-      
-      // Format the invoice date
-      const invoiceDate = new Date().toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
-      document.getElementById('invoiceDate').textContent = invoiceDate;
-      
-      // Update bank details in the invoice with the correct IDs
-      if (details.bankName) document.getElementById('invoiceBankName').textContent = details.bankName;
-      if (details.accountNumber) document.getElementById('invoiceAccountNumber').textContent = details.accountNumber;
-      if (details.accountHolder) document.getElementById('invoiceAccountHolder').textContent = details.accountHolder;
-      if (details.ifscCode) document.getElementById('invoiceIfscCode').textContent = details.ifscCode;
-      if (details.accountType) document.getElementById('invoiceAccountType').textContent = details.accountType;
-      
-      // Update company details
-      if (details.companyName) {
-        document.getElementById('companyName').textContent = details.companyName;
-        document.getElementById('companyNameFooter').textContent = details.companyName;
-      }
-      if (details.companyAddress) {
-        document.getElementById('companyAddress').textContent = details.companyAddress;
-      }
-      if (details.gstNumber) {
-        document.getElementById('companyGst').textContent = `GST: ${details.gstNumber}`;
-      }
-      if (details.companyPhone) {
-        // Remove existing phone element if it exists
-        const existingPhone = document.getElementById('companyPhone');
-        if (existingPhone) {
-          existingPhone.remove();
-        }
-        
-        const phoneEl = document.createElement('p');
-        phoneEl.id = 'companyPhone';
-        phoneEl.className = 'mb-0';
-        phoneEl.textContent = `Ph: ${details.companyPhone}`;
-        document.getElementById('companyGst').insertAdjacentElement('afterend', phoneEl);
-      }
-      
-      // Show the invoice modal
-      const invoiceModal = new bootstrap.Modal(document.getElementById('invoiceModal'));
-      invoiceModal.show();
-    }
-    
-    // Function to print the invoice
-    function printInvoice() {
-      const printWindow = window.open('', '_blank');
-      const printContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Invoice</title>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            @page { 
-              size: A4;
-              margin: 10mm 5mm;
-            }
-            body { 
-              font-family: Arial, sans-serif; 
-              font-size: 10px;
-              line-height: 1.2;
-              margin: 0;
-              padding: 0;
-            }
-            .table { 
-              width: 100%; 
-              margin-bottom: 5px;
-              border-collapse: collapse;
-            }
-            .table th, .table td { 
-              padding: 3px 5px; 
-              border: 1px solid #dee2e6;
-              word-break: break-word;
-            }
-            .text-end { 
-              text-align: right !important;
-              white-space: nowrap;
-            }
-            .table-light {
-              background-color: #f8f9fa !important;
-            }
-            .table-active {
-              background-color: #f8f9fa !important;
-            }
-            .fw-bold {
-              font-weight: bold !important;
-            }
-            .text-center {
-              text-align: center !important;
-            }
-            .mb-0 { margin-bottom: 0 !important; }
-            .mb-1 { margin-bottom: 0.25rem !important; }
-            .mb-4 { margin-bottom: 1.5rem !important; }
-            .mt-4 { margin-top: 1.5rem !important; }
-            .table-bordered { border: 1px solid #dee2e6; }
-            .table-bordered th, .table-bordered td { border: 1px solid #dee2e6; }
-            .table-light { background-color: #f8f9fa; }
-            .table-active { background-color: rgba(0,0,0,.075); }
-            .fw-bold { font-weight: 700; }
-            .text-center { text-align: center; }
-            .mb-0 { margin-bottom: 0; }
-            .mb-1 { margin-bottom: 0.25rem; }
-            .mb-4 { margin-bottom: 1.5rem; }
-            .mt-4 { margin-top: 1.5rem; }
-            .p-4 { padding: 1.5rem; }
-            .border-bottom { border-bottom: 1px solid #dee2e6; }
-            .invoice-header { 
-              border-bottom: 2px solid #dee2e6; 
-              margin-bottom: 10px; 
-              padding-bottom: 8px;
-            }
-            .invoice-table {
-              table-layout: fixed;
-            }
-            .invoice-table th, 
-            .invoice-table td {
-              padding: 3px 5px;
-              font-size: 9px;
-            }
-            .amount-column {
-              width: 70px;
-              min-width: 70px;
-              max-width: 70px;
-            }
-            .small-text {
-              font-size: 9px;
-              margin: 2px 0;
-            }
-          </style>
-        </head>
-        <body class="p-4">
-          ${document.getElementById('printableInvoice').outerHTML}
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            };
-          <\/script>
-        </body>
-        </html>
-      `;
-      
-      printWindow.document.open();
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-    }
-    
-    // Function to download invoice as PDF (placeholder - requires jsPDF)
-    function downloadPDF() {
-      alert('PDF download functionality will be implemented with jsPDF library');
-      // Implementation will use jsPDF to generate PDF from the invoice content
-    }
-
-    // Initialize the application
-    document.addEventListener('DOMContentLoaded', function() {
-      // Check authentication state
-      auth.onAuthStateChanged(function(user) {
-        if (!user) {
-          window.location.href = 'login.html';
-          return;
-        }
-        initializePage();
-      });
-    });
-
-    function initializePage() {
-      // Set default dates
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('lrDate').value = today;
-      document.getElementById('fromDate').value = today;
-      document.getElementById('toDate').value = today;
-
+    // Initialize the page
+    $(document).ready(function() {
       // Initialize DataTable
-      lrTable = $('#lrTable').DataTable({
-        order: [[0, 'desc']],
+      lrTableInstance = $('#lrTable').DataTable({
         pageLength: 25,
-        responsive: true,
-        columns: [
-          { data: null, render: function(data, type, row) {
-            return `
-              <div class="form-check">
-                <input class="form-check-input lr-checkbox" type="checkbox" value="${row.id}" onchange="handleLRSelection(this)">
-              </div>
-            `;
-          } },
-          { data: 'date', render: formatDate },
-          { data: 'lrNumber' },
-          { data: 'truckNumber' },
-          { data: 'consignor' },
-          { data: 'consignee' },
-          { data: 'item' },
-          { data: 'fromLocation' },
-          { data: 'toLocation' },
-          { data: 'weight', render: (v) => v ? `${Number(v).toFixed(2)}` : '-' },
-          { data: 'billingAmount', render: (v) => v ? `₹${Number(v).toFixed(2)}` : '-' },
-          { data: 'freightAmount', render: (v) => v ? `₹${Number(v).toFixed(2)}` : '-' },
-          { data: 'totalAmount', render: (v) => v ? `₹${Number(v).toFixed(2)}` : '-', className: 'fw-bold' },
-          { 
-            data: 'status', 
-            render: (status) => {
-              const badgeClass = status === 'active' ? 'bg-success' : (status === 'completed' ? 'bg-primary' : 'bg-danger');
-              return `<span class="badge ${badgeClass}">${status}</span>`;
-            }
-          },
-          {
-            data: null,
-            render: function(data, type, row) {
-              return `
-                <div class="btn-group">
-                  <button class="btn btn-sm btn-primary" onclick="editLR('${row.id}')">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="btn btn-sm btn-danger" onclick="deleteLR('${row.id}')">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>`;
-            },
-            orderable: false,
-            searchable: false
-          }
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']],
+        columnDefs: [
+          { orderable: false, targets: [0, 13] },
+          { searchable: false, targets: [0, 13] }
         ]
       });
 
-      // Add event listeners
-      document.getElementById('applyFiltersBtn').addEventListener('click', applyFilters);
-      document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
-      document.getElementById('saveLRBtn').addEventListener('click', saveLR);
-      document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
-      document.getElementById('generateInvoiceBtn').addEventListener('click', generateInvoice);
-      document.getElementById('selectAllCheckbox').addEventListener('change', function() {
-        handleSelectAll(this.checked);
-      });
+      // Initialize Firebase
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      auth = firebase.auth();
+      db = firebase.database();
 
-      // Load data
-      loadLRData();
-
-      // Calculate initial amounts
-      setTimeout(() => {
-        calculateAmount();
-        calculateGST();
-      }, 300);
-    }
-
-    // Utility functions
-    function getVal(id, prefix = '') {
-      const el = document.getElementById(prefix + id);
-      return el ? parseFloat(el.value) || 0 : 0;
-    }
-
-    function getStr(id, prefix = '') {
-      const el = document.getElementById(prefix + id);
-      return el ? el.value : '';
-    }
-
-    function setVal(id, val, prefix = '') {
-      const element = document.getElementById(prefix ? prefix + id : id);
-      if (element) {
-        if (element.type === 'number' && val !== undefined && val !== null) {
-          // For number fields, ensure we don't set to 0 if the value is falsy but not zero
-          const numVal = parseFloat(val);
-          element.value = !isNaN(numVal) ? numVal : '';
+      // Check authentication
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          // Load data from Firebase
+          loadLRData();
         } else {
-          element.value = val !== undefined && val !== null ? val : '';
+          // Redirect to login if not authenticated
+          window.location.href = 'login.html';
         }
-      }
+      });
+      
+      // Set current date as default
+      const today = new Date().toISOString().split('T')[0];
+      $('#lrDate').val(today);
+      $('#fromDate').val(today);
+      $('#toDate').val(today);
+      
+      // Event listeners
+      $('#saveLRBtn').click(saveLR);
+      $('#applyFiltersBtn').click(applyFilters);
+      $('#selectAllCheckbox').change(toggleSelectAll);
+      $('#saveEditBtn').click(saveEditLR);
+      
+      // Calculate initial amounts
+      calculateAmount();
+    });
+
+    // Load LR data from localStorage
+    function loadLRData() { 
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const lrReportsRef = db.ref('lrReports').orderByChild('userId').equalTo(user.uid);
+      lrReportsRef.on('value', (snapshot) => {
+        lrData = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(childSnapshot => {
+            lrData.push({ id: childSnapshot.key, ...childSnapshot.val() });
+          });
+        }
+        // Sort by date descending
+        lrData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        populateLRTable();
+        updateTruckFilter();
+        generateLRNumber();
+      }, (error) => {
+        console.error("Error loading LR data: ", error);
+        alert("Could not load LR data. Please check your connection and permissions.");
+      });
     }
 
-    function formatDate(dateString) {
-      if (!dateString) return '-';
-      const options = { year: 'numeric', month: 'short', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString('en-US', options);
+    // Generate LR number
+    function generateLRNumber() {
+      const date = new Date();
+      const year = date.getFullYear().toString().slice(-2);
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      
+      // Count today's LRs
+      const todayLRs = lrData.filter(lr => {
+        const lrDate = new Date(lr.date);
+        return lrDate.getDate() === date.getDate() && 
+               lrDate.getMonth() === date.getMonth() && 
+               lrDate.getFullYear() === date.getFullYear();
+      });
+      
+      const count = todayLRs.length + 1;
+      const countStr = count.toString().padStart(3, '0');
+      
+      $('#lrNumber').val(`LR${day}${month}${year}${countStr}`);
     }
 
-    // Calculation functions for add form
+    // Calculate billing amount based on rate and weight
     function calculateBillingAmount() {
-      const weight = getVal('weight');
-      const billingRate = getVal('billingRate');
-      const billingAmount = weight * billingRate;
-      setVal('billingAmount', billingAmount);
+      const weight = parseFloat($('#weight').val()) || 0;
+      const billingRate = parseFloat($('#billingRate').val()) || 0;
+      $('#billingAmount').val((weight * billingRate).toFixed(2));
       calculateAmount();
     }
 
+    // Calculate billing rate based on amount and weight
     function calculateBillingRate() {
-      const weight = getVal('weight');
-      const billingAmount = getVal('billingAmount');
+      const weight = parseFloat($('#weight').val()) || 0;
+      const billingAmount = parseFloat($('#billingAmount').val()) || 0;
       if (weight > 0) {
-        const billingRate = billingAmount / weight;
-        setVal('billingRate', billingRate);
+        $('#billingRate').val((billingAmount / weight).toFixed(2));
       }
       calculateAmount();
     }
 
+    // Calculate freight amount based on rate and weight
     function calculateFreightAmount() {
-      const weight = getVal('weight');
-      const freightRate = getVal('freightRate');
-      const freightAmount = weight * freightRate;
-      setVal('freightAmount', freightAmount);
+      const weight = parseFloat($('#weight').val()) || 0;
+      const freightRate = parseFloat($('#freightRate').val()) || 0;
+      $('#freightAmount').val((weight * freightRate).toFixed(2));
       calculateAmount();
     }
 
+    // Calculate freight rate based on amount and weight
     function calculateFreightRate() {
-      const weight = getVal('weight');
-      const freightAmount = getVal('freightAmount');
+      const weight = parseFloat($('#weight').val()) || 0;
+      const freightAmount = parseFloat($('#freightAmount').val()) || 0;
       if (weight > 0) {
-        const freightRate = freightAmount / weight;
-        setVal('freightRate', freightRate);
+        $('#freightRate').val((freightAmount / weight).toFixed(2));
       }
       calculateAmount();
     }
 
+    // Calculate GST and total amount
     function calculateAmount() {
-      const billingAmount = getVal('billingAmount');
-      const freightAmount = getVal('freightAmount');
-      const shortage = getVal('shortage');
-      const otherExpenses = getVal('otherExpenses');
-      const dieselCost = getVal('dieselCost');
-      const advance = getVal('advance');
+      const billingAmount = parseFloat($('#billingAmount').val()) || 0;
+      const freightAmount = parseFloat($('#freightAmount').val()) || 0;
+      const shortage = parseFloat($('#shortage').val()) || 0;
+      const advance = parseFloat($('#advance').val()) || 0;
+      const otherExpenses = parseFloat($('#otherExpenses').val()) || 0;
       
-      const subtotal = billingAmount + freightAmount - shortage + otherExpenses + dieselCost;
-      const balance = subtotal - advance;
+      // NEW: Add all expense fields
+      const tyreExpenses = parseFloat($('#tyreExpenses').val()) || 0;
+      const dieselExpenses = parseFloat($('#dieselExpenses').val()) || 0;
+      const tollExpenses = parseFloat($('#tollExpenses').val()) || 0;
+      const vehicleWork = parseFloat($('#vehicleWork').val()) || 0;
+      const foodExpenses = parseFloat($('#foodExpenses').val()) || 0;
       
-      setVal('subtotal', subtotal);
-      setVal('balance', balance);
+      // Calculate subtotal (before GST)
+      const subtotal = billingAmount + freightAmount + shortage + advance + otherExpenses + 
+                      tyreExpenses + dieselExpenses + tollExpenses + vehicleWork + foodExpenses;
+      $('#subtotal').val(subtotal.toFixed(2));
+      
+      // Calculate balance
+      const balance = billingAmount - freightAmount - shortage - advance - otherExpenses - 
+                     tyreExpenses - dieselExpenses - tollExpenses - vehicleWork - foodExpenses;
+      $('#balance').val(balance.toFixed(2));
+      
+      // Calculate GST and total
       calculateGST();
     }
 
+    // Calculate GST amount
     function calculateGST() {
-      const subtotal = getVal('subtotal');
-      const gstPercentage = getVal('gstPercentage');
-      const gstAmount = subtotal * (gstPercentage / 100);
-      const totalAmount = subtotal + gstAmount;
+      const subtotal = parseFloat($('#subtotal').val()) || 0;
+      const gstPercentage = parseFloat($('#gstPercentage').val()) || 0;
+      const gstAmount = (subtotal * gstPercentage / 100).toFixed(2);
+      $('#gstAmount').val(gstAmount);
       
-      setVal('gstAmount', gstAmount);
-      setVal('totalAmount', totalAmount);
+      const totalAmount = (subtotal + parseFloat(gstAmount)).toFixed(2);
+      $('#totalAmount').val(totalAmount);
     }
 
-    // Calculation functions for edit form
-    function calculateEditBillingAmount() {
-      const weight = getVal('Weight', 'edit');
-      const billingRate = getVal('BillingRate', 'edit');
-      const billingAmount = weight * billingRate;
-      setVal('BillingAmount', billingAmount, 'edit');
-      calculateEditAmount();
-    }
-
-    function calculateEditBillingRate() {
-      const weight = getVal('Weight', 'edit');
-      const billingAmount = getVal('BillingAmount', 'edit');
-      if (weight > 0) {
-        const billingRate = billingAmount / weight;
-        setVal('BillingRate', billingRate, 'edit');
+    // Save LR record
+    function saveLR() {
+      // Validate form
+      if (!$('#lrForm')[0].checkValidity()) {
+        $('#lrForm')[0].reportValidity();
+        return;
       }
-      calculateEditAmount();
-    }
-
-    function calculateEditFreightAmount() {
-      const weight = getVal('Weight', 'edit');
-      const freightRate = getVal('FreightRate', 'edit');
-      const freightAmount = weight * freightRate;
-      setVal('FreightAmount', freightAmount, 'edit');
-      calculateEditAmount();
-    }
-
-    function calculateEditFreightRate() {
-      const weight = getVal('Weight', 'edit');
-      const freightAmount = getVal('FreightAmount', 'edit');
-      if (weight > 0) {
-        const freightRate = freightAmount / weight;
-        setVal('FreightRate', freightRate, 'edit');
-      }
-      calculateEditAmount();
-    }
-
-    function calculateEditAmount() {
-      const billingAmount = getVal('BillingAmount', 'edit');
-      const freightAmount = getVal('FreightAmount', 'edit');
-      const shortage = getVal('Shortage', 'edit');
-      const otherExpenses = getVal('OtherExpenses', 'edit');
-      const dieselCost = getVal('DieselCost', 'edit');
-      const advance = getVal('Advance', 'edit');
       
-      const gstPercentage = getVal('GstPercentage', 'edit');
-      const gstAmount = (billingAmount * gstPercentage) / 100;
-      const totalAmount = (billingAmount + gstAmount) - (freightAmount + shortage + otherExpenses + dieselCost + advance);
-      
-      setVal('GstAmount', gstAmount, 'edit');
-      setVal('TotalAmount', totalAmount, 'edit');
-    }
-
-    function calculateEditGST() {
-      const billingAmount = getVal('BillingAmount', 'edit');
-      const gstPercentage = getVal('GstPercentage', 'edit');
-      
-      const gstAmount = (billingAmount * gstPercentage) / 100;
-      setVal('GstAmount', gstAmount, 'edit');
-      
-      // Recalculate total after GST update
-      calculateEditAmount();
-    }
-
-    // Data operations
-    function loadLRData() {
       const user = auth.currentUser;
-      if (!user) return;
-      
-      const lrRef = db.ref('lrReports');
-      lrRef.orderByChild('userId').equalTo(user.uid).on('value', (snapshot) => {
-        lrData = [];
-        const trucks = new Set();
+      if (!user) {
+        alert("You must be logged in to save an LR record.");
+        return;
+      }
 
-        snapshot.forEach((child) => {
-          const data = child.val();
-          if (data) {
-            const lrEntry = {
-              id: child.key,
-              date: data.date || '',
-              lrNumber: data.lrNumber || '',
-              truckNumber: data.truckNumber || '',
-              consignor: data.consignor || '',
-              consignee: data.consignee || '',
-              item: data.item || '',
-              fromLocation: data.fromLocation || '',
-              toLocation: data.toLocation || '',
-              shipmentNo: data.shipmentNo || '',
-              invoiceNo: data.invoiceNo || '',
-              weight: data.weight ? parseFloat(data.weight) : 0,
-              billingRate: data.billingRate ? parseFloat(data.billingRate) : 0,
-              billingAmount: data.billingAmount ? parseFloat(data.billingAmount) : 0,
-              freightRate: data.freightRate ? parseFloat(data.freightRate) : 0,
-              freightAmount: data.freightAmount ? parseFloat(data.freightAmount) : 0,
-              paymentType: data.paymentType || '',
-              bankName: data.bankName || '',
-              shortage: data.shortage ? parseFloat(data.shortage) : 0,
-              otherExpenses: data.otherExpenses ? parseFloat(data.otherExpenses) : 0,
-              dieselCost: data.dieselCost ? parseFloat(data.dieselCost) : 0,
-              advance: data.advance ? parseFloat(data.advance) : 0,
-              gstPercentage: data.gstPercentage ? parseFloat(data.gstPercentage) : 0,
-              gstAmount: data.gstAmount ? parseFloat(data.gstAmount) : 0,
-              totalAmount: data.totalAmount ? parseFloat(data.totalAmount) : 0,
-              status: data.status || 'active',
-              createdAt: data.createdAt || '',
-              updatedAt: data.updatedAt || ''
-            };
-            lrData.push(lrEntry);
-            if (lrEntry.truckNumber) trucks.add(lrEntry.truckNumber);
-          }
+      const lrRecord = {
+        date: $('#lrDate').val(),
+        lrNumber: $('#lrNumber').val(),
+        truckNumber: $('#truckNumber').val(),
+        consignor: $('#consignor').val(),
+        consignee: $('#consignee').val(),
+        fromLocation: $('#fromLocation').val(),
+        toLocation: $('#toLocation').val(),
+        weight: parseFloat($('#weight').val()),
+        item: $('#item').val(),
+        shipmentNo: $('#shipmentNo').val(),
+        billingRate: parseFloat($('#billingRate').val()) || 0,
+        billingAmount: parseFloat($('#billingAmount').val()) || 0,
+        freightRate: parseFloat($('#freightRate').val()) || 0,
+        freightAmount: parseFloat($('#freightAmount').val()) || 0,
+        paymentType: $('#paymentType').val(),
+        bankName: $('#bankName').val(),
+        shortage: parseFloat($('#shortage').val()) || 0,
+        advance: parseFloat($('#advance').val()) || 0,
+        otherExpenses: parseFloat($('#otherExpenses').val()) || 0,
+        gstPercentage: parseFloat($('#gstPercentage').val()) || 0,
+        gstAmount: parseFloat($('#gstAmount').val()) || 0,
+        totalAmount: parseFloat($('#totalAmount').val()) || 0,
+        status: 'active',
+        
+        // NEW: Add expense fields
+        tyreExpenses: parseFloat($('#tyreExpenses').val()) || 0,
+        dieselExpenses: parseFloat($('#dieselExpenses').val()) || 0,
+        tollExpenses: parseFloat($('#tollExpenses').val()) || 0,
+        vehicleWork: parseFloat($('#vehicleWork').val()) || 0, // This field is 'vehicler' in your other file, ensure consistency. Using 'vehicleWork' here.
+        foodExpenses: parseFloat($('#foodExpenses').val()) || 0,
+
+        // Firebase-specific fields
+        userId: user.uid,
+        branchId: localStorage.getItem('selectedBranch') || 'main', // Get branch from localStorage
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Save to Firebase
+      const newLrRef = db.ref('lrReports').push();
+      newLrRef.set(lrRecord)
+        .then(() => {
+          alert('LR record saved successfully!');
+        })
+        .catch((error) => {
+          alert('Error saving LR record: ' + error.message);
         });
 
-        updateTruckFilter(Array.from(trucks).sort());
-        applyFilters();
+      // Reset form and generate new LR number
+      $('#lrForm')[0].reset();
+      generateLRNumber();
+      calculateAmount();
+      
+      // Set current date
+      const today = new Date().toISOString().split('T')[0];
+      $('#lrDate').val(today);
+    }
+
+    // Populate LR table with data
+    function populateLRTable() {
+      // Clear the table
+      lrTableInstance.clear();
+      
+      // Add each LR record to the table
+      lrData.forEach(lr => {
+        lrTableInstance.row.add([
+          `<div class="form-check">
+            <input class="form-check-input lr-checkbox" type="checkbox" value="${lr.id}">
+          </div>`,
+          lr.date,
+          lr.lrNumber,
+          lr.truckNumber,
+          lr.consignor,
+          lr.consignee,
+          lr.item,
+          lr.fromLocation,
+          lr.toLocation,
+          lr.weight,
+          lr.billingAmount.toFixed(2),
+          lr.freightAmount.toFixed(2),
+          `<span class="badge ${lr.status === 'Completed' ? 'bg-success' : 'bg-warning'}">${lr.status}</span>`,
+          `<button class="btn btn-sm btn-outline-primary me-1" onclick="editLR('${lr.id}')">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteLR('${lr.id}')">
+            <i class="fas fa-trash"></i>
+          </button>`
+        ]);
+      });
+      
+      // Redraw the table
+      lrTableInstance.draw();
+      
+      // Update checkbox event listeners
+      $('.lr-checkbox').change(function() {
+        updateSelectedLRs();
       });
     }
 
-    function updateTruckFilter(trucks) {
-      const select = document.getElementById('truckFilter');
-      if (!select) return;
+    // Update truck filter dropdown
+    function updateTruckFilter() {
+      const truckFilter = $('#truckFilter');
+      truckFilter.empty();
+      truckFilter.append('<option value="">All Trucks</option>');
       
-      // Save current value
-      const currentValue = select.value;
-      
-      // Clear and rebuild options
-      select.innerHTML = '<option value="">All Trucks</option>';
-      trucks.forEach(truck => {
-        const option = document.createElement('option');
-        option.value = truck;
-        option.textContent = truck;
-        select.appendChild(option);
+      // Get unique truck numbers
+      const truckNumbers = [...new Set(lrData.map(lr => lr.truckNumber))];
+      truckNumbers.forEach(truck => {
+        truckFilter.append(`<option value="${truck}">${truck}</option>`);
       });
-      
-      // Restore previous selection if still available
-      if (currentValue && trucks.includes(currentValue)) {
-        select.value = currentValue;
-      }
     }
 
+    // Apply filters to the table
     function applyFilters() {
       const fromDate = document.getElementById('fromDate').value;
       const toDate = document.getElementById('toDate').value;
       const truckNumber = document.getElementById('truckFilter').value;
+      
+      // Use DataTables custom search function for filtering
+      $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        // Ensure we are targeting the correct table
+        if (settings.nTable.id !== 'lrTable') {
+          return true;
+        }
+        
+        const rowDate = data[1] || ''; // Date is in the second column (index 1)
+        const rowTruck = data[3] || ''; // Truck number is in the fourth column (index 3)
+        
+        let showRow = true;
+        
+        // Date range filter
+        if (fromDate && rowDate < fromDate) showRow = false;
+        if (toDate && rowDate > toDate) showRow = false;
+        
+        // Truck number filter
+        if (truckNumber && rowTruck !== truckNumber) showRow = false;
+        
+        return showRow;
+      });
+      
+      // Redraw the table with the new filter
+      lrTableInstance.draw();
+      
+      // Update checkbox event listeners
+      $('.lr-checkbox').change(function() {
+        updateSelectedLRs();
+      });
+      
+      // Update selected LRs
+      updateSelectedLRs();
 
-      let filteredData = [...lrData];
-
-      // Apply date filter
-      if (fromDate) {
-        const from = new Date(fromDate);
-        filteredData = filteredData.filter(item => new Date(item.date) >= from);
-      }
-
-      if (toDate) {
-        const to = new Date(toDate);
-        to.setHours(23, 59, 59, 999);
-        filteredData = filteredData.filter(item => new Date(item.date) <= to);
-      }
-
-      // Apply truck filter
-      if (truckNumber) {
-        filteredData = filteredData.filter(item => item.truckNumber === truckNumber);
-      }
-
-      updateTable(filteredData);
+      // Remove the custom filter function so it doesn't interfere with other searches
+      $.fn.dataTable.ext.search.length = 0;
     }
 
-    function updateTable(data) {
-      lrTable.clear().rows.add(data).draw();
+    // Toggle select all checkboxes
+    function toggleSelectAll() {
+      const isChecked = $('#selectAllCheckbox').prop('checked');
+      $('.lr-checkbox').prop('checked', isChecked);
+      updateSelectedLRs();
     }
 
-    async function saveLR() {
-      const user = auth.currentUser;
-      if (!user) {
-        alert('You must be logged in to save LR data.');
+    // Update selected LRs array
+    function updateSelectedLRs() {
+      selectedLRs = [];
+      $('.lr-checkbox:checked').each(function() {
+        selectedLRs.push($(this).val());
+      });
+      
+      // Enable/disable generate invoice button
+      $('#generateInvoiceBtn').prop('disabled', selectedLRs.length === 0);
+    }
+
+    // Show bank details modal
+    function showBankDetailsModal() {
+      $('#bankDetailsModal').modal('show');
+    }
+
+    // Generate invoice
+    function generateInvoice() {
+      // Validate bank details form
+      if (!$('#bankDetailsForm')[0].checkValidity()) {
+        $('#bankDetailsForm')[0].reportValidity();
         return;
       }
-
-      // Validate required fields
-      const requiredFields = ['lrDate', 'lrNumber', 'truckNumber', 'consignor', 'fromLocation', 'toLocation', 'weight'];
-      for (const field of requiredFields) {
-        if (!document.getElementById(field).value) {
-          alert(`Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field.`);
-          return;
-        }
+      
+      // Get selected LRs
+      const selectedLRRecords = lrData.filter(lr => selectedLRs.includes(lr.id));
+      
+      if (selectedLRRecords.length === 0) {
+        alert('No LRs selected for invoice generation.');
+        return;
       }
-
-      // Recalculate to ensure all values are up to date
-      calculateAmount();
-      calculateGST();
-
-      // Get user's complete data
-      // Get user's complete data
-      const userSnapshot = await db.ref('users').child(user.uid).once('value');
-      const userData = userSnapshot.val();
-
-      // Debug: Log the complete user data structure
-      console.log('Complete user data:', JSON.stringify(userData, null, 2));
-
-      // Try to get the branch ID from userData
-      let branchId = null;
-
-      // 1. Check if user has a profile with branchId
-      if (userData.profile && userData.profile.branchId) {
-          branchId = userData.profile.branchId;
-          console.log('Using branchId from user profile:', branchId);
-      }
-      // 2. Check if user has branches (for core accounts)
-      else if (userData.branches && Object.keys(userData.branches).length > 0) {
-          const firstBranchKey = Object.keys(userData.branches)[0];
-          branchId = firstBranchKey;
-          console.log('Using first branch ID from user branches:', branchId);
-      }
-      // 3. Use user UID as fallback (for single account users)
-      else {
-          branchId = user.uid;
-          console.log('Using user UID as branchId:', branchId);
-      }
-
-      if (!branchId) {
-          console.error('Could not determine branch ID. User data:', JSON.stringify(userData, null, 2));
-          alert('Error: Could not determine your branch. Using default branch ID.');
-          branchId = user.uid; // Fallback to user ID
-      }
-      const lrData = {
-        date: getStr('lrDate'),
-        lrNumber: getStr('lrNumber'),
-        truckNumber: getStr('truckNumber'),
-        consignor: getStr('consignor'),
-        consignee: getStr('consignee'),
-        fromLocation: getStr('fromLocation'),
-        branchId: branchId,  // Use the branchId we found
-        toLocation: getStr('toLocation'),
-        weight: getVal('weight'),
-        item: getStr('item'),
-        shipmentNo: getStr('shipmentNo'),
-        invoiceNo: getStr('invoiceNo'),
-        billingRate: getVal('billingRate'),
-        billingAmount: getVal('billingAmount'),
-        freightRate: getVal('freightRate'),
-        freightAmount: getVal('freightAmount'),
-        paymentType: getStr('paymentType'),
-        bankName: getStr('bankName'),
-        shortage: getVal('shortage'),
-        otherExpenses: getVal('otherExpenses'),
-        dieselCost: getVal('dieselCost'),
-        advance: getVal('advance'),
-        gstPercentage: getVal('gstPercentage'),
-        gstAmount: getVal('gstAmount'),
-        totalAmount: getVal('totalAmount'),
-        status: 'active',
-        userId: user.uid,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      
+      // Generate invoice number and date
+      const now = new Date();
+      const invoiceNumber = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const invoiceDate = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      
+      // Update invoice header
+      $('#companyName').text($('#inputCompanyName').val() || 'Your Company Name');
+      $('#companyAddress').text($('#inputCompanyAddress').val() || 'Your Company Address');
+      $('#companyGst').text('GST: ' + ($('#inputGstNumber').val() || 'Not provided'));
+      $('#companyNameFooter').text($('#inputCompanyName').val() || 'Your Company Name');
+      
+      // Update invoice details
+      $('#invoiceNumber').text(invoiceNumber);
+      $('#invoiceDate').text(invoiceDate);
+      
+      // Update bill to address (use first consignee's details)
+      const firstConsignee = selectedLRRecords[0]?.consignee || 'Consignee Name';
+      $('#billToAddress').text(firstConsignee);
+      
+      // Update bank details
+      $('#invoiceBankName').text($('#inputBankName').val() || 'Bank Name');
+      $('#invoiceAccountNumber').text($('#inputAccountNumber').val() || 'Account Number');
+      $('#invoiceAccountHolder').text($('#inputAccountHolder').val() || 'Account Holder');
+      $('#invoiceIfscCode').text($('#inputIfscCode').val() || 'IFSC Code');
+      $('#invoiceAccountType').text($('#inputAccountType').val() || 'Account Type');
+      
+      // Clear and populate invoice items
+      $('#invoiceItems').empty();
+      let subtotal = 0;
+      let gstAmount = 0;
+      
+      selectedLRRecords.forEach(lr => {
+        const itemSubtotal = lr.billingAmount || 0;
+        const itemGst = itemSubtotal * ((lr.gstPercentage || 0) / 100);
+        
+        subtotal += itemSubtotal;
+        gstAmount += itemGst;
+        
+        $('#invoiceItems').append(`
+          <tr>
+            <td class="text-center">${lr.date || '-'}</td>
+            <td class="text-center">${lr.lrNumber || '-'}</td>
+            <td class="text-center">${lr.truckNumber || '-'}</td>
+            <td>${lr.consignor || '-'}</td>
+            <td>${lr.consignee || '-'}</td>
+            <td class="text-center">${lr.fromLocation || '-'}</td>
+            <td class="text-center">${lr.toLocation || '-'}</td>
+            <td class="text-end">${(lr.weight || 0).toFixed(2)}</td>
+            <td class="text-end">${(lr.billingRate || 0).toFixed(2)}</td>
+            <td class="text-end">${lr.gstPercentage || 0}%</td>
+            <td class="text-end">₹${parseFloat(itemGst).toFixed(2)}</td>
+            <td class="text-end">₹${parseFloat(itemSubtotal).toFixed(2)}</td>
+          </tr>
+        `);
+      });
+      
+      // Update totals with proper formatting
+      const formatCurrency = (amount) => {
+        return parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       };
-
-      // Ensure we don't overwrite the advance with undefined
-      if (isNaN(lrData.advance)) {
-        lrData.advance = 0;
-      }
-
-      // Save to Firebase
-      db.ref('lrReports').push(lrData)
-        .then(() => {
-          alert('LR saved successfully!');
-          document.getElementById('lrForm').reset();
-          
-          // Reset date to today
-          const today = new Date().toISOString().split('T')[0];
-          document.getElementById('lrDate').value = today;
-          
-          // Switch to view tab
-          const viewTab = document.querySelector('a[href="#view"]');
-          if (viewTab) {
-            new bootstrap.Tab(viewTab).show();
-          }
-        })
-        .catch(error => {
-          console.error('Error saving LR:', error);
-          alert('Error saving LR. Please try again.');
-        });
+      
+      $('#subtotalAmount').text('₹' + formatCurrency(subtotal));
+      $('#invoiceGstAmount').text('₹' + formatCurrency(gstAmount));
+      $('#grandTotal').text('₹' + formatCurrency(subtotal + gstAmount));
+      $('#gstPercent').text(selectedLRRecords[0]?.gstPercentage || 0);
+      
+      // Show invoice modal
+      $('#bankDetailsModal').modal('hide');
+      $('#invoiceModal').modal('show');
     }
 
+    // Print invoice
+    function printInvoice() {
+      const printContent = document.getElementById('printableInvoice');
+      const allStyles = Array.from(document.styleSheets)
+        .map(styleSheet => {
+          try {
+            return Array.from(styleSheet.cssRules)
+              .map(rule => rule.cssText)
+              .join('');
+          } catch (e) {
+            console.warn("Could not read stylesheet rules:", e);
+            return '';
+          }
+        }).join('\n');
+
+      // Calculate the required scale to fit the content
+      const contentWidth = printContent.scrollWidth;
+      const printAreaWidth = 1123; // A4 landscape width in pixels (approx 29.7cm at 96dpi)
+      const scale = contentWidth > printAreaWidth ? (printAreaWidth / contentWidth) * 0.98 : 1;
+
+      const dynamicStyles = `
+        @media print {
+          @page { size: A4 landscape; margin: 1cm; }
+          html, body {
+            width: ${contentWidth}px;
+            transform: scale(${scale});
+            transform-origin: top left;
+            margin: 0;
+            padding: 0;
+          }
+        }
+      `;
+
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(`<html><head><title>Print Invoice</title><style>${allStyles}${dynamicStyles}</style></head><body>${printContent.innerHTML}</body></html>`);
+      doc.close();
+
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+
+      // Clean up after a delay
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }
+
+    // Edit LR record
     function editLR(id) {
-      currentEditId = id;
       const lr = lrData.find(item => item.id === id);
       if (!lr) return;
-
-      // Fill the edit form
-      setVal('LrDate', lr.date, 'edit');
-      setVal('LrNumber', lr.lrNumber, 'edit');
-      setVal('TruckNumber', lr.truckNumber, 'edit');
-      setVal('Consignor', lr.consignor, 'edit');
-      setVal('Consignee', lr.consignee, 'edit');
-      setVal('Item', lr.item, 'edit');
-      setVal('FromLocation', lr.fromLocation, 'edit');
-      setVal('ToLocation', lr.toLocation, 'edit');
-      setVal('ShipmentNo', lr.shipmentNo, 'edit');
-      setVal('InvoiceNo', lr.invoiceNo, 'edit');
-      setVal('Weight', lr.weight, 'edit');
-      setVal('BillingRate', lr.billingRate, 'edit');
-      setVal('BillingAmount', lr.billingAmount, 'edit');
-      setVal('FreightRate', lr.freightRate, 'edit');
-      setVal('FreightAmount', lr.freightAmount, 'edit');
-      document.getElementById('editPaymentType').value = lr.paymentType || '';
-      setVal('BankName', lr.bankName, 'edit');
-      setVal('Shortage', lr.shortage, 'edit');
-      setVal('OtherExpenses', lr.otherExpenses, 'edit');
-      setVal('DieselCost', lr.dieselCost, 'edit');
-      const advanceInput = document.getElementById('editAdvance');
-      if (advanceInput) {
-        advanceInput.value = parseFloat(lr.advance).toFixed(2);
-        // Store the original value
-        advanceInput.dataset.originalValue = lr.advance;
-      }
-      setVal('GstPercentage', lr.gstPercentage, 'edit');
-      setVal('GstAmount', lr.gstAmount, 'edit');
-      setVal('TotalAmount', lr.totalAmount, 'edit');
-
-      // Show the modal
-      const editModal = new bootstrap.Modal(document.getElementById('editLRModal'));
-      editModal.show();
-
-      // Recalculate amounts
-      setTimeout(() => {
-        calculateEditAmount();
-      }, 100);
+      
+      currentEditId = id;
+      
+      // Populate edit form
+      $('#editLrDate').val(lr.date);
+      $('#editLrNumber').val(lr.lrNumber);
+      $('#editTruckNumber').val(lr.truckNumber);
+      $('#editConsignor').val(lr.consignor);
+      $('#editConsignee').val(lr.consignee);
+      $('#editFromLocation').val(lr.fromLocation);
+      $('#editToLocation').val(lr.toLocation);
+      $('#editWeight').val(lr.weight);
+      $('#editItem').val(lr.item);
+      $('#editShipmentNo').val(lr.shipmentNo);
+      $('#editBillingRate').val(lr.billingRate);
+      $('#editBillingAmount').val(lr.billingAmount);
+      $('#editFreightRate').val(lr.freightRate);
+      $('#editFreightAmount').val(lr.freightAmount);
+      $('#editPaymentType').val(lr.paymentType);
+      $('#editBankName').val(lr.bankName);
+      $('#editShortage').val(lr.shortage);
+      $('#editAdvance').val(lr.advance);
+      $('#editOtherExpenses').val(lr.otherExpenses);
+      $('#editGstPercentage').val(lr.gstPercentage);
+      $('#editGstAmount').val(lr.gstAmount);
+      $('#editTotalAmount').val(lr.totalAmount);
+      
+      // NEW: Populate expense fields in edit modal
+      $('#editTyreExpenses').val(lr.tyreExpenses || 0);
+      $('#editDieselExpenses').val(lr.dieselExpenses || 0);
+      $('#editTollExpenses').val(lr.tollExpenses || 0);
+      $('#editVehicleWork').val(lr.vehicleWork || 0);
+      $('#editFoodExpenses').val(lr.foodExpenses || 0);
+      
+      // Show edit modal
+      $('#editLRModal').modal('show');
     }
 
-    function saveEdit() {
-      if (!currentEditId) return;
-
-      const user = auth.currentUser;
-      if (!user) {
-        alert('You must be logged in to update LR data.');
-        return;
-      }
-
-      // Recalculate to ensure all values are up to date
+    // Calculate billing amount for edit form
+    function calculateEditBillingAmount() {
+      const weight = parseFloat($('#editWeight').val()) || 0;
+      const billingRate = parseFloat($('#editBillingRate').val()) || 0;
+      $('#editBillingAmount').val((weight * billingRate).toFixed(2));
       calculateEditAmount();
+    }
 
+    // Calculate billing rate for edit form
+    function calculateEditBillingRate() {
+      const weight = parseFloat($('#editWeight').val()) || 0;
+      const billingAmount = parseFloat($('#editBillingAmount').val()) || 0;
+      if (weight > 0) {
+        $('#editBillingRate').val((billingAmount / weight).toFixed(2));
+      }
+      calculateEditAmount();
+    }
+
+    // Calculate freight amount for edit form
+    function calculateEditFreightAmount() {
+      const weight = parseFloat($('#editWeight').val()) || 0;
+      const freightRate = parseFloat($('#editFreightRate').val()) || 0;
+      $('#editFreightAmount').val((weight * freightRate).toFixed(2));
+      calculateEditAmount();
+    }
+
+    // Calculate freight rate for edit form
+    function calculateEditFreightRate() {
+      const weight = parseFloat($('#editWeight').val()) || 0;
+      const freightAmount = parseFloat($('#editFreightAmount').val()) || 0;
+      if (weight > 0) {
+        $('#editFreightRate').val((freightAmount / weight).toFixed(2));
+      }
+      calculateEditAmount();
+    }
+
+    // Calculate amount for edit form
+    function calculateEditAmount() {
+      const billingAmount = parseFloat($('#editBillingAmount').val()) || 0;
+      const freightAmount = parseFloat($('#editFreightAmount').val()) || 0;
+      const shortage = parseFloat($('#editShortage').val()) || 0;
+      const advance = parseFloat($('#editAdvance').val()) || 0;
+      const otherExpenses = parseFloat($('#editOtherExpenses').val()) || 0;
+      
+      // NEW: Add all expense fields
+      const tyreExpenses = parseFloat($('#editTyreExpenses').val()) || 0;
+      const dieselExpenses = parseFloat($('#editDieselExpenses').val()) || 0;
+      const tollExpenses = parseFloat($('#editTollExpenses').val()) || 0;
+      const vehicleWork = parseFloat($('#editVehicleWork').val()) || 0;
+      const foodExpenses = parseFloat($('#editFoodExpenses').val()) || 0;
+      
+      // Calculate subtotal (before GST)
+      const subtotal = billingAmount + freightAmount + shortage + advance + otherExpenses + 
+                      tyreExpenses + dieselExpenses + tollExpenses + vehicleWork + foodExpenses;
+      
+      // Calculate GST and total
+      calculateEditGST();
+    }
+
+    // Calculate GST for edit form
+    function calculateEditGST() {
+      const billingAmount = parseFloat($('#editBillingAmount').val()) || 0;
+      const freightAmount = parseFloat($('#editFreightAmount').val()) || 0;
+      const shortage = parseFloat($('#editShortage').val()) || 0;
+      const advance = parseFloat($('#editAdvance').val()) || 0;
+      const otherExpenses = parseFloat($('#editOtherExpenses').val()) || 0;
+      
+      // NEW: Add all expense fields
+      const tyreExpenses = parseFloat($('#editTyreExpenses').val()) || 0;
+      const dieselExpenses = parseFloat($('#editDieselExpenses').val()) || 0;
+      const tollExpenses = parseFloat($('#editTollExpenses').val()) || 0;
+      const vehicleWork = parseFloat($('#editVehicleWork').val()) || 0;
+      const foodExpenses = parseFloat($('#editFoodExpenses').val()) || 0;
+      
+      // Calculate subtotal (before GST)
+      const subtotal = billingAmount + freightAmount + shortage + advance + otherExpenses + 
+                      tyreExpenses + dieselExpenses + tollExpenses + vehicleWork + foodExpenses;
+      
+      const gstPercentage = parseFloat($('#editGstPercentage').val()) || 0;
+      const gstAmount = (subtotal * gstPercentage / 100).toFixed(2);
+      $('#editGstAmount').val(gstAmount);
+      
+      const totalAmount = (subtotal + parseFloat(gstAmount)).toFixed(2);
+      $('#editTotalAmount').val(totalAmount);
+    }
+
+    // Save edited LR record
+    function saveEditLR() {
+      if (!currentEditId) return;
+      
+      // Find the LR record to update
+      const lrToUpdate = lrData.find(lr => lr.id === currentEditId);
+      if (!lrToUpdate) return;
+      
+      // Update the record
       const updatedData = {
-        date: getStr('LrDate', 'edit'),
-        lrNumber: getStr('LrNumber', 'edit'),
-        truckNumber: getStr('TruckNumber', 'edit'),
-        consignor: getStr('Consignor', 'edit'),
-        consignee: getStr('Consignee', 'edit'),
-        item: getStr('Item', 'edit'),
-        fromLocation: getStr('FromLocation', 'edit'),
-        toLocation: getStr('ToLocation', 'edit'),
-        shipmentNo: getStr('ShipmentNo', 'edit'),
-        invoiceNo: getStr('InvoiceNo', 'edit'),
-        weight: getVal('Weight', 'edit'),
-        billingRate: getVal('BillingRate', 'edit'),
-        billingAmount: getVal('BillingAmount', 'edit'),
-        freightRate: getVal('FreightRate', 'edit'),
-        freightAmount: getVal('FreightAmount', 'edit'),
-        paymentType: getStr('PaymentType', 'edit'),
-        bankName: getStr('BankName', 'edit'),
-        shortage: getVal('Shortage', 'edit'),
-        otherExpenses: getVal('OtherExpenses', 'edit'),
-        dieselCost: getVal('DieselCost', 'edit'),
-        gstPercentage: getVal('GstPercentage', 'edit'),
-        gstAmount: getVal('GstAmount', 'edit'),
-        totalAmount: getVal('TotalAmount', 'edit'),
+        ...lrToUpdate,
+        date: $('#editLrDate').val(),
+        lrNumber: $('#editLrNumber').val(),
+        truckNumber: $('#editTruckNumber').val(),
+        consignor: $('#editConsignor').val(),
+        consignee: $('#editConsignee').val(),
+        fromLocation: $('#editFromLocation').val(),
+        toLocation: $('#editToLocation').val(),
+        weight: parseFloat($('#editWeight').val()),
+        item: $('#editItem').val(),
+        shipmentNo: $('#editShipmentNo').val(),
+        billingRate: parseFloat($('#editBillingRate').val()) || 0,
+        billingAmount: parseFloat($('#editBillingAmount').val()) || 0,
+        freightRate: parseFloat($('#editFreightRate').val()) || 0,
+        freightAmount: parseFloat($('#editFreightAmount').val()) || 0,
+        paymentType: $('#editPaymentType').val(),
+        bankName: $('#editBankName').val(),
+        shortage: parseFloat($('#editShortage').val()) || 0,
+        advance: parseFloat($('#editAdvance').val()) || 0,
+        otherExpenses: parseFloat($('#editOtherExpenses').val()) || 0,
+        gstPercentage: parseFloat($('#editGstPercentage').val()) || 0,
+        gstAmount: parseFloat($('#editGstAmount').val()) || 0,
+        totalAmount: parseFloat($('#editTotalAmount').val()) || 0,
+        status: lrToUpdate.status, // Keep existing status unless changed
+        
+        // NEW: Update expense fields
+        tyreExpenses: parseFloat($('#editTyreExpenses').val()) || 0,
+        dieselExpenses: parseFloat($('#editDieselExpenses').val()) || 0,
+        tollExpenses: parseFloat($('#editTollExpenses').val()) || 0,
+        vehicleWork: parseFloat($('#editVehicleWork').val()) || 0,
+        foodExpenses: parseFloat($('#editFoodExpenses').val()) || 0,
         updatedAt: new Date().toISOString()
       };
-
-      // Update in Firebase
-      db.ref(`lrReports/${currentEditId}`).update(updatedData)
+      
+      // Save to Firebase
+      db.ref('lrReports/' + currentEditId).update(updatedData)
         .then(() => {
-          alert('LR updated successfully!');
-          const modal = bootstrap.Modal.getInstance(document.getElementById('editLRModal'));
-          if (modal) modal.hide();
+          // Close the modal
+          $('#editLRModal').modal('hide');
+          // Show success message
+          alert('LR record updated successfully!');
         })
-        .catch(error => {
-          console.error('Error updating LR:', error);
-          alert('Error updating LR. Please try again.');
+        .catch((error) => {
+          alert('Error updating LR record: ' + error.message);
         });
     }
 
+    // Delete LR record
     function deleteLR(id) {
       if (!confirm('Are you sure you want to delete this LR record?')) return;
-
-      db.ref(`lrReports/${id}`).remove()
+      
+      // Remove the record
+      db.ref('lrReports/' + id).remove()
         .then(() => {
-          alert('LR deleted successfully!');
+          // Show success message
+          alert('LR record deleted successfully!');
+          // The onValue listener will automatically update the table
         })
-        .catch(error => {
-          console.error('Error deleting LR:', error);
-          alert('Error deleting LR. Please try again.');
-        });
-    }
-
-    function exportToPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Title
-      doc.setFontSize(16);
-      doc.text('LR Management Report', 14, 15);
-      
-      // Date range
-      doc.setFontSize(10);
-      const fromDate = document.getElementById('fromDate').value;
-      const toDate = document.getElementById('toDate').value;
-      const dateRange = `Date Range: ${fromDate} to ${toDate}`;
-      doc.text(dateRange, 14, 22);
-      
-      // Generated date
-      doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
-
-      // Table data
-      const tableData = [];
-      const tableColumns = [
-        'Date', 'LR No', 'Truck No', 'Consignor', 'Consignee', 
-        'From', 'To', 'Weight', 'Billing Amt', 'Freight Amt', 'Total Amt'
-      ];
-
-      // Get filtered data from DataTable
-      const filteredData = lrTable.rows({ search: 'applied' }).data().toArray();
-      
-      filteredData.forEach(row => {
-        tableData.push([
-          formatDate(row.date),
-          row.lrNumber || '',
-          row.truckNumber || '',
-          row.consignor || '',
-          row.consignee || '',
-          row.fromLocation || '',
-          row.toLocation || '',
-          row.weight ? Number(row.weight).toFixed(2) : '0.00',
-          row.billingAmount ? `₹${Number(row.billingAmount).toFixed(2)}` : '₹0.00',
-          row.freightAmount ? `₹${Number(row.freightAmount).toFixed(2)}` : '₹0.00',
-          row.totalAmount ? `₹${Number(row.totalAmount).toFixed(2)}` : '₹0.00'
-        ]);
-      });
-
-      // Add summary row
-      const totalBilling = filteredData.reduce((sum, row) => sum + (row.billingAmount || 0), 0);
-      const totalFreight = filteredData.reduce((sum, row) => sum + (row.freightAmount || 0), 0);
-      const totalAmount = filteredData.reduce((sum, row) => sum + (row.totalAmount || 0), 0);
-      
-      tableData.push([
-        '', '', '', '', '', '', '',
-        'TOTALS:',
-        `₹${totalBilling.toFixed(2)}`,
-        `₹${totalFreight.toFixed(2)}`,
-        `₹${totalAmount.toFixed(2)}`
-      ]);
-
-      // Create table
-      doc.autoTable({
-        head: [tableColumns],
-        body: tableData,
-        startY: 35,
-        theme: 'grid',
-        headStyles: {
-          fillColor: [46, 139, 87],
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        footStyles: {
-          fillColor: [220, 220, 220],
-          textColor: 0,
-          fontStyle: 'bold'
-        },
-        styles: {
-          fontSize: 8,
-          cellPadding: 1
-        },
-        margin: { top: 35 }
-      });
-
-      // Save the PDF
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      doc.save(`LR_Report_${timestamp}.pdf`);
-    }
-
-    function toggleMenu() {
-      const navLinks = document.getElementById('navLinks');
-      navLinks.classList.toggle('show');
-    }
-
-    function logout() {
-      auth.signOut()
-        .then(() => {
-          window.location.href = 'index.html';
-        })
-        .catch(error => {
-          console.error('Logout error:', error);
+        .catch((error) => {
+          alert('Error deleting LR record: ' + error.message);
         });
     }
   </script>
