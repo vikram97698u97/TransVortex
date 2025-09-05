@@ -3,267 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Invoice Generator</title>
+  <title>Generated Invoices</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="print-invoice.css" media="print">
   <style>
-    /* Previous styles remain the same */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #F5F5F5;
-      color: #111111;
-    }
-
-    body {
-      background-color: #f3fff3;
-    }
-    .form-control, .btn {
-      border-radius: 12px;
-    }
-    .btn-success {
-      background-color: #28a745;
-      border: none;
-    }
-    .btn-success:hover {
-      background-color: #218838;
-    }
-    h2 {
-      text-align: center;
-      color: #2d572c;
-      margin-bottom: 20px;
-    }
-    .btn-green {
-      background-color: #27ae60;
-      color: white;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    .btn-green:hover {
-      background-color: #219150;
-    }
-    
-    .invoice-container {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-      padding: 30px;
-      margin-bottom: 30px;
-    }
-    
-    .invoice-header {
-      text-align: center;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #2E8B57;
-      padding-bottom: 20px;
-    }
-    
-    .company-name {
-      font-size: 28px;
-      font-weight: bold;
-      color: #2d572c;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    .invoice-title {
-      font-size: 24px;
-      font-weight: bold;
-      margin: 15px 0;
-      color: #333;
-    }
-    
-    .owner-name {
-      font-size: 16px;
-      color: #666;
-    }
-    
-    .invoice-details {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      margin-bottom: 25px;
-    }
-    
-    .invoice-from, .invoice-to {
-      width: 48%;
-      margin-bottom: 20px;
-    }
-    
-    @media (max-width: 768px) {
-      .invoice-from, .invoice-to {
-        width: 100%;
-      }
-    }
-    
-    .detail-heading {
-      font-weight: bold;
-      color: #2E8B57;
-      margin-bottom: 8px;
-      font-size: 16px;
-    }
-    
-    .invoice-info {
-      background: #f9f9f9;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 25px;
-    }
-    
-    .info-row {
-      display: flex;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-    
-    .info-item {
-      flex: 1;
-      min-width: 200px;
-      margin-right: 15px;
-      margin-bottom: 10px;
-    }
-    
-    .info-label {
-      font-weight: bold;
-      color: #555;
-    }
-    
-    .items-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 25px;
-    }
-    
-    .items-table th {
-      background-color: #2E8B57;
-      color: white;
-      padding: 12px 15px;
-      text-align: left;
-    }
-    
-    .items-table td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #ddd;
-    }
-    
-    .items-table tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    
-    .item-number {
-      width: 60px;
-      text-align: center;
-    }
-    
-    .totals-section {
-      background: #f9f9f9;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 25px;
-    }
-    
-    .total-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-    }
-    
-    .total-label {
-      font-weight: bold;
-    }
-    
-    .final-total {
-      font-size: 20px;
-      font-weight: bold;
-      color: #2E8B57;
-      border-top: 2px solid #ddd;
-      padding-top: 12px;
-    }
-    
-    .terms-section {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px dashed #ccc;
-    }
-    
-    .terms-heading {
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #2E8B57;
-    }
-    
-    .action-buttons {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      margin-top: 30px;
-    }
-    
-    /* New styles for the setup card */
-    .setup-card {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 600px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 5px 30px rgba(0,0,0,0.2);
-      padding: 30px;
-      z-index: 1000;
-    }
-    
-    .setup-card h3 {
-      color: #2d572c;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    
-    .setup-card .form-group {
-      margin-bottom: 15px;
-    }
-    
-    .setup-card .form-label {
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 999;
-    }
-    
+    body { padding: 0; margin: 0; background-color: #f8f9fa; }
     @media print {
-      .navbar, .no-print {
-        display: none !important;
+      /* Hide everything except the printable area */
+      body * {
+        visibility: hidden;
       }
-      
-      body {
-        padding-top: 0;
+      /* Make the printable area and its children visible */
+      #printableInvoiceDetail, #printableInvoiceDetail * {
+        visibility: visible;
       }
-      
-      .invoice-container {
-        box-shadow: none;
+      /* Position the printable area to fill the page */
+      #printableInvoiceDetail {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
         padding: 0;
       }
-      
-      .setup-card, .overlay {
+      /* Hide the modal's footer when printing */
+      .modal-footer {
         display: none !important;
       }
     }
@@ -272,214 +38,56 @@
 <body>
   <script src="navbar-loader.js"></script>
 
-  <!-- Setup Card Overlay -->
-  <div id="setupOverlay" class="overlay" style="display: none;"></div>
-  
-  <!-- Setup Card -->
-  <div id="setupCard" class="setup-card" style="display: none;">
-    <h3>Complete Your Company Profile</h3>
-    <p class="text-muted mb-4">Please provide your company details to generate invoices.</p>
-    
-    <div class="form-group mb-3">
-      <label class="form-label">Company Name</label>
-      <input type="text" id="setupCompanyName" class="form-control" placeholder="Enter company name">
-    </div>
-    
-    <div class="form-group mb-3">
-      <label class="form-label">Owner Name</label>
-      <input type="text" id="setupOwnerName" class="form-control" placeholder="Enter owner name">
-    </div>
-    
-    <div class="form-group mb-3">
-      <label class="form-label">Address</label>
-      <input type="text" id="setupAddress" class="form-control" placeholder="Enter address">
-    </div>
-    
-    <div class="row">
-      <div class="col-md-6">
-        <div class="form-group mb-3">
-          <label class="form-label">City</label>
-          <input type="text" id="setupCity" class="form-control" placeholder="Enter city">
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="form-group mb-3">
-          <label class="form-label">State</label>
-          <input type="text" id="setupState" class="form-control" placeholder="Enter state">
-        </div>
-      </div>
-    </div>
-    
-    <div class="row">
-      <div class="col-md-6">
-        <div class="form-group mb-3">
-          <label class="form-label">Pincode</label>
-          <input type="text" id="setupPincode" class="form-control" placeholder="Enter pincode">
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="form-group mb-3">
-          <label class="form-label">Phone Number</label>
-          <input type="text" id="setupPhone" class="form-control" placeholder="Enter phone number">
-        </div>
-      </div>
-    </div>
-    
-    <div class="form-group mb-4">
-      <label class="form-label">GSTIN (Optional)</label>
-      <input type="text" id="setupGST" class="form-control" placeholder="Enter GSTIN">
-    </div>
-    
-    <div class="d-flex justify-content-end">
-      <button class="btn btn-green" onclick="saveCompanyDetails()">
-        <i class="fas fa-save me-2"></i>Save Details
-      </button>
-    </div>
-  </div>
-
   <div class="container">
-    <div class="invoice-container" id="invoiceContent">
-      <!-- Invoice content remains the same -->
-      <div class="invoice-header">
-        <div class="company-name" id="companyName">TRANSPORT COMPANY</div>
-        <div class="invoice-title">INVOICE</div>
-        <div class="owner-name" id="companyOwner">Owner Name</div>
-      </div>
-      
-      <div class="invoice-details">
-        <div class="invoice-from">
-          <div class="detail-heading">FROM:</div>
-          <div id="fromDetails">
-            <div id="companyNameDetail">Transport Company</div>
-            <div id="companyAddress">Address line 1</div>
-            <div id="companyLocation">City, State - Pincode</div>
-            <div id="companyContact">
-              <i class="fas fa-phone me-1"></i>
-              <span id="phoneNumber">+91 XXXXX XXXXX</span>
-            </div>
-            <div id="companyGST">GSTIN: XXXXXXXXXXXXXX</div>
-          </div>
-        </div>
-        
-        <div class="invoice-to">
-          <div class="detail-heading">TO:</div>
-          <input type="text" id="clientName" class="form-control mb-2" placeholder="Client Name" />
-          <textarea id="clientAddress" class="form-control mb-2" placeholder="Client Address" rows="3"></textarea>
-          <input type="text" id="clientGST" class="form-control" placeholder="GSTIN (Optional)" />
-        </div>
-      </div>
-      
-      <div class="invoice-info">
-        <div class="info-row">
-          <div class="info-item">
-            <span class="info-label">Invoice Number:</span>
-            <input type="text" id="invoiceNumber" class="form-control form-control-sm" placeholder="INV-001" />
-          </div>
-          <div class="info-item">
-            <span class="info-label">Invoice Date:</span>
-            <input type="date" id="invoiceDate" class="form-control form-control-sm" />
-          </div>
-        </div>
-        <div class="info-row">
-          <div class="info-item">
-            <span class="info-label">Vehicle Number:</span>
-            <input type="text" id="vehicleNumber" class="form-control form-control-sm" placeholder="UP32XXXX" />
-          </div>
-          <div class="info-item">
-            <span class="info-label">LR Number:</span>
-            <input type="text" id="lrNumber" class="form-control form-control-sm" placeholder="LR Number" />
-          </div>
-        </div>
-        <div class="info-row">
-          <div class="info-item">
-            <span class="info-label">From:</span>
-            <input type="text" id="from" class="form-control form-control-sm" placeholder="Source Location" />
-          </div>
-          <div class="info-item">
-            <span class="info-label">To:</span>
-            <input type="text" id="to" class="form-control form-control-sm" placeholder="Destination Location" />
-          </div>
-        </div>
-        <div class="info-row">
-          <div class="info-item">
-            <span class="info-label">Loading Date:</span>
-            <input type="date" id="loadingDate" class="form-control form-control-sm" />
-          </div>
-          <div class="info-item">
-            <span class="info-label">Unloading Date:</span>
-            <input type="date" id="unloadingDate" class="form-control form-control-sm" />
-          </div>
-        </div>
-      </div>
-      
-      <table class="items-table">
+    <h2 class="mb-4"><i class="fas fa-file-invoice-dollar me-2"></i>Generated Invoices</h2>
+    <div class="table-responsive">
+      <table id="invoicesTable" class="table table-striped">
         <thead>
           <tr>
-            <th class="item-number">#</th>
-            <th>DESCRIPTION</th>
-            <th style="text-align: right;">AMOUNT (₹)</th>
+            <th>Invoice #</th>
+            <th>Date</th>
+            <th>Company Name</th>
+            <th class="text-end">Total Amount</th>
+            <th class="text-center">LRs</th>
+            <th class="text-center">Actions</th>
           </tr>
         </thead>
-        <tbody id="invoiceBody">
-          <tr>
-            <td class="item-number">1</td>
-            <td><input class="form-control form-control-sm item-name" placeholder="Item description" /></td>
-            <td><input class="form-control form-control-sm item-amount" type="number" placeholder="0.00" style="text-align: right;" /></td>
-          </tr>
+        <tbody id="invoicesTableBody">
+          <!-- Data will be populated here -->
         </tbody>
       </table>
-      
-      <button class="btn btn-green mb-3 no-print" id="addItemBtn">
-        <i class="fas fa-plus"></i> Add Item
-      </button>
-      
-      <div class="totals-section">
-        <div class="total-row">
-          <div class="total-label">Subtotal:</div>
-          <div id="subtotalDisplay">₹0.00</div>
+    </div>
+  </div>
+
+  <!-- Invoice Detail Modal -->
+  <div class="modal fade" id="invoiceDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title">Invoice Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="total-row">
-          <div>
-            <span class="total-label">GST:</span>
-            <input type="number" id="gst" class="form-control form-control-sm d-inline-block" style="width: 80px; margin-left: 10px;" value="18" placeholder="%" />
-          </div>
-          <div id="gstDisplay">₹0.00</div>
+        <div class="modal-body" id="printableInvoiceDetail">
+          <!-- Content will be populated dynamically -->
         </div>
-        <div class="total-row final-total">
-          <div>Total Amount:</div>
-          <div id="finalDisplay">₹0.00</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="printInvoiceDetail()">
+            <i class="fas fa-print me-2"></i>Print
+          </button>
         </div>
-      </div>
-      
-      <div class="terms-section">
-        <div class="terms-heading">Terms & Conditions:</div>
-        <div id="termsText">
-          - Payment due within 15 days of invoice date<br>
-          - Late payment interest @ 1.5% per month<br>
-          - All disputes subject to [City] jurisdiction
-        </div>
-      </div>
-      
-      <div class="action-buttons no-print">
-        <button class="btn btn-success" onclick="saveInvoice()">
-          <i class="fas fa-save"></i> Save & Download PDF
-        </button>
-        <button class="btn btn-green" id="downloadExcelBtn">
-          <i class="fas fa-file-excel"></i> Download Excel
-        </button>
-        <button class="btn btn-secondary" onclick="window.print()">
-          <i class="fas fa-print"></i> Print
-        </button>
       </div>
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, push, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -497,362 +105,174 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
 
-    // Make renderProfile globally accessible
-    window.renderProfile = function(profileData) {
-      if (!profileData) return;
-      
-      console.log("Rendering profile with data:", profileData);
-      
-      // Set company name
-      document.getElementById("companyName").textContent = 
-        profileData.transportName || profileData.name || "TRANSPORT COMPANY";
-      
-      document.getElementById("companyNameDetail").textContent = 
-        profileData.transportName || profileData.name || "Transport Company";
-      
-      // Set owner name
-      document.getElementById("companyOwner").textContent = 
-        profileData.ownerName || profileData.name || "Owner Name";
-      
-      // Set address
-      if (profileData.address) {
-        document.getElementById("companyAddress").textContent = profileData.address;
-      } else {
-        document.getElementById("companyAddress").textContent = "Address line 1";
-      }
-      
-      // Set location (city, state, pincode)
-      let locationLine = '';
-      if (profileData.city) {
-        locationLine = profileData.city;
-        if (profileData.state) locationLine += `, ${profileData.state}`;
-        if (profileData.pincode) locationLine += ` - ${profileData.pincode}`;
-        document.getElementById("companyLocation").textContent = locationLine;
-      } else if (profileData.pincode) {
-        document.getElementById("companyLocation").textContent = profileData.pincode;
-      } else {
-        document.getElementById("companyLocation").textContent = "City, State - Pincode";
-      }
-      
-      // Set phone number
-      const phoneNumber = profileData.phoneNumber || profileData.phone || profileData.mobile || '';
-      const phoneDisplay = phoneNumber ? `+91 ${phoneNumber}` : 'Not provided';
-      document.getElementById("phoneNumber").textContent = phoneDisplay;
-      
-      // Set GSTIN
-      if (profileData.gstin || profileData.gst) {
-        const gstValue = profileData.gstin || profileData.gst;
-        document.getElementById("companyGST").textContent = `GSTIN: ${gstValue}`;
-        document.getElementById("companyGST").style.display = '';
-      } else {
-        document.getElementById("companyGST").style.display = 'none';
-      }
-    };
+    let invoicesTable;
 
     onAuthStateChanged(auth, user => {
       if (!user) {
         window.location.href = "index.html";
       } else {
-        // Check if user needs to complete profile
-        const checkAndShowSetupCard = async () => {
-          try {
-            // Check if user has profile data
-            const userProfileSnap = await get(ref(db, `users/${user.uid}/profile`));
-            
-            // Check if this is a branch user
-            const userDataSnap = await get(ref(db, `users/${user.uid}`));
-            const userData = userDataSnap.exists() ? userDataSnap.val() : {};
-            const isBranchUser = userData.accountType === 'branch' || userData.userType === 'branch';
-            
-            // Show setup card if no profile data exists and it's a branch user
-            if (!userProfileSnap.exists() && isBranchUser) {
-              document.getElementById('setupOverlay').style.display = 'block';
-              document.getElementById('setupCard').style.display = 'block';
-            } else {
-              // Load profile data as usual
-              loadCurrentOrBranchProfile();
-            }
-          } catch (error) {
-            console.error('Error checking profile:', error);
-          }
-        };
-
-        checkAndShowSetupCard();
-
-        // Load profile for invoice
-        const loadCurrentOrBranchProfile = async () => {
-          console.log('Loading profile for user:', user.uid);
-          
-          try {
-            // First try to get the user's profile directly
-            const userProfileSnap = await get(ref(db, `users/${user.uid}/profile`));
-            if (userProfileSnap.exists()) {
-              console.log('Found user profile:', userProfileSnap.val());
-              window.renderProfile(userProfileSnap.val());
-              return;
-            }
-            
-            // Check if this is a branch user by looking at accountType or userType
-            const userDataSnap = await get(ref(db, `users/${user.uid}`));
-            const userData = userDataSnap.exists() ? userDataSnap.val() : {};
-            
-            const isBranchUser = userData.accountType === 'branch' || userData.userType === 'branch';
-            console.log('Is branch user:', isBranchUser, userData);
-            
-            if (isBranchUser) {
-              // For branch users, try to get the branch data from the parent account
-              const coreAccountId = userData.coreAccountId || userData.parentUid;
-              
-              if (coreAccountId) {
-                console.log('Looking for branch data in parent account:', coreAccountId);
-                
-                // Try to get the branch data from the parent's branches list
-                const branchDataSnap = await get(ref(db, `users/${coreAccountId}/branches/${user.uid}`));
-                if (branchDataSnap.exists()) {
-                  console.log('Found branch data in parent branches:', branchDataSnap.val());
-                  window.renderProfile(branchDataSnap.val());
-                  return;
-                }
-                
-                // If not found in branches, try to get from branchAccounts
-                const branchAccountSnap = await get(ref(db, `users/${coreAccountId}/branchAccounts/${user.uid}`));
-                if (branchAccountSnap.exists()) {
-                  console.log('Found branch data in branchAccounts:', branchAccountSnap.val());
-                  window.renderProfile(branchAccountSnap.val());
-                  return;
-                }
-                
-                // If still not found, try to get the parent's profile
-                const parentProfileSnap = await get(ref(db, `users/${coreAccountId}/profile`));
-                if (parentProfileSnap.exists()) {
-                  console.log('Found parent profile:', parentProfileSnap.val());
-                  window.renderProfile(parentProfileSnap.val());
-                  return;
-                }
-              }
-              
-              // If no parent data found, try to get the branch's own data
-              console.log('Using branch user data as profile:', userData);
-              window.renderProfile(userData);
-              return;
-            } else {
-              // For main accounts, check for selected branch
-              let selectedBranch = null;
-              try { 
-                selectedBranch = localStorage.getItem('selectedBranch');
-                console.log('Selected branch from localStorage:', selectedBranch);
-              } catch (e) {
-                console.error('Error reading selectedBranch from localStorage:', e);
-              }
-              
-              if (selectedBranch && selectedBranch !== 'main') {
-                console.log('Getting branch account info for:', selectedBranch);
-                
-                // Try to get the branch data from branches list
-                const branchDataSnap = await get(ref(db, `users/${user.uid}/branches/${selectedBranch}`));
-                if (branchDataSnap.exists()) {
-                  console.log('Found branch data in branches:', branchDataSnap.val());
-                  window.renderProfile(branchDataSnap.val());
-                  return;
-                }
-                
-                // If not found in branches, try to get from branchAccounts
-                const branchAccountSnap = await get(ref(db, `users/${user.uid}/branchAccounts/${selectedBranch}`));
-                if (branchAccountSnap.exists()) {
-                  console.log('Found branch data in branchAccounts:', branchAccountSnap.val());
-                  
-                  // Try to get the branch user's profile
-                  const branchAuthUid = branchAccountSnap.val().branchAuthUid || selectedBranch;
-                  const brProfileSnap = await get(ref(db, `users/${branchAuthUid}/profile`));
-                  if (brProfileSnap.exists()) {
-                    console.log('Found branch profile:', brProfileSnap.val());
-                    window.renderProfile(brProfileSnap.val());
-                    return;
-                  }
-                  
-                  // If no profile, use the branch account data
-                  window.renderProfile(branchAccountSnap.val());
-                  return;
-                }
-              }
-              
-              // If no branch selected or not found, use the main account's profile
-              const mainProfileSnap = await get(ref(db, `users/${user.uid}/profile`));
-              if (mainProfileSnap.exists()) {
-                console.log('Found main profile:', mainProfileSnap.val());
-                window.renderProfile(mainProfileSnap.val());
-                return;
-              }
-              
-              // If no profile found, use the user data
-              console.log('Using main user data as profile:', userData);
-              window.renderProfile(userData);
-              return;
-            }
-          } catch (error) {
-            console.error('Error loading profile:', error);
-            // Fallback to default values on error
-            window.renderProfile({
-              transportName: 'TRANSPORT COMPANY',
-              ownerName: 'Owner Name',
-              address: 'Your Address',
-              city: 'Your City',
-              pincode: '000000',
-              phoneNumber: '0000000000'
-            });
-          }
-        };
-
-        // Set today's date as default for invoice date
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('invoiceDate').value = today;
+        initializePage(user);
       }
-      
-      window.logout = function() {
-        signOut(auth).then(() => {
-          window.location.href = "index.html";
-        }).catch(error => {
-          alert("Error logging out: " + error.message);
-        });
-      };
     });
 
-    // Function to save company details from the setup card
-    window.saveCompanyDetails = async function() {
-      const user = auth.currentUser;
-      if (!user) return;
-      
-      const companyData = {
-        transportName: document.getElementById('setupCompanyName').value,
-        ownerName: document.getElementById('setupOwnerName').value,
-        address: document.getElementById('setupAddress').value,
-        city: document.getElementById('setupCity').value,
-        state: document.getElementById('setupState').value,
-        pincode: document.getElementById('setupPincode').value,
-        phoneNumber: document.getElementById('setupPhone').value,
-        gstin: document.getElementById('setupGST').value
-      };
-      
-      try {
-        // Save to the user's profile
-        await set(ref(db, `users/${user.uid}/profile`), companyData);
-        
-        // Hide the setup card
-        document.getElementById('setupOverlay').style.display = 'none';
-        document.getElementById('setupCard').style.display = 'none';
-        
-        // Update the invoice with the new data
-        window.renderProfile(companyData);
-      } catch (error) {
-        console.error('Error saving company details:', error);
-        alert('Failed to save company details. Please try again.');
-      }
-    };
-
-    function calculateTotals() {
-      let subtotal = 0;
-      document.querySelectorAll(".item-amount").forEach(input => {
-        subtotal += parseFloat(input.value) || 0;
+    function initializePage(user) {
+      invoicesTable = $('#invoicesTable').DataTable({
+        order: [[1, 'desc']]
       });
+      loadInvoices(user.uid);
 
-      const gstPercent = parseFloat(document.getElementById("gst").value) || 0;
-      const gstAmount = (subtotal * gstPercent) / 100;
-      const finalAmount = subtotal + gstAmount;
-
-      document.getElementById("subtotalDisplay").textContent = `₹${subtotal.toFixed(2)}`;
-      document.getElementById("gstDisplay").textContent = `₹${gstAmount.toFixed(2)}`;
-      document.getElementById("finalDisplay").textContent = `₹${finalAmount.toFixed(2)}`;
+      // Check for URL param to auto-show an invoice
+      const urlParams = new URLSearchParams(window.location.search);
+      const invoiceToView = urlParams.get('view');
+      if (invoiceToView) {
+        viewInvoice(invoiceToView);
+      }
     }
 
-    document.getElementById("invoiceBody").addEventListener("input", calculateTotals);
-    document.getElementById("gst").addEventListener("input", calculateTotals);
-    calculateTotals();
+    async function loadInvoices(userId) {
+      const invoicesRef = query(ref(db, 'invoices'), orderByChild('userId'), equalTo(userId));
+      const snapshot = await get(invoicesRef);
 
-    document.getElementById("addItemBtn").addEventListener("click", () => {
-      const rowCount = document.querySelectorAll("#invoiceBody tr").length + 1;
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td class="item-number">${rowCount}</td>
-        <td><input class="form-control form-control-sm item-name" placeholder="Item description" /></td>
-        <td><input class="form-control form-control-sm item-amount" type="number" placeholder="0.00" style="text-align: right;" /></td>
-      `;
-      document.getElementById("invoiceBody").appendChild(row);
-      
-      // Update row numbers
-      document.querySelectorAll("#invoiceBody tr").forEach((row, index) => {
-        row.querySelector('.item-number').textContent = index + 1;
-      });
-    });
+      invoicesTable.clear();
+      if (snapshot.exists()) {
+        const invoices = [];
+        snapshot.forEach(child => {
+          invoices.push({ id: child.key, ...child.val() });
+        });
+        invoices.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    window.saveInvoice = function () {
-      const user = auth.currentUser;
-      if (!user) {
-        alert("Please login to save invoice.");
-        return;
+        invoices.forEach(inv => {
+          invoicesTable.row.add([
+            inv.invoiceNumber,
+            new Date(inv.createdAt).toLocaleDateString('en-IN'),
+            inv.companyDetails.name,
+            `<span class="text-end d-block">₹${(inv.grandTotal || 0).toFixed(2)}</span>`,
+            `<span class="badge bg-secondary">${inv.lrIds.length}</span>`,
+            `<button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('${inv.id}')">
+              <i class="fas fa-eye"></i> View
+            </button>`
+          ]);
+        });
       }
+      invoicesTable.draw();
+    }
 
-      const items = [];
-      document.querySelectorAll("#invoiceBody tr").forEach(row => {
-        const item = row.querySelector(".item-name")?.value.trim() || "";
-        const amount = parseFloat(row.querySelector(".item-amount")?.value) || 0;
-        if (item && amount) items.push({ item, amount });
-      });
+    window.viewInvoice = async function(invoiceId) {
+      const modalBody = document.getElementById('printableInvoiceDetail');
+      modalBody.innerHTML = '<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading invoice...</p></div>';
+      $('#invoiceDetailModal').modal('show');
 
-      const invoiceData = {
-        invoiceNumber: document.getElementById("invoiceNumber")?.value.trim(),
-        invoiceDate: document.getElementById("invoiceDate")?.value,
-        clientName: document.getElementById("clientName")?.value.trim(),
-        clientAddress: document.getElementById("clientAddress")?.value.trim(),
-        clientGST: document.getElementById("clientGST")?.value.trim(),
-        vehicleNumber: document.getElementById("vehicleNumber")?.value.trim(),
-        lrNumber: document.getElementById("lrNumber")?.value.trim(),
-        from: document.getElementById("from")?.value.trim(),
-        to: document.getElementById("to")?.value.trim(),
-        loadingDate: document.getElementById("loadingDate")?.value,
-        unloadingDate: document.getElementById("unloadingDate")?.value,
-        gst: parseFloat(document.getElementById("gst")?.value) || 0,
-        items,
-        timestamp: new Date().toISOString(),
-        transportName: document.getElementById("companyName").textContent,
-        ownerName: document.getElementById("companyOwner").textContent
-      };
+      try {
+        const invoiceSnap = await get(ref(db, `invoices/${invoiceId}`));
+        if (!invoiceSnap.exists()) {
+          modalBody.innerHTML = '<p class="text-danger text-center">Invoice not found.</p>';
+          return;
+        }
+        const invoice = invoiceSnap.val();
 
-      const invoiceRef = ref(db, `invoices/${user.uid}`);
-      const newInvoice = push(invoiceRef);
-      set(newInvoice, invoiceData)
-        .then(() => {
-          document.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
+        // Fetch all associated LRs
+        const lrPromises = invoice.lrIds.map(lrId => get(ref(db, `lrReports/${lrId}`)));
+        const lrSnaps = await Promise.all(lrPromises);
+        const lrs = lrSnaps.map(snap => snap.val()).filter(Boolean);
 
-          html2pdf().set({
-            margin: 0.5,
-            filename: `${invoiceData.invoiceNumber || 'invoice'}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, scrollY: 0 },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-          }).from(document.getElementById("invoiceContent")).save().then(() => {
-            document.querySelectorAll('.no-print').forEach(el => el.style.display = '');
-          });
-        })
-        .catch(err => alert("Failed to save invoice: " + err));
-    };
-    
-    document.getElementById('downloadExcelBtn').addEventListener('click', () => {
-      const wb = XLSX.utils.book_new();
-      const wsData = [['Item #', 'Description', 'Amount (₹)']];
+        // Build the invoice HTML
+        const invoiceHtml = `
+          <div class="p-4">
+            <div class="row mb-4">
+              <div class="col-12 text-center">
+                <h2 class="mb-1 fw-bold text-success">${invoice.companyDetails.name || 'Transport Company'}</h2>
+                <p class="mb-1 text-muted">${invoice.companyDetails.address || 'Company Address'}</p>
+                <p class="mb-0 text-muted"><strong>GST:</strong> ${invoice.companyDetails.gst || 'N/A'}</p>
+              </div>
+            </div>
+            <hr>
+            <div class="row mb-4">
+              <div class="col-sm-6">
+                <h6 class="fw-bold">Bill To:</h6>
+                <p class="mb-0">${invoice.clientDetails?.name || invoice.companyDetails.name}</p>
+              </div>
+              <div class="col-sm-6 text-sm-end mt-3 mt-sm-0">
+                <h6 class="fw-bold">Invoice Details:</h6>
+                <p class="mb-1"><strong>Invoice #:</strong> <span>${invoice.invoiceNumber}</span></p>
+                <p class="mb-0"><strong>Date:</strong> <span>${new Date(invoice.createdAt).toLocaleDateString('en-IN')}</span></p>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th><th>LR No</th><th>Truck No</th><th>Consignor</th><th>Consignee</th><th>From</th><th>To</th><th class="text-end">Weight</th><th class="text-end">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${lrs.map(lr => `
+                    <tr>
+                      <td>${lr.date}</td>
+                      <td>${lr.lrNumber}</td>
+                      <td>${lr.truckNumber}</td>
+                      <td>${lr.consignor}</td>
+                      <td>${lr.consignee}</td>
+                      <td>${lr.fromLocation}</td>
+                      <td>${lr.toLocation}</td>
+                      <td class="text-end">${(lr.weight || 0).toFixed(2)}</td>
+                      <td class="text-end">₹${(lr.billingAmount || 0).toFixed(2)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="7" rowspan="3" class="align-bottom">
+                      <p class="mb-1"><strong>Bank Details:</strong></p>
+                      <p class="mb-1 small">Bank: <span>${invoice.bankDetails.bankName}</span></p>
+                      <p class="mb-1 small">A/C No: <span>${invoice.bankDetails.accountNumber}</span></p>
+                      <p class="mb-1 small">Holder: <span>${invoice.bankDetails.accountHolder}</span></p>
+                      <p class="mb-0 small">IFSC: <span>${invoice.bankDetails.ifsc}</span></p>
+                    </td>
+                    <td class="text-end"><strong>Subtotal:</strong></td>
+                    <td class="text-end fw-bold">₹${(invoice.subtotal || 0).toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-end"><strong>GST:</strong></td>
+                    <td class="text-end fw-bold">₹${(invoice.gstAmount || 0).toFixed(2)}</td>
+                  </tr>
+                  <tr class="table-success">
+                    <td class="text-end"><strong>Grand Total:</strong></td>
+                    <td class="text-end fw-bold fs-5">₹${(invoice.grandTotal || 0).toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <div class="row mt-4">
+              <div class="col-md-6">
+                <p class="small text-muted">This is a computer-generated invoice.</p>
+              </div>
+              <div class="col-md-6 text-end">
+                <div class="mt-5">
+                  <p class="mb-4">For ${invoice.companyDetails.name}</p>
+                  <p class="mb-0">___________________</p>
+                  <p class="mb-0">Authorized Signatory</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        modalBody.innerHTML = invoiceHtml;
+      } catch (error) {
+        console.error("Error viewing invoice:", error);
+        modalBody.innerHTML = '<p class="text-danger text-center">Could not load invoice details.</p>';
+      }
+    }
 
-      document.querySelectorAll('#invoiceBody tr').forEach((row, index) => {
-        const itemNumber = index + 1;
-        const itemName = row.querySelector('.item-name')?.value || '';
-        const amount = row.querySelector('.item-amount')?.value || '';
-        wsData.push([itemNumber, itemName, amount]);
-      });
+    window.printInvoiceDetail = function() {
+      window.print();
+    }
 
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      XLSX.utils.book_append_sheet(wb, ws, "Invoice Items");
-
-      const fileName = `Invoice_${document.getElementById('invoiceNumber').value || new Date().toISOString().slice(0,10)}.xlsx`;
-      XLSX.writeFile(wb, fileName);
-    });
+    window.logout = function() {
+      const user = auth.currentUser;
+      if (user) {
+        signOut(auth).then(() => { window.location.href = "index.html"; });
+      }
+    }
   </script>
 </body>
 </html>
