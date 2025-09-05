@@ -324,7 +324,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" onclick="generateInvoice()">Generate Invoice</button>
+          <button type="button" class="btn btn-primary" onclick="createAndSaveInvoice()">Generate Invoice</button>
         </div>
       </div>
     </div>
@@ -825,11 +825,13 @@
       const lrReportsRef = db.ref('lrReports').orderByChild('userId').equalTo(user.uid);
       lrReportsRef.on('value', (snapshot) => {
         lrData = [];
-        if (snapshot.exists()) {
-          snapshot.forEach(childSnapshot => {
-            lrData.push({ id: childSnapshot.key, ...childSnapshot.val() });
-          });
-        }
+        snapshot.forEach(childSnapshot => {
+          const lr = childSnapshot.val();
+          // Only show LRs that have not been invoiced yet
+          if (lr.status !== 'Generated') {
+            lrData.push({ id: childSnapshot.key, ...lr });
+          }
+        });
         // Sort by date descending
         lrData.sort((a, b) => new Date(b.date) - new Date(a.date));
         populateLRTable();
@@ -1033,7 +1035,7 @@
           lr.weight,
           lr.billingAmount.toFixed(2),
           lr.freightAmount.toFixed(2),
-          `<span class="badge ${lr.status === 'Completed' ? 'bg-success' : 'bg-warning'}">${lr.status}</span>`,
+          `<span class="badge ${getStatusBadge(lr.status)}">${lr.status}</span>`,
           `<button class="btn btn-sm btn-outline-primary me-1" onclick="editLR('${lr.id}')">
             <i class="fas fa-edit"></i>
           </button>
@@ -1050,6 +1052,18 @@
       $('.lr-checkbox').change(function() {
         updateSelectedLRs();
       });
+    }
+
+    // Get bootstrap badge class based on status
+    function getStatusBadge(status) {
+      switch (status.toLowerCase()) {
+        case 'completed':
+          return 'bg-success';
+        case 'generated':
+          return 'bg-info';
+        default:
+          return 'bg-warning';
+      }
     }
 
     // Update truck filter dropdown
@@ -1218,59 +1232,159 @@
       $('#invoiceModal').modal('show');
     }
 
-    // Print invoice
-    function printInvoice() {
-      const printContent = document.getElementById('printableInvoice');
-      const allStyles = Array.from(document.styleSheets)
-        .map(styleSheet => {
-          try {
-            return Array.from(styleSheet.cssRules)
-              .map(rule => rule.cssText)
-              .join('');
-          } catch (e) {
-            console.warn("Could not read stylesheet rules:", e);
-            return '';
-          }
-        }).join('\n');
-
-      // Calculate the required scale to fit the content
-      const contentWidth = printContent.scrollWidth;
-      const printAreaWidth = 1123; // A4 landscape width in pixels (approx 29.7cm at 96dpi)
-      const scale = contentWidth > printAreaWidth ? (printAreaWidth / contentWidth) * 0.98 : 1;
-
-      const dynamicStyles = `
-        @media print {
-          @page { size: A4 landscape; margin: 1cm; }
-          html, body {
-            width: ${contentWidth}px;
-            transform: scale(${scale});
-            transform-origin: top left;
-            margin: 0;
-            padding: 0;
-          }
-        }
-      `;
-
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'absolute';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      document.body.appendChild(iframe);
-
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(`<html><head><title>Print Invoice</title><style>${allStyles}${dynamicStyles}</style></head><body>${printContent.innerHTML}</body></html>`);
-      doc.close();
-
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-
-      // Clean up after a delay
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 1000);
+    // Generate and save the invoice, then show the print preview
+    function generateInvoicePreview(selectedLRRecords) {
+      // This function populates the invoice modal's HTML but doesn't show it.
+      // It's used to calculate totals before saving to the database.
+      
+      // Generate invoice number and date
+      const now = new Date();
+      const invoiceNumber = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const invoiceDate = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      
+      // Update invoice header
+      $('#companyName').text($('#inputCompanyName').val() || 'Your Company Name');
+      $('#companyAddress').text($('#inputCompanyAddress').val() || 'Your Company Address');
+      $('#companyGst').text('GST: ' + ($('#inputGstNumber').val() || 'Not provided'));
+      $('#companyNameFooter').text($('#inputCompanyName').val() || 'Your Company Name');
+      
+      // Update invoice details
+      $('#invoiceNumber').text(invoiceNumber);
+      $('#invoiceDate').text(invoiceDate);
+      
+      // Update bill to address (use first consignee's details)
+      const firstConsignee = selectedLRRecords[0]?.consignee || 'Consignee Name';
+      $('#billToAddress').text(firstConsignee);
+      
+      // Update bank details
+      $('#invoiceBankName').text($('#inputBankName').val() || 'Bank Name');
+      $('#invoiceAccountNumber').text($('#inputAccountNumber').val() || 'Account Number');
+      $('#invoiceAccountHolder').text($('#inputAccountHolder').val() || 'Account Holder');
+      $('#invoiceIfscCode').text($('#inputIfscCode').val() || 'IFSC Code');
+      $('#invoiceAccountType').text($('#inputAccountType').val() || 'Account Type');
+      
+      // Clear and populate invoice items
+      $('#invoiceItems').empty();
+      let subtotal = 0;
+      let gstAmount = 0;
+      
+      selectedLRRecords.forEach(lr => {
+        const itemSubtotal = lr.billingAmount || 0;
+        // Use the GST percentage from the LR record itself
+        const itemGst = itemSubtotal * ((lr.gstPercentage || 0) / 100);
+        
+        subtotal += itemSubtotal;
+        gstAmount += itemGst;
+        
+        $('#invoiceItems').append(`
+          <tr>
+            <td class="text-center">${lr.date || '-'}</td>
+            <td class="text-center">${lr.lrNumber || '-'}</td>
+            <td class="text-center">${lr.truckNumber || '-'}</td>
+            <td>${lr.consignor || '-'}</td>
+            <td>${lr.consignee || '-'}</td>
+            <td class="text-center">${lr.fromLocation || '-'}</td>
+            <td class="text-center">${lr.toLocation || '-'}</td>
+            <td class="text-end">${(lr.weight || 0).toFixed(2)}</td>
+            <td class="text-end">${(lr.billingRate || 0).toFixed(2)}</td>
+            <td class="text-end">${lr.gstPercentage || 0}%</td>
+            <td class="text-end">₹${parseFloat(itemGst).toFixed(2)}</td>
+            <td class="text-end">₹${parseFloat(itemSubtotal).toFixed(2)}</td>
+          </tr>
+        `);
+      });
+      
+      $('#subtotalAmount').text('₹' + subtotal.toFixed(2));
+      $('#invoiceGstAmount').text('₹' + gstAmount.toFixed(2));
+      $('#grandTotal').text('₹' + (subtotal + gstAmount).toFixed(2));
+      $('#gstPercent').text(selectedLRRecords[0]?.gstPercentage || 18);
     }
+
+    function createAndSaveInvoice() {
+      const user = auth.currentUser;
+      if (!user) {
+        alert("You must be logged in to generate an invoice.");
+        return;
+      }
+
+      // Validate bank details form
+      if (!$('#bankDetailsForm')[0].checkValidity()) {
+        $('#bankDetailsForm')[0].reportValidity();
+        return;
+      }
+
+      const selectedLRRecords = lrData.filter(lr => selectedLRs.includes(lr.id));
+      if (selectedLRRecords.length === 0) {
+        alert('No LRs selected for invoice generation.');
+        return;
+      }
+
+      // **FIX**: First, run the preview generation to calculate and populate totals in the DOM
+      generateInvoicePreview(selectedLRRecords);
+
+      // 1. Create the invoice object
+      const invoiceRef = db.ref('invoices').push();
+      const invoiceId = invoiceRef.key;
+      const now = new Date();
+      // Get the consignee from the first selected LR to use as the client name
+      const clientName = selectedLRRecords.length > 0 ? selectedLRRecords[0].consignee : 'N/A';
+
+      const invoiceNumber = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const invoiceData = {
+        id: invoiceId,
+        invoiceNumber: invoiceNumber,
+        userId: user.uid,
+        createdAt: now.toISOString(),
+        lrIds: selectedLRs,
+        companyDetails: {
+          name: $('#inputCompanyName').val(),
+          address: $('#inputCompanyAddress').val(),
+          gst: $('#inputGstNumber').val(),
+          phone: $('#inputCompanyPhone').val()
+        },
+        clientDetails: {
+          name: clientName,
+          // address: clientAddress, // Future enhancement: add client address field
+        },
+        bankDetails: {
+          bankName: $('#inputBankName').val(),
+          accountHolder: $('#inputAccountHolder').val(),
+          accountNumber: $('#inputAccountNumber').val(),
+          ifsc: $('#inputIfscCode').val(),
+          accountType: $('#inputAccountType').val()
+        },
+        // Store calculated totals
+        subtotal: parseFloat($('#subtotalAmount').text().replace(/[^0-9.-]+/g,"")),
+        gstAmount: parseFloat($('#invoiceGstAmount').text().replace(/[^0-9.-]+/g,"")),
+        grandTotal: parseFloat($('#grandTotal').text().replace(/[^0-9.-]+/g,""))
+      };
+
+      // 2. Prepare multi-path update for atomicity
+      const updates = {};
+      // Add the new invoice
+      updates[`/invoices/${invoiceId}`] = invoiceData;
+      // Update status and add invoiceId for each LR
+      selectedLRs.forEach(lrId => {
+        updates[`/lrReports/${lrId}/status`] = 'Generated';
+        updates[`/lrReports/${lrId}/invoiceId`] = invoiceId;
+        updates[`/lrReports/${lrId}/updatedAt`] = now.toISOString();
+      });
+
+      // 3. Execute the update
+      db.ref().update(updates)
+        .then(() => {
+          $('#bankDetailsModal').modal('hide');
+          alert('Invoice generated successfully!');
+          // Redirect to the invoice page to view the newly created invoice
+          window.location.href = `invoice.html?view=${invoiceId}`;
+        })
+        .catch((error) => {
+          console.error("Error generating invoice: ", error);
+          alert("Could not generate the invoice. Please check your database rules and try again.");
+        });
+    }
+    window.createAndSaveInvoice = createAndSaveInvoice; // Make it accessible from the modal's onclick
 
     // Edit LR record
     function editLR(id) {
@@ -1433,7 +1547,7 @@
         gstPercentage: parseFloat($('#editGstPercentage').val()) || 0,
         gstAmount: parseFloat($('#editGstAmount').val()) || 0,
         totalAmount: parseFloat($('#editTotalAmount').val()) || 0,
-        status: lrToUpdate.status, // Keep existing status unless changed
+        status: $('#editStatus').val() || lrToUpdate.status, // Keep existing status unless changed
         
         // NEW: Update expense fields
         tyreExpenses: parseFloat($('#editTyreExpenses').val()) || 0,
