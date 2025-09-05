@@ -1547,7 +1547,7 @@
 
       // Load Model
       const loader = new GLTFLoader();
-      loader.load('https://cdn.jsdelivr.net/npm/@google/model-viewer/shared-assets/models/Truck.glb', (gltf) => {
+      loader.load('https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@main/2.0/BoxTruck/glTF-Binary/BoxTruck.glb', (gltf) => {
         model = gltf.scene;
         model.scale.set(1, 1, 1);
         model.position.y = -1;
