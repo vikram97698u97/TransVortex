@@ -1,430 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Thread Booking</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Management - Transport System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-      color: #111111;
-    }
-
-    .container {
-      padding: 1rem;
-      max-width: 900px;
-      margin: auto;
-    }
-
-    .container h1 {
-      color: #2e8b57;
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-
-    form {
-      background-color: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      margin-bottom: 2rem;
-    }
-
-    form input,
-    form button,
-    form select {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .actions button {
-      background-color: #43b97f;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 10px 16px;
-    }
-
-    .actions button:hover {
-      background-color: #3ba06f;
-    }
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .toolbar input {
-      flex: 1;
-      min-width: 200px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-
-    .toolbar button {
-      padding: 10px 16px;
-      border: none;
-      background-color: #43b97f;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    .toolbar button:hover {
-      background-color: #3ba06f;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    body { padding: 0; margin: 0; background-color: #f8f9fa; }
+    .main-content {
       background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-
-    th,
-    td {
-      padding: 0.75rem;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-
-    th {
-      background-color: #2e8b57;
-      color: white;
-    }
-
-    td button {
-      padding: 6px 10px;
-      margin-right: 5px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .edit-btn {
-      background-color: #f4b400;
-      color: white;
-    }
-
-    .delete-btn {
-      background-color: #db4437;
-      color: white;
-    }
-
-    @media (max-width: 768px) {
-      .toolbar {
-        flex-direction: column;
-      }
-
-      .toolbar > div {
-        display: flex;
-        gap: 10px;
-      }
-
-      .toolbar button {
-        flex: 1;
-      }
-
-      table,
-      thead,
-      tbody,
-      th,
-      td,
-      tr {
-        display: block;
-      }
-
-      thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-      }
-
-      tr {
-        border: 1px solid #ccc;
-        margin-bottom: 1rem;
-      }
-
-      td {
-        border: none;
-        border-bottom: 1px solid #eee;
-        position: relative;
-        padding-left: 50%;
-        text-align: right;
-      }
-
-      td:before {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
-        text-align: left;
-        font-weight: bold;
-      }
-
-      td:nth-of-type(1):before {
-        content: "Vehicle No";
-      }
-
-      td:nth-of-type(2):before {
-        content: "Company";
-      }
-
-      td:nth-of-type(3):before {
-        content: "Size";
-      }
-
-      td:nth-of-type(4):before {
-        content: "Weight";
-      }
-
-      td:nth-of-type(5):before {
-        content: "Date";
-      }
-
-      td:nth-of-type(6):before {
-        content: "Actions";
-      }
-    }
-
-    /* Loading Spinner */
-    #loading {
-      text-align: center;
-      padding: 10px;
-      color: #2e8b57;
-      font-weight: bold;
-    }
-
-    /* Message Box */
-    #message {
-      margin-bottom: 15px;
-      padding: 10px;
-      border-radius: 6px;
-      font-weight: 600;
-      display: none;
-    }
-
-    #message.success {
-      background-color: #d4edda;
-      color: #155724;
-    }
-
-    #message.error {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 100;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-content {
-      background: white;
-      margin: 10% auto;
       padding: 20px;
-      border-radius: 10px;
-      max-width: 400px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
-
-    .modal-content label,
-    .modal-content input {
-      width: 100%;
-      display: block;
-      margin-bottom: 10px;
+    .hidden { display: none !important; }
+    .form-section {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dee2e6;
     }
-
-    .modal-content button {
-      background-color: #43b97f;
-      color: white;
-      border: none;
-      padding: 10px;
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 16px;
+    .list-group-item {
+      border-color: #dee2e6;
     }
-
-    .modal-content button:hover {
-      background-color: #3ba06f;
-    }
-
   </style>
 </head>
-
 <body>
-  <script src="navbar-loader.js"></script>
+  <!-- Navbar will be loaded here by navbar-loader.js -->
+  <div id="navbar-placeholder"></div>
 
-  <div class="container">
-    <h1>Thread Booking Management</h1>
+  <!-- Main Content -->
+  <div class="container mt-4">
+    <div class="main-content" id="clientListView">
+      <h2 class="mb-4"><i class="fas fa-users me-2"></i>Client / Consignor Management</h2>
 
-    <div id="message"></div>
-    <div id="loading">Loading bookings...</div>
-
-    <!-- Booking Form -->
-    <form id="bookingForm">
-      <div class="form-group">
-        <label for="vehicleNo">Vehicle Number</label>
-        <input type="text" id="vehicleNo" placeholder="Enter Vehicle Number" required />
+    <!-- Add Client Form -->
+    <form id="clientForm" class="form-section">
+      <h4 class="mb-3">Add New Client</h4>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="clientName" class="form-label">Client Name <span class="text-danger">*</span></label>
+          <input type="text" id="clientName" class="form-control" placeholder="Client Name" required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="contactPerson" class="form-label">Contact Person <span class="text-danger">*</span></label>
+          <input type="text" id="contactPerson" class="form-control" placeholder="Contact Person" required>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="threadCompany">Thread Company</label>
-        <input type="text" id="threadCompany" placeholder="Enter Thread Company" required />
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="mobile" class="form-label">Mobile Number <span class="text-danger">*</span></label>
+          <input type="tel" id="mobile" class="form-control" placeholder="Mobile Number" required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" placeholder="Email">
+        </div>
       </div>
-      <div class="form-group">
-        <label for="threadSize">Thread Size</label>
-        <input type="text" id="threadSize" placeholder="Enter Thread Size" required />
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="gstin" class="form-label">GSTIN</label>
+          <input type="text" id="gstin" class="form-control" placeholder="GSTIN">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="pan" class="form-label">PAN</label>
+          <input type="text" id="pan" class="form-control" placeholder="PAN">
+        </div>
       </div>
-      <div class="form-group">
-        <label for="weight">Weight (tons)</label>
-        <input type="number" id="weight" placeholder="Enter Weight" step="0.01" required />
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="billingAddress" class="form-label">Billing Address</label>
+          <textarea id="billingAddress" class="form-control" placeholder="Billing Address"></textarea>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="dispatchAddress" class="form-label">Dispatch Address</label>
+          <textarea id="dispatchAddress" class="form-control" placeholder="Dispatch Address"></textarea>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="bookingDate">Booking Date</label>
-        <input type="date" id="bookingDate" required />
-      </div>
-      <div class="actions">
-        <button type="submit">Add Booking</button>
-      </div>
+      <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Client</button>
     </form>
 
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <input type="text" id="searchInput" placeholder="Search by Vehicle No, Company, or Size..." />
-      <input type="date" id="dateFrom" placeholder="From date" />
-      <input type="date" id="dateTo" placeholder="To date" />
-      <div>
-        <button id="applyDateFilter">Apply</button>
-        <button id="clearDateFilter" style="background:#888;">Clear</button>
-        <button id="sortBtn">Sort by Date ↓</button>
-        <button id="downloadExcel">Export to Excel</button>
-      </div>
+    <!-- Search + Export -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4>Client List</h4>
+      <button id="exportExcel" class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Export Excel</button>
     </div>
 
-    <!-- Bookings Table -->
-    <table id="bookingTable">
-      <thead>
-        <tr>
-          <th>Vehicle No</th>
-          <th>Company</th>
-          <th>Size</th>
-          <th>Weight (tons)</th>
-          <th>Date</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <!-- Total Weight Summary -->
-    <div id="totalWeightSummary" style="margin-top: 15px; font-weight: 700;"></div>
-
-    <!-- Pagination Controls (Tab System) -->
-    <div style="margin-top: 16px;">
-      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-        <label for="entriesPerPage" style="font-weight:600;">Entries per page:</label>
-        <select id="entriesPerPage" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
-          <option value="5">5</option>
-          <option value="10" selected>10</option>
-          <option value="20">20</option>
-          <option value="50">50</option>
-        </select>
-        <div id="entriesInfo" style="color:#666; font-size:14px;"></div>
-      </div>
-      <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
-        <button class="tab-nav-control" id="prevPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        <div class="tab-navigation" id="tabNavigation" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
-        <button class="tab-nav-control" id="nextPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
-          <i class="fas fa-chevron-right"></i>
-        </button>
-      </div>
+    <!-- Client List -->
+    <div class="table-responsive">
+      <table id="clientTable" class="table table-striped table-bordered" style="width:100%">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>GSTIN</th>
+            <th>Contact</th>
+            <th class="text-end">Outstanding</th>
+            <th class="text-center">Total Trips</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="clientTableBody"></tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Edit Booking Modal -->
-  <div id="editModal" class="modal" tabindex="-1" role="dialog">
-    <div class="modal-content" role="document">
-      <h3>Edit Booking</h3>
-      <form id="editForm">
-        <label for="editVehicleNo">Vehicle No</label>
-        <input type="text" id="editVehicleNo" required />
-        <label for="editThreadCompany">Thread Company</label>
-        <input type="text" id="editThreadCompany" required />
-        <label for="editThreadSize">Thread Size</label>
-        <input type="text" id="editThreadSize" required />
-        <label for="editWeight">Weight (tons)</label>
-        <input type="number" id="editWeight" step="0.01" required />
-        <label for="editBookingDate">Booking Date</label>
-        <input type="date" id="editBookingDate" required />
-        <div style="text-align: right;">
-          <button type="submit">Save</button>
-          <button type="button" id="closeModal" style="background:#db4437; margin-left: 8px;">Cancel</button>
+    <!-- Client Detail View -->
+    <div id="clientDetail" class="main-content hidden">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 id="clientTitle" class="mb-0">Client Details</h2>
+        <button class="btn btn-secondary" id="backBtn"><i class="fas fa-arrow-left me-2"></i>Back to List</button>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4"><strong>Contact:</strong> <span id="clientContact"></span></div>
+            <div class="col-md-4"><strong>GSTIN:</strong> <span id="clientGSTIN"></span></div>
+            <div class="col-md-4"><strong>PAN:</strong> <span id="clientPAN"></span></div>
+          </div>
+          <hr>
+          <div class="row">
+            <div class="col-md-4"><strong>Outstanding:</strong> <span id="clientOutstanding" class="fw-bold text-danger"></span></div>
+            <div class="col-md-4"><strong>Total Trips:</strong> <span id="clientTrips" class="fw-bold"></span></div>
+          </div>
         </div>
-      </form>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header bg-primary text-white"><h5><i class="fas fa-file-invoice me-2"></i>Invoices</h5></div>
+            <ul id="invoiceList" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header bg-info text-white"><h5><i class="fas fa-receipt me-2"></i>LR Reports</h5></div>
+            <ul id="lrList" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header bg-success text-white"><h5><i class="fas fa-money-bill-wave me-2"></i>Payments</h5></div>
+            <ul id="paymentList" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Scripts -->
+  <script src="navbar-loader.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
   <script type="module">
-    import {
-      initializeApp
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      push,
-      set,
-      onValue,
-      remove,
-      update
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    // Firebase imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove, query, orderByChild, equalTo, get } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+    // Config
     const firebaseConfig = {
       apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
       authDomain: "transport-dashboard-ad69a.firebaseapp.com",
@@ -433,328 +176,201 @@
       storageBucket: "transport-dashboard-ad69a.appspot.com",
       messagingSenderId: "526889676196",
       appId: "1:526889676196:web:66032c80a4aede690ae531",
-      measurementId: "G-7F9R7HJYDH",
+      measurementId: "G-7F9R7HJYDH"
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase();
-    const auth = getAuth();
+    const db = getDatabase(app);
+    const auth = getAuth(app);
 
-    const bookingForm = document.getElementById("bookingForm");
-    const tableBody = document.querySelector("#bookingTable tbody");
-    const searchInput = document.getElementById("searchInput");
-    const sortBtn = document.getElementById("sortBtn");
-    const exportBtn = document.getElementById("downloadExcel");
-    const messageBox = document.getElementById("message");
-    const loadingDiv = document.getElementById("loading");
-    const dateFromInput = document.getElementById("dateFrom");
-    const dateToInput = document.getElementById("dateTo");
-    const applyDateFilterBtn = document.getElementById("applyDateFilter");
-    const clearDateFilterBtn = document.getElementById("clearDateFilter");
+    let clientTable;
+    let currentUser = null;
 
-    const editModal = document.getElementById("editModal");
-    const editForm = document.getElementById("editForm");
-
-    let bookingRef;
-    let bookingData = [];
-    let sortAsc = false;
-    let currentEditKey = null;
-
-    // Pagination state
-    const entriesPerPageSelect = document.getElementById("entriesPerPage");
-    const entriesInfo = document.getElementById("entriesInfo");
-    const tabNavigation = document.getElementById("tabNavigation");
-    const prevPageBtn = document.getElementById("prevPage");
-    const nextPageBtn = document.getElementById("nextPage");
-    let currentPage = 1;
-    let itemsPerPage = 10;
-    let totalPages = 1;
-    let filteredBookingData = [];
-
-    onAuthStateChanged(auth, (user) => {
+    // Auth Check
+    onAuthStateChanged(auth, user => {
       if (!user) {
         window.location.href = "index.html";
-        return;
-      }
-
-      const uid = user.uid;
-      bookingRef = ref(db, `users/${uid}/threadBookings`);
-
-      onValue(bookingRef, (snapshot) => {
-        bookingData = [];
-        snapshot.forEach((child) => {
-          bookingData.push({ ...child.val(), key: child.key });
-        });
-        loadingDiv.style.display = "none";
-        renderTableWithPagination();
-      });
-
-      bookingForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const data = {
-          vehicleNo: bookingForm.vehicleNo.value.trim(),
-          threadCompany: bookingForm.threadCompany.value.trim(),
-          threadSize: bookingForm.threadSize.value.trim(),
-          weight: bookingForm.weight.value.trim(),
-          bookingDate: bookingForm.bookingDate.value,
-          createdAt: Date.now(),
-        };
-        if (
-          !data.vehicleNo ||
-          !data.threadCompany ||
-          !data.threadSize ||
-          !data.weight ||
-          !data.bookingDate
-        )
-          return;
-        push(bookingRef, data)
-          .then(() => showMessage("Booking added successfully!"))
-          .catch(() => showMessage("Failed to add booking.", "error"));
-        bookingForm.reset();
-      });
-    });
-
-    function renderTable(dataArr) {
-      tableBody.innerHTML = "";
-      if (dataArr.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">No bookings found.</td></tr>`;
       } else {
-        dataArr.forEach((item) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${item.vehicleNo}</td>
-            <td>${item.threadCompany}</td>
-            <td>${item.threadSize}</td>
-            <td>${item.weight}</td>
-            <td>${item.bookingDate}</td>
-            <td>
-              <button class="edit-btn" onclick="editBooking('${item.key}')">Edit</button>
-              <button class="delete-btn" onclick="deleteBooking('${item.key}')">Delete</button>
-            </td>`;
-          row.dataset.key = item.key;
-          tableBody.appendChild(row);
+        currentUser = user;
+        clientTable = $('#clientTable').DataTable({
+          "pageLength": 10,
+          "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+          "columnDefs": [{ "orderable": false, "targets": 5 }]
         });
+        loadClients(user.uid);
       }
-      updateTotalWeight(dataArr);
-    }
+    });
 
-    // Filtering and pagination
-    function filterData() {
-      const value = (searchInput.value || '').toLowerCase();
-      const from = dateFromInput.value ? new Date(dateFromInput.value) : null;
-      const to = dateToInput.value ? new Date(dateToInput.value) : null;
-      if (to) { to.setHours(23,59,59,999); }
-
-      filteredBookingData = bookingData.filter((item) => {
-        const matchesText = (
-          item.vehicleNo?.toLowerCase().includes(value) ||
-          item.threadCompany?.toLowerCase().includes(value) ||
-          item.threadSize?.toLowerCase().includes(value)
-        );
-        if (!matchesText) return false;
-
-        if (!from && !to) return true;
-        const d = item.bookingDate ? new Date(item.bookingDate) : null;
-        if (!d) return false;
-        if (from && d < from) return false;
-        if (to && d > to) return false;
-        return true;
-      });
-    }
-
-    function updatePaginationControls(totalItems) {
-      prevPageBtn.disabled = currentPage === 1;
-      nextPageBtn.disabled = currentPage === totalPages;
-      const startIndex = Math.min((currentPage - 1) * itemsPerPage + 1, totalItems);
-      const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
-      entriesInfo.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
-      generatePageTabs();
-    }
-
-    function generatePageTabs() {
-      tabNavigation.innerHTML = '';
-      if (totalPages <= 1) return;
-      addTab(1);
-      let startPage = Math.max(2, currentPage - 2);
-      let endPage = Math.min(totalPages - 1, currentPage + 2);
-      if (startPage > 2) addEllipsis();
-      for (let i = startPage; i <= endPage; i++) addTab(i);
-      if (endPage < totalPages - 1) addEllipsis();
-      addTab(totalPages);
-    }
-
-    function addTab(pageNumber) {
-      const tab = document.createElement('div');
-      tab.className = `tab ${pageNumber === currentPage ? 'active' : ''}`;
-      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
-      tab.textContent = pageNumber;
-      tab.addEventListener('click', () => {
-        currentPage = pageNumber;
-        renderTableWithPagination();
-      });
-      tabNavigation.appendChild(tab);
-    }
-
-    function addEllipsis() {
-      const ellipsis = document.createElement('div');
-      ellipsis.textContent = '...';
-      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
-      tabNavigation.appendChild(ellipsis);
-    }
-
-    function renderTableWithPagination() {
-      filterData();
-      const totalItems = filteredBookingData.length;
-      totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-      if (currentPage > totalPages) currentPage = totalPages;
-      updatePaginationControls(totalItems);
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-      const pageData = filteredBookingData.slice(startIndex, endIndex);
-      renderTable(pageData);
-      // Update total weight for filtered results (not just the page)
-      updateTotalWeight(filteredBookingData);
-    }
-
-    function showMessage(text, type = "success") {
-      messageBox.textContent = text;
-      messageBox.className = "";
-      messageBox.classList.add(type);
-      messageBox.style.display = "block";
-      setTimeout(() => {
-        messageBox.style.display = "none";
-      }, 3000);
-    }
-
-    function updateTotalWeight(dataArr) {
-      let totalWeight = dataArr.reduce((sum, b) => sum + Number(b.weight), 0);
-      const totalWeightSummary = document.getElementById("totalWeightSummary");
-      totalWeightSummary.textContent = `Total Weight Booked: ${totalWeight.toFixed(2)} tons`;
-    }
-
-    window.deleteBooking = (key) => {
-      if (confirm("Are you sure you want to delete this booking?")) {
-        const uid = auth.currentUser?.uid;
-        if (!uid) return;
-        remove(ref(db, `users/${uid}/threadBookings/${key}`))
-          .then(() => showMessage("Booking deleted successfully!"))
-          .catch(() => showMessage("Failed to delete booking.", "error"));
-      }
-    };
-
-    window.editBooking = (key) => {
-      const item = bookingData.find((b) => b.key === key);
-      if (!item) return;
-      currentEditKey = key;
-      editForm.editVehicleNo.value = item.vehicleNo;
-      editForm.editThreadCompany.value = item.threadCompany;
-      editForm.editThreadSize.value = item.threadSize;
-      editForm.editWeight.value = item.weight;
-      editForm.editBookingDate.value = item.bookingDate;
-      editModal.style.display = "block";
-    };
-
-    editForm.addEventListener("submit", (e) => {
+    // Add Client
+    document.getElementById("clientForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (!currentEditKey) return;
-      const uid = auth.currentUser?.uid;
-      if (!uid) return;
+      if (!currentUser) return;
 
-      update(ref(db, `users/${uid}/threadBookings/${currentEditKey}`), {
-          vehicleNo: editForm.editVehicleNo.value.trim(),
-          threadCompany: editForm.editThreadCompany.value.trim(),
-          threadSize: editForm.editThreadSize.value.trim(),
-          weight: editForm.editWeight.value.trim(),
-          bookingDate: editForm.editBookingDate.value,
-        })
-        .then(() => {
-          showMessage("Booking updated successfully!");
-          editModal.style.display = "none";
-        })
-        .catch(() => showMessage("Failed to update booking.", "error"));
-    });
-
-    document.getElementById("closeModal").onclick = () => {
-      editModal.style.display = "none";
-    };
-
-    searchInput.addEventListener("input", () => {
-      currentPage = 1;
-      renderTableWithPagination();
-    });
-
-    applyDateFilterBtn.addEventListener('click', () => {
-      currentPage = 1;
-      renderTableWithPagination();
-    });
-
-    clearDateFilterBtn.addEventListener('click', () => {
-      dateFromInput.value = '';
-      dateToInput.value = '';
-      currentPage = 1;
-      renderTableWithPagination();
-    });
-
-    sortBtn.addEventListener("click", () => {
-      sortAsc = !sortAsc;
-      bookingData.sort((a, b) =>
-        sortAsc
-          ? new Date(a.bookingDate) - new Date(b.bookingDate)
-          : new Date(b.bookingDate) - new Date(a.bookingDate)
-      );
-      currentPage = 1;
-      renderTableWithPagination();
-      sortBtn.textContent = `Sort by Date ${sortAsc ? "↑" : "↓"}`;
-    });
-
-    // Init pagination controls
-    entriesPerPageSelect.addEventListener('change', function () {
-      itemsPerPage = parseInt(this.value, 10) || 10;
-      currentPage = 1;
-      renderTableWithPagination();
-    });
-    prevPageBtn.addEventListener('click', function () {
-      if (currentPage > 1) {
-        currentPage--;
-        renderTableWithPagination();
-      }
-    });
-    nextPageBtn.addEventListener('click', function () {
-      if (currentPage < totalPages) {
-        currentPage++;
-        renderTableWithPagination();
-      }
-    });
-
-    exportBtn.addEventListener("click", () => {
-      if (bookingData.length === 0) {
-        showMessage("No data to export.", "error");
+      const newClientName = document.getElementById("clientName").value.trim();
+      if (!newClientName) {
+        alert('Client name cannot be empty.');
         return;
       }
-      const worksheet = XLSX.utils.json_to_sheet(
-        bookingData.map(({ key, ...rest }) => rest)
-      );
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "ThreadBookings");
-      XLSX.writeFile(workbook, "thread_bookings.xlsx");
-    });
 
-    // Make logout function available globally
-    window.logout = function () {
-      signOut(auth)
+      // Check for duplicates before saving
+      const clientRef = ref(db, `users/${currentUser.uid}/clients`);
+      const snapshot = await get(clientRef);
+      let isDuplicate = false;
+      if (snapshot.exists()) {
+        snapshot.forEach(childSnapshot => {
+          const client = childSnapshot.val();
+          if (client.clientName && client.clientName.toLowerCase() === newClientName.toLowerCase()) {
+            isDuplicate = true;
+          }
+        });
+      }
+
+      if (isDuplicate) {
+        alert('A client with this name already exists. Please use a different name.');
+        return; // Stop the function if a duplicate is found
+      }
+
+      // If not a duplicate, proceed to save
+      const now = new Date().toISOString();
+      const clientData = {
+        clientName: newClientName, // Use the trimmed name
+        gstin: document.getElementById("gstin").value,
+        pan: document.getElementById("pan").value,
+        contactPerson: document.getElementById("contactPerson").value,
+        mobile: document.getElementById("mobile").value,
+        email: document.getElementById("email").value,
+        billingAddress: document.getElementById("billingAddress").value,
+        dispatchAddress: document.getElementById("dispatchAddress").value,
+        outstanding: 0,
+        totalTrips: 0,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      push(ref(db, `users/${currentUser.uid}/clients`), clientData)
         .then(() => {
-          window.location.href = "index.html";
+          e.target.reset();
+          alert('Client added successfully!');
         })
         .catch((error) => {
-          alert("Error logging out: " + error.message);
+          alert('Error adding client: ' + error.message);
         });
+    });
+
+    // Load Clients
+    function loadClients(uid) {
+      const clientRef = ref(db, "users/" + uid + "/clients");
+      onValue(clientRef, (snapshot) => {
+        clientTable.clear();
+        snapshot.forEach(child => {
+          const client = child.val();
+          clientTable.row.add([
+            client.clientName,
+            client.gstin || "-",
+            client.mobile,
+            `₹${(client.outstanding || 0).toFixed(2)}`,
+            client.totalTrips || 0,
+            `<div class="text-center">
+              <button class="btn btn-sm btn-outline-primary me-1" onclick="viewClient('${child.key}')"><i class="fas fa-eye"></i></button>
+              <button class="btn btn-sm btn-outline-secondary me-1" onclick="editClient('${child.key}')"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteClient('${child.key}')"><i class="fas fa-trash"></i></button>
+            </div>`
+          ]).node().id = `client-row-${child.key}`;
+        });
+        clientTable.draw();
+      });
+    }
+
+    // View Client
+    window.viewClient = (id) => {
+      document.getElementById("clientDetail").classList.remove("hidden");
+      document.getElementById("clientListView").classList.add("hidden");
+
+      const clientRef = ref(db, "users/" + currentUser.uid + "/clients/" + id);
+      get(clientRef).then((snapshot) => {
+        const c = snapshot.val();
+        document.getElementById("clientTitle").textContent = c.clientName;
+        document.getElementById("clientContact").textContent = c.contactPerson + " (" + c.mobile + ")";
+        document.getElementById("clientGSTIN").textContent = c.gstin || "-";
+        document.getElementById("clientPAN").textContent = c.pan || "-";
+        document.getElementById("clientOutstanding").textContent = `₹${(c.outstanding || 0).toFixed(2)}`;
+        document.getElementById("clientTrips").textContent = c.totalTrips || 0;
+      });
+
+      // Load linked data
+      loadLinkedData(id);
     };
 
-    window.toggleMenu = function () {
-      document.getElementById("navLinks").classList.toggle("show");
+    function loadLinkedData(clientId) {
+      const invoiceRef = query(ref(db, "invoices"), orderByChild('clientId'), equalTo(clientId));
+      onValue(invoiceRef, (snapshot) => {
+        const list = document.getElementById("invoiceList");
+        list.innerHTML = "";
+        snapshot.forEach(child => {
+          const inv = child.val();
+          list.innerHTML += `<li class="list-group-item">#${inv.invoiceNumber} - ₹${(inv.grandTotal || 0).toFixed(2)}</li>`;
+        });
+        if (!list.innerHTML) list.innerHTML = '<li class="list-group-item text-muted">No invoices found.</li>';
+      });
+
+      const lrRef = query(ref(db, "lrReports"), orderByChild('clientId'), equalTo(clientId));
+      onValue(lrRef, (snapshot) => {
+        const list = document.getElementById("lrList");
+        list.innerHTML = "";
+        snapshot.forEach(child => {
+          const lr = child.val();
+          list.innerHTML += `<li class="list-group-item">#${lr.lrNumber || 'N/A'} - ${lr.fromLocation || ''} → ${lr.toLocation || ''}</li>`;
+        });
+        if (!list.innerHTML) list.innerHTML = '<li class="list-group-item text-muted">No LR reports found.</li>';
+      });
+
+      const payRef = query(ref(db, "payments"), orderByChild('clientId'), equalTo(clientId));
+      onValue(payRef, (snapshot) => {
+        const list = document.getElementById("paymentList");
+        list.innerHTML = "";
+        snapshot.forEach(child => {
+          const pay = child.val();
+          list.innerHTML += `<li class="list-group-item">₹${parseFloat(pay.amount || 0).toFixed(2)} on ${pay.date || 'N/A'}</li>`;
+        });
+        if (!list.innerHTML) list.innerHTML = '<li class="list-group-item text-muted">No payments found.</li>';
+      });
+    }
+
+    // Back button
+    document.getElementById("backBtn").addEventListener("click", () => {
+      document.getElementById("clientDetail").classList.add("hidden");
+      document.getElementById("clientListView").classList.remove("hidden");
+    });
+
+    // Edit Client
+    window.editClient = (id) => {
+      const newName = prompt("Enter new name:");
+      if (newName) {
+        update(ref(db, "users/" + currentUser.uid + "/clients/" + id), { 
+          clientName: newName,
+          updatedAt: new Date().toISOString()
+        });
+      }
     };
+
+    // Delete Client
+    window.deleteClient = (id) => {
+      if (confirm("Are you sure you want to delete this client? This action cannot be undone.")) {
+        remove(ref(db, "users/" + currentUser.uid + "/clients/" + id));
+      }
+    };
+
+    // Export to Excel
+    document.getElementById("exportExcel").addEventListener("click", () => {
+      const table = document.getElementById("clientTable");
+      const wb = XLSX.utils.table_to_book(table, { sheet: "Clients" });
+      XLSX.writeFile(wb, "Clients.xlsx");
+    });
+
+    // Make functions globally accessible for onclick attributes
+    window.viewClient = viewClient;
+    window.editClient = editClient;
+    window.deleteClient = deleteClient;
   </script>
-
 </body>
-
 </html>
