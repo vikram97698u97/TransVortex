@@ -498,10 +498,6 @@
               <label>Brand:</label>
               <input type="text" class="tyre-brand" placeholder="e.g., Apollo" required>
             </div>
-            <div class="form-group">
-              <label>Size:</label>
-              <input type="text" class="tyre-size" placeholder="e.g., 195/65R15" required>
-            </div>
           </div>
         </div>
       </div>
@@ -543,6 +539,8 @@
     let currentUser = null;
     let editingVehicleId = null;
     let tyreCount = 1;
+    let allVehiclesData = {};
+    let searchTermVehicles = '';
 
     // Make Firebase functions available globally
     window.db = db;
@@ -633,10 +631,6 @@
             <label>Brand:</label>
             <input type="text" class="tyre-brand" placeholder="e.g., MRF" required>
           </div>
-          <div class="form-group">
-            <label>Size:</label>
-            <input type="text" class="tyre-size" placeholder="e.g., 195/65R15" required>
-          </div>
         </div>
       `;
       
@@ -678,9 +672,8 @@
       for (const container of tyreContainers) {
         const tyreNumber = container.querySelector('.tyre-number').value.trim();
         const tyreBrand = container.querySelector('.tyre-brand').value.trim();
-        const tyreSize = container.querySelector('.tyre-size').value.trim();
         
-        if (!tyreNumber || !tyreBrand || !tyreSize) {
+        if (!tyreNumber || !tyreBrand) {
           showAlert('Please fill in all tyre details', 'warning');
           return;
         }
@@ -696,7 +689,6 @@
         newTyres.push({
           number: tyreNumber,
           brand: tyreBrand,
-          size: tyreSize,
           addedAt: Date.now()
         });
       }
@@ -824,7 +816,7 @@
       onValue(vehiclesRef, (snapshot) => {
         const vehicles = snapshot.val() || {};
         allVehiclesData = vehicles;
-        renderVehicles(Object.entries(vehicles));
+        renderVehiclesWithPagination();
       });
     };
 
@@ -966,10 +958,6 @@
                   <label>Brand:</label>
                   <input type="text" class="tyre-brand" value="${tyre.brand}" required>
                 </div>
-                <div class="form-group">
-                  <label>Size:</label>
-                  <input type="text" class="tyre-size" value="${tyre.size}" required>
-                </div>
               </div>
             `;
             
@@ -1076,10 +1064,6 @@
                 <div class="form-group">
                   <label>Brand:</label>
                   <input type="text" class="tyre-brand" value="${tyreToEdit.brand}" required>
-                </div>
-                <div class="form-group">
-                  <label>Size:</label>
-                  <input type="text" class="tyre-size" value="${tyreToEdit.size}" required>
                 </div>
               </div>
             `;
@@ -1316,10 +1300,6 @@
             <div class="form-group">
               <label>Brand:</label>
               <input type="text" class="tyre-brand" placeholder="e.g., MRF" required>
-            </div>
-            <div class="form-group">
-              <label>Size:</label>
-              <input type="text" class="tyre-size" placeholder="e.g., 195/65R15" required>
             </div>
           </div>
         </div>
