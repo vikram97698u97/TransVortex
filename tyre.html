@@ -179,8 +179,9 @@
     }
 
     .card.expanded .card-body {
-      max-height: 2000px; /* Adjust based on your content */
       padding: 15px;
+      max-height: 100vh; /* Use viewport height as a sensible limit */
+      overflow-y: auto; /* Add a scrollbar if content exceeds the viewport height */
     }
 
     .tyre-list {
