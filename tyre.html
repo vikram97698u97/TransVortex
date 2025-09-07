@@ -1,17 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Import Map for Three.js modules -->
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
-      }
-    }
-  </script>
-  <!-- End Import Map -->
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tyre Management System</title>
@@ -26,47 +15,6 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #f5f5f5;
       color: #333;
-    }
-
-    /* 3D Model Viewer Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1001;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(5px);
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-content {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 800px;
-      position: relative;
-      animation: modal-fade-in 0.3s ease-out;
-    }
-
-    @keyframes modal-fade-in {
-      from { transform: translateY(-30px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    .close-modal {
-      color: #aaa;
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
     }
 
     #modelContainer {
@@ -554,10 +502,6 @@
               <label>Size:</label>
               <input type="text" class="tyre-size" placeholder="e.g., 195/65R15" required>
             </div>
-            <div class="form-group">
-              <label>Position:</label>
-              <input type="text" class="tyre-position" placeholder="e.g., Front Left" required>
-            </div>
           </div>
         </div>
       </div>
@@ -573,36 +517,6 @@
       <div id="vehicleList"></div>
       <!-- Pagination Controls (Tab System) for Vehicle Cards -->
       <div style="margin-top: 16px;">
-        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-          <label for="entriesPerPageVehicles" style="font-weight:600;">Entries per page:</label>
-          <select id="entriesPerPageVehicles" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
-            <option value="5">5</option>
-            <option value="10" selected>10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-          </select>
-          <div id="entriesInfoVehicles" style="color:#666; font-size:14px;"></div>
-        </div>
-        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
-          <button class="tab-nav-control" id="prevVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <div class="tab-navigation" id="tabNavigationVehicles" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
-          <button class="tab-nav-control" id="nextVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 3D Model Viewer Modal -->
-  <div id="modelViewerModal" class="modal">
-    <div class="modal-content">
-      <span class="close-modal" onclick="closeModelViewer()">&times;</span>
-      <h2 id="modelVehicleNumber"></h2>
-      <div id="modelContainer">
-        <!-- Three.js canvas will be inserted here -->
       </div>
     </div>
   </div>
@@ -630,16 +544,6 @@
     let editingVehicleId = null;
     let tyreCount = 1;
 
-    // --- 3D Model Viewer ---
-    let scene, camera, renderer, controls, model;
-    const annotations = [];
-    const annotationPositions = [
-      { x: -1.2, y: -0.5, z: 2.5 }, // Front-Left
-      { x: 1.2, y: -0.5, z: 2.5 },  // Front-Right
-      { x: -1.2, y: -0.5, z: -2 }, // Rear-Left
-      { x: 1.2, y: -0.5, z: -2 },   // Rear-Right
-    ];
-    
     // Make Firebase functions available globally
     window.db = db;
     window.ref = ref;
@@ -647,18 +551,6 @@
     window.currentUser = null; // Will be updated in onAuthStateChanged
 
     // Navbar is now injected via navbar-loader.js
-
-    // Pagination state for vehicle cards
-    const entriesPerPageVehicles = document.getElementById('entriesPerPageVehicles');
-    const entriesInfoVehicles = document.getElementById('entriesInfoVehicles');
-    const tabNavigationVehicles = document.getElementById('tabNavigationVehicles');
-    const prevVehiclesBtn = document.getElementById('prevVehicles');
-    const nextVehiclesBtn = document.getElementById('nextVehicles');
-    let currentPageVehicles = 1;
-    let itemsPerPageVehicles = 10;
-    let totalPagesVehicles = 1;
-    let allVehiclesData = {}; // keyed by id
-    let searchTermVehicles = '';
 
     // Check authentication
     onAuthStateChanged(auth, async (user) => {
@@ -745,10 +637,6 @@
             <label>Size:</label>
             <input type="text" class="tyre-size" placeholder="e.g., 195/65R15" required>
           </div>
-          <div class="form-group">
-            <label>Position:</label>
-            <input type="text" class="tyre-position" placeholder="e.g., Front Right" required>
-          </div>
         </div>
       `;
       
@@ -791,9 +679,8 @@
         const tyreNumber = container.querySelector('.tyre-number').value.trim();
         const tyreBrand = container.querySelector('.tyre-brand').value.trim();
         const tyreSize = container.querySelector('.tyre-size').value.trim();
-        const tyrePosition = container.querySelector('.tyre-position').value.trim();
         
-        if (!tyreNumber || !tyreBrand || !tyreSize || !tyrePosition) {
+        if (!tyreNumber || !tyreBrand || !tyreSize) {
           showAlert('Please fill in all tyre details', 'warning');
           return;
         }
@@ -810,7 +697,6 @@
           number: tyreNumber,
           brand: tyreBrand,
           size: tyreSize,
-          position: tyrePosition,
           addedAt: Date.now()
         });
       }
@@ -934,12 +820,11 @@
     // Load vehicles from database with card deck layout (single realtime listener)
     window.loadVehicles = function() {
       const vehicleListContainer = document.getElementById('vehicleList');
-      vehicleListContainer.innerHTML = '<p>Loading vehicles...</p>';
       const vehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
       onValue(vehiclesRef, (snapshot) => {
-        allVehiclesData = snapshot.val() || {};
-        currentPageVehicles = 1;
-        renderVehiclesWithPagination();
+        const vehicles = snapshot.val() || {};
+        allVehiclesData = vehicles;
+        renderVehicles(Object.entries(vehicles));
       });
     };
 
@@ -953,9 +838,7 @@
         const tyres = vehicle.tyres || {};
         const tyreMatch = Object.values(tyres).some(t =>
           ((t.number || '').toLowerCase().includes(term)) ||
-          ((t.brand || '').toLowerCase().includes(term)) ||
-          ((t.size || '').toLowerCase().includes(term)) ||
-          ((t.position || '').toLowerCase().includes(term))
+          ((t.brand || '').toLowerCase().includes(term))
         );
         return vnum.includes(term) || vmodel.includes(term) || tyreMatch;
       });
@@ -963,20 +846,16 @@
 
     function renderVehiclesWithPagination() {
       const vehicleListContainer = document.getElementById('vehicleList');
-      const filtered = computeFilteredVehicles();
-      const totalItems = filtered.length;
-      totalPagesVehicles = Math.max(1, Math.ceil(totalItems / itemsPerPageVehicles));
-      if (currentPageVehicles > totalPagesVehicles) currentPageVehicles = totalPagesVehicles;
-      updateVehiclePaginationControls(totalItems);
-      const start = (currentPageVehicles - 1) * itemsPerPageVehicles;
-      const end = Math.min(start + itemsPerPageVehicles, totalItems);
-      const pageEntries = filtered.slice(start, end);
-      if (pageEntries.length === 0) {
+      const filteredEntries = computeFilteredVehicles();
+
+      vehicleListContainer.innerHTML = '';
+
+      if (filteredEntries.length === 0) {
         vehicleListContainer.innerHTML = '<p>No vehicles found. Add a vehicle to get started.</p>';
         return;
       }
       let html = '';
-      pageEntries.forEach(([id, vehicle]) => {
+      filteredEntries.forEach(([id, vehicle]) => {
         const tyreCountLocal = vehicle.tyres ? Object.keys(vehicle.tyres).length : 0;
         html += `
           <div class="card" id="vehicle-${id}">
@@ -998,8 +877,7 @@
                   ${Object.entries(vehicle.tyres || {}).map(([tyreId, tyre]) => `
                     <li class="tyre-item">
                       <div class="tyre-details">
-                        <div><strong>#${tyre.number || 'N/A'}</strong> - ${tyre.brand || ''} ${tyre.size || ''}</div>
-                        <div>Position: ${tyre.position || 'N/A'}</div>
+                        <div><strong>#${tyre.number || 'N/A'}</strong> - ${tyre.brand || ''}</div>
                         <div>Status: <span class="status-badge ${tyre.status ? tyre.status.toLowerCase() : 'active'}">${tyre.status || 'Active'}</span></div>
                       </div>
                       <div class="tyre-actions">
@@ -1017,9 +895,6 @@
               <div class="vehicle-actions" style="margin-top: 15px;">
                 <button onclick="event.stopPropagation(); addTyreToVehicle('${id}')" class="btn btn-primary">Add Tyre</button>
                 <button onclick="event.stopPropagation(); editVehicle('${id}')" class="btn btn-secondary">Edit Vehicle</button>
-                <button onclick="event.stopPropagation(); show3DModel('${id}')" class="btn btn-info" title="View 3D Model">
-                  <i class="fas fa-cube"></i> View 3D
-                </button>
                 <button onclick="event.stopPropagation(); deleteVehicle('${id}')" class="btn btn-danger">Delete</button>
               </div>
             </div>
@@ -1027,46 +902,6 @@
         `;
       });
       vehicleListContainer.innerHTML = html;
-    }
-
-    function updateVehiclePaginationControls(totalItems) {
-      prevVehiclesBtn.disabled = currentPageVehicles === 1;
-      nextVehiclesBtn.disabled = currentPageVehicles === totalPagesVehicles;
-      const startIndex = Math.min((currentPageVehicles - 1) * itemsPerPageVehicles + 1, totalItems);
-      const endIndex = Math.min(currentPageVehicles * itemsPerPageVehicles, totalItems);
-      entriesInfoVehicles.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
-      generateVehicleTabs();
-    }
-
-    function generateVehicleTabs() {
-      tabNavigationVehicles.innerHTML = '';
-      if (totalPagesVehicles <= 1) return;
-      addVehicleTab(1);
-      let startPage = Math.max(2, currentPageVehicles - 2);
-      let endPage = Math.min(totalPagesVehicles - 1, currentPageVehicles + 2);
-      if (startPage > 2) addVehicleEllipsis();
-      for (let i = startPage; i <= endPage; i++) addVehicleTab(i);
-      if (endPage < totalPagesVehicles - 1) addVehicleEllipsis();
-      addVehicleTab(totalPagesVehicles);
-    }
-
-    function addVehicleTab(pageNumber) {
-      const tab = document.createElement('div');
-      tab.className = `tab ${pageNumber === currentPageVehicles ? 'active' : ''}`;
-      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
-      tab.textContent = pageNumber;
-      tab.addEventListener('click', () => {
-        currentPageVehicles = pageNumber;
-        renderVehiclesWithPagination();
-      });
-      tabNavigationVehicles.appendChild(tab);
-    }
-
-    function addVehicleEllipsis() {
-      const ellipsis = document.createElement('div');
-      ellipsis.textContent = '...';
-      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
-      tabNavigationVehicles.appendChild(ellipsis);
     }
 
     // Toggle vehicle card expansion
@@ -1080,7 +915,6 @@
     // Search vehicles function
     window.searchVehicles = function() {
       searchTermVehicles = document.getElementById('searchInput').value.trim();
-      currentPageVehicles = 1;
       renderVehiclesWithPagination();
     };
 
@@ -1135,10 +969,6 @@
                 <div class="form-group">
                   <label>Size:</label>
                   <input type="text" class="tyre-size" value="${tyre.size}" required>
-                </div>
-                <div class="form-group">
-                  <label>Position:</label>
-                  <input type="text" class="tyre-position" value="${tyre.position}" required>
                 </div>
               </div>
             `;
@@ -1250,10 +1080,6 @@
                 <div class="form-group">
                   <label>Size:</label>
                   <input type="text" class="tyre-size" value="${tyreToEdit.size}" required>
-                </div>
-                <div class="form-group">
-                  <label>Position:</label>
-                  <input type="text" class="tyre-position" value="${tyreToEdit.position}" required>
                 </div>
               </div>
             `;
@@ -1495,10 +1321,6 @@
               <label>Size:</label>
               <input type="text" class="tyre-size" placeholder="e.g., 195/65R15" required>
             </div>
-            <div class="form-group">
-              <label>Position:</label>
-              <input type="text" class="tyre-position" placeholder="e.g., Front Left" required>
-            </div>
           </div>
         </div>
       `;
@@ -1507,122 +1329,6 @@
       editingVehicleId = null;
       document.getElementById('saveVehicleBtn').textContent = 'Save Vehicle';
       document.getElementById('cancelEditBtn').style.display = 'none';
-    }
-
-    // --- 3D Model Viewer Functions ---
-    async function init3DViewer() {
-      // Import Three.js modules
-      const THREE = await import('three');
-      const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-      const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
-
-      const container = document.getElementById('modelContainer');
-      if (!container) return;
-
-      // Scene
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xf0f0f0);
-
-      // Camera
-      camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-      camera.position.set(3, 2, 5);
-
-      // Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(container.clientWidth, container.clientHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      container.innerHTML = ''; // Clear previous content
-      container.appendChild(renderer.domElement);
-
-      // Controls
-      controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-
-      // Lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-      scene.add(ambientLight);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-      directionalLight.position.set(5, 10, 7);
-      scene.add(directionalLight);
-
-      // Load Model
-      const loader = new GLTFLoader();
-      loader.load('https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@main/2.0/BoxTruck/glTF-Binary/BoxTruck.glb', (gltf) => {
-        model = gltf.scene;
-        model.scale.set(1, 1, 1);
-        model.position.y = -1;
-        scene.add(model);
-      }, undefined, (error) => {
-        console.error('Error loading 3D model:', error);
-        container.innerHTML = '<p style="color: red; text-align: center; padding-top: 50px;">Failed to load 3D model.</p>';
-      });
-
-      // Animation Loop
-      function animate() {
-        if (!renderer) return; // Stop animation if viewer is closed
-        requestAnimationFrame(animate);
-        controls.update();
-        updateAnnotations();
-        renderer.render(scene, camera);
-      }
-      animate();
-
-      // Handle Resize
-      window.addEventListener('resize', () => {
-        if (!renderer) return;
-        camera.aspect = container.clientWidth / container.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
-      });
-    }
-
-    function updateAnnotations() {
-      if (!camera || !model || !renderer) return;
-      annotations.forEach(annotation => {
-        const vector = new THREE.Vector3(annotation.position.x, annotation.position.y, annotation.position.z);
-        const canvas = renderer.domElement;
-        vector.project(camera);
-
-        const x = (vector.x * 0.5 + 0.5) * canvas.clientWidth;
-        const y = (vector.y * -0.5 + 0.5) * canvas.clientHeight;
-
-        annotation.element.style.transform = `translate(-50%, -50%) translate(${x}px,${y}px)`;
-      });
-    }
-
-    window.show3DModel = async function(vehicleId) {
-      const vehicle = allVehiclesData[vehicleId];
-      if (!vehicle) return;
-
-      document.getElementById('modelVehicleNumber').textContent = `3D View: ${vehicle.vehicleNumber}`;
-      document.getElementById('modelViewerModal').style.display = 'flex';
-      document.body.classList.add('modal-open');
-
-      if (!scene) {
-        await init3DViewer();
-      }
-
-      // Clear previous annotations
-      annotations.forEach(a => a.element.remove());
-      annotations.length = 0;
-
-      // Create new annotations for this vehicle's tyres
-      const container = document.getElementById('modelContainer');
-      const tyres = Object.values(vehicle.tyres || {});
-      tyres.forEach((tyre, index) => {
-        if (index < annotationPositions.length) {
-          const annotationDiv = document.createElement('div');
-          annotationDiv.className = 'annotation';
-          annotationDiv.innerHTML = `&rarr; ${tyre.number}`;
-          container.appendChild(annotationDiv);
-          annotations.push({ element: annotationDiv, position: annotationPositions[index] });
-        }
-      });
-    }
-
-    window.closeModelViewer = function() {
-      document.getElementById('modelViewerModal').style.display = 'none';
-      document.body.classList.remove('modal-open');
     }
 
     window.logout = function() {
@@ -1636,25 +1342,6 @@
     window.toggleMenu = function () {
       document.getElementById("navLinks").classList.toggle("show");
     };
-
-    // Hook up pagination controls
-    entriesPerPageVehicles.addEventListener('change', function () {
-      itemsPerPageVehicles = parseInt(this.value, 10) || 10;
-      currentPageVehicles = 1;
-      renderVehiclesWithPagination();
-    });
-    prevVehiclesBtn.addEventListener('click', function () {
-      if (currentPageVehicles > 1) {
-        currentPageVehicles--;
-        renderVehiclesWithPagination();
-      }
-    });
-    nextVehiclesBtn.addEventListener('click', function () {
-      if (currentPageVehicles < totalPagesVehicles) {
-        currentPageVehicles++;
-        renderVehiclesWithPagination();
-      }
-    });
   </script>
 </body>
 </html>
