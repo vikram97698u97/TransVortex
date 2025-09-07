@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Payment Billing</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
   :root {
@@ -70,75 +71,149 @@
     td:nth-of-type(1)::before { content: "Company"; }
     td:nth-of-type(2)::before { content: "Amount"; }
     td:nth-of-type(3)::before { content: "Date"; }
-    td:nth-of-type(4)::before { content: "Type"; }
-    td:nth-of-type(5)::before { content: "Proof"; }
-    td:nth-of-type(6)::before { content: "Actions"; }
+    td:nth-of-type(4)::before { content: "Proof"; }
+    td:nth-of-type(5)::before { content: "Actions"; }
+
+    /* For expense table */
+    #expenseTableBody td:nth-of-type(1)::before { content: "Date"; }
+    #expenseTableBody td:nth-of-type(2)::before { content: "Type"; }
+    #expenseTableBody td:nth-of-type(3)::before { content: "Amount"; }
+    #expenseTableBody td:nth-of-type(4)::before { content: "Proof"; }
+    #expenseTableBody td:nth-of-type(5)::before { content: "Actions"; }
   }
 </style>
 </head>
 <body>
   <script src="navbar-loader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <div class="main-content">
     <div class="container">
       <h1><i class="fas fa-money-bill-wave"></i> Payment Records</h1>
-      <form id="paymentForm">
-        <label>Company Name: <input type="text" id="companyName" required /></label>
-        <label>Amount: <input type="number" id="amount" required /></label>
-        <label>Date: <input type="date" id="date" required /></label>
-        <label>Payment Type:
-          <select id="paymentType">
-            <option value="Tyre">Tyre</option>
-            <option value="Driver">Driver</option>
-            <option value="repair">repair</option>
-            <option value="diesel">diesel</option>
-            <option value="salary">salary</option>
-            <option value="other">other</option>
-          </select>
-        </label>
-        <label>Upload Proof:
-          <input type="file" id="proofFile" accept="image/*,application/pdf"/>
-        </label>
-        <img id="preview" class="preview" style="display:none;" />
-        <button type="submit" class="btn">Add Payment</button>
-        <button type="button" id="sortByDateBtn" class="btn">Sort by Date</button>
-      </form>
-      <input type="text" id="searchInput" placeholder="Search by company..." />
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr>
-              <th>Company</th>
-              <th>Amount</th>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Proof</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="paymentTableBody"></tbody>
-        </table>
-      </div>
+      <!-- Tabs Navigation -->
+      <ul class="nav nav-tabs" id="paymentTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="client-payments-tab" data-bs-toggle="tab" data-bs-target="#client-payments" type="button" role="tab" aria-controls="client-payments" aria-selected="true">Client Payments</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses" type="button" role="tab" aria-controls="expenses" aria-selected="false">Expenses</button>
+        </li>
+      </ul>
 
-      <!-- Pagination Controls (Tab System) -->
-      <div style="margin-top: 16px;">
-        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-          <label for="entriesPerPage" style="font-weight:600;">Entries per page:</label>
-          <select id="entriesPerPage" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
-            <option value="5">5</option>
-            <option value="10" selected>10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-          </select>
-          <div id="entriesInfo" style="color:#666; font-size:14px;"></div>
+      <!-- Tab Content -->
+      <div class="tab-content" id="paymentTabsContent">
+        <!-- Client Payments Tab -->
+        <div class="tab-pane fade show active p-3" id="client-payments" role="tabpanel" aria-labelledby="client-payments-tab">
+          <form id="paymentForm" class="form-group">
+            <label for="clientSelect">Select Client:</label>
+            <select id="clientSelect" class="form-control" required>
+              <option value="">Loading clients...</option>
+            </select>
+            <label for="amount">Amount:</label> <input type="number" id="amount" class="form-control" required />
+            <label for="date">Date:</label> <input type="date" id="date" class="form-control" required />
+            <label for="proofFile">Upload Proof:</label>
+            <input type="file" id="proofFile" class="form-control" accept="image/*,application/pdf"/>
+            <img id="preview" class="preview" style="display:none;" />
+            <button type="submit" class="btn" style="margin-top: 1rem;">Add Payment</button>
+            <button type="button" id="sortByDateBtn" class="btn" style="margin-top: 1rem;">Sort by Date</button>
+          </form>
+          <input type="text" id="searchInput" placeholder="Search by company..." />
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Proof</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="paymentTableBody"></tbody>
+            </table>
+          </div>
+          <!-- Pagination for Client Payments -->
+          <div style="margin-top: 16px;">
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+              <label for="entriesPerPage" style="font-weight:600;">Entries per page:</label>
+              <select id="entriesPerPage" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+              <div id="entriesInfo" style="color:#666; font-size:14px;"></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+              <button class="tab-nav-control" id="prevPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <div class="tab-navigation" id="tabNavigation" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+              <button class="tab-nav-control" id="nextPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
         </div>
-        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
-          <button class="tab-nav-control" id="prevPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <div class="tab-navigation" id="tabNavigation" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
-          <button class="tab-nav-control" id="nextPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
-            <i class="fas fa-chevron-right"></i>
-          </button>
+
+        <!-- Expenses Tab -->
+        <div class="tab-pane fade p-3" id="expenses" role="tabpanel" aria-labelledby="expenses-tab">
+          <form id="expenseForm" class="form-group">
+            <label for="expenseType">Expense Type:</label>
+            <select id="expenseType" class="form-control" required>
+                <option value="">Select Type</option>
+                <option value="Tyre">Tyre</option>
+                <option value="Driver">Driver</option>
+                <option value="Repair">Repair</option>
+                <option value="Diesel">Diesel</option>
+                <option value="Salary">Salary</option>
+                <option value="Other">Other</option>
+            </select>
+            <label for="expenseAmount">Amount:</label>
+            <input type="number" id="expenseAmount" class="form-control" required />
+            <label for="expenseDate">Date:</label>
+            <input type="date" id="expenseDate" class="form-control" required />
+            <label for="expenseProofFile">Upload Proof:</label>
+            <input type="file" id="expenseProofFile" class="form-control" accept="image/*,application/pdf"/>
+            <img id="expensePreview" class="preview" style="display:none;" />
+            <button type="submit" class="btn" style="margin-top: 1rem;">Add Expense</button>
+          </form>
+          <input type="text" id="expenseSearchInput" placeholder="Search by type..." />
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Proof</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="expenseTableBody"></tbody>
+            </table>
+          </div>
+          <!-- Pagination for Expenses -->
+          <div style="margin-top: 16px;">
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+              <label for="entriesPerPageExpenses" style="font-weight:600;">Entries per page:</label>
+              <select id="entriesPerPageExpenses" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+              <div id="entriesInfoExpenses" style="color:#666; font-size:14px;"></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+              <button class="tab-nav-control" id="prevPageExpenses" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <div class="tab-navigation" id="tabNavigationExpenses" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+              <button class="tab-nav-control" id="nextPageExpenses" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -146,7 +221,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, push, set, onValue, remove, update, query, orderByChild, equalTo, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -168,7 +243,9 @@
     onAuthStateChanged(auth, user => {
       if (user) {
         currentUserUID = user.uid;
-        loadPayments();
+        loadClientsForDropdown();
+        loadClientPayments();
+        loadExpenses();
       } else {
         window.location.href = "index.html";
       }
@@ -182,17 +259,28 @@
     });
 
     const form = document.getElementById("paymentForm");
-    const companyName = document.getElementById("companyName");
+    const clientSelect = document.getElementById("clientSelect");
     const amount = document.getElementById("amount");
     const date = document.getElementById("date");
-    const paymentType = document.getElementById("paymentType");
     const proofFile = document.getElementById("proofFile");
     const preview = document.getElementById("preview");
     const searchInput = document.getElementById("searchInput");
-    const paymentTableBody = document.getElementById("paymentTableBody");
+    const clientPaymentTableBody = document.getElementById("paymentTableBody");
     let payments = [];
 
-    // Pagination state
+    // Expense Form Elements
+    const expenseForm = document.getElementById("expenseForm");
+    const expenseType = document.getElementById("expenseType");
+    const expenseAmount = document.getElementById("expenseAmount");
+    const expenseDate = document.getElementById("expenseDate");
+    const expenseProofFile = document.getElementById("expenseProofFile");
+    const expensePreview = document.getElementById("expensePreview");
+    const expenseSearchInput = document.getElementById("expenseSearchInput");
+    const expenseTableBody = document.getElementById("expenseTableBody");
+    let expenses = [];
+
+
+    // Pagination state for Client Payments
     const entriesPerPageSelect = document.getElementById('entriesPerPage');
     const entriesInfo = document.getElementById('entriesInfo');
     const tabNavigation = document.getElementById('tabNavigation');
@@ -202,6 +290,34 @@
     let itemsPerPage = 10;
     let totalPages = 1;
     let filteredPayments = [];
+
+    // Pagination state for Expenses
+    const entriesPerPageSelectExpenses = document.getElementById('entriesPerPageExpenses');
+    const entriesInfoExpenses = document.getElementById('entriesInfoExpenses');
+    const tabNavigationExpenses = document.getElementById('tabNavigationExpenses');
+    const prevPageBtnExpenses = document.getElementById('prevPageExpenses');
+    const nextPageBtnExpenses = document.getElementById('nextPageExpenses');
+    let currentPageExpenses = 1;
+    let itemsPerPageExpenses = 10;
+    let totalPagesExpenses = 1;
+    let filteredExpenses = [];
+
+    function loadClientsForDropdown() {
+        const clientRef = ref(db, `users/${currentUserUID}/clients`);
+        onValue(clientRef, (snapshot) => {
+            clientSelect.innerHTML = '<option value="">Select a Client</option>';
+            if (snapshot.exists()) {
+                snapshot.forEach(child => {
+                    const client = child.val();
+                    const option = document.createElement('option');
+                    option.value = child.key;
+                    option.textContent = `${client.clientName} (Outstanding: ₹${client.outstanding || 0})`;
+                    option.dataset.name = client.clientName;
+                    clientSelect.appendChild(option);
+                });
+            }
+        });
+    }
 
     proofFile.addEventListener("change", () => {
       const file = proofFile.files[0];
@@ -251,50 +367,78 @@
       return data.secure_url;
     }
 
-    form.addEventListener("submit", async (e) => {
+    // Named function to handle adding a new payment
+    async function handleAddClientPayment(e) {
       e.preventDefault();
       let fileURL = "";
       const file = proofFile.files[0];
+      const selectedClientId = clientSelect.value;
+      const selectedClientName = clientSelect.options[clientSelect.selectedIndex].dataset.name;
+    
+      if (!selectedClientId) {
+          alert("Please select a client.");
+          return;
+      }
+    
       if (file) fileURL = await uploadToCloudinary(file);
-      const paymentRef = push(ref(db, `users/${currentUserUID}/payments`));
-      await set(paymentRef, {
-        companyName: companyName.value,
-        amount: amount.value,
+    
+      const paymentRef = push(ref(db, `payments`)); // Store at root level
+      const paymentData = {
+        companyName: selectedClientName,
+        amount: parseFloat(amount.value) || 0,
         date: date.value,
-        type: paymentType.value,
         proof: fileURL,
-        id: paymentRef.key
+        id: paymentRef.key,
+        clientId: selectedClientId,
+        userId: currentUserUID,
+        createdAt: new Date().toISOString() // Add createdAt timestamp
+      };
+    
+      await set(paymentRef, paymentData);
+    
+      // ** NEW: Update client's outstanding balance **
+      const clientRef = ref(db, `users/${currentUserUID}/clients/${selectedClientId}`);
+      await update(clientRef, {
+        outstanding: increment(-parseFloat(amount.value))
       });
+    
       form.reset();
       preview.style.display = "none";
-    });
+    }
 
-    function loadPayments() {
-      const paymentsRef = ref(db, `users/${currentUserUID}/payments`);
-      onValue(paymentsRef, (snapshot) => {
+    // Set the initial form submit handler
+    form.onsubmit = handleAddClientPayment;
+
+    function loadClientPayments() {
+      onValue(query(ref(db, 'payments'), orderByChild('userId'), equalTo(currentUserUID)), (snapshot) => { // Query root `payments`
         payments = [];
-        snapshot.forEach(child => { payments.push(child.val()); });
+        snapshot.forEach(child => { 
+            const payment = child.val();
+            // **FIX**: Only include operational payments (those without a 'plan' field)
+            if(payment.userId === currentUserUID && !payment.plan) {
+              payments.push(payment); 
+            }
+        });
         currentPage = 1;
-        renderPaymentsWithPagination();
+        renderClientPaymentsWithPagination();
       });
     }
 
-    function renderPayments(list) {
-      paymentTableBody.innerHTML = "";
+    function renderClientPayments(list) {
+      clientPaymentTableBody.innerHTML = "";
       list.forEach(payment => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${payment.companyName}</td>
           <td>${payment.amount}</td>
           <td>${payment.date}</td>
-          <td>${payment.type}</td>
           <td>${payment.proof ? `<a href="${payment.proof}" target="_blank">View</a>` : '—'}</td>
           <td class="action-btns">
-            <button onclick="editPayment('${payment.id}')">Edit</button>
-            <button onclick="deletePayment('${payment.id}')">Delete</button>
+            <button onclick="editClientPayment('${payment.id}')">Edit</button>
+            <button onclick="deleteClientPayment('${payment.id}')">Delete</button>
           </td>
         `;
-        paymentTableBody.appendChild(tr);
+        clientPaymentTableBody.appendChild(tr);
       });
     }
 
@@ -331,7 +475,7 @@
       tab.textContent = pageNumber;
       tab.addEventListener('click', () => {
         currentPage = pageNumber;
-        renderPaymentsWithPagination();
+        renderClientPaymentsWithPagination();
       });
       tabNavigation.appendChild(tab);
     }
@@ -343,7 +487,7 @@
       tabNavigation.appendChild(ellipsis);
     }
 
-    function renderPaymentsWithPagination() {
+    function renderClientPaymentsWithPagination() {
       filteredPayments = computeFiltered();
       const totalItems = filteredPayments.length;
       totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
@@ -352,72 +496,290 @@
       const startIndex = (currentPage - 1) * itemsPerPage;
       const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
       const pageData = filteredPayments.slice(startIndex, endIndex);
-      renderPayments(pageData);
+      renderClientPayments(pageData);
     }
 
-    window.editPayment = (id) => {
+    // Refactored and corrected edit function
+    window.editClientPayment = (id) => {
       const p = payments.find(p => p.id === id);
-      if (p) {
-        companyName.value = p.companyName;
-        amount.value = p.amount;
-        date.value = p.date;
-        paymentType.value = p.type;
-        form.onsubmit = async (e) => {
-          e.preventDefault();
-          const file = proofFile.files[0];
-          let fileURL = p.proof;
-          if (file) fileURL = await uploadToCloudinary(file);
-          await update(ref(db, `users/${currentUserUID}/payments/${id}`), {
-            companyName: companyName.value,
-            amount: amount.value,
-            date: date.value,
-            type: paymentType.value,
-            proof: fileURL
-          });
+      if (!p) {
+        alert('Payment record not found.');
+        return;
+      }
+
+      // Populate the form for editing
+      clientSelect.value = p.clientId;
+      amount.value = p.amount;
+      date.value = p.date;
+      if (p.proof) {
+        preview.src = p.proof;
+        preview.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+      }
+      
+      // Scroll to the form and change the submit button text
+      form.scrollIntoView({ behavior: 'smooth' });
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.textContent = 'Update Payment';
+
+      // Change form submission behavior for editing
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const newClientId = clientSelect.value;
+        const oldClientId = p.clientId;
+        const newAmount = parseFloat(amount.value) || 0;
+        const oldAmount = parseFloat(p.amount) || 0;
+
+        const file = proofFile.files[0];
+        let fileURL = p.proof;
+        if (file) fileURL = await uploadToCloudinary(file);
+
+        const updatedPaymentData = {
+          ...p, // Keep original data like id, userId, createdAt
+          companyName: clientSelect.options[clientSelect.selectedIndex].dataset.name,
+          amount: newAmount,
+          date: date.value,
+          proof: fileURL,
+          clientId: newClientId,
+          updatedAt: new Date().toISOString()
+        };
+
+        // Atomically update the payment record and client outstanding balances
+        const updates = {};
+        updates[`/payments/${id}`] = updatedPaymentData;
+
+        if (oldClientId === newClientId) {
+          // The client is the same, so we only need to adjust for the difference in amount.
+          const amountDifference = newAmount - oldAmount;
+          if (amountDifference !== 0) {
+            updates[`/users/${currentUserUID}/clients/${oldClientId}/outstanding`] = increment(-amountDifference);
+          }
+        } else {
+          // The client has changed. We need to revert the old payment and apply the new one.
+          // 1. Add the old amount back to the original client's outstanding balance.
+          if (oldClientId) {
+            updates[`/users/${currentUserUID}/clients/${oldClientId}/outstanding`] = increment(oldAmount);
+          }
+          // 2. Subtract the new amount from the new client's outstanding balance.
+          if (newClientId) {
+            updates[`/users/${currentUserUID}/clients/${newClientId}/outstanding`] = increment(-newAmount);
+          }
+        }
+        
+        try {
+          await update(ref(db), updates);
+          alert('Payment updated successfully!');
+        } catch (error) {
+          alert('Error updating payment: ' + error.message);
+          console.error(error);
+        } finally {
+          // Reset form to its original "add" behavior
           form.reset();
           preview.style.display = "none";
-          form.onsubmit = defaultSubmit;
-        };
-      }
+          submitBtn.textContent = 'Add Payment';
+          form.onsubmit = handleAddClientPayment; // **FIX**: Restore the correct "add" handler
+        }
+      };
     };
 
-    const defaultSubmit = form.onsubmit;
-
-    window.deletePayment = (id) => {
+    window.deleteClientPayment = (id) => {
       if (confirm("Delete this record?")) {
-        remove(ref(db, `users/${currentUserUID}/payments/${id}`));
+        remove(ref(db, `payments/${id}`)); // Delete from root `payments`
       }
     };
 
     searchInput.addEventListener("input", () => {
       currentPage = 1;
-      renderPaymentsWithPagination();
+      renderClientPaymentsWithPagination();
     });
 
     document.getElementById("sortByDateBtn").addEventListener("click", () => {
       payments.sort((a, b) => new Date(a.date) - new Date(b.date));
       currentPage = 1;
-      renderPaymentsWithPagination();
+      renderClientPaymentsWithPagination();
     });
 
     // Hook up pagination controls
     entriesPerPageSelect.addEventListener('change', function () {
       itemsPerPage = parseInt(this.value, 10) || 10;
       currentPage = 1;
-      renderPaymentsWithPagination();
+      renderClientPaymentsWithPagination();
     });
     prevPageBtn.addEventListener('click', function () {
       if (currentPage > 1) {
         currentPage--;
-        renderPaymentsWithPagination();
+        renderClientPaymentsWithPagination();
       }
     });
     nextPageBtn.addEventListener('click', function () {
       if (currentPage < totalPages) {
         currentPage++;
-        renderPaymentsWithPagination();
+        renderClientPaymentsWithPagination();
       }
     });
+
+    // --- EXPENSE PAYMENT LOGIC ---
+
+    expenseProofFile.addEventListener("change", () => {
+      const file = expenseProofFile.files[0];
+      if (file && file.type.startsWith("image")) {
+        const reader = new FileReader();
+        reader.onload = () => { expensePreview.src = reader.result; expensePreview.style.display = "block"; };
+        reader.readAsDataURL(file);
+      } else {
+        expensePreview.style.display = "none";
+      }
+    });
+
+    async function handleAddExpense(e) {
+      e.preventDefault();
+      let fileURL = "";
+      const file = expenseProofFile.files[0];
+      if (file) fileURL = await uploadToCloudinary(file);
+
+      const expenseData = {
+        type: expenseType.value,
+        amount: parseFloat(expenseAmount.value) || 0,
+        date: expenseDate.value,
+        proof: fileURL,
+        userId: currentUserUID,
+        createdAt: new Date().toISOString()
+      };
+
+      const newExpenseRef = push(ref(db, `users/${currentUserUID}/expenses`));
+      expenseData.id = newExpenseRef.key;
+      await set(newExpenseRef, expenseData);
+
+      expenseForm.reset();
+      expensePreview.style.display = "none";
+    }
+
+    expenseForm.onsubmit = handleAddExpense;
+
+    function loadExpenses() {
+      onValue(ref(db, `users/${currentUserUID}/expenses`), (snapshot) => {
+        expenses = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            expenses.push(child.val());
+          });
+        }
+        currentPageExpenses = 1;
+        renderExpensesWithPagination();
+      });
+    }
+
+    function renderExpenses(list) {
+      expenseTableBody.innerHTML = "";
+      list.forEach(expense => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${expense.date}</td>
+          <td>${expense.type}</td>
+          <td>${expense.amount}</td>
+          <td>${expense.proof ? `<a href="${expense.proof}" target="_blank">View</a>` : '—'}</td>
+          <td class="action-btns">
+            <button onclick="editExpense('${expense.id}')">Edit</button>
+            <button onclick="deleteExpense('${expense.id}')">Delete</button>
+          </td>
+        `;
+        expenseTableBody.appendChild(tr);
+      });
+    }
+
+    function computeFilteredExpenses() {
+      const value = (expenseSearchInput.value || '').toLowerCase();
+      return expenses.filter(p => (p.type || '').toLowerCase().includes(value));
+    }
+
+    function updatePaginationControlsExpenses(totalItems) {
+      prevPageBtnExpenses.disabled = currentPageExpenses === 1;
+      nextPageBtnExpenses.disabled = currentPageExpenses === totalPagesExpenses;
+      entriesInfoExpenses.textContent = `Showing ${totalItems === 0 ? 0 : ((currentPageExpenses - 1) * itemsPerPageExpenses + 1)} to ${Math.min(currentPageExpenses * itemsPerPageExpenses, totalItems)} of ${totalItems} entries`;
+      generatePageTabsExpenses();
+    }
+
+    function generatePageTabsExpenses() {
+      tabNavigationExpenses.innerHTML = '';
+      if (totalPagesExpenses <= 1) return;
+      addTabExpenses(1);
+      let startPage = Math.max(2, currentPageExpenses - 2);
+      let endPage = Math.min(totalPagesExpenses - 1, currentPageExpenses + 2);
+      if (startPage > 2) tabNavigationExpenses.appendChild(document.createTextNode('...'));
+      for (let i = startPage; i <= endPage; i++) addTabExpenses(i);
+      if (endPage < totalPagesExpenses - 1) tabNavigationExpenses.appendChild(document.createTextNode('...'));
+      addTabExpenses(totalPagesExpenses);
+    }
+
+    function addTabExpenses(pageNumber) {
+      const tab = document.createElement('div');
+      tab.className = `tab ${pageNumber === currentPageExpenses ? 'active' : ''}`;
+      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
+      tab.textContent = pageNumber;
+      tab.addEventListener('click', () => { currentPageExpenses = pageNumber; renderExpensesWithPagination(); });
+      tabNavigationExpenses.appendChild(tab);
+    }
+
+    function renderExpensesWithPagination() {
+      filteredExpenses = computeFilteredExpenses();
+      const totalItems = filteredExpenses.length;
+      totalPagesExpenses = Math.max(1, Math.ceil(totalItems / itemsPerPageExpenses));
+      if (currentPageExpenses > totalPagesExpenses) currentPageExpenses = totalPagesExpenses;
+      updatePaginationControlsExpenses(totalItems);
+      const startIndex = (currentPageExpenses - 1) * itemsPerPageExpenses;
+      const endIndex = Math.min(startIndex + itemsPerPageExpenses, totalItems);
+      const pageData = filteredExpenses.slice(startIndex, endIndex);
+      renderExpenses(pageData);
+    }
+
+    window.editExpense = (id) => {
+      const expense = expenses.find(ex => ex.id === id);
+      if (!expense) return;
+
+      expenseType.value = expense.type;
+      expenseAmount.value = expense.amount;
+      expenseDate.value = expense.date;
+      if (expense.proof) { expensePreview.src = expense.proof; expensePreview.style.display = 'block'; }
+
+      expenseForm.scrollIntoView({ behavior: 'smooth' });
+      const submitBtn = expenseForm.querySelector('button[type="submit"]');
+      submitBtn.textContent = 'Update Expense';
+
+      expenseForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const file = expenseProofFile.files[0];
+        let fileURL = expense.proof;
+        if (file) fileURL = await uploadToCloudinary(file);
+
+        const updatedData = {
+          ...expense,
+          type: expenseType.value,
+          amount: parseFloat(expenseAmount.value) || 0,
+          date: expenseDate.value,
+          proof: fileURL,
+          updatedAt: new Date().toISOString()
+        };
+        await update(ref(db, `users/${currentUserUID}/expenses/${id}`), updatedData);
+        
+        expenseForm.reset();
+        expensePreview.style.display = 'none';
+        submitBtn.textContent = 'Add Expense';
+        expenseForm.onsubmit = handleAddExpense;
+      };
+    };
+
+    window.deleteExpense = (id) => {
+      if (confirm("Delete this expense record?")) {
+        remove(ref(db, `users/${currentUserUID}/expenses/${id}`));
+      }
+    };
+
+    expenseSearchInput.addEventListener("input", () => { currentPageExpenses = 1; renderExpensesWithPagination(); });
+    entriesPerPageSelectExpenses.addEventListener('change', function () { itemsPerPageExpenses = parseInt(this.value, 10) || 10; currentPageExpenses = 1; renderExpensesWithPagination(); });
+    prevPageBtnExpenses.addEventListener('click', () => { if (currentPageExpenses > 1) { currentPageExpenses--; renderExpensesWithPagination(); } });
+    nextPageBtnExpenses.addEventListener('click', () => { if (currentPageExpenses < totalPagesExpenses) { currentPageExpenses++; renderExpensesWithPagination(); } });
 
     window.toggleMenu = function () {
       document.getElementById("navLinks").classList.toggle("show");
