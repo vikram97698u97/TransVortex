@@ -513,6 +513,25 @@
       <div id="vehicleList"></div>
       <!-- Pagination Controls (Tab System) for Vehicle Cards -->
       <div style="margin-top: 16px;">
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+          <label for="entriesPerPageVehicles" style="font-weight:600;">Entries per page:</label>
+          <select id="entriesPerPageVehicles" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+          <div id="entriesInfoVehicles" style="color:#666; font-size:14px;"></div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <button class="tab-nav-control" id="prevVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="tab-navigation" id="tabNavigationVehicles" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+          <button class="tab-nav-control" id="nextVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -540,6 +559,16 @@
     let editingVehicleId = null;
     let tyreCount = 1;
     let allVehiclesData = {};
+
+    // Pagination state for vehicle cards
+    const entriesPerPageVehicles = document.getElementById('entriesPerPageVehicles');
+    const entriesInfoVehicles = document.getElementById('entriesInfoVehicles');
+    const tabNavigationVehicles = document.getElementById('tabNavigationVehicles');
+    const prevVehiclesBtn = document.getElementById('prevVehicles');
+    const nextVehiclesBtn = document.getElementById('nextVehicles');
+    let currentPageVehicles = 1;
+    let itemsPerPageVehicles = 10;
+    let totalPagesVehicles = 1;
     let searchTermVehicles = '';
 
     // Make Firebase functions available globally
@@ -816,7 +845,7 @@
       onValue(vehiclesRef, (snapshot) => {
         const vehicles = snapshot.val() || {};
         allVehiclesData = vehicles;
-        renderVehiclesWithPagination();
+        renderVehiclesWithPagination(); // This will now handle pagination
       });
     };
 
@@ -838,16 +867,21 @@
 
     function renderVehiclesWithPagination() {
       const vehicleListContainer = document.getElementById('vehicleList');
-      const filteredEntries = computeFilteredVehicles();
+      const filtered = computeFilteredVehicles();
+      const totalItems = filtered.length;
+      totalPagesVehicles = Math.max(1, Math.ceil(totalItems / itemsPerPageVehicles));
+      if (currentPageVehicles > totalPagesVehicles) currentPageVehicles = totalPagesVehicles;
+      updateVehiclePaginationControls(totalItems);
+      const start = (currentPageVehicles - 1) * itemsPerPageVehicles;
+      const end = Math.min(start + itemsPerPageVehicles, totalItems);
+      const pageEntries = filtered.slice(start, end);
 
-      vehicleListContainer.innerHTML = '';
-
-      if (filteredEntries.length === 0) {
+      if (pageEntries.length === 0) {
         vehicleListContainer.innerHTML = '<p>No vehicles found. Add a vehicle to get started.</p>';
         return;
       }
       let html = '';
-      filteredEntries.forEach(([id, vehicle]) => {
+      pageEntries.forEach(([id, vehicle]) => {
         const tyreCountLocal = vehicle.tyres ? Object.keys(vehicle.tyres).length : 0;
         html += `
           <div class="card" id="vehicle-${id}">
@@ -894,6 +928,50 @@
         `;
       });
       vehicleListContainer.innerHTML = html;
+    }
+
+    function updateVehiclePaginationControls(totalItems) {
+      prevVehiclesBtn.disabled = currentPageVehicles === 1;
+      nextVehiclesBtn.disabled = currentPageVehicles === totalPagesVehicles;
+      const startIndex = Math.min((currentPageVehicles - 1) * itemsPerPageVehicles + 1, totalItems);
+      const endIndex = Math.min(currentPageVehicles * itemsPerPageVehicles, totalItems);
+      entriesInfoVehicles.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+      generateVehicleTabs();
+    }
+
+    function generateVehicleTabs() {
+      tabNavigationVehicles.innerHTML = '';
+      if (totalPagesVehicles <= 1) return;
+      addVehicleTab(1);
+      let startPage = Math.max(2, currentPageVehicles - 2);
+      let endPage = Math.min(totalPagesVehicles - 1, currentPageVehicles + 2);
+      if (startPage > 2) addVehicleEllipsis();
+      for (let i = startPage; i <= endPage; i++) addVehicleTab(i);
+      if (endPage < totalPagesVehicles - 1) addVehicleEllipsis();
+      addVehicleTab(totalPagesVehicles);
+    }
+
+    function addVehicleTab(pageNumber) {
+      const tab = document.createElement('div');
+      tab.className = `tab ${pageNumber === currentPageVehicles ? 'active' : ''}`;
+      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
+      if (pageNumber === currentPageVehicles) {
+        tab.style.background = '#43b97f';
+        tab.style.color = '#fff';
+      }
+      tab.textContent = pageNumber;
+      tab.addEventListener('click', () => {
+        currentPageVehicles = pageNumber;
+        renderVehiclesWithPagination();
+      });
+      tabNavigationVehicles.appendChild(tab);
+    }
+
+    function addVehicleEllipsis() {
+      const ellipsis = document.createElement('div');
+      ellipsis.textContent = '...';
+      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
+      tabNavigationVehicles.appendChild(ellipsis);
     }
 
     // Toggle vehicle card expansion
@@ -1322,6 +1400,25 @@
     window.toggleMenu = function () {
       document.getElementById("navLinks").classList.toggle("show");
     };
+
+    // Hook up pagination controls
+    entriesPerPageVehicles.addEventListener('change', function () {
+      itemsPerPageVehicles = parseInt(this.value, 10) || 10;
+      currentPageVehicles = 1;
+      renderVehiclesWithPagination();
+    });
+    prevVehiclesBtn.addEventListener('click', function () {
+      if (currentPageVehicles > 1) {
+        currentPageVehicles--;
+        renderVehiclesWithPagination();
+      }
+    });
+    nextVehiclesBtn.addEventListener('click', function () {
+      if (currentPageVehicles < totalPagesVehicles) {
+        currentPageVehicles++;
+        renderVehiclesWithPagination();
+      }
+    });
   </script>
 </body>
 </html>
