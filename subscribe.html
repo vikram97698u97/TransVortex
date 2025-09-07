@@ -276,7 +276,7 @@
 
       <div class="trial-info">
         <i class="fas fa-info-circle"></i>
-        <span>Your 30-day free trial has ended. Subscribe to continue using all features.</span>
+        <span>Your subscription has ended. Subscribe to continue using all features again.</span>
       </div>
     </div>
   </div>
@@ -462,7 +462,9 @@
             userId: user.uid,
             amount: 1999,
             status: 'pending',
-            timestamp: new Date().toISOString(),
+            createdAt: new Date().toISOString(), // Fulfills validation rule
+            clientId: user.uid, // Fulfills validation rule, using user's ID for subscription
+            timestamp: new Date().toISOString(), // Kept for compatibility if used elsewhere
             plan: 'monthly'
           });
           
@@ -723,7 +725,7 @@
             <h3 style="color: #2E8B57; margin-bottom: 10px;">Payment Successful! 🎉</h3>
             <p style="margin-bottom: 20px; font-size: 16px;">${message}</p>
             <div style="margin-top: 20px; padding: 15px; background: #E8F5E9; border-radius: 8px; text-align: left;">
-              <p style="margin: 5px 0;"><strong>Amount:</strong> ₹10.00</p>
+              <p style="margin: 5px 0;"><strong>Amount:</strong> ₹1999.00</p>
               <p style="margin: 5px 0;"><strong>Status:</strong> Verified</p>
               <p style="margin: 5px 0; color: #2E8B57;"><i class="fas fa-check"></i> Subscription Activated</p>
             </div>
@@ -785,6 +787,7 @@
                 status: 'active',
                 startDate: now.toISOString(),
                 endDate: endDate.toISOString(),
+                nextPayment: endDate.toISOString(),
                 paymentRef: paymentRef,
                 plan: paymentData.plan || 'monthly',
                 updatedAt: now.toISOString()
