@@ -220,7 +220,7 @@
       </div>
       
       <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search by tyre number, brand, size...">
+        <input type="text" id="searchInput" placeholder="Search by tyre number, brand...">
         <button onclick="searchHistory()">Search</button>
       </div>
       
@@ -231,8 +231,6 @@
             <th>Vehicle</th>
             <th>Tyre Number</th>
             <th>Brand</th>
-            <th>Size</th>
-            <th>Position</th>
             <th>Age at Disposal</th>
             <th>Reason</th>
           </tr>
@@ -363,7 +361,7 @@
       
       onValue(historyRef, (snapshot) => {
         if (!snapshot.exists()) {
-          document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="8">No disposal history found</td></tr>';
+          document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="6">No disposal history found</td></tr>';
           updateStats([]);
           populateFilters([]);
           filteredHistoryData = [];
@@ -396,7 +394,7 @@
       const tableBody = document.getElementById('historyTableBody');
       
       if (historyData.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8">No matching records found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6">No matching records found</td></tr>';
         return;
       }
       
@@ -424,8 +422,6 @@
             <td>${item.vehicleNumber} - ${item.vehicleModel}</td>
             <td>${item.number}</td>
             <td>${item.brand}</td>
-            <td>${item.size}</td>
-            <td>${item.position}</td>
             <td>${ageText}</td>
             <td>${item.disposalReason}</td>
           </tr>
@@ -611,8 +607,6 @@
         data = data.filter(item =>
           (item.number && item.number.toLowerCase().includes(searchTerm)) ||
           (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
-          (item.size && item.size.toLowerCase().includes(searchTerm)) ||
-          (item.position && item.position.toLowerCase().includes(searchTerm)) ||
           (item.vehicleNumber && item.vehicleNumber.toLowerCase().includes(searchTerm)) ||
           (item.disposalReason && item.disposalReason.toLowerCase().includes(searchTerm))
         );
