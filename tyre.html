@@ -499,6 +499,14 @@
               <label>Brand:</label>
               <input type="text" class="tyre-brand" placeholder="e.g., Apollo" required>
             </div>
+            <div class="form-group">
+              <label>Position:</label>
+              <input type="text" class="tyre-position" placeholder="e.g., Front-Left" required>
+            </div>
+            <div class="form-group">
+              <label>Added Date:</label>
+              <input type="date" class="tyre-added-date" required>
+            </div>
           </div>
         </div>
       </div>
@@ -661,6 +669,14 @@
             <label>Brand:</label>
             <input type="text" class="tyre-brand" placeholder="e.g., MRF" required>
           </div>
+          <div class="form-group">
+            <label>Position:</label>
+            <input type="text" class="tyre-position" placeholder="e.g., Rear-Right-Outer" required>
+          </div>
+          <div class="form-group">
+            <label>Added Date:</label>
+            <input type="date" class="tyre-added-date" required>
+          </div>
         </div>
       `;
       
@@ -702,8 +718,10 @@
       for (const container of tyreContainers) {
         const tyreNumber = container.querySelector('.tyre-number').value.trim();
         const tyreBrand = container.querySelector('.tyre-brand').value.trim();
+        const tyrePosition = container.querySelector('.tyre-position').value.trim();
+        const tyreAddedDate = container.querySelector('.tyre-added-date').value;
         
-        if (!tyreNumber || !tyreBrand) {
+        if (!tyreNumber || !tyreBrand || !tyrePosition || !tyreAddedDate) {
           showAlert('Please fill in all tyre details', 'warning');
           return;
         }
@@ -719,7 +737,8 @@
         newTyres.push({
           number: tyreNumber,
           brand: tyreBrand,
-          addedAt: Date.now()
+          position: tyrePosition,
+          addedAt: new Date(tyreAddedDate).getTime()
         });
       }
       
@@ -746,9 +765,13 @@
             
             if (isEditingSingleTyre) {
               // In tyre edit mode, replace only the edited tyre and keep others
-              const editedTyreNumber = newTyres[0].number;
-              updatedTyres = existingTyres.filter(t => t.number !== editedTyreNumber);
-              updatedTyres.push(newTyres[0]);
+              const editedTyreNumber = document.querySelector('.tyre-number[readonly]')?.value;
+              if (editedTyreNumber) {
+                updatedTyres = existingTyres.map(t => t.number === editedTyreNumber ? newTyres[0] : t);
+              } else {
+                // Fallback if the readonly field isn't found, though it should be.
+                updatedTyres = [...existingTyres, ...newTyres];
+              }
             } else {
               // In add tyre mode, add new tyres to existing ones
               updatedTyres = [...existingTyres, ...newTyres];
@@ -906,6 +929,7 @@
                       <div class="tyre-details">
                         <div><strong>#${tyre.number || 'N/A'}</strong> - ${tyre.brand || ''}</div>
                         <div>Status: <span class="status-badge ${tyre.status ? tyre.status.toLowerCase() : 'active'}">${tyre.status || 'Active'}</span></div>
+                        <div>Position: <strong>${tyre.position || 'N/A'}</strong> | Added: <strong>${tyre.addedAt ? new Date(tyre.addedAt).toLocaleDateString() : 'N/A'}</strong></div>
                       </div>
                       <div class="tyre-actions">
                         <button onclick="event.stopPropagation(); editTyre('${id}', '${tyre.number}')" class="btn btn-primary" title="Edit Tyre">
@@ -1037,6 +1061,14 @@
                   <label>Brand:</label>
                   <input type="text" class="tyre-brand" value="${tyre.brand}" required>
                 </div>
+                <div class="form-group">
+                  <label>Position:</label>
+                  <input type="text" class="tyre-position" value="${tyre.position}" required>
+                </div>
+                <div class="form-group">
+                  <label>Added Date:</label>
+                  <input type="date" class="tyre-added-date" value="${tyre.addedAt ? new Date(tyre.addedAt).toISOString().split('T')[0] : ''}" required>
+                </div>
               </div>
             `;
             
@@ -1064,13 +1096,43 @@
 
     // Delete vehicle
     window.deleteVehicle = function(vehicleId) {
-      if (confirm('Are you sure you want to delete this vehicle and all its tyres?')) {
-        remove(ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`)).then(() => {
-          showAlert('Vehicle deleted successfully', 'success');
-          loadVehicles();
-        }).catch((error) => {
-          showAlert(`Error: ${error.message}`, 'danger');
-        });
+      if (confirm('Are you sure you want to delete this vehicle? All its tyres will be moved to the disposal history.')) {
+        const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
+        get(vehicleRef).then(snapshot => {
+          if (!snapshot.exists()) {
+            showAlert('Vehicle not found.', 'danger');
+            return;
+          }
+
+          const vehicle = snapshot.val();
+          const tyresToDispose = vehicle.tyres || [];
+
+          if (tyresToDispose.length > 0) {
+            const historyRef = ref(db, `users/${currentUser.uid}/tyre_history`);
+            const updates = {};
+
+            tyresToDispose.forEach(tyre => {
+              const newHistoryRef = push(historyRef);
+              updates[newHistoryRef.key] = {
+                ...tyre,
+                disposedAt: Date.now(),
+                disposalReason: 'Vehicle Deleted',
+                vehicleId: vehicleId, // Important for restore
+                vehicleNumber: vehicle.vehicleNumber,
+                vehicleModel: vehicle.vehicleModel
+              };
+            });
+
+            update(historyRef, updates);
+          }
+
+          // After archiving tyres, remove the vehicle
+          remove(vehicleRef).then(() => {
+            showAlert('Vehicle deleted and tyres moved to history.', 'success');
+            // loadVehicles() is called automatically by the onValue listener
+          }).catch(error => showAlert(`Error deleting vehicle: ${error.message}`, 'danger'));
+
+        }).catch(error => showAlert(`Error fetching vehicle data: ${error.message}`, 'danger'));
       }
     };
 
@@ -1143,6 +1205,14 @@
                 <div class="form-group">
                   <label>Brand:</label>
                   <input type="text" class="tyre-brand" value="${tyreToEdit.brand}" required>
+                </div>
+                <div class="form-group">
+                  <label>Position:</label>
+                  <input type="text" class="tyre-position" value="${tyreToEdit.position || ''}" required>
+                </div>
+                <div class="form-group">
+                  <label>Added Date:</label>
+                  <input type="date" class="tyre-added-date" value="${tyreToEdit.addedAt ? new Date(tyreToEdit.addedAt).toISOString().split('T')[0] : ''}" required>
                 </div>
               </div>
             `;
@@ -1328,6 +1398,7 @@
             ...tyreToDispose,
             disposedAt: Date.now(),
             disposalReason: reason,
+            vehicleId: vehicleId, // Important for restore
             vehicleNumber: vehicle.vehicleNumber,
             vehicleModel: vehicle.vehicleModel
           };
@@ -1379,6 +1450,14 @@
             <div class="form-group">
               <label>Brand:</label>
               <input type="text" class="tyre-brand" placeholder="e.g., MRF" required>
+            </div>
+            <div class="form-group">
+              <label>Position:</label>
+              <input type="text" class="tyre-position" placeholder="e.g., Front-Left" required>
+            </div>
+            <div class="form-group">
+              <label>Added Date:</label>
+              <input type="date" class="tyre-added-date" required>
             </div>
           </div>
         </div>
@@ -1586,77 +1665,6 @@
 <!-- Update the renderCard function in the JavaScript section -->
 <script>
   // Add these functions to your existing script
-  
-  // Modify the loadVehicles function to add the history button
-  window.loadVehicles = function() {
-    const vehicleListContainer = document.getElementById('vehicleList');
-    vehicleListContainer.innerHTML = '<p>Loading vehicles...</p>';
-    
-    const vehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
-    
-    onValue(vehiclesRef, (snapshot) => {
-      if (!snapshot.exists()) {
-        vehicleListContainer.innerHTML = '<p>No vehicles found</p>';
-        return;
-      }
-      
-      const vehicles = snapshot.val();
-      let vehicleHtml = '';
-      
-      for (const vehicleId in vehicles) {
-        const vehicle = vehicles[vehicleId];
-        const tyres = vehicle.tyres || [];
-        
-        let tyresHtml = '';
-        for (const tyre of tyres) {
-          // Add age badge to each tyre
-          const tyreAge = getTyreAge(tyre.addedAt);
-          let badgeClass = 'badge-new';
-          let badgeText = 'New';
-          
-          if (tyreAge > 180) { // older than 6 months
-            badgeClass = 'badge-old';
-            badgeText = 'Old';
-          } else if (tyreAge > 30) { // older than 1 month
-            badgeClass = 'badge-used';
-            badgeText = 'Used';
-          }
-          
-          tyresHtml += `
-            <div class="tyre-card">
-              <div class="tyre-actions">
-                <button class="action-btn edit-btn" onclick="editTyre('${vehicleId}', '${tyre.number}')">Edit</button>
-                <button class="action-btn delete-btn" onclick="disposeTyre('${vehicleId}', '${tyre.number}')">Dispose</button>
-              </div>
-              <p><strong>Number:</strong> ${tyre.number} <span class="tyre-badge ${badgeClass}">${badgeText}</span></p>
-              <p><strong>Brand:</strong> ${tyre.brand}</p>
-              <p><strong>Size:</strong> ${tyre.size}</p>
-              <p><strong>Position:</strong> ${tyre.position}</p>
-            </div>
-          `;
-        }
-        
-        vehicleHtml += `
-          <div class="vehicle-card">
-            <div class="vehicle-header">
-              <div>${vehicle.vehicleNumber} - ${vehicle.vehicleModel}</div>
-              <div class="vehicle-actions">
-                <button class="btn btn-primary" onclick="addTyreToVehicle('${vehicleId}')">Add Tyre</button>
-                <button class="btn history-btn" onclick="showTyreHistory('${vehicleId}')">Tyre History</button>
-                <button class="btn btn-warning" onclick="editVehicle('${vehicleId}')">Edit Vehicle</button>
-                <button class="btn btn-danger" onclick="deleteVehicle('${vehicleId}')">Delete Vehicle</button>
-              </div>
-            </div>
-            <div class="tyre-grid">
-              ${tyresHtml}
-            </div>
-          </div>
-        `;
-      }
-      
-      vehicleListContainer.innerHTML = vehicleHtml;
-    });
-  };
   
   // Function to calculate tyre age in days
   function getTyreAge(timestamp) {
