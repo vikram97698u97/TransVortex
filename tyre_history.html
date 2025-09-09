@@ -172,6 +172,10 @@
       background-color: #5a6268;
     }
 
+    .btn-restore {
+      background-color: #17a2b8;
+      color: white;
+    }
     @media (max-width: 768px) {
       .stats-container {
         flex-direction: column;
@@ -232,7 +236,9 @@
             <th>Tyre Number</th>
             <th>Brand</th>
             <th>Age at Disposal</th>
+            <th>Position</th>
             <th>Reason</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="historyTableBody">
@@ -268,7 +274,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, onValue, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
@@ -361,9 +367,8 @@
       
       onValue(historyRef, (snapshot) => {
         if (!snapshot.exists()) {
-          document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="6">No disposal history found</td></tr>';
+          document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="8">No disposal history found</td></tr>';
           updateStats([]);
-          populateFilters([]);
           filteredHistoryData = [];
           renderHistoryWithPagination();
           return;
@@ -394,7 +399,7 @@
       const tableBody = document.getElementById('historyTableBody');
       
       if (historyData.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6">No matching records found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8">No matching records found</td></tr>';
         return;
       }
       
@@ -423,7 +428,13 @@
             <td>${item.number}</td>
             <td>${item.brand}</td>
             <td>${ageText}</td>
+            <td>${item.position || 'N/A'}</td>
             <td>${item.disposalReason}</td>
+            <td>
+              <button class="btn btn-sm btn-restore" onclick="restoreTyre('${item.id}')" title="Restore Tyre">
+                <i class="fas fa-undo"></i> Restore
+              </button>
+            </td>
           </tr>
         `;
       }
@@ -665,6 +676,68 @@
       const pageData = filteredHistoryData.slice(startIndex, endIndex);
       renderHistoryTable(pageData);
     }
+
+    // Restore Tyre
+    window.restoreTyre = async function(historyId) {
+      if (!confirm('Are you sure you want to restore this tyre to its original vehicle?')) {
+        return;
+      }
+
+      const historyItemRef = ref(db, `users/${currentUser.uid}/tyre_history/${historyId}`);
+      const historySnapshot = await get(historyItemRef);
+
+      if (!historySnapshot.exists()) {
+        showAlert('History record not found.', 'danger');
+        return;
+      }
+
+      const tyreToRestore = historySnapshot.val();
+      // Destructure to get vehicle details and the remaining tyre data
+      const { vehicleId, vehicleNumber, vehicleModel, disposedAt, disposalReason, ...originalTyreData } = tyreToRestore;
+
+      if (!vehicleId) {
+        showAlert('Cannot restore: Original vehicle ID is missing from this history record.', 'danger');
+        return;
+      }
+
+      const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
+      const vehicleSnapshot = await get(vehicleRef);
+
+      try {
+        if (vehicleSnapshot.exists()) {
+          // Vehicle exists, add tyre back
+          const vehicleData = vehicleSnapshot.val();
+          const existingTyres = vehicleData.tyres || [];
+          
+          // Check if a tyre with the same number is already on the vehicle
+          if (existingTyres.some(t => t.number === originalTyreData.number)) {
+            showAlert(`Cannot restore: A tyre with number ${originalTyreData.number} already exists on vehicle ${vehicleNumber}.`, 'warning');
+            return;
+          }
+
+          const updatedTyres = [...existingTyres, originalTyreData];
+          await update(vehicleRef, { tyres: updatedTyres });
+        } else {
+          // Vehicle does not exist, recreate it with the tyre
+          const newVehicleData = {
+            vehicleNumber: vehicleNumber || 'Unknown Vehicle',
+            vehicleModel: vehicleModel || 'Unknown Model',
+            tyres: [originalTyreData],
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          };
+          await set(vehicleRef, newVehicleData);
+        }
+
+        // Remove from history
+        await remove(historyItemRef);
+
+        showAlert('Tyre restored successfully!', 'success');
+      } catch (error) {
+        console.error('Error restoring tyre:', error);
+        showAlert(`Error restoring tyre: ${error.message}`, 'danger');
+      }
+    };
 
     // Hook up pagination controls
     entriesPerPageSelect.addEventListener('change', function () {
