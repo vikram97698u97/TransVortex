@@ -236,8 +236,10 @@
             <th>Tyre Number</th>
             <th>Brand</th>
             <th>Age at Disposal</th>
+            <th>Added Date</th>
             <th>Position</th>
             <th>Reason</th>
+            <th>Resell Price</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -367,7 +369,7 @@
       
       onValue(historyRef, (snapshot) => {
         if (!snapshot.exists()) {
-          document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="8">No disposal history found</td></tr>';
+          document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="9">No disposal history found</td></tr>';
           updateStats([]);
           filteredHistoryData = [];
           renderHistoryWithPagination();
@@ -399,7 +401,7 @@
       const tableBody = document.getElementById('historyTableBody');
       
       if (historyData.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8">No matching records found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="10">No matching records found</td></tr>';
         return;
       }
       
@@ -407,6 +409,8 @@
       
       for (const item of historyData) {
         const disposalDate = item.disposedAt ? new Date(item.disposedAt).toLocaleDateString() : 'Unknown';
+        const resellPrice = item.resellPrice ? `₹${item.resellPrice.toFixed(2)}` : 'N/A';
+        const addedDate = item.addedAt ? new Date(item.addedAt).toLocaleDateString() : 'Unknown';
         
         // Calculate age at disposal
         let ageText = 'Unknown';
@@ -428,8 +432,10 @@
             <td>${item.number}</td>
             <td>${item.brand}</td>
             <td>${ageText}</td>
+            <td>${addedDate}</td>
             <td>${item.position || 'N/A'}</td>
             <td>${item.disposalReason}</td>
+            <td>${resellPrice}</td>
             <td>
               <button class="btn btn-sm btn-restore" onclick="restoreTyre('${item.id}')" title="Restore Tyre">
                 <i class="fas fa-undo"></i> Restore
@@ -448,6 +454,7 @@
       
       // Calculate statistics
       const totalDisposed = historyData.length;
+      const totalResaleValue = historyData.reduce((sum, item) => sum + (item.resellPrice || 0), 0);
       
       // Count by reason
       const reasonCounts = {};
@@ -484,6 +491,11 @@
         <div class="stat-card">
           <div class="stat-value">${totalDisposed}</div>
           <div class="stat-label">Total Disposed Tyres</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-value">₹${totalResaleValue.toFixed(2)}</div>
+          <div class="stat-label">Total Resale Value</div>
         </div>
         
         <div class="stat-card">
