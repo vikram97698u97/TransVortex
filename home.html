@@ -473,8 +473,44 @@
       
       // If this is a branch account, bypass subscription gating (owner controls subscription)
       if (accountType === 'branch') {
-        console.log('Branch account detected, bypassing subscription checks');
-        initializePage();
+        console.log('Branch account detected, checking core account subscription...');
+        const coreAccountId = userData.coreAccountId || profileData.coreAccountId;
+
+        if (!coreAccountId) {
+          console.error('Branch account is missing coreAccountId reference.');
+          document.body.innerHTML = `
+            <div style="text-align: center; padding: 50px; font-family: sans-serif;">
+              <h1>Configuration Error</h1>
+              <p>Your branch account is not linked to a main account. Please contact support.</p>
+            </div>`;
+          return;
+        }
+
+        // Fetch the core account's subscription data
+        const coreSubSnapshot = await get(ref(db, `users/${coreAccountId}/subscription`));
+
+        if (!coreSubSnapshot.exists()) {
+          console.error('Core account subscription data not found.');
+          document.body.innerHTML = `
+            <div style="text-align: center; padding: 50px; font-family: sans-serif; background: #fff3cd; color: #856404; min-height: 100vh; display: flex; align-items: center; justify-content: center;"><div style="max-width: 500px;"><h1>Access Denied</h1><p>The main account's subscription could not be found. Please contact your main branch administrator to get the access again.</p></div></div>`;
+          return;
+        }
+
+        const coreSubscription = coreSubSnapshot.val();
+        const now = new Date();
+        const trialEnd = coreSubscription.trialEnd ? new Date(coreSubscription.trialEnd) : null;
+        const nextPayment = coreSubscription.nextPayment ? new Date(coreSubscription.nextPayment) : null;
+
+        const isTrialActive = coreSubscription.status === 'trial' && trialEnd && now < trialEnd;
+        const isPaidActive = coreSubscription.status === 'active' && nextPayment && now < nextPayment;
+
+        if (isTrialActive || isPaidActive) {
+          console.log('Core account subscription is active. Granting access to branch.');
+          initializePage();
+        } else {
+          console.log('Core account subscription has expired. Denying access to branch.');
+          document.body.innerHTML = `<div style="text-align: center; padding: 50px; font-family: sans-serif; background: #fff3cd; color: #856404; min-height: 100vh; display: flex; align-items: center; justify-content: center;"><div style="max-width: 500px;"><h1>Access Denied</h1><p>The subscription for your main account has expired.</p><p>Please contact your main branch administrator to renew the subscription and regain access.</p></div></div>`;
+        }
         return;
       }
       
@@ -657,8 +693,9 @@
       });
       
       // Load total payments (sum of all payments)
-      const paymentsRef = ref(db, `users/${currentUser.uid}/payments`);
-      onValue(paymentsRef, (snapshot) => {
+      // FIX: Query the root /payments collection and filter by userId to match where data is written.
+      const paymentsQuery = query(ref(db, 'payments'), orderByChild('userId'), equalTo(currentUser.uid));
+      onValue(paymentsQuery, (snapshot) => {
         if (snapshot.exists()) {
           const payments = snapshot.val();
           const totalPayments = Object.values(payments).reduce(
