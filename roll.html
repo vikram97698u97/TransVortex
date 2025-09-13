@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics & AI Insights</title>
+  <!-- Using a consistent Firebase version from your other files -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background:#F5F5F5; margin:0; padding:0; }
+    h1 { color:#2E8B57; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
+    .analytics-container { display: flex; gap: 20px; flex-wrap: wrap; }
+    .primary-content { flex: 3; min-width: 300px; }
+    .sidebar-content { flex: 1; min-width: 300px; }
+    .card { background:white; padding:20px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .card h3 { display: flex; justify-content: space-between; align-items: center; margin-top: 0; color: #333; font-size: 1.1rem; }
+    
+    /* KPI Cards */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .kpi-card { background: #f9f9f9; padding: 15px; border-radius: 10px; border-left: 4px solid #2E8B57; }
+    .kpi-card .label { font-size: 0.9rem; color: #666; margin-bottom: 5px; }
+    .kpi-card .value { font-size: 1.8rem; font-weight: 700; color: #2E8B57; }
+    .kpi-card .value.negative { color: #e74c3c; }
+
+    /* AI Insights Card */
+    .ai-suggestions { background: linear-gradient(135deg, #2E8B57, #287a4d); color:white; padding:20px; border-radius:15px; }
+    .ai-suggestions h3 { color: white; }
+    .ai-controls { display: flex; gap: 10px; align-items: center; }
+    .ai-controls select { padding: 4px 8px; border-radius: 5px; border: 1px solid #ccc; background: #fff; font-size: 14px; }
+    #speakBtn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 5px; transition: background 0.2s; }
+    #speakBtn:hover { background: rgba(255,255,255,0.2); border-radius: 50%; }
+    #aiList { 
+      padding-left: 20px; 
+      margin-top: 15px;
+      max-height: 200px; /* Make insights smaller */
+      overflow-y: auto; /* Add scroll for long content */
+      font-size: 0.95rem;
+    }
+    /* Responsive layout for smaller screens */
+    @media (max-width: 900px) {
+      .analytics-container { flex-direction: column; }
+    }
+    @media (max-width: 900px) {
+      .analytics-container { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <script src="navbar-loader.js"></script>
+
+  <h1>📊 Analytics & AI Insights</h1>
+
+  <div class="analytics-container">
+    <!-- Primary Content Area -->
+    <div class="primary-content">
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="label">Total Revenue</div>
+          <div class="value" id="kpiRevenue">₹0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Total Expenses</div>
+          <div class="value" id="kpiExpenses">₹0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Net Profit</div>
+          <div class="value" id="kpiProfit">₹0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Monthly Revenue vs Expenses</h3>
+        <canvas id="revenueChart"></canvas>
+      </div>
+      <div class="card">
+        <h3>Route Profitability</h3>
+        <canvas id="routeChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Sidebar Area -->
+    <div class="sidebar-content">
+      <div class="card">
+        <h3>Client-wise Revenue</h3>
+        <canvas id="clientChart"></canvas>
+      </div>
+      <div class="card ai-suggestions">
+        <h3><span>🤖 AI Insights</span>
+          <div class="ai-controls"><select id="aiLanguage"><option value="en-US">English</option><option value="hi-IN">हिन्दी</option></select><button id="speakBtn" title="Read insights aloud"><i class="fas fa-volume-up"></i></button></div>
+        </h3>
+        <ul id="aiList"><li>Loading insights...</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // === Gemini API Function ===
+    async function getAIInsights(summary, language) {
+      const API_KEY = "AIzaSyDjv2Wr5dW8hWLRAh_GjDcTKzgBdhxsOQc"; // Your Gemini API key
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+      const langName = language === 'hi-IN' ? 'Hindi' : 'English';
+      const body = {
+        contents: [{
+          parts: [{ text: `Analyze this logistics data and give 5 smart, actionable insights in ${langName}:\n\n${summary}` }]
+        }]
+      };
+
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || "No insights generated.";
+      } catch (error) {
+        console.error("AI Error:", error);
+        return "Error fetching AI insights.";
+      }
+    }
+
+    // === Text-to-Speech Functionality ===
+    const speakBtn = document.getElementById('speakBtn');
+    const aiList = document.getElementById('aiList');
+    const languageSelect = document.getElementById('aiLanguage');
+    let isSpeaking = false;
+
+    function speakInsights() {
+      if (!('speechSynthesis' in window)) {
+        alert('Sorry, your browser does not support text-to-speech.');
+        return;
+      }
+
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        isSpeaking = false;
+        speakBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        return;
+      }
+
+      const textToSpeak = aiList.innerText;
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      const selectedLang = languageSelect.value;
+      
+      utterance.lang = selectedLang;
+
+      utterance.onstart = () => {
+        isSpeaking = true;
+        speakBtn.innerHTML = '<i class="fas fa-stop-circle"></i>';
+      };
+      utterance.onend = () => {
+        isSpeaking = false;
+        speakBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+    speakBtn.addEventListener('click', speakInsights);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+      } else {
+        const uid = user.uid;
+        // Corrected the path to query the root 'lrReports' collection
+        const lrsRef = query(ref(db, 'lrReports'), orderByChild('userId'), equalTo(uid));
+        const snapshot = await get(lrsRef);
+
+        let fullSummary = ''; // Store summary to re-use on language change
+
+        if (snapshot.exists()) {
+          const lrs = snapshot.val();
+          let totalRevenue = 0, totalExpenses = 0;
+          let clientData = {}, routeData = {}, monthlyData = Array(12).fill({revenue: 0, expenses: 0});
+
+          Object.values(lrs).forEach(lr => {
+            const revenue = Number(lr.freightAmount || 0);
+            // Calculate total expenses from individual fields
+            const expenses = (Number(lr.tyreExpenses) || 0) + (Number(lr.dieselExpenses) || 0) + (Number(lr.tollExpenses) || 0) +
+                             (Number(lr.vehicleWork) || 0) + (Number(lr.foodExpenses) || 0) + (Number(lr.otherExpenses) || 0) +
+                             (Number(lr.advance) || 0) + (Number(lr.shortage) || 0);
+            
+            totalRevenue += revenue;
+            totalExpenses += expenses;
+            
+            const clientName = lr.consignor || 'Unknown Client';
+            clientData[clientName] = (clientData[clientName] || 0) + revenue;
+
+            const routeName = `${lr.fromLocation || 'Start'} to ${lr.toLocation || 'End'}`;
+            routeData[routeName] = (routeData[routeName] || 0) + (revenue - expenses);
+
+            const month = new Date(lr.date).getMonth();
+            if (month >= 0 && month < 12) {
+              monthlyData[month] = {
+                revenue: monthlyData[month].revenue + revenue,
+                expenses: monthlyData[month].expenses + expenses
+              };
+            }
+          });
+
+          // Populate KPI Cards
+          const netProfit = totalRevenue - totalExpenses;
+          document.getElementById('kpiRevenue').textContent = `₹${totalRevenue.toLocaleString('en-IN')}`;
+          document.getElementById('kpiExpenses').textContent = `₹${totalExpenses.toLocaleString('en-IN')}`;
+          document.getElementById('kpiProfit').textContent = `₹${netProfit.toLocaleString('en-IN')}`;
+          if(netProfit < 0) document.getElementById('kpiProfit').classList.add('negative');
+
+          // Revenue vs Expenses Chart
+          new Chart(document.getElementById("revenueChart"), {
+            type: 'bar',
+            data: {
+              labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+              datasets: [
+                { label: "Revenue", data: monthlyData.map(d => d.revenue), backgroundColor: "#2E8B57" },
+                { label: "Expenses", data: monthlyData.map(d => d.expenses), backgroundColor: "#FF6384" }
+              ]
+            }
+          });
+
+          // Client Chart
+          new Chart(document.getElementById("clientChart"), {
+            type: 'pie',
+            data: { labels: Object.keys(clientData), datasets: [{ data: Object.values(clientData) }] }
+          });
+
+          // Route Chart
+          new Chart(document.getElementById("routeChart"), {
+            type: 'line',
+            data: { labels: Object.keys(routeData), datasets: [{ label: "Profit", data: Object.values(routeData), borderColor:"#2E8B57", tension: 0.1 }] }
+          });
+
+          // === Prepare summary for AI ===
+          fullSummary = `
+            Total Revenue: ${totalRevenue}
+            Total Expenses: ${totalExpenses}
+            Clients: ${JSON.stringify(clientData)}
+            Routes: ${JSON.stringify(routeData)}
+          `;
+
+          async function fetchAndRenderAIInsights() {
+            const selectedLang = languageSelect.value;
+            aiList.innerHTML = '<li><i class="fas fa-spinner fa-spin"></i> Loading insights...</li>';
+            const aiText = await getAIInsights(fullSummary, selectedLang);
+            aiList.innerHTML = aiText.split(/[\n*-]/).filter(line => line.trim()).map(line => `<li>${line.trim()}</li>`).join("");
+          }
+
+          // Initial fetch
+          fetchAndRenderAIInsights();
+
+          // Re-fetch on language change
+          languageSelect.addEventListener('change', fetchAndRenderAIInsights);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
