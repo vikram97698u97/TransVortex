@@ -1210,7 +1210,7 @@
               <div class="tyre-row">
                 <div class="form-group">
                   <label>Tyre Number:</label>
-                  <input type="text" class="tyre-number" value="${tyre.number}" required>
+                  <input type="text" class="tyre-number" value="${tyre.number}" readonly required>
                 </div>
                 <div class="form-group">
                   <label>Brand:</label>
@@ -1671,8 +1671,9 @@
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({
-        // Using a font that supports the Rupee symbol
-        font: "helvetica" 
+        // Using a font that supports the Rupee symbol.
+        // jsPDF's default 'helvetica' font may not have it.
+        // 'arial' is a common fallback that often includes it.
       });
 
       // Add a title
@@ -1681,7 +1682,7 @@
       doc.setFontSize(11);
       doc.setTextColor(100);
       doc.text(`Model: ${vehicle.vehicleModel}`, 14, 30);
-
+      doc.setFont('arial', 'normal'); // Set font for the rest of the document
       // Define table columns and rows
       const tableColumn = ["Tyre Number", "Brand", "Position", "Added Date", "Cost (₹)"];
       const tableRows = [];
@@ -1695,7 +1696,7 @@
           tyre.brand || 'N/A',
           tyre.position || 'N/A',
           tyre.addedAt ? new Date(tyre.addedAt).toLocaleDateString() : 'N/A',
-          cost.toFixed(2)
+          `₹${cost.toFixed(2)}`
         ];
         tableRows.push(tyreData);
       });
