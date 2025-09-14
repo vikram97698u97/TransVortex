@@ -238,6 +238,29 @@
     .reminder-item i { color: var(--mint); }
     .no-reminders { text-align: center; color: var(--muted); padding: 14px; }
 
+    /* Error message styling */
+    .error-container {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+      border-radius: var(--radius);
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .error-container h3 {
+      color: #856404;
+      margin-bottom: 10px;
+    }
+    .error-container p {
+      margin-bottom: 15px;
+    }
+    .error-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      color: #ffc107;
+    }
+
     @media (max-width: 768px) {
       .welcome-title { font-size: 1.5rem; }
       .reminders-grid { grid-template-columns: 1fr; }
@@ -262,6 +285,17 @@
       </div>
     </div>
 
+    <!-- Error Message Container (initially hidden) -->
+    <div id="accountErrorContainer" class="error-container" style="display: none;">
+      <i class="fas fa-exclamation-triangle error-icon"></i>
+      <h3>Account Configuration Issue</h3>
+      <p id="errorMessage">We encountered a problem verifying your account type.</p>
+      <p>Please contact support if this issue persists.</p>
+      <button id="retryButton" class="btn" style="background: #ffc107; color: #856404;">
+        <i class="fas fa-redo"></i> Retry Verification
+      </button>
+    </div>
+
     <!-- Quick Actions -->
     <div class="quick-actions">
       <div class="action-card" onclick="location.href='add.html'">
@@ -274,7 +308,7 @@
       <div class="action-card" onclick="location.href='booking.html'">
         <i class="fas fa-calendar-alt"></i>
         <div>
-          <h3>Manage Clients</h3>
+          <h3>Manage Client</h3>
           <p>Schedule new transport orders</p>
         </div>
       </div>
@@ -312,8 +346,8 @@
             <i class="fas fa-calendar-check" style="color: #3498DB;"></i>
           </div>
           <div class="summary-details">
-            <h3>Active Bookings</h3>
-            <p id="bookingsCount">0</p>
+            <h3>Active LR Reports</h3>
+            <p id="activeLRCount">0</p>
           </div>
         </div>
         <div class="summary-card">
@@ -337,8 +371,8 @@
           <div id="latestVehicles"></div>
         </div>
         <div class="activity-column">
-          <h4>Latest Bookings</h4>
-          <div id="latestBookings"></div>
+          <h4>Latest LR's</h4>
+          <div id="latestLRs"></div>
         </div>
         <div class="activity-column">
           <h4>Recent Payments</h4>
@@ -374,886 +408,216 @@
               <input type="date" id="dueDate" class="form-control" required>
             </div>
             <div class="form-group">
-              <label for="description">Notes (Optional)</label>
-              <textarea id="description" class="form-control" rows="3" placeholder="Add details..."></textarea>
+              <label for="notes">Notes</label>
+              <textarea id="notes" class="form-control" rows="3" placeholder="Add any additional details..."></textarea>
             </div>
-            <button type="submit" class="btn btn-full"><i class="fas fa-bell"></i> Set Reminder</button>
+            <button type="submit" class="btn btn-full">Set Reminder</button>
           </form>
         </div>
         <div>
           <h4>Upcoming Reminders</h4>
-          <div id="alertsList">
-            <div class="no-reminders">
-              <i class="fas fa-inbox" style="font-size: 1.8rem; opacity:.4;"></i>
-              <p>No upcoming reminders</p>
-            </div>
+          <div id="upcomingReminders">
+            <div class="no-reminders">No upcoming reminders</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Security and subscription check -->
- <script src="js/security.js"></script>
-  
   <script type="module">
-  // Import Firebase modules
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, query, orderByChild, limitToLast, get, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  
-  // Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-    authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-    databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "transport-dashboard-ad69a",
-    storageBucket: "transport-dashboard-ad69a.appspot.com",
-    messagingSenderId: "526889676196",
-    appId: "1:526889676196:web:66032c80a4aede690ae531",
-    measurementId: "G-7F9R7HJYDH"
-  };
-  
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const auth = getAuth(app);
-  let currentUser = null;
-  
-  // Initialize the page after security checks
-  async function initializePage() {
-    try {
-      // Load user profile first to show name as soon as possible
-      await loadUserProfile();
-      // Then load other dashboard components
-      loadDashboard();
-      loadBusinessSummary();
-      loadSubscriptionStatus();
-      setupReminderForm();
-    } catch (error) {
-      console.error('Error initializing page:', error);
-    }
-  }
-  
-  // Check authentication and subscription status before loading the page
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      // First check if user is authenticated
-      currentUser = await new Promise((resolve) => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          unsubscribe();
-          resolve(user);
-        });
-      });
-      
-      if (!currentUser) {
-        window.location.href = 'login.html';
-        return;
-      }
-      
-      // Check if user is admin first
-      const adminCheck = await get(ref(db, `users/${currentUser.uid}/role`));
-      if (adminCheck.exists() && adminCheck.val() === 'admin') {
-        console.log('Admin user detected, bypassing subscription check');
-        initializePage();
-        return;
-      }
-
-      // Then check subscription status in both possible locations
-      const [userSnapshot, profileSnapshot] = await Promise.all([
-        get(ref(db, `users/${currentUser.uid}`)),
-        get(ref(db, `users/${currentUser.uid}/profile`))
-      ]);
-      
-      // Get subscription and account type
-      const userData = userSnapshot.val() || {};
-      const profileData = profileSnapshot.val() || {};
-      const accountType = userData.accountType || profileData.accountType || null;
-      const subscription = userData.subscription || profileData.subscription || null;
-      
-      // If this is a branch account, bypass subscription gating (owner controls subscription)
-      if (accountType === 'branch') {
-        console.log('Branch account detected, checking core account subscription...');
-        const coreAccountId = userData.coreAccountId || profileData.coreAccountId;
-
-        if (!coreAccountId) {
-          console.error('Branch account is missing coreAccountId reference.');
-          document.body.innerHTML = `
-            <div style="text-align: center; padding: 50px; font-family: sans-serif;">
-              <h1>Configuration Error</h1>
-              <p>Your branch account is not linked to a main account. Please contact support.</p>
-            </div>`;
-          return;
-        }
-
-        // Fetch the core account's subscription data
-        const coreSubSnapshot = await get(ref(db, `users/${coreAccountId}/subscription`));
-
-        if (!coreSubSnapshot.exists()) {
-          console.error('Core account subscription data not found.');
-          document.body.innerHTML = `
-            <div style="text-align: center; padding: 50px; font-family: sans-serif; background: #fff3cd; color: #856404; min-height: 100vh; display: flex; align-items: center; justify-content: center;"><div style="max-width: 500px;"><h1>Access Denied</h1><p>The main account's subscription could not be found. Please contact your main branch administrator to get the access again.</p></div></div>`;
-          return;
-        }
-
-        const coreSubscription = coreSubSnapshot.val();
-        const now = new Date();
-        const trialEnd = coreSubscription.trialEnd ? new Date(coreSubscription.trialEnd) : null;
-        const nextPayment = coreSubscription.nextPayment ? new Date(coreSubscription.nextPayment) : null;
-
-        const isTrialActive = coreSubscription.status === 'trial' && trialEnd && now < trialEnd;
-        const isPaidActive = coreSubscription.status === 'active' && nextPayment && now < nextPayment;
-
-        if (isTrialActive || isPaidActive) {
-          console.log('Core account subscription is active. Granting access to branch.');
-          initializePage();
-        } else {
-          console.log('Core account subscription has expired. Denying access to branch.');
-          document.body.innerHTML = `<div style="text-align: center; padding: 50px; font-family: sans-serif; background: #fff3cd; color: #856404; min-height: 100vh; display: flex; align-items: center; justify-content: center;"><div style="max-width: 500px;"><h1>Access Denied</h1><p>The subscription for your main account has expired.</p><p>Please contact your main branch administrator to renew the subscription and regain access.</p></div></div>`;
-        }
-        return;
-      }
-      
-      const now = new Date();
-      
-      // If no subscription exists, create a new trial
-      if (!subscription) {
-        console.log('No subscription found, creating new trial...');
-        const trialStart = new Date();
-        const trialEnd = new Date();
-        trialEnd.setDate(trialStart.getDate() + 14); // 14-day trial
-        
-        const updates = {};
-        updates[`users/${currentUser.uid}/subscription`] = {
-          status: 'trial',
-          trialStart: trialStart.toISOString(),
-          trialEnd: trialEnd.toISOString(),
-          createdAt: trialStart.toISOString()
-        };
-        
-        // Also update profile for backward compatibility
-        updates[`users/${currentUser.uid}/profile/subscription`] = updates[`users/${currentUser.uid}/subscription`];
-        
-        await update(ref(db), updates);
-        console.log('Created new 14-day trial');
-        
-        // Continue to the home page
-        initializePage();
-        return;
-      }
-      
-      // Check subscription status
-      const trialEnd = subscription.trialEnd ? new Date(subscription.trialEnd) : null;
-      const nextPayment = subscription.nextPayment ? new Date(subscription.nextPayment) : null;
-      
-      console.log('Subscription check:', {
-        status: subscription.status,
-        trialEnd,
-        nextPayment,
-        now,
-        isTrialActive: subscription.status === 'trial' && trialEnd && now < trialEnd,
-        isPaidActive: subscription.status === 'active' && nextPayment && now < nextPayment
-      });
-      
-      // If user has an active paid subscription, let them in
-      if (subscription.status === 'active' && nextPayment && now < nextPayment) {
-        console.log('User has active paid subscription, allowing access');
-        initializePage();
-        return;
-      }
-      
-      // If user is in trial period, let them in
-      if (subscription.status === 'trial' && trialEnd && now < trialEnd) {
-        console.log('User is in trial period, allowing access');
-        initializePage();
-        return;
-      }
-      
-      // If subscription has expired, update status
-      if (subscription.status === 'active' && nextPayment && now >= nextPayment) {
-        console.log('Paid subscription has expired, updating status');
-        const updates = {};
-        updates[`users/${currentUser.uid}/subscription/status`] = 'expired';
-        updates[`users/${currentUser.uid}/profile/subscription/status`] = 'expired';
-        await update(ref(db), updates);
-      }
-      
-      // If we get here, the user needs to subscribe
-      console.log('User needs to subscribe, redirecting to subscribe page');
-      if (subscription.status !== 'expired') {
-        console.log('Updating status to expired for user:', currentUser.uid);
-        await update(ref(db, `users/${currentUser.uid}/subscription/status`), 'expired');
-        await update(ref(db, `users/${currentUser.uid}/profile/subscription/status`), 'expired');
-      }
-      
-      // Store the current path to return after subscription
-      sessionStorage.setItem('returnAfterSubscribe', window.location.pathname);
-      window.location.href = 'subscribe.html';
-      return;
-      
-    } catch (error) {
-      console.error('Security check failed:', error);
-      window.location.href = 'login.html';
-    }
-  });
-
-  // Load user profile information - Enhanced version
-  async function loadUserProfile() {
-    console.log('Loading user profile...');
-    if (!currentUser) {
-      console.log('No current user');
-      return;
-    }
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, query, orderByChild, limitToLast, get, update, push, remove, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     
-    const nameElement = document.getElementById('ownerName');
-    if (!nameElement) {
-      console.log('Name element not found');
-      return;
-    }
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531"
+    };
     
-    try {
-      // Try to get user data from database
-      const userRef = ref(db, `users/${currentUser.uid}`);
-      const userSnap = await get(userRef);
-      
-      let userName = '';
-      
-      if (userSnap.exists()) {
-        const userData = userSnap.val();
-        console.log('User data from database:', userData);
-        
-        // Check if this is a branch user
-        if (userData.userType === 'branch') {
-          // For branch users, check profile or root for name
-          if (userData.profile) {
-            userName = userData.profile.name || userData.profile.ownerName || '';
-          } else {
-            userName = userData.name || userData.branchName || '';
-          }
-        } else {
-          // For main users, check profile for name
-          if (userData.profile) {
-            userName = userData.profile.name || userData.profile.ownerName || '';
-          }
-        }
-      }
-      
-      // Fallback to displayName or email
-      if (!userName) {
-        userName = currentUser.displayName || currentUser.email.split('@')[0] || 'User';
-      }
-      
-      // Update UI and localStorage
-      const firstName = userName.split(' ')[0];
-      nameElement.textContent = firstName;
-      localStorage.setItem('userName', userName);
-      
-      console.log('Displaying name:', firstName);
-      
-    } catch (error) {
-      console.error('Error in loadUserProfile:', error);
-      // Final fallback
-      const defaultName = currentUser.displayName || currentUser.email?.split('@')[0] || 'User';
-      nameElement.textContent = defaultName.split(' ')[0];
-      localStorage.setItem('userName', defaultName);
-    }
-  }
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+    let currentUser = null;
 
-  // Load business summary data (vehicles, bookings, payments)
-  async function loadBusinessSummary() {
-    if (!currentUser) return;
-    
-    try {
-      // Load vehicles count
-      const vehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
-      onValue(vehiclesRef, (snapshot) => {
-        const vehiclesCount = snapshot.exists() ? Object.keys(snapshot.val() || {}).length : 0;
-        const vehiclesElement = document.getElementById('vehiclesCount');
-        if (vehiclesElement) {
-          vehiclesElement.textContent = vehiclesCount;
-        }
-      });
-      
-      // Load active bookings count
-      const bookingsRef = query(ref(db, `users/${currentUser.uid}/bookings`), orderByChild('status'));
-      onValue(bookingsRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const bookings = snapshot.val();
-          const activeBookings = Object.values(bookings).filter(
-            booking => booking.status === 'active' || booking.status === 'upcoming'
-          ).length;
-          const bookingsElement = document.getElementById('bookingsCount');
-          if (bookingsElement) {
-            bookingsElement.textContent = activeBookings;
-          }
-        } else {
-          const bookingsElement = document.getElementById('bookingsCount');
-          if (bookingsElement) bookingsElement.textContent = '0';
-        }
-      });
-      
-      // Load total payments (sum of all payments)
-      // FIX: Query the root /payments collection and filter by userId to match where data is written.
-      const paymentsQuery = query(ref(db, 'payments'), orderByChild('userId'), equalTo(currentUser.uid));
-      onValue(paymentsQuery, (snapshot) => {
-        if (snapshot.exists()) {
-          const payments = snapshot.val();
-          const totalPayments = Object.values(payments).reduce(
-            (sum, payment) => sum + (parseFloat(payment.amount) || 0), 0
-          );
-          const paymentsElement = document.getElementById('totalPayments');
-          if (paymentsElement) {
-            paymentsElement.textContent = `₹${totalPayments.toLocaleString()}`;
-          }
-        } else {
-          const paymentsElement = document.getElementById('totalPayments');
-          if (paymentsElement) paymentsElement.textContent = '₹0';
-        }
-      });
-      
-      console.log('Business summary loaded');
-    } catch (error) {
-      console.error('Error loading business summary:', error);
-    }
-  }
-
-  // ---------- Auth gate ----------
-  onAuthStateChanged(auth, (user) => {
-    if (!user) {
-      window.location.href = 'login.html';
-      return;
-    }
-    
-    currentUser = user;
-    loadUserProfile();
-    loadBusinessSummary();
-    loadRecentActivity();
-    loadReminders();
-    
-    loadSubscriptionStatus();
-  });
-  
-  // Load and display subscription status
-  // Helper function to format date
-  function formatDate(date) {
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  }
-
-  async function loadSubscriptionStatus() {
-    console.log('Loading subscription status...');
-    const statusElement = document.getElementById('subscriptionStatusText');
-    const statusContainer = document.getElementById('subscriptionStatus');
-    
-    if (!currentUser) {
-      console.log('No current user');
-      statusElement.textContent = 'Not logged in';
-      return;
-    }
-    
-    try {
-      console.log('Fetching user data for:', currentUser.uid);
-      
-      // Get both the root user data and profile data
-      const [userSnapshot, profileSnapshot] = await Promise.all([
-        get(ref(db, `users/${currentUser.uid}`)),
-        get(ref(db, `users/${currentUser.uid}/profile`))
-      ]);
-      
-      // Hide subscription card for branch accounts
-      const userRoot = userSnapshot.val() || {};
-      const profileRoot = profileSnapshot.val() || {};
-      const accountTypeForUI = userRoot.accountType || profileRoot.accountType || null;
-      if (accountTypeForUI === 'branch') {
-        if (statusContainer) statusContainer.style.display = 'none';
-        console.log('Branch account detected: hiding subscription status UI');
-        return;
-      }
-
-      const now = new Date();
-      const userCreationDate = new Date(parseInt(currentUser.metadata.createdAt));
-      
-      // Debug: Log the raw data we got back
-      console.log('Raw user data:', userSnapshot.val());
-      console.log('Raw profile data:', profileSnapshot.val());
-      
-      // Check subscription in both possible locations
-      let subscription = userSnapshot.val()?.subscription || 
-                        profileSnapshot.val()?.subscription || 
-                        null;
-      
-      console.log('Combined subscription data:', subscription);
-      
-      // If no subscription data exists, create it
-      if (!subscription) {
-        console.log('No subscription data found, creating default trial...');
-        const trialEndDate = new Date(userCreationDate);
-        trialEndDate.setDate(trialEndDate.getDate() + 14);
-        
-        const newSubscription = {
-          status: 'trial',
-          trialStart: userCreationDate.toISOString(),
-          trialEnd: trialEndDate.toISOString(),
-          createdAt: userCreationDate.toISOString()
-        };
-        
-        // Save to both locations for consistency
-        const updates = {};
-        updates[`users/${currentUser.uid}/subscription`] = newSubscription;
-        updates[`users/${currentUser.uid}/profile/subscription`] = newSubscription;
-        
-        await update(ref(db), updates);
-        
-        // Use the new subscription data
-        subscription = newSubscription;
-      }
-      
-      console.log('Subscription data:', subscription);
-      
-      // If we have subscription data
-      const sub = subscription || {};
-      console.log('Subscription data:', {
-        status: sub.status,
-        trialStart: sub.trialStart,
-        trialEnd: sub.trialEnd,
-        nextPayment: sub.nextPayment,
-        fullData: sub
-      });
-      
-      // Set default values for subscription status
-      const status = sub.status || 'trial';
-      const trialEnd = sub.trialEnd ? new Date(sub.trialEnd) : new Date(userCreationDate.getTime() + (14 * 24 * 60 * 60 * 1000));
-      const nextPayment = sub.nextPayment ? new Date(sub.nextPayment) : null;
-      
-      console.log('Processed subscription:', {
-        status,
-        trialEnd: trialEnd.toISOString(),
-        nextPayment: nextPayment?.toISOString()
-      });
-      
-      // Check if trial is active
-      if (status === 'trial') {
-        const daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
-        console.log('Trial days left:', daysLeft);
-        
-        if (daysLeft > 0) {
-          // Trial is active
-          statusElement.textContent = `Free Trial (${daysLeft} days left)`;
-          statusElement.innerHTML += `<br><small>Started: ${formatDate(new Date(sub.trialStart || userCreationDate))} - Ends: ${formatDate(trialEnd)}</small>`;
-          statusContainer.style.backgroundColor = 'rgba(46, 139, 87, 0.1)';
-          statusContainer.style.borderColor = 'rgba(46, 139, 87, 0.3)';
-          statusElement.style.color = '#2E8B57';
-        } else {
-          // Trial has ended
-          statusElement.textContent = 'Free Trial Expired';
-          statusElement.innerHTML += `<br><small>Your trial ended on ${formatDate(trialEnd)}</small>`;
-          statusContainer.style.backgroundColor = 'rgba(255, 152, 0, 0.1)';
-          statusContainer.style.borderColor = 'rgba(255, 152, 0, 0.3)';
-          statusElement.style.color = '#FF9800';
-          
-          // Redirect to subscribe page if not already there
-          if (!window.location.href.includes('subscribe.html')) {
-            window.location.href = 'subscribe.html';
-          }
-        }
-      } 
-      // Check if subscription is active
-      else if (status === 'active') {
-        // If nextPayment is not set but we have an endDate, use that
-        const paymentDate = nextPayment || sub.endDate;
-        
-        if (!paymentDate) {
-          // If no payment date is set but status is active, just show active status
-          statusElement.textContent = 'Active Subscription';
-          statusElement.innerHTML += `<br><small>No payment due date set</small>`;
-          statusContainer.style.backgroundColor = 'rgba(46, 139, 87, 0.1)';
-          statusContainer.style.borderColor = 'rgba(46, 139, 87, 0.3)';
-          statusElement.style.color = '#2E8B57';
-          return;
-        }
-        
-        const paymentDateObj = new Date(paymentDate);
-        const daysLeft = Math.ceil((paymentDateObj - now) / (1000 * 60 * 60 * 24));
-        console.log('Paid subscription days left:', daysLeft, 'Next payment:', paymentDateObj);
-        
-        if (daysLeft > 0) {
-          statusElement.textContent = `Active Subscription (${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} remaining)`;
-          statusElement.innerHTML += `<br><small>Renews on: ${formatDate(paymentDateObj)}</small>`;
-          statusContainer.style.backgroundColor = 'rgba(46, 139, 87, 0.1)';
-          statusContainer.style.borderColor = 'rgba(46, 139, 87, 0.3)';
-          statusElement.style.color = '#2E8B57';
-        } else {
-          // If subscription has expired
-          statusElement.textContent = 'Subscription Expired';
-          statusElement.innerHTML += `<br><small>Ended on: ${formatDate(paymentDateObj)}</small>`;
-          statusContainer.style.backgroundColor = 'rgba(255, 152, 0, 0.1)';
-          statusContainer.style.borderColor = 'rgba(255, 152, 0, 0.3)';
-          statusElement.style.color = '#FF9800';
-          
-          // Redirect to subscribe page if not already there
-          if (!window.location.href.includes('subscribe.html')) {
-            window.location.href = 'subscribe.html';
-          }
-        }
-      } 
-      // Fallback for unknown status
-      else {
-        console.log('Unknown subscription status:', sub.status);
-        statusElement.textContent = 'Subscription status unknown';
-        statusContainer.style.backgroundColor = 'rgba(158, 158, 158, 0.1)';
-        statusContainer.style.borderColor = 'rgba(158, 158, 158, 0.3)';
-        statusElement.style.color = '#9E9E9E';
-      }
-    } catch (error) {
-      console.error('Error loading subscription status:', error);
-      document.getElementById('subscriptionStatusText').textContent = 'Error loading status';
-    }
-  }
-
-  // ---------- Dashboard loaders ----------
-  function loadDashboard() {
-    loadRecentActivity();
-    loadReminders();
-  }
-
-  // Helpers
-  function isSameMonth(ts, now = new Date()) {
-    if (!ts) return false;
-    const d = new Date(ts);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }
-  function toCurrency(n) {
-    const num = Number(n || 0);
-    return num.toLocaleString("en-IN");
-  }
-
-  // Business Summary (Monthly) across bookings + payments
-  
-
-  // Recent Activity (Latest 3 — vehicles/bookings/payments)
-  function loadRecentActivity() {
-    // Latest Vehicles (requires .indexOn ["addedAt"])
-    onValue(query(ref(db, `users/${currentUser.uid}/vehicles`), orderByChild("addedAt"), limitToLast(3)), (snap) => {
-      const data = snap.val() || {};
-      const arr = Object.values(data).sort((a,b) => (b.addedAt||0) - (a.addedAt||0));
-      const box = document.getElementById("latestVehicles");
-      box.innerHTML = "";
-      if (arr.length === 0) {
-        box.innerHTML = `<div class="activity-item"><span class="activity-sub">No vehicles yet</span></div>`;
-        return;
-      }
-      arr.forEach(v => {
-        const when = v.addedAt ? new Date(v.addedAt).toLocaleDateString('en-GB') : "";
-        box.insertAdjacentHTML("beforeend",
-          `<div class="activity-item"><span>${(v.vehicleNumber || v.vehicleNo || "—")}</span><span class="activity-sub">${when}</span></div>`);
-      });
-    });
-
-    // Latest Bookings (requires .indexOn ["createdAt"])
-    onValue(query(ref(db, `users/${currentUser.uid}/bookings`), orderByChild("createdAt"), limitToLast(3)), (snap) => {
-      const data = snap.val() || {};
-      const arr = Object.entries(data)
-        .map(([key, b]) => ({ key, ...b }))
-        .sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
-      const box = document.getElementById("latestBookings");
-      box.innerHTML = "";
-      if (arr.length === 0) {
-        box.innerHTML = `<div class="activity-item"><span class="activity-sub">No bookings yet</span></div>`;
-        return;
-      }
-      arr.forEach(b => {
-        const id = b.bookingId || b.key.slice(-4);
-        const when = b.createdAt ? new Date(b.createdAt).toLocaleDateString('en-GB') : "";
-        box.insertAdjacentHTML("beforeend",
-          `<div class="activity-item"><span>#${id}</span><span class="activity-sub">${when}</span></div>`);
-      });
-    });
-
-    // Recent Payments (requires .indexOn ["date"])
-    onValue(query(ref(db, `users/${currentUser.uid}/payments`), orderByChild("date"), limitToLast(3)), (snap) => {
-      const data = snap.val() || {};
-      // Support date being ms or ISO; normalize to ms for sort
-      const toMs = (d) => {
-        if (!d) return 0;
-        if (typeof d === "number") return d;
-        const t = Date.parse(d);
-        return isNaN(t) ? 0 : t;
-      };
-      const arr = Object.values(data).sort((a,b) => toMs(b.date) - toMs(a.date));
-      const box = document.getElementById("recentPayments");
-      box.innerHTML = "";
-      if (arr.length === 0) {
-        box.innerHTML = `<div class="activity-item"><span class="activity-sub">No payments yet</span></div>`;
-        return;
-      }
-      arr.forEach(p => {
-        const amt = toCurrency(p.amount || 0);
-        const when = p.date ? new Date(toMs(p.date)).toLocaleDateString('en-GB') : "";
-        box.insertAdjacentHTML("beforeend",
-          `<div class="activity-item"><span>₹${amt}</span><span class="activity-sub">${when}</span></div>`);
-      });
-    });
-  }
-
-  // Reminders
-  function loadReminders() {
-    console.log('Loading reminders...');
-    if (!currentUser) {
-      console.log('No user logged in, cannot load reminders');
-      return;
-    }
-
-    const alertsList = document.getElementById("alertsList");
-    if (!alertsList) {
-      console.error('Reminders container not found');
-      return;
-    }
-
-    // Show loading state
-    alertsList.innerHTML = `
-      <div style="text-align: center; padding: 20px;">
-        <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--primary);"></i>
-        <p>Loading reminders...</p>
-      </div>
-    `;
-
-    const remindersRef = ref(db, `users/${currentUser.uid}/reminders`);
-    onValue(remindersRef, async (snapshot) => {
-      try {
-        const reminders = snapshot.val() || {};
-        console.log('Reminders from DB:', reminders);
-        
-        const now = new Date();
-        const oneDayInMs = 24 * 60 * 60 * 1000;
-        const remindersToUpdate = [];
-        const activeReminders = [];
-        
-        // Process each reminder
-        Object.entries(reminders).forEach(([key, reminder]) => {
-          if (!reminder) return;
-          
-          // Parse due date
-          let due;
-          try {
-            due = new Date(reminder.dueDate);
-            if (isNaN(due.getTime())) {
-              console.warn('Invalid date for reminder:', reminder);
-              return;
-            }
-          } catch (e) {
-            console.error('Error parsing date:', e);
-            return;
-          }
-          
-          const timeDiff = due - now;
-          const daysLeft = Math.ceil(timeDiff / oneDayInMs);
-          const isExpired = timeDiff < 0 && Math.abs(timeDiff) > oneDayInMs;
-          
-          // Mark as expired if due date has passed more than 1 day ago
-          if (isExpired && reminder.status !== 'expired') {
-            console.log(`Marking reminder ${key} as expired`);
-            remindersToUpdate.push({ key, status: 'expired' });
-            return;
-          }
-          
-          // Only show active reminders (not expired and not marked as done)
-          if (!isExpired && reminder.status !== 'done') {
-            activeReminders.push({ 
-              ...reminder, 
-              key, 
-              daysLeft,
-              dueDate: due
-            });
-          }
-        });
-
-        // Update expired reminders in database
-        if (remindersToUpdate.length > 0) {
-          console.log(`Updating ${remindersToUpdate.length} expired reminders`);
-          const updates = {};
-          
-          remindersToUpdate.forEach(({ key, status }) => {
-            updates[`users/${currentUser.uid}/reminders/${key}/status`] = status;
-          });
-          
-          await update(ref(db), updates);
-        }
-
-        // Sort reminders by due date (nearest first)
-        activeReminders.sort((a, b) => a.dueDate - b.dueDate);
-
-        // Display active reminders
-        if (activeReminders.length === 0) {
-          alertsList.innerHTML = `
-            <div class="no-reminders">
-              <i class="fas fa-inbox" style="font-size: 1.8rem; opacity:.4;"></i>
-              <p>No upcoming reminders</p>
-            </div>
-          `;
-          return;
-        }
-
-        // Render active reminders
-        alertsList.innerHTML = "";
-        activeReminders.forEach(reminder => {
-          const isOverdue = reminder.daysLeft < 0;
-          const daysText = isOverdue 
-            ? 'Today' 
-            : reminder.daysLeft === 0 
-              ? 'Tomorrow' 
-              : `${reminder.daysLeft} day${reminder.daysLeft !== 1 ? 's' : ''} left`;
-              
-          const reminderEl = document.createElement('div');
-          reminderEl.className = 'reminder-item';
-          reminderEl.style.position = 'relative';
-          reminderEl.style.padding = '10px';
-          reminderEl.style.marginBottom = '10px';
-          reminderEl.style.border = '1px solid #eee';
-          reminderEl.style.borderRadius = '8px';
-          reminderEl.style.display = 'flex';
-          reminderEl.style.alignItems = 'center';
-          reminderEl.style.gap = '10px';
-          
-          reminderEl.innerHTML = `
-            <i class="fas fa-bell" style="color: ${isOverdue ? '#ff6b6b' : '#43B97F'}"></i>
-            <div style="flex: 1;">
-              <div style="font-weight: 500;">${(reminder.type || 'reminder').charAt(0).toUpperCase() + (reminder.type || 'reminder').slice(1)}</div>
-              <div style="font-size: 0.9em; color: #666;">${reminder.vehicleNumber || 'No vehicle'}</div>
-              <div style="font-size: 0.8em; color: #888; margin-top: 2px;">
-                <i class="far fa-calendar-alt"></i> 
-                ${reminder.dueDate.toLocaleDateString()} 
-                <span style="color: ${isOverdue ? '#ff6b6b' : '#666'};">(${daysText})</span>
-              </div>
-            </div>
-            <button class="delete-reminder" data-id="${reminder.key}" style="
-              background: none;
-              border: none;
-              color: #999;
-              cursor: pointer;
-              font-size: 1.1rem;
-              opacity: 0.7;
-              transition: opacity 0.2s;
-              padding: 5px;
-              border-radius: 4px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            ">
-              <i class="fas fa-times"></i>
-            </button>
-          `;
-          
-          // Add delete functionality
-          const deleteBtn = reminderEl.querySelector('.delete-reminder');
-          if (deleteBtn) {
-            deleteBtn.addEventListener('click', async (e) => {
-              e.stopPropagation();
-              if (confirm('Are you sure you want to delete this reminder?')) {
-                try {
-                  await remove(ref(db, `users/${currentUser.uid}/reminders/${reminder.key}`));
-                  console.log('Reminder deleted:', reminder.key);
-                } catch (error) {
-                  console.error('Error deleting reminder:', error);
-                  alert('Failed to delete reminder. Please try again.');
-                }
-              }
-            });
-          }
-          
-          alertsList.appendChild(reminderEl);
-        });
-        
-      } catch (error) {
-        console.error('Error processing reminders:', error);
-        alertsList.innerHTML = `
-          <div class="error-message" style="color: #ff6b6b; text-align: center; padding: 20px;">
-            <i class="fas fa-exclamation-triangle"></i>
-            <p>Failed to load reminders. Please refresh the page.</p>
-          </div>
-        `;
-      }
-    });
-  }
-
-  // Handle form submit (create reminder)
-  function setupReminderForm() {
-    const form = document.getElementById("reminderForm");
-    if (!form) return;
-    
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      
-      if (!currentUser) {
-        alert("Please log in to set reminders.");
-        return;
-      }
-      
-      const { push } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
-      const type = document.getElementById("reminderType").value;
-      const vehicleNumber = document.getElementById("vehicleNumber").value.trim();
-      const dueDate = document.getElementById("dueDate").value;
-      const description = document.getElementById("description").value.trim();
-
-      if (!type || !vehicleNumber || !dueDate) {
-        alert("Please fill in type, vehicle number and due date.");
-        return;
-      }
-      
-      const payload = {
-        type, 
-        vehicleNumber, 
-        dueDate, 
-        description,
-        createdAt: Date.now(), 
-        status: "active", 
-        createdBy: currentUser.uid
-      };
-      
-      try {
-        await push(ref(db, `users/${currentUser.uid}/reminders`), payload);
-        form.reset(); 
-        alert("Reminder set successfully!");
-      } catch (err) {
-        console.error("Error setting reminder:", err); 
-        alert("Error setting reminder. Please try again.");
-      }
-    });
-  }
-  
-  // Initialize the page
-  function initPage() {
-    setupReminderForm();
-    loadSubscriptionStatus();
-    loadReminders();
-    loadRecentActivity();
-  }
-  
-  // Run initialization when the page loads
-  document.addEventListener('DOMContentLoaded', () => {
+    // Main entry point
     onAuthStateChanged(auth, (user) => {
       if (user) {
         currentUser = user;
-        initPage();
+        initializePage(user);
       } else {
-        window.location.href = 'index.html';
+        window.location.href = 'login.html';
       }
     });
-  });
-  window.logout = function() { signOut(auth).then(()=> window.location.href="index.html").catch(e => alert("Logout error: "+e.message)); };
-  window.toggleMenu = function(){ const el=document.getElementById("navLinks"); if(el) el.classList.toggle("show"); };
 
-  // ---------- Notes ----------
-  // Vehicles are stored at: /users/{uid}/vehicles/{autoId}
-  // Bookings at: /users/{uid}/bookings/{autoId}
-  // Payments at: /users/{uid}/payments/{autoId}
-  // Reminders at: /users/{uid}/reminders/{autoId}
-  //
-  // Queries above use orderByChild on fields:
-  //   vehicles.addedAt, bookings.createdAt, payments.date
-  // Be sure your rules include the ".indexOn" shown at the top to remove warnings and speed up queries.
-</script>
+    // Initialize all dashboard components
+    function initializePage(user) {
+      loadUserProfile(user);
+      loadBusinessSummary(user);
+      loadRecentActivity(user);
+      loadSubscriptionStatus(user);
+      setupReminderForm(user);
+      loadReminders(user);
+    }
+
+    // Load user's name
+    async function loadUserProfile(user) {
+      const userRef = ref(db, `users/${user.uid}`);
+      const snapshot = await get(userRef);
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        const profile = userData.profile || {};
+        const name = profile.ownerName || userData.name || user.displayName || 'User';
+        document.getElementById('ownerName').textContent = name.split(' ')[0];
+      }
+    }
+
+    // Load vehicle count, booking count, and total payments
+    function loadBusinessSummary(user) {
+      // Vehicles
+      onValue(ref(db, `users/${user.uid}/vehicles`), (snap) => {
+        document.getElementById('vehiclesCount').textContent = snap.exists() ? Object.keys(snap.val()).length : 0;
+      });
+      // Active LR Reports
+      const lrQuery = query(ref(db, 'lrReports'), orderByChild('userId'), equalTo(user.uid));
+      onValue(lrQuery, (snap) => {
+        let activeCount = 0;
+        if (snap.exists()) {
+          snap.forEach(child => {
+            if (child.val().status === 'active') activeCount++;
+          });
+        }
+        document.getElementById('activeLRCount').textContent = activeCount;
+      });
+      // Payments
+      onValue(query(ref(db, 'payments'), orderByChild('userId'), equalTo(user.uid)), (snap) => {
+        let total = 0;
+        if (snap.exists()) {
+          snap.forEach(child => { total += parseFloat(child.val().amount || 0); });
+        }
+        document.getElementById('totalPayments').textContent = `₹${total.toLocaleString('en-IN')}`;
+      });
+    }
+
+    // Load latest entries for the activity section
+    function loadRecentActivity(user) {
+      const renderList = (elementId, data, primaryField, secondaryField) => {
+        const el = document.getElementById(elementId);
+        el.innerHTML = '';
+        if (Object.keys(data).length === 0) {
+          el.innerHTML = '<div class="activity-item"><div class="activity-sub">No data yet</div></div>';
+          return;
+        }
+        Object.values(data).forEach(item => {
+          el.innerHTML += `
+            <div class="activity-item">
+              <div>${item[primaryField] || 'N/A'}</div>
+              <div class="activity-sub">${item[secondaryField] || ''}</div>
+            </div>`;
+        });
+      };
+
+      onValue(query(ref(db, `users/${user.uid}/vehicles`), limitToLast(3)), (snap) => renderList('latestVehicles', snap.val() || {}, 'vehicleNumber', 'vehicleType'));
+      
+      // Fetch latest LRs instead of bookings
+      onValue(query(ref(db, 'lrReports'), orderByChild('userId'), equalTo(user.uid), limitToLast(3)), (snap) => {
+        const lrData = snap.val() || {};
+        // Custom rendering for LRs to show "From -> To"
+        const el = document.getElementById('latestLRs');
+        el.innerHTML = Object.values(lrData).map(lr => `
+          <div class="activity-item">
+            <div>#${lr.lrNumber || 'N/A'}</div>
+            <div class="activity-sub">${lr.fromLocation || ''} → ${lr.toLocation || ''}</div>
+          </div>`).join('');
+      });
+
+      onValue(query(ref(db, 'payments'), orderByChild('userId'), equalTo(user.uid), limitToLast(3)), (snap) => renderList('recentPayments', snap.val() || {}, 'amount', 'companyName'));
+    }
+
+    // Load and display subscription status
+    async function loadSubscriptionStatus(user) {
+      const statusEl = document.getElementById('subscriptionStatusText');
+      const subRef = ref(db, `users/${user.uid}/subscription`);
+      const snapshot = await get(subRef);
+      if (snapshot.exists()) {
+        const sub = snapshot.val();
+        if (sub.status === 'active' || sub.status === 'trial') {
+          const endDate = new Date(sub.endDate || sub.trialEnd);
+          const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+          statusEl.textContent = daysLeft > 0 ? `${sub.status === 'trial' ? 'Trial' : 'Active'} (${daysLeft} days left)` : 'Expired';
+        } else {
+          statusEl.textContent = 'Expired';
+        }
+      } else {
+        statusEl.textContent = 'No Subscription';
+      }
+    }
+
+    // Set up the reminder form submission
+    function setupReminderForm(user) {
+      const form = document.getElementById('reminderForm');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const reminder = {
+          type: form.reminderType.value,
+          vehicleNumber: form.vehicleNumber.value,
+          dueDate: form.dueDate.value,
+          notes: form.notes.value,
+          createdAt: Date.now(),
+          status: 'active'
+        };
+        push(ref(db, `users/${user.uid}/reminders`), reminder)
+          .then(() => {
+            alert('Reminder set successfully!');
+            form.reset();
+          })
+          .catch(err => alert('Error setting reminder: ' + err.message));
+      });
+    }
+
+    // Load and display upcoming reminders
+    function loadReminders(user) {
+      const remindersContainer = document.getElementById('upcomingReminders');
+      const remindersRef = query(ref(db, `users/${user.uid}/reminders`), orderByChild('dueDate'), limitToLast(5));
+      onValue(remindersRef, (snap) => {
+        remindersContainer.innerHTML = '';
+        if (!snap.exists()) {
+          remindersContainer.innerHTML = '<div class="no-reminders">No upcoming reminders</div>';
+          return;
+        }
+        snap.forEach(child => {
+          const r = child.val();
+          const dueDate = new Date(r.dueDate);
+          const daysLeft = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
+          const icon = {
+            service: 'fa-tools', payment: 'fa-credit-card', permit: 'fa-id-card',
+            insurance: 'fa-shield-alt', puc: 'fa-smog'
+          }[r.type] || 'fa-bell';
+
+          remindersContainer.innerHTML += `
+            <div class="reminder-item">
+              <i class="fas ${icon}"></i>
+              <div>
+                <strong>${r.vehicleNumber}: ${r.type}</strong>
+                <div class="activity-sub">Due in ${daysLeft} days (${dueDate.toLocaleDateString()})</div>
+              </div>
+            </div>`;
+        });
+      });
+    }
+
+    // Handle retry button click (in case of initial error)
+    document.getElementById('retryButton').addEventListener('click', () => {
+      window.location.reload();
+    });
+
+  </script>
 </body>
 </html>
