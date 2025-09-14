@@ -359,7 +359,23 @@
     `;
     document.head.appendChild(style);
     
-    document.addEventListener('DOMContentLoaded', async () => {
+    onAuthStateChanged(auth, (user) => {
+      // If no user is logged in, redirect to the login page.
+      if (!user) {
+        window.location.href = `login.html?redirect=subscribe.html`;
+        return;
+      }
+
+      if (!user) {
+        // If no user is logged in, redirect to the login page.
+        // Pass a parameter to return to this page after login.
+        window.location.href = `login.html?redirect=subscribe.html`;
+        return;
+      }
+      // User is authenticated, proceed with page initialization.
+      initializePage(user);
+    });
+    async function initializePage(user) {
       // Get all elements
       const paymentForm = document.getElementById('paymentForm');
       const pendingApproval = document.getElementById('pendingApproval');
@@ -449,7 +465,6 @@
       // When user clicks subscribe button
       subscribeBtn.addEventListener('click', async () => {
         try {
-          const user = auth.currentUser;
           if (!user) {
             throw new Error('Please log in to subscribe');
           }
@@ -523,7 +538,6 @@
       // When user clicks verify payment button
       verifyPaymentBtn.addEventListener('click', async () => {
         try {
-          const user = auth.currentUser;
           if (!user) {
             throw new Error('User not authenticated. Please log in again.');
           }
@@ -658,8 +672,18 @@
             </div>
           `;
 
+          // Fetch user data to determine account type for redirect
+          const userProfileRef = ref(db, `users/${user.uid}`);
+          const userProfileSnap = await get(userProfileRef);
+          let destination = 'home.html'; // Default destination
+          if (userProfileSnap.exists()) {
+            const userData = userProfileSnap.val();
+            if (userData.accountType === 'core') {
+              destination = 'branch-selection.html';
+            }
+          }
           setTimeout(() => {
-            window.location.href = 'home.html';
+            window.location.href = destination;
           }, 2000);
           
         } catch (error) {
@@ -816,10 +840,20 @@
               // Clear payment ref from session storage
               sessionStorage.removeItem('currentPaymentRef');
               
-              // Force reload of auth state and redirect to home page
+              // Fetch user data to determine account type for redirect
+              const userProfileRef = ref(db, `users/${auth.currentUser.uid}`);
+              const userProfileSnap = await get(userProfileRef);
+              let destination = 'home.html'; // Default destination
+              if (userProfileSnap.exists()) {
+                const userData = userProfileSnap.val();
+                if (userData.accountType === 'core') {
+                  destination = 'branch-selection.html';
+                }
+              }
+              // Force reload of auth state and redirect
               setTimeout(() => {
                 // Force a hard redirect to ensure all state is reset
-                window.location.href = 'home.html?t=' + new Date().getTime();
+                window.location.href = destination + '?t=' + new Date().getTime();
               }, 2000);
               
               return;
@@ -859,7 +893,6 @@
       // When user clicks verify payment button
       verifyPaymentBtn.addEventListener('click', async () => {
         try {
-          const user = auth.currentUser;
           if (!user) {
             throw new Error('User not authenticated. Please log in again.');
           }
@@ -877,8 +910,8 @@
         qrContainer.style.display = 'none';
         subscribeBtn.style.display = 'block';
         paymentStatus.style.display = 'none';
-      });
-    });
+      });    
+    }
   </script>
 </body>
 </html>
