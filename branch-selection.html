@@ -592,12 +592,11 @@
                 email.className = 'branch-email';
                 email.textContent = acc.email;
                 item.appendChild(title);
-                item.appendChild(email);
-                const link = document.createElement('a');
-                link.className = 'btn';
-                link.href = `login.html?email=${encodeURIComponent(acc.email)}&branch=${encodeURIComponent(acc.branchKey || key)}`;
-                link.textContent = 'Login';
-                item.appendChild(link);
+                item.appendChild(email);                
+                item.dataset.branchKey = acc.branchKey || key;
+                item.dataset.branchEmail = acc.email;
+                item.style.cursor = 'pointer';
+                item.onclick = () => loginAsBranch(item.dataset.branchKey, item.dataset.branchEmail);
                 branchListEl.appendChild(item);
               }
             });
@@ -644,6 +643,22 @@
         }
       } catch (e) {
         branchListEl.textContent = 'Failed to load branches';
+      }
+    }
+
+    // New function to handle the branch login flow
+    async function loginAsBranch(branchKey, branchEmail) {
+      if (!confirm(`You are about to log in as the branch: ${branchEmail}. Continue?`)) {
+        return;
+      }
+      try {
+        // Store the target branch and core user's credentials for the login page to use
+        localStorage.setItem('selectedBranch', branchKey);
+        sessionStorage.setItem('targetBranchEmail', branchEmail);
+        // Redirect to login page which will handle the auto-login
+        window.location.href = `login.html?autologin=branch`;
+      } catch (e) {
+        alert('An error occurred while preparing to switch branches.');
       }
     }
 
@@ -750,22 +765,6 @@
                 <label for="b_phone">Phone</label>
                 <input id="b_phone" class="form-control" placeholder="9876543210" />
               </div>
-              <div class="form-group">
-                <label for="b_addr">Address</label>
-                <input id="b_addr" class="form-control" placeholder="Address line" />
-              </div>
-              <div class="form-group">
-                <label for="b_city">City</label>
-                <input id="b_city" class="form-control" placeholder="City" />
-              </div>
-              <div class="form-group">
-                <label for="b_pin">Pincode</label>
-                <input id="b_pin" class="form-control" placeholder="110001" />
-              </div>
-              <div class="form-group">
-                <label for="b_gst">GSTIN (optional)</label>
-                <input id="b_gst" class="form-control" placeholder="22AAAAA0000A1Z5" />
-              </div>
               <!-- Branch type selection removed; new branches are sub by default -->
             </div>
             <div class="modal-actions">
@@ -799,13 +798,6 @@
             alert('Password must be at least 6 characters');
             return;
           }
-          const ownerName = modal.querySelector('#b_oname').value.trim();
-          const phoneNumber = modal.querySelector('#b_phone').value.trim();
-          const address = modal.querySelector('#b_addr').value.trim();
-          const city = modal.querySelector('#b_city').value.trim();
-          const pincode = modal.querySelector('#b_pin').value.trim();
-          const gstin = (modal.querySelector('#b_gst').value || '').trim().toUpperCase();
-          if (!name || !email || !password || !transportName || !ownerName || !phoneNumber || !address || !city || !pincode) { alert('Please fill all required fields'); return; }
           // Create branch auth using a secondary app so owner session is unaffected
           let branchApp;
           try {
