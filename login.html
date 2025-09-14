@@ -337,22 +337,25 @@
           const userData = snapshot.val();
           console.log('User data from database:', userData);
           
-          // Debug: Log role information
-          console.log('Full user data:', JSON.stringify(userData, null, 2));
-          
           // Check for admin role in various possible locations
           const isAdmin = userData.role === 'admin' || 
                          (userData.profile && userData.profile.role === 'admin') ||
                          (userData.profile && userData.profile.isAdmin === true);
           
-          console.log('Admin check result:', { 
-            userRole: userData.role,
-            profileRole: userData.profile?.role,
-            isAdmin: isAdmin 
-          });
+          // **FIX**: Check for admin role *before* subscription check.
+          if (isAdmin) {
+            console.log('Admin user detected, redirecting to admin-payments.html');
+            // Ensure the role is properly set in the database
+            await update(ref(db, `users/${user.uid}`), { 
+              role: 'admin',
+              lastLogin: new Date().toISOString()
+            });
+            window.location.href = 'admin-payments.html';
+            return; // Ensure we don't continue execution
+          }
           
           // Check subscription status for non-admin users
-          if (!isAdmin) {
+          // if (!isAdmin) { // This check is now redundant
             const accountType = userData.accountType || 'user';
             const coreAccountId = (accountType === 'branch') ? userData.coreAccountId : user.uid;
             
@@ -427,20 +430,8 @@
                 showSubscriptionExpiredCard();
                 return;
               }
-            }
-          }
-          
-          // Redirect based on role
-          if (isAdmin) {
-            console.log('Admin user detected, redirecting to admin-payments.html');
-            // Ensure the role is properly set in the database
-            await update(ref(db, `users/${user.uid}`), { 
-              role: 'admin',
-              lastLogin: new Date().toISOString()
-            });
-            window.location.href = 'admin-payments.html';
-            return; // Ensure we don't continue execution
-          } else {
+            } // End of subscription check block
+          // } else { // This 'else' is now part of the main flow for non-admins
             // Ensure profile is completed before proceeding
             try {
               const profileSnap = await get(ref(db, `users/${user.uid}/profile`));
@@ -466,7 +457,7 @@
             } catch (_) {}
             console.log('Regular user, redirecting to branch-selection.html');
             window.location.href = 'branch-selection.html';
-          }
+          // }
         } else {
           // If no profile data exists, redirect to home
           window.location.href = 'home.html';
