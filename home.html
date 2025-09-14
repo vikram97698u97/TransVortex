@@ -543,20 +543,37 @@
 
     // Load and display subscription status
     async function loadSubscriptionStatus(user) {
-      const statusEl = document.getElementById('subscriptionStatusText');
-      const subRef = ref(db, `users/${user.uid}/subscription`);
-      const snapshot = await get(subRef);
-      if (snapshot.exists()) {
-        const sub = snapshot.val();
-        if (sub.status === 'active' || sub.status === 'trial') {
+      try {
+        const statusEl = document.getElementById('subscriptionStatusText');
+        
+        // 1. Get the current user's data to find their core account ID
+        const userProfileRef = ref(db, `users/${user.uid}`);
+        const userProfileSnap = await get(userProfileRef);
+
+        if (!userProfileSnap.exists()) {
+            statusEl.textContent = 'User profile not found.';
+            return;
+        }
+
+        const userData = userProfileSnap.val();
+        // Determine the correct ID to check for the subscription
+        const coreAccountId = (userData.accountType === 'branch') ? userData.coreAccountId : user.uid;
+
+        // 2. Fetch the subscription using the core account ID
+        const subRef = ref(db, `users/${coreAccountId}/subscription`);
+        const snapshot = await get(subRef);
+
+        if (snapshot.exists()) {
+          const sub = snapshot.val();
           const endDate = new Date(sub.endDate || sub.trialEnd);
           const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
           statusEl.textContent = daysLeft > 0 ? `${sub.status === 'trial' ? 'Trial' : 'Active'} (${daysLeft} days left)` : 'Expired';
         } else {
-          statusEl.textContent = 'Expired';
+          statusEl.textContent = 'No Subscription';
         }
-      } else {
-        statusEl.textContent = 'No Subscription';
+      } catch (error) {
+        console.error("Error loading subscription status:", error);
+        document.getElementById('subscriptionStatusText').textContent = 'Error';
       }
     }
 
