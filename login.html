@@ -162,6 +162,27 @@
       text-align: right;
     }
     .forgot-password:hover { text-decoration: underline; }
+
+    /* Subscription Expired Card */
+    .expired-card {
+      text-align: center;
+      padding: 20px;
+    }
+    .expired-card h2 {
+      color: var(--pink);
+      margin-bottom: 15px;
+    }
+    .expired-card p {
+      color: var(--trans-white);
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+    .expired-card .btn {
+      background: var(--white);
+      color: var(--pink);
+      box-shadow: none;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -234,6 +255,20 @@
       // Remove the signup success parameter from URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+    // Function to show the subscription expired message for branch users
+    function showSubscriptionExpiredCard() {
+      const authContainer = document.querySelector('.auth-container');
+      authContainer.innerHTML = `
+        <div class="expired-card">
+          <div class="top-icon"><i class="fas fa-exclamation-triangle"></i></div>
+          <h2>Subscription Expired</h2>
+          <p>Your subscription is over. To get access to your dashboard, please contact your transport owner to subscribe right now.</p>
+          <button class="btn" onclick="window.location.href='index.html'">OK</button>
+        </div>
+      `;
+    }
+
 
     // Function to check if a date is valid
     function isValidDate(d) {
@@ -318,139 +353,79 @@
           
           // Check subscription status for non-admin users
           if (!isAdmin) {
-            const now = new Date();
-            let subscription = userData.subscription || (userData.profile?.subscription || null);
+            const accountType = userData.accountType || 'user';
+            const coreAccountId = (accountType === 'branch') ? userData.coreAccountId : user.uid;
             
-            // If no subscription exists, create a new 14-day trial
-            if (!subscription) {
-              // Check account type and redirect accordingly
-              const accountType = userData.accountType || 'user';
-              
-              if (accountType === 'core') {
-                // If no main branch yet, guide to main-branch creation first
-                const hasMain = (snapshot.child('branches').child('main').exists()) ||
-                                 (snapshot.child('branchAccounts').child('main').exists()) ||
-                                 (userData.hasMainBranch === true);
-                window.location.href = hasMain ? 'branch-selection.html' : 'create-branch-account.html';
-                return;
-              } else if (accountType === 'branch') {
-                // Get branch type and core account ID
-                const branchType = userData.branchType || 'sub';
-                const coreAccountId = userData.coreAccountId;
-                
-                if (!coreAccountId) {
-                  throw new Error('Invalid branch account: missing core account reference');
-                }
-                
-                // Store branch info in session
-                sessionStorage.setItem('currentBranch', JSON.stringify({
-                  id: user.uid,
-                  name: userData.name || 'Branch',
-                  type: branchType,
-                  coreAccountId: coreAccountId
-                }));
-                
-                // Redirect to dashboard
-                window.location.href = 'home.html';
-                return;
-              }
+            if (!coreAccountId) {
+              throw new Error('Account configuration error: Core account link is missing.');
+            }
 
-              // Handle regular user accounts with subscription
-              let subscription = userData.subscription || (userData.profile?.subscription || null);
+            // Fetch the core subscription data from both possible locations
+            const [coreSubSnap, coreProfSubSnap] = await Promise.all([
+              get(ref(db, `users/${coreAccountId}/subscription`)),
+              get(ref(db, `users/${coreAccountId}/profile/subscription`))
+            ]);
+            
+            let subscription = coreSubSnap.val() || coreProfSubSnap.val();
+            const now = new Date();
+
+            // If the core account has no subscription record, create a new trial.
+            if (!subscription) {
+              console.log('No subscription found on login, creating new trial...');
+              const trialStart = new Date();
+              const trialEnd = new Date();
+              trialEnd.setDate(trialStart.getDate() + 14); // 14-day trial
               
-              // If no subscription exists, create a new 14-day trial
-              if (!subscription) {
-                const trialEnd = new Date();
-                trialEnd.setDate(trialEnd.getDate() + 14);
-                const subscriptionData = {
-                  plan: 'trial',
-                  status: 'active',
-                  startDate: new Date().toISOString(),
-                  endDate: trialEnd.toISOString(),
-                  trial: true
-                };
-                
-                // Save subscription to database
-                await update(ref(db, `users/${user.uid}/subscription`), subscriptionData);
-                
-                // Also update profile with subscription info
-                await update(ref(db, `users/${user.uid}/profile`), {
-                  subscription: subscriptionData,
-                  lastLogin: now.toISOString()
-                });
-                
-                console.log('Created new 14-day trial');
-                subscription = subscriptionData;
+              const newSubscriptionData = {
+                status: 'trial',
+                trialStart: trialStart.toISOString(),
+                trialEnd: trialEnd.toISOString(),
+                createdAt: trialStart.toISOString()
+              };
+              
+              // Save to both root and profile for consistency
+              const updates = {};
+              updates[`users/${coreAccountId}/subscription`] = newSubscriptionData;
+              updates[`users/${coreAccountId}/profile/subscription`] = newSubscriptionData;
+              
+              await update(ref(db), updates);
+              console.log('Created new 14-day trial for core account.');
+              
+              // Use the newly created subscription for the check
+              subscription = newSubscriptionData;
+
+              // **FIX**: For a new core user, their trial is now active. Redirect them immediately.
+              if (accountType === 'core') {
+                window.location.href = 'branch-selection.html';
+                return;
               }
             }
             
-            // Check if subscription is active or in trial
+            // Check if the core subscription is active or in trial
             if (subscription) {
-              const subscriptionEnd = subscription.endDate || subscription.trialEnd;
-              const endDate = new Date(subscriptionEnd);
+              const endDate = subscription.endDate ? new Date(subscription.endDate) : null;
+              const trialEnd = subscription.trialEnd ? new Date(subscription.trialEnd) : null;
               
-              // Check if subscription is active (paid)
-              if (subscription.status === 'active' && subscriptionEnd) {
-                if (isValidDate(endDate) && endDate > now) {
-                  // Subscription is active and not expired
-                  console.log('Active subscription found, expires on:', endDate);
-                  // Update last login
-                  await update(ref(db, `users/${user.uid}/profile`), {
-                    lastLogin: now.toISOString()
-                  });
-                  // Redirect based on account type
-                  const accountTypeActive = userData.accountType || 'user';
-                  if (accountTypeActive === 'core') {
-                    window.location.href = 'branch-selection.html';
-                  } else if (accountTypeActive === 'branch') {
-                    window.location.href = 'home.html';
-                  } else {
-                    window.location.href = 'home.html';
-                  }
-                  return;
-                } else if (isValidDate(endDate) && endDate <= now) {
-                  // Subscription has expired
-                  console.log('Subscription has expired');
-                  subscription.status = 'expired';
-                  subscription.isActive = false;
-                }
-              }
+              const isPaidActive = subscription.status === 'active' && endDate && endDate > now;
+              const isTrialActive = subscription.status === 'trial' && trialEnd && trialEnd > now;
               
-              // Handle trial or expired subscription
-              if (subscription.status === 'trial' || subscription.status === 'expired') {
-                const trialEnd = new Date(subscription.trialEnd || subscription.endDate);
+              if (isPaidActive || isTrialActive) {
+                // Subscription is active, grant access
+                console.log('Active subscription or trial found. Granting access.');
+                await update(ref(db, `users/${user.uid}/profile`), { lastLogin: now.toISOString() });
                 
-                if (isValidDate(trialEnd) && trialEnd < now) {
-                  // Trial/Subscription has ended
-                  const updates = {
-                    status: 'expired',
-                    isActive: false,
-                    lastUpdated: now.toISOString()
-                  };
-                  
-                  // Update both root and profile subscription
-                  await update(ref(db, `users/${user.uid}/subscription`), updates);
-                  await update(ref(db, `users/${user.uid}/profile/subscription`), updates);
-                  
-                  // Redirect to subscription page
-                  showError('Your subscription has expired. Please renew to continue.');
-                  if (loginButton) {
-                    loginButton.disabled = false;
-                    loginButton.innerHTML = originalButtonHTML || '<i class="fas fa-sign-in-alt"></i> Sign In';
-                  }
-                  await auth.signOut();
+                const destination = accountType === 'core' ? 'branch-selection.html' : 'home.html';
+                window.location.href = destination;
+                return;
+              } else {
+                // Core subscription is expired. Redirect core user to subscribe.
+                if (accountType === 'core') {
                   window.location.href = 'subscribe.html';
                   return;
-                } else if (isValidDate(trialEnd)) {
-                  // Calculate remaining trial days
-                  const daysLeft = daysBetween(now, trialEnd);
-                  console.log(`Trial ends in ${daysLeft} days`);
-                  
-                  // Update last login time
-                  await update(ref(db, `users/${user.uid}/profile`), {
-                    lastLogin: now.toISOString()
-                  });
                 }
+                // For branch users, show the expired card.
+                showSubscriptionExpiredCard();
+                return;
               }
             }
           }
@@ -482,6 +457,7 @@
               const params = new URLSearchParams(window.location.search);
               const branchParam = params.get('branch');
               if (branchParam) {
+                if (branchParam === 'main') localStorage.setItem('selectedBranch', 'main');
                 try { localStorage.setItem('selectedBranch', branchParam); } catch (_) {}
                 // For non-main branches, go directly to home.html (limited navbar enforces restrictions)
                 window.location.href = 'home.html';
@@ -591,6 +567,25 @@
           emailField.value = prefill;
         }
         emailField.focus();
+      }
+    });
+
+    // Auto-login for branch switching
+    document.addEventListener('DOMContentLoaded', function() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('autologin') === 'branch') {
+        const targetEmail = sessionStorage.getItem('targetBranchEmail');
+        const corePassword = sessionStorage.getItem('corePassword'); // Assumes core password was stored on initial login
+
+        if (targetEmail && corePassword) {
+          const emailField = document.getElementById('login-email');
+          const passwordField = document.getElementById('login-password');
+          emailField.value = targetEmail;
+          passwordField.value = corePassword;
+          
+          // Automatically trigger the login
+          window.login();
+        }
       }
     });
   </script>
