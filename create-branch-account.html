@@ -261,50 +261,26 @@
         });
 
         // Write profile for branch auth user (used by invoice and other pages when logged into branch account)
-        const now = new Date();
         const dbBranch = getDatabase2(branchApp);
         await set(ref(dbBranch, `users/${branchUser.uid}`), {
+          accountType: 'branch',
+          coreAccountId: owner.uid,
+          email: email,
           profile: {
             transportName,
             ownerName,
             phoneNumber,
             email,
             role: 'user',
-            createdAt: now.toISOString()
+            createdAt: new Date().toISOString()
           }
         });
 
-        // After creating main branch: switch session to branch user and go to dashboard
-        try { localStorage.setItem('selectedBranch', 'main'); } catch (_) {}
-        try {
-          // Sign out owner from primary app, then sign in as branch in primary app
-          suppressAuthRedirect = true;
-          await signOut(ownerAuth);
-          await signInWithEmailAndPassword(ownerAuth, email, password);
-          // Wait for auth to confirm signed-in state
-          const signedInUser = await new Promise((resolve, reject) => {
-            const unsubscribe = onAuthStateChanged(ownerAuth, (u) => {
-              if (u) { unsubscribe(); resolve(u); }
-            }, (err) => { reject(err); });
-            // Safety timeout
-            setTimeout(() => { try { unsubscribe(); } catch (_) {}; resolve(ownerAuth.currentUser); }, 1500);
-          });
-          suppressAuthRedirect = false;
-          try {
-            sessionStorage.setItem('currentBranch', JSON.stringify({
-              id: signedInUser?.uid,
-              name: 'Main Branch',
-              type: 'main',
-              coreAccountId: owner.uid
-            }));
-          } catch (_) {}
-          window.location.href = 'home.html';
-          return;
-        } catch (switchErr) {
-          suppressAuthRedirect = false;
-          console.warn('Auto switch to branch failed, falling back to login redirect', switchErr);
-          window.location.href = `login.html?email=${encodeURIComponent(email)}&branch=main`;
-        }
+        // **FIX**: Instead of complex auto-login, redirect to the login page with the new email pre-filled.
+        // This is a safer and more standard user flow.
+        alert('Main Branch created successfully! Please log in with your new branch credentials.');
+        window.location.href = `login.html?email=${encodeURIComponent(email)}&branch=main`;
+
       } catch (e) {
         console.error(e);
         alert(e.message || 'Failed to create branch account');
