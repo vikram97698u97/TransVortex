@@ -472,10 +472,12 @@
       const userRef = ref(db, `users/${user.uid}`);
       const snapshot = await get(userRef);
       if (snapshot.exists()) {
-        const userData = snapshot.val();
-        const profile = userData.profile || {};
-        const name = profile.ownerName || userData.name || user.displayName || 'User';
-        document.getElementById('ownerName').textContent = name.split(' ')[0];
+        const userData = snapshot.val() || {};
+        // **FIX**: Consistently read from the 'profile' object.
+        const profileData = userData.profile || {};
+        // Use ownerName from profile, fallback to top-level name, then auth display name.
+        const name = profileData.ownerName || userData.name || user.displayName || 'User';
+        document.getElementById('ownerName').textContent = name.split(' ')[0]; // Show first name
       }
     }
 
