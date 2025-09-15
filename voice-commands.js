@@ -32,12 +32,16 @@ function initVoiceRecognition() {
         };
 
         recognition.onresult = function(event) {
-            // Loop through results to get the final transcript
-            let final_transcript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) final_transcript += event.results[i][0].transcript;
+            // **FIX**: Correctly capture the final transcript from the event.
+            let final_transcript = "";
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    final_transcript += event.results[i][0].transcript;
+                }
             }
-            if (final_transcript) processVoiceCommand(final_transcript);
+            if (final_transcript.trim()) {
+                processVoiceCommand(final_transcript.trim());
+            }
         };
 
         recognition.onerror = function(event) {
@@ -63,13 +67,12 @@ function initVoiceRecognition() {
         };
 
         recognition.onend = function() {
-            // Only reset if the user intentionally stopped it.
-            // Otherwise, if it stops due to silence, it will be ready for the next click.
-            if (recognitionStoppedIntentionally) {
-                resetVoiceButton();
-            } else if (isListening) {
-                // If it stops unexpectedly (e.g., network issue), reset the state.
-                resetVoiceButton();
+            // **FIX**: Only reset the button if the user intentionally stopped it.
+            // If recognition stops due to silence, it will automatically restart on the next sound,
+            // providing a more continuous experience without being aggressive.
+            // The `isListening` state remains true.
+            if (recognitionStoppedIntentionally || !isListening) {
+              resetVoiceButton();
             }
         };
     } else {
