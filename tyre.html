@@ -561,7 +561,6 @@
 <body>
   <script src="navbar-loader.js"></script>
   <script src="table-pager.js"></script>
-  <script src="voice-commands.js" defer></script>
 
   <div class="container">
     <h1>Tyre Management System</h1>
@@ -746,6 +745,24 @@
       }
       currentUser = user;
       window.currentUser = user; // Update the global reference
+
+      // **NEW**: Handle voice command inputs from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('vehicleNumber')) {
+        document.getElementById('vehicleNumber').value = urlParams.get('vehicleNumber') || '';
+        
+        // Pre-fill the first tyre's details
+        const firstTyreContainer = document.querySelector('.tyre-container');
+        if (firstTyreContainer) {
+          if (urlParams.has('tyreNumber')) firstTyreContainer.querySelector('.tyre-number').value = urlParams.get('tyreNumber');
+          if (urlParams.has('brand')) firstTyreContainer.querySelector('.tyre-brand').value = urlParams.get('brand');
+          if (urlParams.has('position')) firstTyreContainer.querySelector('.tyre-position').value = urlParams.get('position');
+          if (urlParams.has('cost')) firstTyreContainer.querySelector('.tyre-cost').value = urlParams.get('cost');
+        }
+
+        window.history.replaceState({}, document.title, window.location.pathname); // Clean URL
+      }
+
       loadVehicles();
     });
 
@@ -2018,3 +2035,4 @@
 </script>
 </body>
 </html>
+
