@@ -349,6 +349,45 @@
       display: none;
       max-width: 320px;
     }
+
+    /* Voice Command Button */
+    .voice-command-btn {
+      background: #ffc107;
+      color: #212529;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: all 0.2s ease;
+      margin-left: 10px; /* Space from logout button */
+    }
+    .voice-command-btn:hover {
+      transform: scale(1.1);
+    }
+    .voice-command-btn.listening {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* Add to existing voice-command-btn styles */
+    .voice-command-btn.listening i {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    /* Toast notification for voice feedback */
+    #voiceFeedbackToast { position: fixed; bottom: 70px; right: 20px; background: #2E8B57; color: white; padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; display: none; max-width: 300px; }
   </style>
 </head>
 <body>
@@ -426,6 +465,10 @@
         <span class="logout-icon"><i class="fas fa-sign-out-alt"></i></span>
         <span class="logout-text">Logout</span>
       </button>
+      <!-- Voice Command Button -->
+      <button class="voice-command-btn" id="voiceCommandBtn" title="Use Voice Command">
+        <i class="fas fa-microphone"></i>
+      </button>
     </div>
   </div>
 
@@ -439,7 +482,7 @@
 
     const firebaseConfig = {
       apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com", // Your Auth Domain
       databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "transport-dashboard-ad69a",
       storageBucket: "transport-dashboard-ad69a.appspot.com",
