@@ -96,9 +96,10 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
@@ -111,32 +112,29 @@
       measurementId: "G-7F9R7HJYDH"
     };
 
-    const app = initializeApp(firebaseConfig);
+    // Safely initialize Firebase
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
+    const functions = getFunctions(app, 'asia-south1');
 
     // === Gemini API Function ===
     async function getAIInsights(summary, language) {
-      const API_KEY = "AIzaSyDjv2Wr5dW8hWLRAh_GjDcTKzgBdhxsOQc"; // Your Gemini API key
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+      // **SECURITY FIX**: API Key is removed. We call our secure Cloud Function instead.
       const langName = language === 'hi-IN' ? 'Hindi' : 'English';
-      const body = {
-        contents: [{
-          parts: [{ text: `Analyze this logistics data and give 5 smart, actionable insights in ${langName}:\n\n${summary}` }]
-        }]
-      };
+      const prompt = `Analyze this logistics data and give 5 smart, actionable insights in ${langName}:\n\n${summary}`;
 
       try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || "No insights generated.";
+        // Call the Cloud Function
+        const getGeminiResponse = httpsCallable(functions, 'getGeminiResponse');
+        const result = await getGeminiResponse({ prompt: prompt });
+        return result.data.text || "No insights generated.";
       } catch (error) {
-        console.error("AI Error:", error);
-        return "Error fetching AI insights.";
+        console.error("Error calling getGeminiResponse Cloud Function:", error);
+        if (error.code === 'unauthenticated') {
+          return "Authentication error. Please log in again.";
+        }
+        return "Error fetching AI insights from the server.";
       }
     }
 
