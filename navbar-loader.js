@@ -1,3 +1,4 @@
+
 // Navbar Loader: injects the new vertical sidebar from navbar.html into any page
 // - Extracts styles, toggle button, and sidebar markup
 // - Wraps existing page content in .main-content if missing
@@ -143,6 +144,7 @@
         clearTimeout(window.__branchToastTimer);
         window.__branchToastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
       };
+      
       // Provide a global logout handler (works with Firebase compat if present)
       if (typeof window.logout !== 'function') {
         window.logout = function () {
@@ -184,6 +186,19 @@
         }
       };
       ensureFlex();
+
+      // **FIX**: Manually find, clone, and append scripts from the navbar's body
+      // to ensure they are executed correctly after the navbar is injected.
+      const scripts = doc.body.querySelectorAll('script');
+      scripts.forEach(script => {
+        if (script.src.includes('navbar-loader.js')) return; // Don't re-inject self
+
+        const newScript = document.createElement('script');
+        newScript.src = script.src;
+        if (script.type === 'module') newScript.type = 'module';
+        if (script.defer) newScript.defer = true;
+        document.body.appendChild(newScript);
+      });
     } catch (e) {
       // Fail silently to not block page content
       console.warn('Navbar loader failed:', e);
