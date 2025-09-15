@@ -20,8 +20,6 @@ function initVoiceRecognition() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         recognition.continuous = true; // Listen continuously
-        recognition.interimResults = false;
-        recognition.lang = 'en-US'; // Default language
 
         recognition.onstart = function() {
             isListening = true;
@@ -100,6 +98,11 @@ function initVoiceRecognition() {
             // Small delay before starting recognition to allow greeting to play
             setTimeout(() => {
                 try {
+                    // **FIX**: Set language based on dropdown before starting
+                    const langSelect = document.getElementById('voiceLanguageSelect');
+                    if (langSelect) {
+                        recognition.lang = langSelect.value;
+                    }
                     recognition.start();
                 } catch (error) {
                     console.error('Recognition start error:', error);
