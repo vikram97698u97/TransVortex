@@ -1,5 +1,7 @@
 // Voice command functionality - Modified to work with dynamically loaded content
 function initVoiceRecognition() {
+    const GEMINI_API_KEY = "AIzaSyDjv2Wr5dW8hWLRAh_GjDcTKzgBdhxsOQc"; // Your Gemini API key
+
     // Voice command functionality
     const voiceCommandBtn = document.getElementById('voiceCommandBtn');
     if (!voiceCommandBtn) {
@@ -14,7 +16,7 @@ function initVoiceRecognition() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
-        recognition.continuous = false;
+        recognition.continuous = true; // **FIX**: Listen continuously
         recognition.interimResults = false;
         recognition.lang = 'en-US'; // Default language
 
@@ -26,8 +28,12 @@ function initVoiceRecognition() {
         };
 
         recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript;
-            processVoiceCommand(transcript);
+            // Loop through results to get the final transcript
+            let final_transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) final_transcript += event.results[i][0].transcript;
+            }
+            if (final_transcript) processVoiceCommand(final_transcript);
         };
 
         recognition.onerror = function(event) {
@@ -159,60 +165,109 @@ function initVoiceRecognition() {
 
     // Process voice commands
     async function processVoiceCommand(command) {
-        showVoiceFeedback(`Processing: "${command}"`);
-        
-        try {
-            // Translate if not in English (using a simple approach - in production use a translation API)
-            const translatedCommand = await translateIfNeeded(command);
-            
-            // Process the command
-            await executeCommand(translatedCommand);
-        } catch (error) {
-            console.error('Error processing command:', error);
-            showVoiceFeedback("Sorry, I couldn't process that command");
-        }
-    }
+      showVoiceFeedback(`Processing: "${command}"`);
+      
+      if (!GEMINI_API_KEY || GEMINI_API_KEY.includes("YOUR_GEMINI_API_KEY")) {
+        showVoiceFeedback("AI command processing is not configured.");
+        // Fallback to simple commands
+        await executeCommand({ intent: 'navigate', entities: { page_name: command.toLowerCase() } });
+        return;
+      }
 
-    // Simple translation function (for demonstration)
-    // In a real application, you would use a translation API
-    async function translateIfNeeded(text) {
-        // This is a placeholder - in reality you would call a translation API
-        // For now, we'll assume the text is already in English
-        return text;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const prompt = `
+        You are a website command parser for a transport management system. Analyze the user command and extract the intent and entities.
+        Your response MUST be a valid JSON object.
+        
+        Possible intents: "navigate", "create_lr_report", "add_payment", "add_tyre".
+        
+        Entities for "navigate":
+        - "page_name": one of [home, client, vehicle, fuel, expenses, tyres, tyre history, payments, report, analytics, invoice, reminder].
+        
+        Entities for "create_lr_report":
+        - "truckNumber", "fromLocation", "toLocation", "weight", "item", "consignor", "consignee".
+        
+        Entities for "add_payment":
+        - "clientName", "amount", "date".
+        
+        Entities for "add_tyre":
+        - "vehicleNumber", "tyreNumber", "brand", "position", "cost".
+
+        User command (could be in English, Hindi, or Hinglish): "${command}"
+
+        JSON Response:
+      `;
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await response.json();
+        let resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsedCommand = JSON.parse(resultText);
+        await executeCommand(parsedCommand);
+      } catch (error) {
+        console.error('Error processing command with Gemini:', error);
+        showVoiceFeedback("Sorry, I couldn't understand that command.");
+      }
     }
 
     // Execute the voice command
-    async function executeCommand(command) {
-        const lowerCommand = command.toLowerCase();
-        
-        const pageMap = {
-            'home': 'home.html', 'dashboard': 'home.html',
-            'client': 'booking.html', 'customer': 'booking.html',
-            'vehicle': 'add.html', 'add vehicle': 'add.html',
-            'fuel': 'route-details.html', 'gas': 'route-details.html',
-            'trip': 'trip-expenses.html', 'expense': 'trip-expenses.html',
-            'tyre': 'tyre.html', 'tire': 'tyre.html',
-            'payment': 'payment-billing.html', 'bill': 'payment-billing.html',
-            'report': 'combined_ca.html', 'trip report': 'combined_ca.html',
-            'lr': 'lr-report.html', 'lr report': 'lr-report.html',
-            'analytics': 'roll.html', 'chart': 'roll.html',
-            'invoice': 'invoice.html',
-            'reminder': 'alerts-system.html', 'alert': 'alerts-system.html'
-        };
+    async function executeCommand(parsedCommand) {
+      const { intent, entities } = parsedCommand;
 
-        const page = Object.keys(pageMap).find(key => lowerCommand.includes(key));
+      switch (intent) {
+        case 'navigate':
+          const pageMap = {
+            'home': 'home.html', 'dashboard': 'home.html', 'client': 'booking.html', 'customer': 'booking.html',
+            'vehicle': 'add.html', 'add vehicle': 'add.html', 'fuel': 'route-details.html', 'gas': 'route-details.html',
+            'trip': 'trip-expenses.html', 'expense': 'trip-expenses.html', 'tyre': 'tyre.html', 'tire': 'tyre.html',
+            'payment': 'payment-billing.html', 'bill': 'payment-billing.html', 'report': 'combined_ca.html',
+            'lr': 'lr-report.html', 'lr report': 'lr-report.html', 'analytics': 'roll.html', 'chart': 'roll.html',
+            'invoice': 'invoice.html', 'reminder': 'alerts-system.html', 'alert': 'alerts-system.html',
+            'tyre history': 'tyre_history.html'
+          };
+          const pageName = entities.page_name?.toLowerCase() || '';
+          const destination = Object.keys(pageMap).find(key => pageName.includes(key));
+          if (destination) {
+            window.location.href = pageMap[destination];
+            speakText(`Navigating to ${destination}`);
+          } else {
+            speakText(`Sorry, I don't know the page "${entities.page_name}".`);
+          }
+          break;
 
-        if (page) {
-            window.location.href = pageMap[page];
-            speakText(`Navigating to ${page}`);
-        } else if (lowerCommand.includes('help') || lowerCommand.includes('what can you do')) {
-            const helpText = "I can help you navigate. Try saying 'go to vehicles', 'open analytics', or 'show me the dashboard'.";
-            speakText(helpText);
-            showVoiceFeedback(helpText);
-        } else {
-            speakText("I'm not sure how to help with that. Try saying 'help' to see what I can do");
-            showVoiceFeedback("Command not recognized. Say 'help' for options");
-        }
+        case 'create_lr_report':
+          const lrParams = new URLSearchParams(entities).toString();
+          window.location.href = `lr-report.html?${lrParams}`;
+          speakText("Okay, opening the LR report form with the details you provided.");
+          break;
+
+        case 'add_payment':
+          const paymentParams = new URLSearchParams(entities).toString();
+          window.location.href = `payment-billing.html?${paymentParams}`;
+          speakText("Okay, opening the payment form with the details you provided.");
+          break;
+
+        case 'add_tyre':
+          const tyreParams = new URLSearchParams(entities).toString();
+          window.location.href = `tyre.html?${tyreParams}`;
+          speakText("Okay, opening the tyre form with the details you provided.");
+          break;
+
+        case 'help':
+          const helpText = "I can help you navigate, or fill out forms. Try saying 'go to vehicles', or 'create an LR report for truck 123 from Delhi to Mumbai'.";
+          speakText(helpText);
+          showVoiceFeedback(helpText);
+          break;
+
+        default:
+          speakText("I'm not sure how to help with that. Try saying 'help' to see what I can do.");
+          showVoiceFeedback("Command not recognized. Say 'help' for options.");
+      }
     }
 }
 
