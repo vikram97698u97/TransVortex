@@ -1,8 +1,9 @@
 // Voice command functionality - Modified to work with dynamically loaded content
-function initVoiceRecognition() {
+function initVoiceRecognition(firebaseApp) {
     // **SECURITY FIX**: API Key is removed from client-side code.
     // The key is now used in the backend Cloud Function.
     // const GEMINI_API_KEY = "AIzaSyDjv2Wr5dW8hWLRAh_GjDcTKzgBdhxsOQc"; 
+    if (!firebaseApp) return console.error("Voice Commands: Firebase app instance not provided.");
 
     // Voice command functionality
     const voiceCommandBtn = document.getElementById('voiceCommandBtn');
@@ -196,7 +197,7 @@ function initVoiceRecognition() {
       try {
         // **SECURITY FIX**: Call the backend Cloud Function instead of Gemini directly.
         const { getFunctions, httpsCallable } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js");
-        const functions = getFunctions(window.firebaseApp, 'asia-south1'); // Assuming app is on window
+        const functions = getFunctions(firebaseApp, 'asia-south1'); // Use the passed-in app instance
         const getGeminiResponse = httpsCallable(functions, 'getGeminiResponse');
 
         const result = await getGeminiResponse({ prompt: prompt });
@@ -268,11 +269,12 @@ function initVoiceRecognition() {
 }
 
 // Initialize when DOM is ready or when called from navbar loader
-if (document.readyState !== 'loading') {
-    initVoiceRecognition();
-} else {
-    document.addEventListener('DOMContentLoaded', initVoiceRecognition);
-}
+// **REMOVED**: We will no longer auto-initialize. The page using the voice commands (home.html) will call it.
+// if (document.readyState !== 'loading') {
+//     initVoiceRecognition();
+// } else {
+//     document.addEventListener('DOMContentLoaded', initVoiceRecognition);
+// }
 
 // Make function available globally for navbar loader
 window.initVoiceRecognition = initVoiceRecognition;
