@@ -19,7 +19,7 @@ function initVoiceRecognition() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
-        recognition.continuous = true; // Listen continuously
+        recognition.continuous = false; // **FIX**: Process one command at a time for better reliability.
 
         recognition.onstart = function() {
             isListening = true;
@@ -30,16 +30,10 @@ function initVoiceRecognition() {
         };
 
         recognition.onresult = function(event) {
-            // **FIX**: Correctly capture the final transcript from the event.
-            let final_transcript = "";
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                if (event.results[i].isFinal) {
-                    final_transcript += event.results[i][0].transcript;
-                }
-            }
-            if (final_transcript.trim()) {
-                processVoiceCommand(final_transcript.trim());
-            }
+            // **FIX**: Simplified transcript capture for non-continuous mode.
+            const transcript = event.results[0][0].transcript;
+            if (transcript.trim()) processVoiceCommand(transcript.trim());
+            resetVoiceButton(); // Reset after processing one command.
         };
 
         recognition.onerror = function(event) {
@@ -65,13 +59,7 @@ function initVoiceRecognition() {
         };
 
         recognition.onend = function() {
-            // **FIX**: Only reset the button if the user intentionally stopped it.
-            // If recognition stops due to silence, it will automatically restart on the next sound,
-            // providing a more continuous experience without being aggressive.
-            // The `isListening` state remains true.
-            if (recognitionStoppedIntentionally || !isListening) {
-              resetVoiceButton();
-            }
+            resetVoiceButton(); // Always reset the button when recognition ends.
         };
     } else {
         // Browser doesn't support speech recognition
