@@ -1,4 +1,3 @@
-
 // Navbar Loader: injects the new vertical sidebar from navbar.html into any page
 // - Extracts styles, toggle button, and sidebar markup
 // - Wraps existing page content in .main-content if missing
@@ -191,12 +190,12 @@
       // to ensure they are executed correctly after the navbar is injected.
       const scripts = doc.body.querySelectorAll('script');
       scripts.forEach(script => {
-        if (script.src.includes('navbar-loader.js')) return; // Don't re-inject self
+        if (script.src && script.src.includes('navbar-loader.js')) return; // Don't re-inject self
 
         const newScript = document.createElement('script');
-        newScript.src = script.src;
-        if (script.type === 'module') newScript.type = 'module';
-        if (script.defer) newScript.defer = true;
+        for (const attr of script.attributes) {
+          newScript.setAttribute(attr.name, attr.value);
+        }
         document.body.appendChild(newScript);
       });
     } catch (e) {
