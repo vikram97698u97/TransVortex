@@ -11,12 +11,13 @@ function initVoiceRecognition() {
 
     let recognition = null;
     let isListening = false;
+    let recognitionStoppedIntentionally = false;
 
     // Check if browser supports Web Speech API
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
-        recognition.continuous = true; // **FIX**: Listen continuously
+        recognition.continuous = true; // Listen continuously
         recognition.interimResults = false;
         recognition.lang = 'en-US'; // Default language
 
@@ -24,6 +25,7 @@ function initVoiceRecognition() {
             isListening = true;
             voiceCommandBtn.classList.add('listening');
             voiceCommandBtn.innerHTML = '<i class="fas fa-circle"></i>';
+            recognitionStoppedIntentionally = false;
             showVoiceFeedback("Listening...");
         };
 
@@ -59,7 +61,14 @@ function initVoiceRecognition() {
         };
 
         recognition.onend = function() {
-            resetVoiceButton();
+            // Only reset if the user intentionally stopped it.
+            // Otherwise, if it stops due to silence, it will be ready for the next click.
+            if (recognitionStoppedIntentionally) {
+                resetVoiceButton();
+            } else if (isListening) {
+                // If it stops unexpectedly (e.g., network issue), reset the state.
+                resetVoiceButton();
+            }
         };
     } else {
         // Browser doesn't support speech recognition
@@ -77,8 +86,8 @@ function initVoiceRecognition() {
         }
 
         if (isListening) {
+            recognitionStoppedIntentionally = true; // User is stopping it
             recognition.stop();
-            resetVoiceButton();
         } else {
             // Greet user based on time of day before listening
             greetUser();
