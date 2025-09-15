@@ -269,8 +269,6 @@
 </head>
 <body>
   <script src="navbar-loader.js"></script>
-  <script src="voice-commands.js" defer></script>
-
   <div class="main-content">
     <!-- Welcome Section -->
     <div class="welcome-section">
@@ -424,10 +422,10 @@
       </div>
     </div>
   </div>
-
+  <script src="voice-commands.js" defer></script>
   <script type="module">
     // Import Firebase modules
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue, query, orderByChild, limitToLast, get, update, push, remove, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     
@@ -443,7 +441,13 @@
     };
     
     // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
+    // **FIX**: Safely initialize Firebase to prevent duplicate app errors.
+    let app;
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApp(); // Get the default app if it already exists
+    }
     const db = getDatabase(app);
     const auth = getAuth(app);
     let currentUser = null;
@@ -452,6 +456,8 @@
     onAuthStateChanged(auth, (user) => {
       if (user) {
         currentUser = user;
+        // **FIX**: Pass the initialized Firebase app to the voice command script.
+        if (window.initVoiceRecognition) window.initVoiceRecognition(app);
         initializePage(user);
       } else {
         window.location.href = 'login.html';
