@@ -1,6 +1,8 @@
 // Voice command functionality - Modified to work with dynamically loaded content
 function initVoiceRecognition() {
-    const GEMINI_API_KEY = "AIzaSyDjv2Wr5dW8hWLRAh_GjDcTKzgBdhxsOQc"; // Your Gemini API key
+    // **SECURITY FIX**: API Key is removed from client-side code.
+    // The key is now used in the backend Cloud Function.
+    // const GEMINI_API_KEY = "AIzaSyDjv2Wr5dW8hWLRAh_GjDcTKzgBdhxsOQc"; 
 
     // Voice command functionality
     const voiceCommandBtn = document.getElementById('voiceCommandBtn');
@@ -174,16 +176,6 @@ function initVoiceRecognition() {
 
     // Process voice commands
     async function processVoiceCommand(command) {
-      showVoiceFeedback(`Processing: "${command}"`);
-      
-      if (!GEMINI_API_KEY || GEMINI_API_KEY.includes("YOUR_GEMINI_API_KEY")) {
-        showVoiceFeedback("AI command processing is not configured.");
-        // Fallback to simple commands
-        await executeCommand({ intent: 'navigate', entities: { page_name: command.toLowerCase() } });
-        return;
-      }
-
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
       const prompt = `
         You are a website command parser for a transport management system. Analyze the user command and extract the intent and entities.
         Your response MUST be a valid JSON object.
@@ -208,18 +200,19 @@ function initVoiceRecognition() {
       `;
 
       try {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
-        const data = await response.json();
-        let resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        // **SECURITY FIX**: Call the backend Cloud Function instead of Gemini directly.
+        const { getFunctions, httpsCallable } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js");
+        const functions = getFunctions(window.firebaseApp, 'asia-south1'); // Assuming app is on window
+        const getGeminiResponse = httpsCallable(functions, 'getGeminiResponse');
+
+        const result = await getGeminiResponse({ prompt: prompt });
+        let resultText = result.data.text || '{}';
+
         resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsedCommand = JSON.parse(resultText);
         await executeCommand(parsedCommand);
       } catch (error) {
-        console.error('Error processing command with Gemini:', error);
+        console.error('Error processing command with Cloud Function:', error);
         showVoiceFeedback("Sorry, I couldn't understand that command.");
       }
     }
