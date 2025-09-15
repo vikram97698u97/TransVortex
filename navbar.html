@@ -374,6 +374,25 @@
       background: #dc3545;
       color: white;
     }
+    
+    /* Language selector for voice commands */
+    #voiceLanguageSelect {
+      background: #fff;
+      color: #333;
+      border: 1px solid #ccc;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      padding: 0 0 0 9px; /* Adjust text position */
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 10px;
+      transition: all 0.2s ease;
+    }
+    #voiceLanguageSelect:hover { transform: scale(1.1); }
 
     /* Add to existing voice-command-btn styles */
     .voice-command-btn.listening i {
@@ -465,6 +484,11 @@
         <span class="logout-icon"><i class="fas fa-sign-out-alt"></i></span>
         <span class="logout-text">Logout</span>
       </button>
+      <!-- Language Selector for Voice -->
+      <select id="voiceLanguageSelect" title="Select voice command language">
+        <option value="en-US">EN</option>
+        <option value="hi-IN">HI</option>
+      </select>
       <!-- Voice Command Button -->
       <button class="voice-command-btn" id="voiceCommandBtn" title="Use Voice Command">
         <i class="fas fa-microphone"></i>
