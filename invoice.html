@@ -87,7 +87,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, get, query, orderByChild, equalTo, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -150,11 +150,33 @@
             `<span class="badge bg-secondary">${inv.lrIds.length}</span>`,
             `<button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('${inv.id}')">
               <i class="fas fa-eye"></i> View
+            </button>
+            <button class="btn btn-sm btn-outline-warning ms-1" onclick="undoInvoice('${inv.id}')" title="Undo Invoice">
+              <i class="fas fa-undo"></i> Undo
             </button>`
           ]);
         });
       }
       invoicesTable.draw();
+    }
+
+    // Function to convert number to words (Indian Rupees)
+    function numberToWords(num) {
+      const a = ['', 'one ', 'two ', 'three ', 'four ', 'five ', 'six ', 'seven ', 'eight ', 'nine ', 'ten ', 'eleven ', 'twelve ', 'thirteen ', 'fourteen ', 'fifteen ', 'sixteen ', 'seventeen ', 'eighteen ', 'nineteen '];
+      const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+      
+      if ((num = Math.floor(num).toString()).length > 9) return 'overflow';
+      const n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+      if (!n) return '';
+      
+      let str = '';
+      str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'crore ' : '';
+      str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'lakh ' : '';
+      str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'thousand ' : '';
+      str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'hundred ' : '';
+      str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+      
+      return str.trim().replace(/\s+/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') + ' Only';
     }
 
     window.viewInvoice = async function(invoiceId) {
@@ -221,19 +243,27 @@
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colspan="7" rowspan="3" class="align-bottom">
+                    <td colspan="7" rowspan="4" class="align-bottom">
                       <p class="mb-1"><strong>Bank Details:</strong></p>
                       <p class="mb-1 small">Bank: <span>${invoice.bankDetails.bankName}</span></p>
                       <p class="mb-1 small">A/C No: <span>${invoice.bankDetails.accountNumber}</span></p>
                       <p class="mb-1 small">Holder: <span>${invoice.bankDetails.accountHolder}</span></p>
                       <p class="mb-0 small">IFSC: <span>${invoice.bankDetails.ifsc}</span></p>
+                      <div class="mt-3">
+                        <p class="mb-1"><strong>Amount in Words:</strong></p>
+                        <p class="mb-0 small">${numberToWords(invoice.grandTotal || 0)}</p>
+                      </div>
                     </td>
                     <td class="text-end"><strong>Subtotal:</strong></td>
                     <td class="text-end fw-bold">₹${(invoice.subtotal || 0).toFixed(2)}</td>
                   </tr>
                   <tr>
-                    <td class="text-end"><strong>GST:</strong></td>
-                    <td class="text-end fw-bold">₹${(invoice.gstAmount || 0).toFixed(2)}</td>
+                    <td class="text-end"><strong>CGST:</strong></td>
+                    <td class="text-end fw-bold">₹${(invoice.cgstAmount || 0).toFixed(2)}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-end"><strong>SGST:</strong></td>
+                    <td class="text-end fw-bold">₹${(invoice.sgstAmount || 0).toFixed(2)}</td>
                   </tr>
                   <tr class="table-success">
                     <td class="text-end"><strong>Grand Total:</strong></td>
@@ -266,6 +296,60 @@
     window.printInvoiceDetail = function() {
       window.print();
     }
+
+    window.undoInvoice = async function(invoiceId) {
+      if (!confirm('Are you sure you want to undo this invoice? This will move all associated LRs back to the LR Report page and delete this invoice.')) {
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          alert('Authentication error. Please log in again.');
+          return;
+        }
+
+        // 1. Get the invoice data
+        const invoiceRef = ref(db, `invoices/${invoiceId}`);
+        const invoiceSnap = await get(invoiceRef);
+        if (!invoiceSnap.exists()) {
+          throw new Error('Invoice not found. It may have already been deleted.');
+        }
+        const invoiceData = invoiceSnap.val();
+
+        // 2. Prepare a multi-path update
+        const updates = {};
+
+        // 3. Revert each LR status
+        if (invoiceData.lrIds && invoiceData.lrIds.length > 0) {
+          invoiceData.lrIds.forEach(lrId => {
+            updates[`/lrReports/${lrId}/status`] = 'active';
+            updates[`/lrReports/${lrId}/invoiceId`] = null; // Remove invoice link
+          });
+        }
+
+        // 4. Delete the invoice
+        updates[`/invoices/${invoiceId}`] = null;
+
+        // 5. Adjust client's outstanding balance
+        if (invoiceData.clientId && invoiceData.grandTotal) {
+          const clientOutstandingRef = ref(db, `users/${user.uid}/clients/${invoiceData.clientId}/outstanding`);
+          // Use a transaction to safely decrement the outstanding balance
+          await runTransaction(clientOutstandingRef, (currentValue) => {
+            return (currentValue || 0) - invoiceData.grandTotal;
+          });
+        }
+
+        // 6. Execute the atomic update for LRs and the invoice
+        await update(ref(db), updates);
+
+        alert('Invoice successfully undone. The LRs are now available for invoicing again.');
+        // The onValue listener will automatically refresh the table
+      } catch (error) {
+        console.error("Error undoing invoice:", error);
+        alert(`Failed to undo invoice: ${error.message}`);
+      }
+    };
 
     window.logout = function() {
       const user = auth.currentUser;
