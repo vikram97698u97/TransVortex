@@ -12,7 +12,12 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background:#F5F5F5; margin:0; padding:0; }
-    h1 { color:#2E8B57; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
+    .main-content {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    h1 { color:#2E8B57; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; font-size: 1.8rem; }
     .analytics-container { display: flex; gap: 20px; flex-wrap: wrap; }
     .primary-content { flex: 3; min-width: 300px; }
     .sidebar-content { flex: 1; min-width: 300px; }
@@ -44,62 +49,72 @@
     @media (max-width: 900px) {
       .analytics-container { flex-direction: column; }
     }
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 0 15px;
+        margin-top: 80px; /* Adjust for fixed navbar on mobile */
+      }
+      h1 { font-size: 1.5rem; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; } /* 2 cards per row on mobile */
+      .card { padding: 15px; }
+    }
   </style>
 </head>
 <body>
   <script src="navbar-loader.js"></script>
 
-  <h1>📊 Analytics & AI Insights</h1>
+  <div class="main-content">
+    <h1>📊 Analytics & AI Insights</h1>
 
-  <div class="analytics-container">
-    <!-- Primary Content Area -->
-    <div class="primary-content">
-      <!-- KPI Cards -->
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="label">Total Revenue</div>
-          <div class="value" id="kpiRevenue">₹0</div>
+    <div class="analytics-container">
+      <!-- Primary Content Area -->
+      <div class="primary-content">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="label">Total Revenue</div>
+            <div class="value" id="kpiRevenue">₹0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="label">Total Expenses</div>
+            <div class="value" id="kpiExpenses">₹0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="label">Net Profit</div>
+            <div class="value" id="kpiProfit">₹0</div>
+          </div>
         </div>
-        <div class="kpi-card">
-          <div class="label">Total Expenses</div>
-          <div class="value" id="kpiExpenses">₹0</div>
+
+        <div class="card">
+          <h3>Monthly Revenue vs Expenses</h3>
+          <canvas id="revenueChart"></canvas>
         </div>
-        <div class="kpi-card">
-          <div class="label">Net Profit</div>
-          <div class="value" id="kpiProfit">₹0</div>
+        <div class="card">
+          <h3>Route Profitability</h3>
+          <canvas id="routeChart"></canvas>
         </div>
       </div>
 
-      <div class="card">
-        <h3>Monthly Revenue vs Expenses</h3>
-        <canvas id="revenueChart"></canvas>
-      </div>
-      <div class="card">
-        <h3>Route Profitability</h3>
-        <canvas id="routeChart"></canvas>
-      </div>
-    </div>
-
-    <!-- Sidebar Area -->
-    <div class="sidebar-content">
-      <div class="card">
-        <h3>Client-wise Revenue</h3>
-        <canvas id="clientChart"></canvas>
-      </div>
-      <div class="card ai-suggestions">
-        <h3><span>🤖 AI Insights</span>
-          <div class="ai-controls"><select id="aiLanguage"><option value="en-US">English</option><option value="hi-IN">हिन्दी</option></select><button id="speakBtn" title="Read insights aloud"><i class="fas fa-volume-up"></i></button></div>
-        </h3>
-        <ul id="aiList"><li>Loading insights...</li></ul>
+      <!-- Sidebar Area -->
+      <div class="sidebar-content">
+        <div class="card">
+          <h3>Client-wise Revenue</h3>
+          <canvas id="clientChart"></canvas>
+        </div>
+        <div class="card ai-suggestions">
+          <h3><span>🤖 AI Insights</span>
+            <div class="ai-controls"><select id="aiLanguage"><option value="en-US">English</option><option value="hi-IN">हिन्दी</option></select><button id="speakBtn" title="Read insights aloud"><i class="fas fa-volume-up"></i></button></div>
+          </h3>
+          <ul id="aiList"><li>Loading insights...</li></ul>
+        </div>
       </div>
     </div>
   </div>
 
   <script type="module">
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
@@ -112,29 +127,32 @@
       measurementId: "G-7F9R7HJYDH"
     };
 
-    // Safely initialize Firebase
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
-    const functions = getFunctions(app, 'asia-south1');
 
     // === Gemini API Function ===
     async function getAIInsights(summary, language) {
-      // **SECURITY FIX**: API Key is removed. We call our secure Cloud Function instead.
+      const API_KEY = "AIzaSyDjv2Wr5dW8hWLRAh_GjDcTKzgBdhxsOQc"; // Your Gemini API key
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
       const langName = language === 'hi-IN' ? 'Hindi' : 'English';
-      const prompt = `Analyze this logistics data and give 5 smart, actionable insights in ${langName}:\n\n${summary}`;
+      const body = {
+        contents: [{
+          parts: [{ text: `Analyze this logistics data and give 5 smart, actionable insights in ${langName}:\n\n${summary}` }]
+        }]
+      };
 
       try {
-        // Call the Cloud Function
-        const getGeminiResponse = httpsCallable(functions, 'getGeminiResponse');
-        const result = await getGeminiResponse({ prompt: prompt });
-        return result.data.text || "No insights generated.";
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || "No insights generated.";
       } catch (error) {
-        console.error("Error calling getGeminiResponse Cloud Function:", error);
-        if (error.code === 'unauthenticated') {
-          return "Authentication error. Please log in again.";
-        }
-        return "Error fetching AI insights from the server.";
+        console.error("AI Error:", error);
+        return "Error fetching AI insights.";
       }
     }
 
