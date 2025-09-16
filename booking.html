@@ -301,39 +301,78 @@
       loadLinkedData(id);
     };
 
-    function loadLinkedData(clientId) {
-      const invoiceRef = query(ref(db, "invoices"), orderByChild('clientId'), equalTo(clientId));
-      onValue(invoiceRef, (snapshot) => {
-        const list = document.getElementById("invoiceList");
-        list.innerHTML = "";
-        snapshot.forEach(child => {
-          const inv = child.val();
-          list.innerHTML += `<li class="list-group-item">#${inv.invoiceNumber} - ₹${(inv.grandTotal || 0).toFixed(2)}</li>`;
-        });
-        if (!list.innerHTML) list.innerHTML = '<li class="list-group-item text-muted">No invoices found.</li>';
-      });
+    async function loadLinkedData(clientId) {
+      // Clear previous data
+      const invoiceList = document.getElementById("invoiceList");
+      const lrList = document.getElementById("lrList");
+      const paymentList = document.getElementById("paymentList");
+      const outstandingEl = document.getElementById("clientOutstanding");
 
-      const lrRef = query(ref(db, "lrReports"), orderByChild('clientId'), equalTo(clientId));
-      onValue(lrRef, (snapshot) => {
-        const list = document.getElementById("lrList");
-        list.innerHTML = "";
-        snapshot.forEach(child => {
-          const lr = child.val();
-          list.innerHTML += `<li class="list-group-item">#${lr.lrNumber || 'N/A'} - ${lr.fromLocation || ''} → ${lr.toLocation || ''}</li>`;
-        });
-        if (!list.innerHTML) list.innerHTML = '<li class="list-group-item text-muted">No LR reports found.</li>';
-      });
+      invoiceList.innerHTML = '<li>Loading...</li>';
+      lrList.innerHTML = '<li>Loading...</li>';
+      paymentList.innerHTML = '<li>Loading...</li>';
+      outstandingEl.textContent = 'Calculating...';
 
-      const payRef = query(ref(db, "payments"), orderByChild('clientId'), equalTo(clientId));
-      onValue(payRef, (snapshot) => {
+      try {
+        // Fetch all data concurrently
+        const [invoiceSnap, lrSnap, paymentSnap] = await Promise.all([
+          get(query(ref(db, "invoices"), orderByChild('clientId'), equalTo(clientId))),
+          get(query(ref(db, "lrReports"), orderByChild('clientId'), equalTo(clientId))),
+          get(query(ref(db, "payments"), orderByChild('clientId'), equalTo(clientId)))
+        ]);
+
+        // Process Invoices
+        let totalInvoiced = 0;
+        invoiceList.innerHTML = "";
+        if (invoiceSnap.exists()) {
+          invoiceSnap.forEach(child => {
+            const inv = child.val();
+            totalInvoiced += (inv.grandTotal || 0);
+            invoiceList.innerHTML += `<li class="list-group-item">#${inv.invoiceNumber} - ₹${(inv.grandTotal || 0).toFixed(2)}</li>`;
+          });
+        }
+        if (!invoiceList.innerHTML) invoiceList.innerHTML = '<li class="list-group-item text-muted">No invoices found.</li>';
+
+        // Process LRs
+        let totalNonInvoiced = 0;
+        lrList.innerHTML = "";
+        if (lrSnap.exists()) {
+          lrSnap.forEach(child => {
+            const lr = child.val();
+            lrList.innerHTML += `<li class="list-group-item">#${lr.lrNumber || 'N/A'} - ${lr.fromLocation || ''} → ${lr.toLocation || ''} - ₹${(lr.totalAmount || 0).toFixed(2)}</li>`;
+            if (!lr.invoiceId && lr.status !== 'Generated') {
+              totalNonInvoiced += (lr.totalAmount || 0);
+            }
+          });
+        }
+        if (!lrList.innerHTML) lrList.innerHTML = '<li class="list-group-item text-muted">No LR reports found.</li>';
+
+        // Process Payments
+        let totalPaid = 0;
         const list = document.getElementById("paymentList");
         list.innerHTML = "";
-        snapshot.forEach(child => {
-          const pay = child.val();
-          list.innerHTML += `<li class="list-group-item">₹${parseFloat(pay.amount || 0).toFixed(2)} on ${pay.date || 'N/A'}</li>`;
-        });
+        if (paymentSnap.exists()) {
+          paymentSnap.forEach(child => {
+            const pay = child.val();
+            if (pay.companyName) { // Assuming client payments have a companyName
+              totalPaid += parseFloat(pay.amount || 0);
+              list.innerHTML += `<li class="list-group-item">₹${parseFloat(pay.amount || 0).toFixed(2)} on ${pay.date || 'N/A'}</li>`;
+            }
+          });
+        }
         if (!list.innerHTML) list.innerHTML = '<li class="list-group-item text-muted">No payments found.</li>';
-      });
+
+        // Final Calculation
+        const finalOutstanding = totalInvoiced + totalNonInvoiced - totalPaid;
+        outstandingEl.textContent = `₹${finalOutstanding.toFixed(2)}`;
+
+      } catch (error) {
+        console.error("Error loading linked data:", error);
+        outstandingEl.textContent = 'Error';
+        invoiceList.innerHTML = '<li class="list-group-item text-danger">Could not load invoices.</li>';
+        lrList.innerHTML = '<li class="list-group-item text-danger">Could not load LRs.</li>';
+        paymentList.innerHTML = '<li class="list-group-item text-danger">Could not load payments.</li>';
+      }
     }
 
     // Back button
@@ -354,9 +393,51 @@
     };
 
     // Delete Client
-    window.deleteClient = (id) => {
-      if (confirm("Are you sure you want to delete this client? This action cannot be undone.")) {
-        remove(ref(db, "users/" + currentUser.uid + "/clients/" + id));
+    window.deleteClient = async (clientId) => {
+      if (!confirm("Are you sure you want to delete this client? This will also delete all associated LR reports, invoices, and payments. This action cannot be undone.")) {
+        return;
+      }
+      if (!currentUser) return alert('Not authenticated.');
+
+      try {
+        const updates = {};
+        updates[`/users/${currentUser.uid}/clients/${clientId}`] = null;
+
+        // Find and delete associated LRs
+        const lrQuery = query(ref(db, "lrReports"), orderByChild('clientId'), equalTo(clientId));
+        const lrSnap = await get(lrQuery);
+        if (lrSnap.exists()) {
+          lrSnap.forEach(child => {
+            updates[`/lrReports/${child.key}`] = null;
+          });
+        }
+
+        // Find and delete associated invoices
+        const invQuery = query(ref(db, "invoices"), orderByChild('clientId'), equalTo(clientId));
+        const invSnap = await get(invQuery);
+        if (invSnap.exists()) {
+          invSnap.forEach(child => {
+            updates[`/invoices/${child.key}`] = null;
+          });
+        }
+
+        // Find and delete associated payments
+        const payQuery = query(ref(db, "payments"), orderByChild('clientId'), equalTo(clientId));
+        const paySnap = await get(payQuery);
+        if (paySnap.exists()) {
+          paySnap.forEach(child => {
+            updates[`/payments/${child.key}`] = null;
+          });
+        }
+
+        // Perform atomic update
+        await update(ref(db), updates);
+        alert('Client and all associated data deleted successfully.');
+        // The onValue listener in loadClients will handle the UI update automatically.
+
+      } catch (error) {
+        console.error("Error deleting client and associated data:", error);
+        alert("Failed to delete client. Please try again.");
       }
     };
 
