@@ -504,11 +504,17 @@
         }
         document.getElementById('activeLRCount').textContent = activeCount;
       });
-      // Payments
+      // Payments - **FIX**: This now correctly only shows operational client payments.
       onValue(query(ref(db, 'payments'), orderByChild('userId'), equalTo(user.uid)), (snap) => {
         let total = 0;
         if (snap.exists()) {
-          snap.forEach(child => { total += parseFloat(child.val().amount || 0); });
+          snap.forEach(child => { 
+            const payment = child.val();
+            // Ensure we don't accidentally count any old subscription payments if they exist in this node.
+            if (!payment.plan) {
+              total += parseFloat(payment.amount || 0); 
+            }
+          });
         }
         document.getElementById('totalPayments').textContent = `₹${total.toLocaleString('en-IN')}`;
       });
@@ -546,7 +552,13 @@
           </div>`).join('');
       });
 
-      onValue(query(ref(db, 'payments'), orderByChild('userId'), equalTo(user.uid), limitToLast(3)), (snap) => renderList('recentPayments', snap.val() || {}, 'amount', 'companyName'));
+      // **FIX**: Correctly display recent operational payments
+      onValue(query(ref(db, 'payments'), orderByChild('userId'), equalTo(user.uid), limitToLast(5)), (snap) => {
+        const paymentsData = snap.val() || {};
+        // Filter out subscription payments and then render
+        const operationalPayments = Object.fromEntries(Object.entries(paymentsData).filter(([key, payment]) => !payment.plan));
+        renderList('recentPayments', operationalPayments, 'amount', 'companyName');
+      });
     }
 
     // Load and display subscription status
