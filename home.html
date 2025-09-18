@@ -550,6 +550,7 @@
     }
 
     // Load and display subscription status
+    // Load and display subscription status
     async function loadSubscriptionStatus(user) {
       try {
         const statusEl = document.getElementById('subscriptionStatusText');
@@ -565,10 +566,27 @@
 
         const userData = userProfileSnap.val();
         // Determine the correct ID to check for the subscription
-        const coreAccountId = (userData.accountType === 'branch') ? userData.coreAccountId : user.uid;
+        // **FIX**: Correctly identify the coreAccountId for 'main' and 'branch' accounts.
+        const accountType = userData.accountType || 'user';
+        const effectiveCoreAccountId = (accountType === 'branch' || accountType === 'main') ? userData.coreAccountId : user.uid;
 
-        // 2. Fetch the subscription using the core account ID
-        const subRef = ref(db, `users/${coreAccountId}/subscription`);
+        // 2. For branch accounts, first check the coreSubscriptions node
+        if (accountType !== 'core') {
+          const coreSubRef = ref(db, `coreSubscriptions/${effectiveCoreAccountId}`);
+          const coreSubSnap = await get(coreSubRef);
+          
+          if (coreSubSnap.exists()) {
+            const coreSub = coreSubSnap.val();
+            const endDate = new Date(coreSub.endDate);
+            const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+            statusEl.textContent = daysLeft > 0 ? `Active (${daysLeft} days left)` : 'Expired';
+            return;
+          }
+          // Fall through to regular check if coreSubscriptions doesn't exist
+        }
+
+        // 3. Fetch the subscription using the core account ID (fallback for both core and branch)
+        const subRef = ref(db, `users/${effectiveCoreAccountId}/subscription`);
         const snapshot = await get(subRef);
 
         if (snapshot.exists()) {
