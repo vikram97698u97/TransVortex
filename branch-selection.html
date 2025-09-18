@@ -669,6 +669,17 @@
         return;
       }
       
+      // **DEBUG**: Log the subscription status of the core account.
+      try {
+        const subRef = ref(db, `users/${user.uid}/subscription`);
+        const subSnap = await get(subRef);
+        if (subSnap.exists()) {
+          console.log("Core Account Subscription Status:", subSnap.val());
+        } else {
+          console.log("Core Account Subscription Status: No subscription node found.");
+        }
+      } catch (e) { console.error("Error fetching subscription for logging:", e); }
+
       // Get user data to verify account type
       const userRef = ref(db, `users/${user.uid}`);
       let userSnapshot = await get(userRef);
