@@ -194,7 +194,7 @@
       <h1>Welcome back</h1>
       <p>Sign in to continue</p>
     </div>
-    <form id="login-form" onsubmit="event.preventDefault(); login();">
+    <form id="login-form">
       <div class="input-group">
         <i class="fas fa-user" aria-hidden="true"></i>
         <input type="email" id="login-email" class="form-control" placeholder="Email address" autocomplete="email" required>
@@ -224,7 +224,10 @@
       getDatabase,
       ref,
       get,
-      update
+      update,
+      query,
+      orderByChild,
+      equalTo
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -269,7 +272,6 @@
       `;
     }
 
-
     // Function to check if a date is valid
     function isValidDate(d) {
       return d instanceof Date && !isNaN(d);
@@ -287,6 +289,9 @@
       const email = document.getElementById("login-email").value.trim();
       const password = document.getElementById("login-password").value;
       const loginButton = document.getElementById("login-button");
+      
+      // Store original button HTML at the beginning
+      const originalButtonHTML = loginButton.innerHTML;
       
       // Store email in session for potential branch login
       sessionStorage.setItem('coreEmail', email);
@@ -321,7 +326,6 @@
       
       try {
         // Show loading state
-        const originalButtonHTML = loginButton.innerHTML;
         loginButton.disabled = true;
         loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
         
@@ -342,7 +346,7 @@
                          (userData.profile && userData.profile.role === 'admin') ||
                          (userData.profile && userData.profile.isAdmin === true);
           
-          // **FIX**: Check for admin role *before* subscription check.
+          // Check for admin role before subscription check
           if (isAdmin) {
             console.log('Admin user detected, redirecting to admin-payments.html');
             // Ensure the role is properly set in the database
@@ -351,113 +355,103 @@
               lastLogin: new Date().toISOString()
             });
             window.location.href = 'admin-payments.html';
-            return; // Ensure we don't continue execution
+            return;
           }
           
           // Check subscription status for non-admin users
-          // if (!isAdmin) { // This check is now redundant
-            const accountType = userData.accountType || 'user';
-            const coreAccountId = (accountType === 'branch') ? userData.coreAccountId : user.uid;
-            
-            if (!coreAccountId) {
-              throw new Error('Account configuration error: Core account link is missing.');
-            }
+          // **DEFINITIVE FIX**: Determine account type by checking the `accountType` field first.
+          // This is more direct and robust than inferring from `coreAccountId`.
+          const accountType = userData.accountType || 'core'; // Default to 'core' if not set
+          const isNonCoreAccount = accountType === 'branch' || accountType === 'main';
+          const effectiveCoreAccountId = isNonCoreAccount ? userData.coreAccountId : user.uid;
 
-            // Fetch the core subscription data from both possible locations
-            const [coreSubSnap, coreProfSubSnap] = await Promise.all([
-              get(ref(db, `users/${coreAccountId}/subscription`)),
-              get(ref(db, `users/${coreAccountId}/profile/subscription`))
-            ]);
-            
-            let subscription = coreSubSnap.val() || coreProfSubSnap.val();
-            const now = new Date();
-
-            // If the core account has no subscription record, create a new trial.
-            if (!subscription) {
-              console.log('No subscription found on login, creating new trial...');
-              const trialStart = new Date();
-              const trialEnd = new Date();
-              trialEnd.setDate(trialStart.getDate() + 14); // 14-day trial
-              
-              const newSubscriptionData = {
-                status: 'trial',
-                trialStart: trialStart.toISOString(),
-                trialEnd: trialEnd.toISOString(),
-                createdAt: trialStart.toISOString()
-              };
-              
-              // Save to both root and profile for consistency
-              const updates = {};
-              updates[`users/${coreAccountId}/subscription`] = newSubscriptionData;
-              updates[`users/${coreAccountId}/profile/subscription`] = newSubscriptionData;
-              
-              await update(ref(db), updates);
-              console.log('Created new 14-day trial for core account.');
-              
-              // Use the newly created subscription for the check
-              subscription = newSubscriptionData;
-
-              // **FIX**: For a new core user, their trial is now active. Redirect them immediately.
-              if (accountType === 'core') {
-                window.location.href = 'branch-selection.html';
-                return;
-              }
+          if (isNonCoreAccount && !effectiveCoreAccountId) {
+            throw new Error('Account configuration error: Core account link is missing.');
+          }
+          
+          // **UNIFIED SUBSCRIPTION CHECK**
+          // Check for a paid subscription first (the single source of truth)
+          const coreSubRef = ref(db, `coreSubscriptions/${effectiveCoreAccountId}`);
+          const coreSubSnap = await get(coreSubRef);
+          if (coreSubSnap.exists()) {
+            const coreSub = coreSubSnap.val();
+            const endDate = new Date(coreSub.endDate);
+            if (coreSub.status === 'active' && endDate > new Date()) {
+              // Paid subscription is active, grant access.
+              await update(ref(db, `users/${user.uid}/profile`), { lastLogin: new Date().toISOString() });
+              const destination = accountType === 'core' ? 'branch-selection.html' : 'home.html';
+              window.location.href = destination;
+              return;
             }
+          }
+
+          // If no active paid subscription, check for an active trial subscription.
+          const [userCoreSubSnap, coreProfSubSnap] = await Promise.all([
+            get(ref(db, `users/${effectiveCoreAccountId}/subscription`)),
+            get(ref(db, `users/${effectiveCoreAccountId}/profile/subscription`))
+          ]);
+          
+          let subscription = userCoreSubSnap.val() || coreProfSubSnap.val();
+          const now = new Date();
+
+          // If no subscription record exists at all, create a new trial for the core account.
+          if (!subscription && accountType === 'core') {
+            console.log('No subscription found on login, creating new trial...');
+            const trialStart = new Date();
+            const trialEnd = new Date();
+            trialEnd.setDate(trialStart.getDate() + 14); // 14-day trial
+
+            const newSubscriptionData = {
+              status: 'trial',
+              trialStart: trialStart.toISOString(),
+              trialEnd: trialEnd.toISOString(),
+              createdAt: trialStart.toISOString()
+            };
             
-            // Check if the core subscription is active or in trial
-            if (subscription) {
-              const endDate = subscription.endDate ? new Date(subscription.endDate) : null;
-              const trialEnd = subscription.trialEnd ? new Date(subscription.trialEnd) : null;
-              
-              const isPaidActive = subscription.status === 'active' && endDate && endDate > now;
-              const isTrialActive = subscription.status === 'trial' && trialEnd && trialEnd > now;
-              
-              if (isPaidActive || isTrialActive) {
-                // Subscription is active, grant access
-                console.log('Active subscription or trial found. Granting access.');
-                await update(ref(db, `users/${user.uid}/profile`), { lastLogin: now.toISOString() });
-                
-                const destination = accountType === 'core' ? 'branch-selection.html' : 'home.html';
-                window.location.href = destination;
-                return;
-              } else {
-                // Core subscription is expired. Redirect core user to subscribe.
-                if (accountType === 'core') {
-                  window.location.href = 'subscribe.html';
-                  return;
-                }
-                // For branch users, show the expired card.
-                showSubscriptionExpiredCard();
-                return;
-              }
-            } // End of subscription check block
-          // } else { // This 'else' is now part of the main flow for non-admins
-            // Ensure profile is completed before proceeding
-            try {
-              const profileSnap = await get(ref(db, `users/${user.uid}/profile`));
-              if (!profileSnap.exists()) {
-                console.log('Profile missing, redirecting to signup for completion');
-                window.location.href = 'signup.html?completeProfile=1';
-                return;
-              }
-            } catch (e) {
-              console.warn('Profile check failed, proceeding to branch selection');
-            }
-            // If login was initiated for a specific branch, route directly to its dashboard
-            try {
-              const params = new URLSearchParams(window.location.search);
-              const branchParam = params.get('branch');
-              if (branchParam) {
-                if (branchParam === 'main') localStorage.setItem('selectedBranch', 'main');
-                try { localStorage.setItem('selectedBranch', branchParam); } catch (_) {}
-                // For non-main branches, go directly to home.html (limited navbar enforces restrictions)
-                window.location.href = 'home.html';
-                return;
-              }
-            } catch (_) {}
-            console.log('Regular user, redirecting to branch-selection.html');
+            const updates = {};
+            updates[`users/${effectiveCoreAccountId}/subscription`] = newSubscriptionData;
+            updates[`users/${effectiveCoreAccountId}/profile/subscription`] = newSubscriptionData;
+            
+            await update(ref(db), updates);
+            console.log('Created new 14-day trial for core account.');
+            
+            // Use the newly created subscription for the check
+            subscription = newSubscriptionData;
+
+            // A new trial is active, grant access.
             window.location.href = 'branch-selection.html';
-          // }
+            return;
+          }
+
+          // Final check on the trial or expired paid subscription
+          if (subscription) {
+            const endDate = subscription.endDate ? new Date(subscription.endDate) : null;
+            const trialEnd = subscription.trialEnd ? new Date(subscription.trialEnd) : null;
+            
+            const isPaidActive = subscription.status === 'active' && endDate && endDate > now;
+            const isTrialActive = subscription.status === 'trial' && trialEnd && trialEnd > now;
+            
+            if (isPaidActive || isTrialActive) {
+              console.log('Active subscription or trial found. Granting access.');
+              await update(ref(db, `users/${user.uid}/profile`), { lastLogin: now.toISOString() });
+              
+              const destination = accountType === 'core' ? 'branch-selection.html' : 'home.html';
+              window.location.href = destination;
+              return;
+            }
+          }
+          
+          // **FIX**: If all subscription checks fail, handle based on account type.
+          if (accountType === 'core') {
+            // A core user with an expired subscription should be sent to the subscribe page.
+            console.log('Core user subscription expired or not found. Redirecting to subscribe page.');
+            window.location.href = 'subscribe.html';
+          } else {
+            // A branch or main user with an expired core subscription should see the expired message and stop.
+            console.log('Branch/Main user core subscription is expired. Showing expired card.');
+            showSubscriptionExpiredCard();
+          }
+          return; // <-- CRITICAL: Stop further execution.
         } else {
           // If no profile data exists, redirect to home
           window.location.href = 'home.html';
@@ -498,7 +492,7 @@
         // Reset button state
         if (loginButton) {
           loginButton.disabled = false;
-          loginButton.innerHTML = originalButtonHTML || '<i class="fas fa-sign-in-alt"></i> Sign In';
+          loginButton.innerHTML = originalButtonHTML;
         }
       }
     };
@@ -537,15 +531,15 @@
       }
     }
     
-    // Handle Enter key press in login form
-    document.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        const activeElement = document.activeElement;
-        if (activeElement && (activeElement.id === 'login-email' || activeElement.id === 'login-password')) {
-          e.preventDefault();
-          login();
-        }
-      }
+    // Attach event listener to the form for submission
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      window.login();
+    });
+
+    // Expose login function to the global scope so inline onsubmit can find it if needed elsewhere.
+    document.addEventListener('DOMContentLoaded', function() {
+      window.login = login;
     });
     
     // Focus and prefill email field on page load
