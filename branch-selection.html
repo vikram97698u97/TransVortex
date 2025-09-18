@@ -653,7 +653,7 @@
       }
       try {
         // Store the target branch and core user's credentials for the login page to use
-        localStorage.setItem('selectedBranch', branchKey);
+        localStorage.setItem('selectedBranch', branchKey); // This is correct
         sessionStorage.setItem('targetBranchEmail', branchEmail);
         // Redirect to login page which will handle the auto-login
         window.location.href = `login.html?autologin=branch`;
