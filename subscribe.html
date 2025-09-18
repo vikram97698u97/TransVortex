@@ -283,11 +283,20 @@
 
   <script type="module">
     // Import Firebase modules
+    // Import Firebase modules
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, set, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { 
+      getDatabase, 
+      ref, 
+      set, 
+      update, 
+      get, 
+      query, 
+      orderByChild, 
+      equalTo 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
-    
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
@@ -608,16 +617,17 @@
           }
 
           // ✅ Payment verified → update subscription in both root and profile nodes
+          // ✅ Payment verified → update subscription in both root and profile nodes
           const now = new Date();
           const subscriptionEnd = new Date();
           subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1); // 1 month from now
-          
+
           // Get existing subscription data to preserve trial info
           const userRef = ref(db, `users/${user.uid}`);
           const userSnap = await get(userRef);
           const existingData = userSnap.val() || {};
           const existingSubscription = existingData.subscription || {};
-          
+
           // Create subscription data
           const subscriptionData = {
             status: 'active',
@@ -642,13 +652,41 @@
               }
             }
           };
-          
+
           // Update both root and profile nodes for consistency
           const updates = {};
           updates[`users/${user.uid}/subscription`] = subscriptionData;
           updates[`users/${user.uid}/profile/subscription`] = subscriptionData;
           updates[`users/${user.uid}/lastPayment`] = now.toISOString();
-          
+
+          // **CRITICAL FIX**: For core accounts, also update the subscription status
+          // in a way that branch accounts can access it
+          if (existingData.accountType === 'core') {
+            // Store a reference to the core subscription that branch accounts can check
+            updates[`coreSubscriptions/${user.uid}`] = {
+              status: 'active',
+              endDate: subscriptionEnd.toISOString(),
+              lastUpdated: now.toISOString()
+            };
+
+            // Also update all branch accounts to point to this core subscription
+            // Get all branch accounts for this core user
+            const branchesQuery = query(
+              ref(db, 'users'),
+              orderByChild('coreAccountId'),
+              equalTo(user.uid)
+            );
+
+            const branchesSnap = await get(branchesQuery);
+            if (branchesSnap.exists()) {
+              branchesSnap.forEach((branchSnap) => {
+                const branchId = branchSnap.key;
+                updates[`users/${branchId}/coreSubscriptionStatus`] = 'active';
+                updates[`users/${branchId}/coreSubscriptionEndDate`] = subscriptionEnd.toISOString();
+              });
+            }
+          }
+
           // Apply all updates in a single transaction
           await update(ref(db), updates);
           
