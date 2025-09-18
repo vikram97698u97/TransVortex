@@ -482,7 +482,7 @@
           const paymentRef = generatePaymentRef();
           
           // Store payment in database
-          await set(ref(db, `payments/${paymentRef}`), {
+          await set(ref(db, `subscriptionPayments/${paymentRef}`), {
             userId: user.uid,
             amount: 1999,
             status: 'pending',
@@ -600,7 +600,7 @@
             }
             
             // Check payment status
-            const paymentSnap = await get(ref(db, `payments/${paymentReference}`));
+            const paymentSnap = await get(ref(db, `subscriptionPayments/${paymentReference}`));
             if (!paymentSnap.exists()) continue;
             
             const paymentData = paymentSnap.val();
@@ -753,7 +753,7 @@
           if (!paymentRef) return false;
           
           // Get payment data from Firebase
-          const paymentSnap = await get(ref(db, `payments/${paymentRef}`));
+          const paymentSnap = await get(ref(db, `subscriptionPayments/${paymentRef}`));
           if (!paymentSnap.exists()) {
             console.log('Payment not found in database');
             return false;
@@ -830,7 +830,7 @@
               throw new Error('Payment reference not found. Please try again.');
             }
             
-            const paymentSnap = await get(ref(db, `payments/${paymentRef}`));
+            const paymentSnap = await get(ref(db, `subscriptionPayments/${paymentRef}`));
             if (!paymentSnap.exists()) {
               throw new Error('Payment not found. Please try again.');
             }
