@@ -394,35 +394,6 @@
           let subscription = userCoreSubSnap.val() || coreProfSubSnap.val();
           const now = new Date();
 
-          // If no subscription record exists at all, create a new trial for the core account.
-          if (!subscription && accountType === 'core') {
-            console.log('No subscription found on login, creating new trial...');
-            const trialStart = new Date();
-            const trialEnd = new Date();
-            trialEnd.setDate(trialStart.getDate() + 14); // 14-day trial
-
-            const newSubscriptionData = {
-              status: 'trial',
-              trialStart: trialStart.toISOString(),
-              trialEnd: trialEnd.toISOString(),
-              createdAt: trialStart.toISOString()
-            };
-            
-            const updates = {};
-            updates[`users/${effectiveCoreAccountId}/subscription`] = newSubscriptionData;
-            updates[`users/${effectiveCoreAccountId}/profile/subscription`] = newSubscriptionData;
-            
-            await update(ref(db), updates);
-            console.log('Created new 14-day trial for core account.');
-            
-            // Use the newly created subscription for the check
-            subscription = newSubscriptionData;
-
-            // A new trial is active, grant access.
-            window.location.href = 'branch-selection.html';
-            return;
-          }
-
           // Final check on the trial or expired paid subscription
           if (subscription) {
             const endDate = subscription.endDate ? new Date(subscription.endDate) : null;
