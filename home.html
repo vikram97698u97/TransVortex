@@ -354,7 +354,7 @@
             <i class="fas fa-rupee-sign" style="color: #9B59B6;"></i>
           </div>
           <div class="summary-details">
-            <h3>Total Revenue</h3>
+            <h3>This Month's Net</h3>
             <p id="totalPayments">₹0</p>
           </div>
         </div>
@@ -504,19 +504,38 @@
         }
         document.getElementById('activeLRCount').textContent = activeCount;
       });
-      // Payments - **FIX**: This now correctly only shows operational client payments.
-      onValue(query(ref(db, 'payments'), orderByChild('userId'), equalTo(user.uid)), (snap) => {
-        let total = 0;
-        if (snap.exists()) {
-          snap.forEach(child => { 
+      // Payments - **FIX**: Calculate this month's net revenue (Client Payments - Expenses)
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+      const paymentsQuery = query(ref(db, 'payments'), orderByChild('userId'), equalTo(user.uid));
+      onValue(paymentsQuery, (paymentSnap) => {
+        let monthlyPayments = 0;
+        if (paymentSnap.exists()) {
+          paymentSnap.forEach(child => {
             const payment = child.val();
-            // Ensure we don't accidentally count any old subscription payments if they exist in this node.
-            if (!payment.plan) {
-              total += parseFloat(payment.amount || 0); 
+            if (!payment.plan && payment.date >= startOfMonth && payment.date <= endOfMonth) {
+              monthlyPayments += parseFloat(payment.amount || 0);
             }
           });
         }
-        document.getElementById('totalPayments').textContent = `₹${total.toLocaleString('en-IN')}`;
+
+        const expensesRef = ref(db, `users/${user.uid}/expenses`);
+        onValue(expensesRef, (expenseSnap) => {
+          let monthlyExpenses = 0;
+          if (expenseSnap.exists()) {
+            expenseSnap.forEach(child => {
+              const expense = child.val();
+              if (expense.date >= startOfMonth && expense.date <= endOfMonth) {
+                monthlyExpenses += parseFloat(expense.amount || 0);
+              }
+            });
+          }
+
+          const netRevenue = monthlyPayments - monthlyExpenses;
+          document.getElementById('totalPayments').textContent = `₹${netRevenue.toLocaleString('en-IN')}`;
+        });
       });
     }
 
