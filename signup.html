@@ -190,14 +190,27 @@
           displayName: email.split('@')[0],
           photoURL: ''
         });
-        
+
+        // **FIX**: Create the 14-day free trial immediately on signup.
+        const trialStart = new Date();
+        const trialEnd = new Date();
+        trialEnd.setDate(trialStart.getDate() + 14);
+
+        const subscriptionData = {
+          status: 'trial',
+          trialStart: trialStart.toISOString(),
+          trialEnd: trialEnd.toISOString(),
+          createdAt: trialStart.toISOString()
+        };
+
         // Save user data to database
         const userData = {
           email: email,
           accountType: 'core',
           createdAt: new Date().toISOString(),
           status: 'active',
-          emailVerified: false
+          emailVerified: false,
+          subscription: subscriptionData // Add subscription data here
         };
         
         // Save to Realtime Database
