@@ -713,7 +713,7 @@
         // Update payment status
         async function updatePaymentStatus(paymentId, status) {
             try {
-                const paymentRef = ref(database, `payments/${paymentId}`);
+                const paymentRef = ref(database, `subscriptionPayments/${paymentId}`);
                 await update(paymentRef, {
                     status: status,
                     updatedAt: new Date().toISOString()
@@ -780,7 +780,7 @@
             
             try {
                 // Get payment details first
-                const paymentRef = ref(database, `payments/${paymentId}`);
+                const paymentRef = ref(database, `subscriptionPayments/${paymentId}`);
                 const paymentSnapshot = await get(paymentRef);
                 const payment = paymentSnapshot.val();
                 
@@ -853,7 +853,7 @@
                 }
                 
                 const now = new Date();
-                const paymentRef = ref(database, `payments/${paymentId}`);
+                const paymentRef = ref(database, `subscriptionPayments/${paymentId}`);
                 
                 // Update payment status in the database
                 await update(paymentRef, {
@@ -1086,7 +1086,7 @@
                 showLoading('Loading payment data...');
                 
                 // Fetch payments using modular Firebase v9+ syntax
-                const paymentsRef = ref(database, 'payments');
+                const paymentsRef = ref(database, 'subscriptionPayments');
                 const snapshot = await get(paymentsRef);
                 
                 if (!snapshot.exists()) {
@@ -1390,7 +1390,7 @@
                 }
                 
                 // Delete the payment
-                const paymentRef = ref(database, `payments/${paymentId}`);
+                const paymentRef = ref(database, `subscriptionPayments/${paymentId}`);
                 await remove(paymentRef);
                 
                 // Remove from UI
