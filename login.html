@@ -405,7 +405,13 @@
             if (isPaidActive || isTrialActive) {
               console.log('Active subscription or trial found. Granting access.');
               await update(ref(db, `users/${user.uid}/profile`), { lastLogin: now.toISOString() });
-              
+
+              // **FIX**: For branch users, store their specific branch key before redirecting.
+              if (accountType === 'branch' || accountType === 'main') {
+                // The branch key is the user's UID for branch accounts.
+                localStorage.setItem('selectedBranch', user.uid);
+              }
+
               const destination = accountType === 'core' ? 'branch-selection.html' : 'home.html';
               window.location.href = destination;
               return;
