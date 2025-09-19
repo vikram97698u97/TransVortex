@@ -145,27 +145,37 @@
         window.__branchToastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
       };
       
-      // Provide a global logout handler. This assumes `auth` and `signOut` are available
-      // in the global scope or imported in the page that uses this loader.
-      window.logout = async function() {
-        try {
-          // The `auth` and `signOut` variables are expected to be defined on the page
-          // that is using this navbar-loader, typically from a script module.
-          if (window.auth && typeof window.signOut === 'function') {
-            await window.signOut(window.auth);
-          } else if (typeof window.firebase !== 'undefined' && typeof window.firebase.auth === 'function') {
-            // Fallback for older compat library style
-            await firebase.auth().signOut();
+      // Provide a global logout handler (works with Firebase compat if present)
+      if (typeof window.logout !== 'function') {
+        window.logout = function () {
+          try {
+            // Clear stored user data from localStorage
+            localStorage.removeItem('userName');
+            
+            if (window.firebase && typeof firebase.auth === 'function') {
+              firebase.auth().signOut()
+                .then(() => { 
+                  // Ensure localStorage is cleared before redirecting
+                  localStorage.removeItem('userName');
+                  window.location.href = 'branch-selection.html'; 
+                })
+                .catch(err => { 
+                  // Still clear localStorage even if there's an error
+                  localStorage.removeItem('userName');
+                  alert('Error logging out: ' + (err && err.message ? err.message : err)); 
+                });
+            } else {
+              // Fallback: no Firebase on page, just clear and redirect
+              localStorage.removeItem('userName');
+              window.location.href = 'branch-selection.html';
+            }
+          } catch (e) {
+            // Ensure localStorage is cleared even if there's an error
+            localStorage.removeItem('userName');
+            window.location.href = 'branch-selection.html';
           }
-          
-          // Clear any session-related data from localStorage
-          localStorage.removeItem('userName');
-          localStorage.removeItem('selectedBranch');
-          window.location.href = "index.html";
-        } catch (e) {
-          alert("Logout error: " + e.message);
-        }
-      };
+        };
+      }
 
       // Ensure body uses flex layout so sidebar + content align
       const ensureFlex = () => {
