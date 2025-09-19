@@ -1287,17 +1287,6 @@
             return;
           }
           
-          // Enforce main-branch only access
-          const selectedBranch = localStorage.getItem('selectedBranch');
-          if (selectedBranch && selectedBranch !== 'main') {
-            console.error('Not allowed to use this feature in limited branch');
-            if (confirm('This feature is only available in Main Branch. Go to Home?')) {
-              window.location.href = 'home.html';
-            }
-            resolve(false);
-            return;
-          }
-          
           // Check user role
           try {
             const userRef = database.ref(`users/${user.uid}/profile`);
