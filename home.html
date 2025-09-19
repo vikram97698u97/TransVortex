@@ -450,6 +450,10 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
     let currentUser = null;
+    
+    // Expose auth and signOut to the global scope for navbar-loader.js
+    window.auth = auth;
+    window.signOut = signOut;
 
     // Main entry point
     onAuthStateChanged(auth, (user) => {
