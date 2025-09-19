@@ -344,7 +344,7 @@
         await update(ref(db), updates);
 
         alert('Invoice successfully undone. The LRs are now available for invoicing again.');
-        // The onValue listener will automatically refresh the table
+        window.location.reload(); // Reload the page to reflect the changes
       } catch (error) {
         console.error("Error undoing invoice:", error);
         alert(`Failed to undo invoice: ${error.message}`);
