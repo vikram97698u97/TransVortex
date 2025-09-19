@@ -406,10 +406,12 @@
               console.log('Active subscription or trial found. Granting access.');
               await update(ref(db, `users/${user.uid}/profile`), { lastLogin: now.toISOString() });
 
-              // **FIX**: For branch users, store their specific branch key before redirecting.
+              // **DEFINITIVE FIX**: Correctly identify and set the selectedBranch in localStorage.
+              // If the user's branchType is 'main', we must store the literal string 'main'.
+              // Otherwise, for sub-branches, we store their unique user ID as the branch key.
               if (accountType === 'branch' || accountType === 'main') {
-                // The branch key is the user's UID for branch accounts.
-                localStorage.setItem('selectedBranch', user.uid);
+                const branchKey = userData.branchType === 'main' ? 'main' : user.uid;
+                localStorage.setItem('selectedBranch', branchKey);
               }
 
               const destination = accountType === 'core' ? 'branch-selection.html' : 'home.html';
