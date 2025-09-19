@@ -1261,6 +1261,24 @@
         }
       }
 
+      // **NEW**: Load saved details from localStorage to pre-fill the form
+      try {
+        const savedDetails = JSON.parse(localStorage.getItem('invoiceCompanyBankDetails'));
+        if (savedDetails) {
+            $('#inputCompanyName').val(savedDetails.companyName || '');
+            $('#inputCompanyAddress').val(savedDetails.companyAddress || '');
+            $('#inputGstNumber').val(savedDetails.gstNumber || '');
+            $('#inputCompanyPhone').val(savedDetails.companyPhone || '');
+            $('#inputBankName').val(savedDetails.bankName || '');
+            $('#inputAccountHolder').val(savedDetails.accountHolder || '');
+            $('#inputAccountNumber').val(savedDetails.accountNumber || '');
+            $('#inputIfscCode').val(savedDetails.ifscCode || '');
+            $('#inputAccountType').val(savedDetails.accountType || 'Current');
+        }
+      } catch (e) {
+        console.warn("Could not load saved invoice details:", e);
+      }
+
       $('#bankDetailsModal').modal('show');
     }
 
@@ -1271,6 +1289,24 @@
       if (!$('#bankDetailsForm')[0].checkValidity()) {
         $('#bankDetailsForm')[0].reportValidity();
         return;
+      }
+
+      // **NEW**: Save the entered details to localStorage for next time
+      try {
+        const detailsToSave = {
+          companyName: $('#inputCompanyName').val(),
+          companyAddress: $('#inputCompanyAddress').val(),
+          gstNumber: $('#inputGstNumber').val(),
+          companyPhone: $('#inputCompanyPhone').val(),
+          bankName: $('#inputBankName').val(),
+          accountHolder: $('#inputAccountHolder').val(),
+          accountNumber: $('#inputAccountNumber').val(),
+          ifscCode: $('#inputIfscCode').val(),
+          accountType: $('#inputAccountType').val()
+        };
+        localStorage.setItem('invoiceCompanyBankDetails', JSON.stringify(detailsToSave));
+      } catch (e) {
+        console.warn("Could not save invoice details:", e);
       }
 
       if (selectedLRs.length === 0) {
