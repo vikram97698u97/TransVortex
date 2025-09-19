@@ -146,22 +146,23 @@
                 .then(() => { 
                   // Ensure localStorage is cleared before redirecting
                   localStorage.removeItem('userName');
-                  window.location.href = 'branch-selection.html'; 
+                  window.location.href = 'index.html'; 
                 })
                 .catch(err => { 
                   // Still clear localStorage even if there's an error
                   localStorage.removeItem('userName');
                   alert('Error logging out: ' + (err && err.message ? err.message : err)); 
+                  window.location.href = 'index.html'; // Redirect even on error
                 });
             } else {
               // Fallback: no Firebase on page, just clear and redirect
               localStorage.removeItem('userName');
-              window.location.href = 'branch-selection.html';
+              window.location.href = 'index.html';
             }
           } catch (e) {
             // Ensure localStorage is cleared even if there's an error
             localStorage.removeItem('userName');
-            window.location.href = 'branch-selection.html';
+            window.location.href = 'index.html';
           }
         };
       }
