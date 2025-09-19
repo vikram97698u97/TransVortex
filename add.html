@@ -1289,8 +1289,7 @@
           
           // Check user role
           try {
-            const userRef = database.ref(`users/${user.uid}/profile`);
-            const snapshot = await userRef.once('value');
+            const snapshot = await database.ref(`users/${user.uid}/profile`).once('value');
             const profile = snapshot.exists() ? snapshot.val() : {};
             const role = (profile.role || profile.userRole || 'normal').toLowerCase();
             
