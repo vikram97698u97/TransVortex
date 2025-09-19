@@ -105,17 +105,6 @@
         else item.classList.remove('active');
       });
 
-      // Branch restriction guards (no Firebase required here)
-      const isMainBranch = (localStorage.getItem('selectedBranch') === 'main');
-      document.querySelectorAll('#sidebar [data-branch-restricted="true"]').forEach(el => {
-        el.addEventListener('click', function(e) {
-          if (!isMainBranch) {
-            e.preventDefault();
-            showBranchNotice('This feature is only available in Main Branch.');
-          }
-        });
-      });
-
       // Simple toast for branch notices if not present
       if (!document.getElementById('branchToast')) {
         const toast = document.createElement('div');
