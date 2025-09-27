@@ -260,7 +260,7 @@
           (parseFloat(lr.shortage) || 0);
         
         // Calculate profit
-        const profit = (parseFloat(lr.freightAmount) || 0) - totalExpenses;
+        const profit = (parseFloat(lr.billingAmount) || 0) - totalExpenses;
         
         return {
           id: lr.id,
@@ -277,7 +277,7 @@
           otherExpenses: parseFloat(lr.otherExpenses) || 0,
           foodExpenses: parseFloat(lr.foodExpenses) || 0,
           shortage: parseFloat(lr.shortage) || 0,
-          freightAmount: parseFloat(lr.freightAmount) || 0,
+          freightAmount: parseFloat(lr.billingAmount) || 0, // Use billingAmount for display
           totalExpenses: totalExpenses,
           profit: profit
         };
