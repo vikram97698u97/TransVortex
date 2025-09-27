@@ -27,6 +27,13 @@
     .list-group-item {
       border-color: #dee2e6;
     }
+    .nav-tabs .nav-link.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+    .action-btns button {
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
@@ -36,7 +43,20 @@
   <!-- Main Content -->
   <div class="container mt-4">
     <div class="main-content" id="clientListView">
-      <h2 class="mb-4"><i class="fas fa-users me-2"></i>Client / Consignor Management</h2>
+      <h2 class="mb-4"><i class="fas fa-users me-2"></i>Client Management</h2>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3" id="clientTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients-content" type="button" role="tab">Clients</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments-content" type="button" role="tab">Client Payments</button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="clientTabsContent">
+      <div class="tab-pane fade show active" id="clients-content" role="tabpanel">
 
     <!-- Add Client Form -->
     <form id="clientForm" class="form-section">
@@ -105,6 +125,52 @@
         </thead>
         <tbody id="clientTableBody"></tbody>
       </table>
+    </div>
+      </div>
+      <div class="tab-pane fade" id="payments-content" role="tabpanel">
+        <form id="paymentForm" class="form-section">
+          <h4 class="mb-3">Add New Payment</h4>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="clientSelect">Select Client:</label>
+              <select id="clientSelect" class="form-select" required>
+                <option value="">Loading clients...</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="amount">Amount:</label>
+              <input type="number" id="amount" class="form-control" required step="0.01" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="date">Date:</label>
+              <input type="date" id="date" class="form-control" required />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="proofFile">Upload Proof:</label>
+              <input type="file" id="proofFile" class="form-control" accept="image/*,application/pdf"/>
+              <img id="preview" class="mt-2" style="display:none; max-width: 100px; border-radius: 6px;" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Payment</button>
+        </form>
+        <input type="text" id="paymentSearchInput" class="form-control mb-3" placeholder="Search by company..." />
+        <div class="table-responsive">
+          <table id="paymentTable" class="table table-striped table-bordered" style="width:100%">
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Proof</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="paymentTableBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -185,6 +251,8 @@
 
     let clientTable;
     let currentUser = null;
+    let paymentTable;
+    let currentEditingPaymentId = null;
 
     // Auth Check
     onAuthStateChanged(auth, user => {
@@ -197,7 +265,15 @@
           "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
           "columnDefs": [{ "orderable": false, "targets": 5 }]
         });
+        paymentTable = $('#paymentTable').DataTable({
+          "pageLength": 10,
+          "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+          "order": [[ 2, "desc" ]], // Sort by date descending
+          "columnDefs": [{ "orderable": false, "targets": 4 }]
+        });
         loadClients(user.uid);
+        loadClientsForPaymentDropdown(user.uid);
+        loadClientPayments(user.uid);
       }
     });
 
@@ -255,6 +331,217 @@
         .catch((error) => {
           alert('Error adding client: ' + error.message);
         });
+    });
+
+    // --- CLIENT PAYMENT LOGIC ---
+
+    // Load clients into the payment dropdown
+    function loadClientsForPaymentDropdown(uid) {
+        const clientRef = ref(db, `users/${uid}/clients`);
+        onValue(clientRef, (snapshot) => {
+            const select = document.getElementById('clientSelect');
+            select.innerHTML = '<option value="">Select a Client</option>';
+            if (snapshot.exists()) {
+                snapshot.forEach(child => {
+                    const client = child.val();
+                    const option = document.createElement('option');
+                    option.value = child.key;
+                    option.textContent = `${client.clientName} (Outstanding: ₹${(client.outstanding || 0).toFixed(2)})`;
+                    option.dataset.name = client.clientName;
+                    select.appendChild(option);
+                });
+            }
+        });
+    }
+
+    // Handle image preview
+    document.getElementById("proofFile").addEventListener("change", () => {
+      const file = document.getElementById("proofFile").files[0];
+      const preview = document.getElementById("preview");
+      if (file && file.type.startsWith("image")) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          preview.src = reader.result;
+          preview.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.style.display = "none";
+      }
+    });
+
+    // Cloudinary upload logic
+    async function resizeImage(file, maxWidth = 800) {
+      return new Promise((resolve) => {
+        const img = document.createElement("img");
+        const reader = new FileReader();
+        reader.onload = (e) => { img.src = e.target.result; };
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const scaleFactor = maxWidth / img.width;
+          canvas.width = maxWidth;
+          canvas.height = img.height * scaleFactor;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            resolve(new File([blob], file.name, { type: file.type }));
+          }, 'image/jpeg', 0.85);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadToCloudinary(file) {
+      if (file.type.startsWith("image")) {
+        file = await resizeImage(file, 800);
+      }
+      const url = `https://api.cloudinary.com/v1_1/doqapn15f/auto/upload`;
+      const preset = "payment-billing";
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", preset);
+      const res = await fetch(url, { method: "POST", body: formData });
+      const data = await res.json();
+      return data.secure_url;
+    }
+
+    // Handle adding a new payment
+    document.getElementById("paymentForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const saveButton = e.target.querySelector('button[type="submit"]');
+      let fileURL = "";
+      const file = document.getElementById("proofFile").files[0];
+      const clientSelect = document.getElementById("clientSelect");
+      const selectedClientId = clientSelect.value;
+      const selectedClientName = clientSelect.options[clientSelect.selectedIndex].dataset.name;
+      const amount = parseFloat(document.getElementById("amount").value) || 0;
+      const date = document.getElementById("date").value;
+    
+      if (!selectedClientId) {
+          alert("Please select a client.");
+          return;
+      }
+    
+      saveButton.disabled = true;
+      saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+      if (file) fileURL = await uploadToCloudinary(file);
+
+      if (currentEditingPaymentId) {
+        // Update logic
+        const paymentRef = ref(db, `payments/${currentEditingPaymentId}`);
+        const oldPaymentSnap = await get(paymentRef);
+        const oldPayment = oldPaymentSnap.val();
+        const amountDifference = amount - (oldPayment.amount || 0);
+
+        const updates = {};
+        updates[`/payments/${currentEditingPaymentId}/amount`] = amount;
+        updates[`/payments/${currentEditingPaymentId}/date`] = date;
+        updates[`/payments/${currentEditingPaymentId}/companyName`] = selectedClientName;
+        updates[`/payments/${currentEditingPaymentId}/clientId`] = selectedClientId;
+        if (file) updates[`/payments/${currentEditingPaymentId}/proof`] = fileURL;
+
+        // Adjust outstanding balance
+        const clientRef = ref(db, `users/${currentUser.uid}/clients/${selectedClientId}/outstanding`);
+        const snapshot = await get(clientRef);
+        const currentOutstanding = snapshot.val() || 0;
+        updates[`/users/${currentUser.uid}/clients/${selectedClientId}/outstanding`] = currentOutstanding - amountDifference;
+
+        await update(ref(db), updates);
+        alert('Payment updated successfully!');
+        currentEditingPaymentId = null;
+        saveButton.innerHTML = '<i class="fas fa-plus me-2"></i>Add Payment';
+      } else {
+        // Add new logic
+        const paymentRef = push(ref(db, `payments`));
+        const paymentData = { companyName: selectedClientName, amount, date, proof: fileURL, id: paymentRef.key, clientId: selectedClientId, userId: currentUser.uid, createdAt: new Date().toISOString() };
+        await set(paymentRef, paymentData);
+        const clientRef = ref(db, `users/${currentUser.uid}/clients/${selectedClientId}/outstanding`);
+        const snapshot = await get(clientRef);
+        const currentOutstanding = snapshot.val() || 0;
+        await set(clientRef, currentOutstanding - amount);
+        alert('Payment added successfully!');
+      }
+      
+      e.target.reset();
+      document.getElementById("preview").style.display = "none";
+      saveButton.disabled = false;
+    });
+
+    // Load client payments into the DataTable
+    function loadClientPayments(uid) {
+      const paymentsQuery = query(ref(db, 'payments'), orderByChild('userId'), equalTo(uid));
+      onValue(paymentsQuery, (snapshot) => {
+        paymentTable.clear();
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const payment = child.val();
+            if (!payment.plan) { // Filter out subscription payments
+              paymentTable.row.add([
+                payment.companyName,
+                `₹${(payment.amount || 0).toFixed(2)}`,
+                payment.date,
+                payment.proof ? `<a href="${payment.proof}" target="_blank">View</a>` : '—',
+                `<div class="action-btns text-center">
+                  <button class="btn btn-sm btn-outline-secondary me-1" onclick="editClientPayment('${child.key}')"><i class="fas fa-edit"></i></button>
+                  <button class="btn btn-sm btn-outline-danger" onclick="deleteClientPayment('${child.key}', '${payment.clientId}', ${payment.amount})"><i class="fas fa-trash"></i></button>
+                 </div>`
+              ]);
+            }
+          });
+        }
+        paymentTable.draw();
+      });
+    }
+
+    // Edit Client Payment
+    window.editClientPayment = async (paymentId) => {
+      const paymentRef = ref(db, `payments/${paymentId}`);
+      const snapshot = await get(paymentRef);
+      if (!snapshot.exists()) {
+        alert('Payment record not found.');
+        return;
+      }
+      const payment = snapshot.val();
+      currentEditingPaymentId = paymentId;
+
+      document.getElementById('clientSelect').value = payment.clientId;
+      document.getElementById('amount').value = payment.amount;
+      document.getElementById('date').value = payment.date;
+      const preview = document.getElementById('preview');
+      preview.src = payment.proof || '';
+      preview.style.display = payment.proof ? 'block' : 'none';
+
+      document.querySelector('#paymentForm button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i>Update Payment';
+      document.getElementById('paymentForm').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // Delete a client payment and update outstanding balance
+    window.deleteClientPayment = async (paymentId, clientId, amount) => {
+      if (!confirm("Are you sure you want to delete this payment record? This will update the client's outstanding balance.")) return;
+
+      const updates = {};
+      updates[`/payments/${paymentId}`] = null; // Delete payment record
+
+      // Add the payment amount back to the client's outstanding balance
+      if (clientId && amount) {
+        const clientRef = ref(db, `users/${currentUser.uid}/clients/${clientId}/outstanding`);
+        const snapshot = await get(clientRef);
+        const currentOutstanding = snapshot.val() || 0;
+        updates[`/users/${currentUser.uid}/clients/${clientId}/outstanding`] = currentOutstanding + amount;
+      }
+
+      try {
+        await update(ref(db), updates);
+        alert('Payment deleted and client balance updated.');
+      } catch (error) {
+        alert('Error deleting payment: ' + error.message);
+      }
+    };
+
+    // Search functionality for payment table
+    $('#paymentSearchInput').on('keyup', function () {
+        paymentTable.search(this.value).draw();
     });
 
     // Load Clients
@@ -316,9 +603,9 @@
       try {
         // Fetch all data concurrently
         const [invoiceSnap, lrSnap, paymentSnap] = await Promise.all([
-          get(query(ref(db, "invoices"), orderByChild('clientId'), equalTo(clientId))),
-          get(query(ref(db, "lrReports"), orderByChild('clientId'), equalTo(clientId))),
-          get(query(ref(db, "payments"), orderByChild('clientId'), equalTo(clientId)))
+          get(query(ref(db, "invoices"), orderByChild('userId'), equalTo(currentUser.uid))),
+          get(query(ref(db, "lrReports"), orderByChild('userId'), equalTo(currentUser.uid))),
+          get(query(ref(db, "payments"), orderByChild('userId'), equalTo(currentUser.uid)))
         ]);
 
         // Process Invoices
@@ -327,8 +614,9 @@
         if (invoiceSnap.exists()) {
           invoiceSnap.forEach(child => {
             const inv = child.val();
+            if (inv.clientId !== clientId) return; // Filter for the correct client
             totalInvoiced += (inv.grandTotal || 0);
-            invoiceList.innerHTML += `<li class="list-group-item">#${inv.invoiceNumber} - ₹${(inv.grandTotal || 0).toFixed(2)}</li>`;
+            invoiceList.innerHTML += `<li class="list-group-item"><a href="invoice.html?view=${child.key}" target="_blank">#${inv.invoiceNumber}</a> - ₹${(inv.grandTotal || 0).toFixed(2)}</li>`;
           });
         }
         if (!invoiceList.innerHTML) invoiceList.innerHTML = '<li class="list-group-item text-muted">No invoices found.</li>';
@@ -339,7 +627,8 @@
         if (lrSnap.exists()) {
           lrSnap.forEach(child => {
             const lr = child.val();
-            lrList.innerHTML += `<li class="list-group-item">#${lr.lrNumber || 'N/A'} - ${lr.fromLocation || ''} → ${lr.toLocation || ''} - ₹${(lr.totalAmount || 0).toFixed(2)}</li>`;
+            if (lr.clientId !== clientId) return; // Filter for the correct client
+            lrList.innerHTML += `<li class="list-group-item"><a href="lr-report.html?view=${child.key}" target="_blank">#${lr.lrNumber || 'N/A'}</a> - ${lr.fromLocation || ''} → ${lr.toLocation || ''} - ₹${(lr.totalAmount || 0).toFixed(2)}</li>`;
             if (!lr.invoiceId && lr.status !== 'Generated') {
               totalNonInvoiced += (lr.totalAmount || 0);
             }
@@ -354,7 +643,8 @@
         if (paymentSnap.exists()) {
           paymentSnap.forEach(child => {
             const pay = child.val();
-            if (pay.companyName) { // Assuming client payments have a companyName
+            // Filter for the correct client and ensure it's an operational payment
+            if (pay.clientId === clientId && !pay.plan) {
               totalPaid += parseFloat(pay.amount || 0);
               list.innerHTML += `<li class="list-group-item">₹${parseFloat(pay.amount || 0).toFixed(2)} on ${pay.date || 'N/A'}</li>`;
             }
@@ -452,6 +742,9 @@
     window.viewClient = viewClient;
     window.editClient = editClient;
     window.deleteClient = deleteClient;
+    window.editClientPayment = editClientPayment;
+    window.deleteClientPayment = deleteClientPayment;
   </script>
 </body>
 </html>
+
