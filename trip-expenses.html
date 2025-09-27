@@ -29,8 +29,8 @@
       <div class="col-md-3 mb-3">
         <div class="card summary-card bg-primary text-white">
           <div class="card-body">
-            <h6 class="card-title">Total Freight</h6>
-            <h3 id="totalFreight">₹0.00</h3>
+            <h6 class="card-title">Total Billing</h6>
+            <h3 id="totalBilling">₹0.00</h3>
           </div>
         </div>
       </div>
@@ -100,7 +100,7 @@
             <th class="text-end">Other Exp</th>
             <th class="text-end">Food Exp</th>
             <th class="text-end">Shortage</th>
-            <th class="text-end">Freight Amt</th>
+            <th class="text-end">Billing Amt</th>
             <th class="text-end">Total Exp</th>
             <th class="text-end">Profit</th>
           </tr>
@@ -334,7 +334,7 @@
 
     // Update summary cards
     function updateSummaryCards() {
-      const totalFreight = tripExpensesData.reduce((sum, expense) => 
+      const totalBilling = tripExpensesData.reduce((sum, expense) => 
         sum + (parseFloat(expense.freightAmount) || 0), 0);
       
       const totalExpenses = tripExpensesData.reduce((sum, expense) => 
@@ -343,7 +343,7 @@
       const totalProfit = tripExpensesData.reduce((sum, expense) => 
         sum + (parseFloat(expense.profit) || 0), 0);
       
-      $('#totalFreight').text(formatCurrency(totalFreight));
+      $('#totalBilling').text(formatCurrency(totalBilling));
       $('#totalExpenses').text(formatCurrency(totalExpenses));
       $('#totalProfit').text(formatCurrency(totalProfit));
       $('#tripsCount').text(tripExpensesData.length);
@@ -383,7 +383,7 @@
 
     // Update summary cards with filtered data
     function updateFilteredSummary() {
-      let filteredFreight = 0;
+      let filteredBilling = 0;
       let filteredExpenses = 0;
       let filteredProfit = 0;
       let filteredCount = 0;
@@ -392,16 +392,16 @@
       const filteredData = expensesTable.rows({ search: 'applied' }).data();
       
       filteredData.each(function(rowData) {
-        const freight = parseCurrency(rowData[13]);
+        const billing = parseCurrency(rowData[13]);
         const expenses = parseCurrency(rowData[14]);
         const profit = parseCurrency(rowData[15]);
-        filteredFreight += freight;
+        filteredBilling += billing;
         filteredExpenses += expenses;
         filteredProfit += profit;
         filteredCount++;
       });
       
-      $('#totalFreight').text(formatCurrency(filteredFreight));
+      $('#totalBilling').text(formatCurrency(filteredBilling));
       $('#totalExpenses').text(formatCurrency(filteredExpenses));
       $('#totalProfit').text(formatCurrency(filteredProfit));
       $('#tripsCount').text(filteredCount);
@@ -481,7 +481,7 @@
           rowData[10], // Other
           rowData[11], // Food
           rowData[12], // Shortage
-          rowData[13], // Freight
+          rowData[13], // Billing
           rowData[14], // Total Expenses
           profitText   // Profit
         ]);
@@ -489,7 +489,7 @@
       
       // Add table to PDF
       doc.autoTable({
-        head: [['Date', 'Vehicle', 'LR No', 'From', 'To', 'Tyre', 'Diesel', 'Advance', 'Toll', 'Veh Work', 'Other', 'Food', 'Shortage', 'Freight', 'Total Exp', 'Profit']],
+        head: [['Date', 'Vehicle', 'LR No', 'From', 'To', 'Tyre', 'Diesel', 'Advance', 'Toll', 'Veh Work', 'Other', 'Food', 'Shortage', 'Billing', 'Total Exp', 'Profit']],
         body: tableData,
         startY: 30,
         theme: 'grid',
@@ -510,7 +510,7 @@
           11: { cellWidth: 10 },
           12: { cellWidth: 10 },
           13: { cellWidth: 12 },
-          14: { cellWidth: 12 },
+          14: { cellWidth: 12 }, // Total Exp
           15: { cellWidth: 12 }
         }
       });
@@ -519,7 +519,7 @@
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(10);
       doc.text(`Total Trips: ${$('#tripsCount').text()}`, 14, finalY);
-      doc.text(`Total Freight: ${$('#totalFreight').text()}`, 14, finalY + 5);
+      doc.text(`Total Billing: ${$('#totalBilling').text()}`, 14, finalY + 5);
       doc.text(`Total Expenses: ${$('#totalExpenses').text()}`, 14, finalY + 10);
       doc.text(`Total Profit: ${$('#totalProfit').text()}`, 14, finalY + 15);
       
