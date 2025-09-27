@@ -571,14 +571,14 @@
             const totalExpenses = 
               (parseFloat(lr.tyreExpenses) || 0) +
               (parseFloat(lr.dieselExpenses) || 0) +
-              (parseFloat(lr.advance) || 0) +
               (parseFloat(lr.tollExpenses) || 0) +
               (parseFloat(lr.vehicleWork) || 0) +
               (parseFloat(lr.otherExpenses) || 0) +
               (parseFloat(lr.foodExpenses) || 0) +
-              (parseFloat(lr.shortage) || 0);
+              (parseFloat(lr.shortage) || 0) +
+              (parseFloat(lr.advance) || 0);
             
-            const profit = (parseFloat(lr.freightAmount) || 0) - totalExpenses;
+            const profit = (parseFloat(lr.billingAmount) || 0) - totalExpenses;
 
             // Map to the structure expected by the rest of the page
             allExpensesData.push({
@@ -586,7 +586,7 @@
               date: lr.date,
               vehicle: lr.truckNumber,
               driver: lr.driverName || 'N/A',
-              gain: parseFloat(lr.freightAmount) || 0,
+              gain: parseFloat(lr.billingAmount) || 0,
               diesel: parseFloat(lr.dieselExpenses) || 0,
               tyre: parseFloat(lr.tyreExpenses) || 0,
               advance: parseFloat(lr.advance) || 0,
