@@ -23,6 +23,79 @@
             margin: 0;
             padding: 0;
         }
+
+        /* Dark Mode Toggle */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .theme-switch-wrapper i {
+            color: var(--dark-gray);
+            transition: color 0.3s ease;
+        }
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 26px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        html[data-theme="dark"] .theme-switch-wrapper .fa-sun { color: #6c757d; }
+        html[data-theme="dark"] .theme-switch-wrapper .fa-moon { color: var(--warning-color); }
+
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: var(--dark-gray);
+            margin: 0;
+        }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -40,29 +113,6 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .header h1 {
-            font-size: 24px;
-            color: var(--dark-gray);
-            margin: 0;
         }
         
         .tabs {
@@ -550,9 +600,27 @@
 </head>
 <body>
     <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
+            <div class="header-actions">
+                <div class="theme-switch-wrapper">
+                    <i class="fas fa-sun"></i>
+                    <label class="theme-switch">
+                        <input type="checkbox" id="theme-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <i class="fas fa-moon"></i>
+                </div>
+                <button id="logoutBtn" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+
         <div class="tabs">
             <button id="paymentsTab" class="tab-btn active">
                 <i class="fas fa-money-bill-wave"></i> Payment Management
+            </button>
+            <button id="branchPaymentsTab" class="tab-btn">
+                <i class="fas fa-code-branch"></i> Branch Payments
             </button>
         </div>
         
@@ -607,6 +675,43 @@
         </div>
     </div>
 
+    <!-- Branch Payments Tab -->
+    <div id="branchPaymentsSection" class="tab-content">
+        <h1><i class="fas fa-code-branch"></i> Branch Creation Payments</h1>
+        <div class="search-box">
+            <input type="text" id="branchSearchInput" placeholder="Search by payment ID, user ID, or status...">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="pending">Pending</button>
+            <button class="filter-btn" data-filter="verified">Verified</button>
+        </div>
+        <div class="table-responsive">
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>Payment ID</th>
+                        <th>User ID</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                        <th></th> <!-- For delete button -->
+                    </tr>
+                </thead>
+                <tbody id="branchPaymentsBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
+                            <p>Loading branch payments...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- Firebase and other scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -646,6 +751,10 @@
         const paymentsList = document.getElementById('paymentsList');
         let searchInput = document.getElementById('searchInput');
         const filterBtns = document.querySelectorAll('.filter-btn');
+
+        // New elements for branch payments
+        const branchPaymentsTab = document.getElementById('branchPaymentsTab');
+        const branchPaymentsSection = document.getElementById('branchPaymentsSection');
         
         let currentFilter = 'all';
         let allPayments = [];
@@ -661,17 +770,33 @@
         const pageTabs = document.getElementById('pageTabs');
         const entriesInfo = document.getElementById('entriesInfo');
 
+        // --- TAB SWITCHING LOGIC ---
+        const paymentsTab = document.getElementById('paymentsTab');
+        const paymentsSection = document.getElementById('paymentsSection');
+
+        paymentsTab.addEventListener('click', () => {
+            paymentsTab.classList.add('active');
+            branchPaymentsTab.classList.remove('active');
+            paymentsSection.classList.add('active');
+            branchPaymentsSection.classList.remove('active');
+            loadPayments(); // Reload subscription payments
+        });
+
+        branchPaymentsTab.addEventListener('click', () => {
+            branchPaymentsTab.classList.add('active');
+            paymentsTab.classList.remove('active');
+            branchPaymentsSection.classList.add('active');
+            paymentsSection.classList.remove('active');
+            loadBranchPayments(); // Load branch payments
+        });
+
+        // Initial load based on which tab is active
+        if (paymentsTab.classList.contains('active')) loadPayments();
+        else loadBranchPayments();
+
         // Check if user is admin
-        async function checkAdmin() {
-            const user = auth.currentUser;
-            if (!user) {
-                console.log('No user logged in, redirecting to login');
-                window.location.href = 'login.html';
-                return false;
-            }
-            
+        async function checkAdmin(user) {
             try {
-                console.log('Checking admin status for user:', user.uid);
                 // Check if user has admin role in the database
                 const userRef = ref(database, `users/${user.uid}`);
                 const snapshot = await get(userRef);
@@ -684,16 +809,7 @@
                 
                 const userData = snapshot.val();
                 const isAdmin = userData && userData.role === 'admin';
-                
-                if (!isAdmin) {
-                    console.error('User does not have admin privileges', { uid: user.uid, userData });
-                    showNotification('Access denied: Admin privileges required', 'error');
-                    // Redirect to home page after a short delay
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 2000);
-                }
-                
+
                 return isAdmin;
                 
             } catch (error) {
@@ -874,6 +990,48 @@
             }
         }
 
+        // Update branch payment status
+        async function updateBranchPaymentStatus(paymentId, status) {
+            try {
+                const paymentRef = ref(database, `branchCreationPayments/${paymentId}`);
+                await update(paymentRef, {
+                    status: status,
+                    updatedAt: new Date().toISOString(),
+                    verifiedBy: auth.currentUser.uid
+                });
+                showNotification(`Branch payment ${paymentId} marked as ${status}.`, 'success');
+                loadBranchPayments(); // Refresh the list
+            } catch (error) {
+                console.error('Error updating branch payment:', error);
+                showNotification('Error updating payment: ' + error.message, 'error');
+            }
+        }
+
+        // --- NEW: Delete branch payment ---
+        async function deleteBranchPayment(paymentId) {
+            if (!paymentId) return showNotification('Error: Payment ID is required', 'error');
+            if (!confirm('Are you sure you want to permanently delete this branch payment record? This action cannot be undone.')) return;
+
+            try {
+                const paymentRef = ref(database, `branchCreationPayments/${paymentId}`);
+                await remove(paymentRef);
+                showNotification('Branch payment record deleted successfully.', 'success');
+                loadBranchPayments(); // Refresh the list
+            } catch (error) {
+                console.error('Error deleting branch payment:', error);
+                showNotification('Error deleting record: ' + error.message, 'error');
+            }
+        }
+
+        // Make functions globally available for onclick handlers
+        window.approveBranchPayment = (id) => {
+            if (confirm('Approve this branch payment?')) updateBranchPaymentStatus(id, 'verified');
+        };
+        window.rejectBranchPayment = (id) => {
+            if (confirm('Reject this branch payment?')) updateBranchPaymentStatus(id, 'failed');
+        };
+        window.deleteBranchPayment = deleteBranchPayment;
+
         // Render payments
         function renderPayments(payments) {
             const paymentsBody = document.getElementById('paymentsBody');
@@ -972,6 +1130,71 @@
             paymentsBody.appendChild(fragment);
         }
 
+        // Render branch payments
+        function renderBranchPayments(payments) {
+            const paymentsBody = document.getElementById('branchPaymentsBody');
+            if (!paymentsBody) return;
+
+            if (!payments || payments.length === 0) {
+                paymentsBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No branch payments found</td></tr>';
+                return;
+            }
+
+            paymentsBody.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+
+            payments.forEach(payment => {
+                const row = document.createElement('tr');
+                row.dataset.paymentId = payment.id;
+
+                const statusBadge = `<span class="status-badge status-${payment.status || 'pending'}">${payment.status || 'pending'}</span>`;
+
+                let actions = '';
+                if (payment.status === 'pending') {
+                    actions = `
+                        <button class="btn btn-success btn-sm" onclick="approveBranchPayment('${payment.id}')"><i class="fas fa-check"></i> Approve</button>
+                        <button class="btn btn-danger btn-sm" onclick="rejectBranchPayment('${payment.id}')"><i class="fas fa-times"></i> Reject</button>
+                    `;
+                } else if (payment.status === 'verified') {
+                    actions = `<span class="text-success"><i class="fas fa-check-circle"></i> Verified</span>`;
+                } else {
+                    actions = `<span class="text-danger"><i class="fas fa-times-circle"></i> ${payment.status}</span>`;
+                }
+
+                row.innerHTML = `
+                    <td>${payment.id || 'N/A'}</td>
+                    <td>${payment.userId || 'N/A'}</td>
+                    <td>${payment.amount ? '₹' + payment.amount : 'N/A'}</td>
+                    <td>${formatDate(payment.createdAt)}</td>
+                    <td>${statusBadge}</td>
+                    <td class="action-buttons">${actions}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteBranchPayment('${payment.id}')" title="Delete"><i class="fas fa-trash"></i></button></td>
+                `;
+                fragment.appendChild(row);
+            });
+            paymentsBody.appendChild(fragment);
+        }
+
+        // Load branch payments from Firebase
+        async function loadBranchPayments() {
+            const paymentsBody = document.getElementById('branchPaymentsBody');
+            try {
+                paymentsBody.innerHTML = '<tr><td colspan="6" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+                const paymentsRef = ref(database, 'branchCreationPayments');
+                const snapshot = await get(paymentsRef);
+                if (snapshot.exists()) {
+                    const payments = Object.entries(snapshot.val()).map(([id, data]) => ({ id, ...data }));
+                    payments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    renderBranchPayments(payments);
+                } else {
+                paymentsBody.innerHTML = '<tr><td colspan="7" class="no-data">No branch payments found.</td></tr>';
+                }
+            } catch (error) {
+                console.error("Error loading branch payments:", error);
+            paymentsBody.innerHTML = `<tr><td colspan="7" class="no-data text-danger">Error: Could not load branch payments. Check console and database rules.</td></tr>`;
+            }
+        }
+
         function generatePageTabs() {
             if (!pageTabs) return;
             pageTabs.innerHTML = '';
@@ -1031,158 +1254,30 @@
             initEventListeners();
             
             const paymentsBody = document.getElementById('paymentsBody');
-            if (!paymentsBody) {
-                console.error('Payments table body not found');
+            if (!paymentsBody) return console.error('Payments table body not found');
+
+            paymentsBody.innerHTML = `<tr><td colspan="7" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading payment data...</td></tr>`;
+
+            const paymentsRef = ref(database, 'subscriptionPayments');
+            const snapshot = await get(paymentsRef);
+
+            if (!snapshot.exists()) {
+                paymentsBody.innerHTML = `<tr><td colspan="7" class="no-data">No payment records found.</td></tr>`;
+                allPayments = [];
                 return;
             }
-            
-            // Show loading state
-            const showLoading = (message = 'Loading payments...') => {
-                paymentsBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 20px;">
-                            <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                            <p>${message}</p>
-                        </td>
-                    </tr>
-                `;
-            };
-            
-            // Show error state
-            const showError = (message) => {
-                const errorRow = document.createElement('tr');
-                errorRow.innerHTML = `
-                    <td colspan="7" style="text-align: center; padding: 20px; color: #dc3545;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                        <p>${message}</p>
-                        <button class="btn btn-primary try-again-btn" style="margin-top: 10px;">
-                            <i class="fas fa-sync-alt"></i> Try Again
-                        </button>
-                    </td>
-                `;
-                
-                // Clear existing content and append new row
-                paymentsBody.innerHTML = '';
-                paymentsBody.appendChild(errorRow);
-                
-                // Add event listener to the try again button
-                const tryAgainBtn = paymentsBody.querySelector('.try-again-btn');
-                if (tryAgainBtn) {
-                    tryAgainBtn.addEventListener('click', loadPayments);
+
+            const payments = [];
+            snapshot.forEach((childSnapshot) => {
+                const paymentData = childSnapshot.val();
+                if (paymentData) {
+                    payments.push({ id: childSnapshot.key, ...paymentData });
                 }
-            };
-            
-            try {
-                showLoading('Verifying admin access...');
-                
-                // First check if user is admin
-                const isAdmin = await checkAdmin();
-                if (!isAdmin) {
-                    showLoading('Redirecting to home page...');
-                    // checkAdmin will handle the redirection with a delay
-                    return;
-                }
-                
-                showLoading('Loading payment data...');
-                
-                // Fetch payments using modular Firebase v9+ syntax
-                const paymentsRef = ref(database, 'subscriptionPayments');
-                const snapshot = await get(paymentsRef);
-                
-                if (!snapshot.exists()) {
-                    const noRecordsRow = document.createElement('tr');
-                    noRecordsRow.innerHTML = `
-                        <td colspan="7" style="text-align: center; padding: 20px;">
-                            <i class="fas fa-inbox" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                            <p>No payment records found</p>
-                            <button class="btn btn-link refresh-btn">
-                                <i class="fas fa-sync-alt"></i> Refresh
-                            </button>
-                        </td>`;
-                    
-                    // Clear existing content and append new row
-                    paymentsBody.innerHTML = '';
-                    paymentsBody.appendChild(noRecordsRow);
-                    
-                    // Add event listener to the refresh button
-                    const refreshBtn = paymentsBody.querySelector('.refresh-btn');
-                    if (refreshBtn) {
-                        refreshBtn.addEventListener('click', loadPayments);
-                    }
-                    allPayments = [];
-                    return;
-                }
-                
-                allPayments = [];
-                
-                const payments = [];
-                try {
-                    snapshot.forEach((childSnapshot) => {
-                        try {
-                            const paymentData = childSnapshot.val();
-                            if (!paymentData) {
-                                console.warn('Empty payment data for key:', childSnapshot.key);
-                                return;
-                            }
-                            
-                            payments.push({
-                                id: childSnapshot.key,
-                                ...paymentData
-                            });
-                        } catch (parseError) {
-                            console.error('Error parsing payment data:', parseError, 'for key:', childSnapshot.key);
-                            // Continue with other payments even if one fails
-                        }
-                    });
-                    
-                    if (payments.length === 0) {
-                        showLoading('No payment records found');
-                        return;
-                    }
-                    
-                    // Sort by date (newest first)
-                    payments.sort((a, b) => {
-                        try {
-                            const dateA = a.timestamp ? new Date(a.timestamp) : new Date(0);
-                            const dateB = b.timestamp ? new Date(b.timestamp) : new Date(0);
-                            return dateB - dateA;
-                        } catch (sortError) {
-                            console.error('Error sorting payments:', sortError);
-                            return 0; // Keep original order if sort fails
-                        }
-                    });
-                    
-                    allPayments = payments;
-                    applyFilters(); // Apply any active filters to the newly loaded data
-                    
-                } catch (processError) {
-                    console.error('Error processing payment data:', processError);
-                    showError('Error processing payment data. Please try again.');
-                    return;
-                }
-                
-            } catch (error) {
-                console.error('Error loading payments:', error);
-                let errorMessage = 'An unexpected error occurred';
-                
-                if (error.code) {
-                    // Firebase error codes
-                    if (error.code === 'permission-denied') {
-                        errorMessage = 'You do not have permission to view payments';
-                    } else if (error.code === 'unavailable') {
-                        errorMessage = 'Network error. Please check your connection and try again.';
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-                
-                showError(`Error: ${errorMessage}`);
-                
-                // Show notification for critical errors
-                if (error.code === 'permission-denied' || error.message?.includes('permission')) {
-                    showNotification('Access denied: You do not have permission to view payments', 'error');
-                }
-            }
+            });
+
+            payments.sort((a, b) => (new Date(b.timestamp) || 0) - (new Date(a.timestamp) || 0));
+            allPayments = payments;
+            applyFilters();
         }
 
         // Debounce helper function
@@ -1500,16 +1595,82 @@
         document.head.appendChild(style);
         
         // Initialize auth state
-        auth.onAuthStateChanged(user => {
+        onAuthStateChanged(auth, async (user) => { // This is the single source of truth for auth state
             if (user) {
-                loadPayments();
+                // User is signed in, now verify they are an admin.
+                const isAdmin = await checkAdmin(user); // Pass the user object directly
+                if (isAdmin === true) {
+                    // Only load data if the user is a verified admin.
+                    if (paymentsTab.classList.contains('active')) loadPayments();
+                    else loadBranchPayments();
+                } else {
+                    // If checkAdmin returns false, the user is not an admin. Redirect them.
+                    showNotification('Access Denied: Admin privileges required.', 'error');
+                    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+                }
             } else {
+                // No user is signed in. This is the only place we should redirect to login.
                 window.location.href = 'login.html';
             }
         });
 
         // Make functions available globally for inline event handlers
         window.updatePaymentStatus = updatePaymentStatus;
+        window.approveBranchPayment = approveBranchPayment;
+        window.rejectBranchPayment = rejectBranchPayment;
+        window.deleteBranchPayment = deleteBranchPayment;
+
+        // --- Logout Functionality ---
+        function logout() {
+            signOut(auth).then(() => {
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                console.error('Logout Error:', error);
+                alert('Failed to log out. Please try again.');
+            });
+        }
+
+        // Attach logout event listener
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        // --- Dark Mode Functionality ---
+        const themeToggle = document.getElementById('theme-toggle');
+        const currentTheme = localStorage.getItem('theme');
+
+        // Apply the saved theme on page load
+        if (currentTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            if (currentTheme === 'dark') {
+                themeToggle.checked = true;
+            }
+        }
+
+        function switchTheme(e) {
+            if (e.target.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        themeToggle.addEventListener('change', switchTheme, false);
+
+        // Add dark mode styles dynamically
+        const darkModeStyles = `
+            html[data-theme="dark"] { --light-gray: #1f2937; --dark-gray: #f9fafb; --border-color: #374151; --body-bg: #111827; --container-bg: #1f2937; --text-color: #d1d5db; --hover-bg: rgba(255, 255, 255, 0.05); }
+            html[data-theme="dark"] body { background-color: var(--body-bg); color: var(--text-color); }
+            html[data-theme="dark"] .container { background: var(--container-bg); box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+            html[data-theme="dark"] th { background-color: #111827; color: var(--text-color); }
+            html[data-theme="dark"] tr:hover { background-color: var(--hover-bg); }
+            html[data-theme="dark"] .tab-btn { color: #9ca3af; }
+            html[data-theme="dark"] .tab-btn.active { color: var(--primary-color); }
+            html[data-theme="dark"] .search-box input { background-color: #374151; color: var(--text-color); border-color: #4b5563; }
+        `;
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = darkModeStyles;
+        document.head.appendChild(styleSheet);
     </script>
 </body>
 </html>
