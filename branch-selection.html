@@ -393,6 +393,20 @@
     .branches-container::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
+    /* Payment Modal for Branch Creation */
+    .payment-modal-content {
+      text-align: center;
+      padding: 20px;
+    }
+    .payment-modal-content #branchQrCode {
+      margin: 15px auto;
+      padding: 10px;
+      background: white;
+      display: inline-block;
+    }
+    .payment-modal-content p {
+      margin-bottom: 10px;
+    }
     /* Search bar styling */
     .search-wrapper {
       position: relative;
@@ -500,6 +514,11 @@
     const btnMain = document.getElementById('btnMain');
     const btnCreate = document.getElementById('btnCreateBranch');
     const branchSearch = document.getElementById('branchSearch');
+
+    // QR Code library
+    const qrScript = document.createElement('script');
+    qrScript.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+    document.head.appendChild(qrScript);
 
     function debounce(fn, delay = 200) {
       let t;
@@ -662,13 +681,215 @@
       }
     }
 
+    // --- NEW: Payment flow for creating a new branch ---
+    async function initiateBranchPayment(coreAccountId) {
+      const paymentRef = 'BRANCH-PAY-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+      
+      // Create a payment record
+      await set(ref(db, `branchCreationPayments/${paymentRef}`), {
+        userId: coreAccountId,
+        amount: 99,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+
+      // Show payment modal
+      const modal = createModal();
+      modal.innerHTML = `
+        <div class="modal-content payment-modal-content">
+          <span class="close" style="position:absolute; top:10px; right:20px; font-size:24px; cursor:pointer;">&times;</span>
+          <h3>One-Time Fee for New Branch</h3>
+          <p>You have reached your free branch limit. A one-time fee of ₹99 is required to create a new branch.</p>
+          <div id="branchQrCode"></div>
+          <p>Amount: <strong>₹99</strong></p>
+          <p>UPI ID: <strong>yourbusiness@upi</strong></p>
+          <p>Reference: <strong id="paymentRef">${paymentRef}</strong></p>
+          <p>After payment, click below to verify.</p>
+          <button id="verifyBranchPaymentBtn" class="btn btn-primary" style="margin-top: 15px;">I've Made the Payment</button>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.style.display = 'flex';
+
+      // Generate QR Code
+      const upiLink = `upi://pay?pa=singhvikram43210s@okhdfcbank&pn=Your%20Business&am=99.00&tn=Branch%20Fee:%20${paymentRef}`;
+      new QRCode(document.getElementById('branchQrCode'), {
+        text: upiLink,
+        width: 180,
+        height: 180
+      });
+
+      // Event listeners for the new modal
+      modal.querySelector('.close').onclick = () => modal.remove();
+      modal.querySelector('#verifyBranchPaymentBtn').onclick = async () => {
+        const verifyBtn = modal.querySelector('#verifyBranchPaymentBtn');
+        verifyBtn.disabled = true;
+        verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+        // Poll for payment verification
+        let paymentVerified = false;
+        for (let i = 0; i < 30; i++) { // Poll for 1 minute
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          const paymentSnap = await get(ref(db, `branchCreationPayments/${paymentRef}`));
+          if (paymentSnap.exists() && paymentSnap.val().status === 'verified') {
+            paymentVerified = true;
+            break;
+          }
+        }
+
+        if (paymentVerified) {
+          // Show a success message within the modal instead of an alert
+          const modalContent = modal.querySelector('.payment-modal-content');
+          modalContent.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+              <i class="fas fa-check-circle" style="color: #2E8B57; font-size: 48px; margin-bottom: 15px;"></i>
+              <h3>Payment Verified!</h3>
+              <p>You can now create your new branch.</p>
+              <button id="proceedToCreateBtn" class="btn btn-primary" style="margin-top: 15px;">OK</button>
+            </div>
+          `;
+          modal.querySelector('#proceedToCreateBtn').onclick = () => {
+            modal.remove();
+            showCreateBranchModal(coreAccountId);
+          };
+        } else {
+          alert('Payment verification timed out. Please contact support if you have already paid.');
+          verifyBtn.disabled = false;
+          verifyBtn.innerHTML = "I've Made the Payment";
+        }
+      };
+    }
+
+    // Helper to create a generic modal
+    function createModal() {
+      const modal = document.createElement('div');
+      modal.style.position = 'fixed';
+      modal.style.inset = '0';
+      modal.style.background = 'rgba(0,0,0,0.5)';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.zIndex = '1000';
+      modal.style.backdropFilter = 'blur(5px)';
+      return modal;
+    }
+
+    // --- MOVED: Moved modal creation to its own function in the global scope ---
+    async function showCreateBranchModal(coreAccountId) {
+      // Build a modal form
+      const modal = createModal();
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h3>Create New Branch</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="b_name">Branch Name</label>
+              <input id="b_name" class="form-control" placeholder="e.g., Jaipur Branch" />
+            </div>
+            <div class="form-group">
+              <label for="b_email">Branch Email</label>
+              <input id="b_email" type="email" class="form-control" placeholder="branch@example.com" />
+            </div>
+            <div class="form-group">
+              <label for="b_pass">Password</label>
+              <input id="b_pass" type="password" class="form-control" placeholder="********" />
+            </div>
+            <div class="form-group">
+              <label for="b_confirm_pass">Confirm Password</label>
+              <input id="b_confirm_pass" type="password" class="form-control" placeholder="********" />
+            </div>
+            <div class="form-group">
+              <label for="b_tname">Transport Name</label>
+              <input id="b_tname" class="form-control" placeholder="Transport Co." />
+            </div>
+            <div class="form-group">
+              <label for="b_oname">Owner Name</label>
+              <input id="b_oname" class="form-control" placeholder="Owner full name" />
+            </div>
+            <div class="form-group">
+              <label for="b_phone">Phone</label>
+              <input id="b_phone" class="form-control" placeholder="9876543210" />
+            </div>
+            <!-- Branch type selection removed; new branches are sub by default -->
+          </div>
+          <div class="modal-actions">
+            <button id="b_cancel" class="btn btn-secondary">Cancel</button>
+            <button id="b_create" class="btn btn-primary">Create Branch</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.querySelector('#b_cancel').onclick = () => modal.remove();
+      modal.querySelector('#b_create').onclick = async () => {
+        const name = modal.querySelector('#b_name').value.trim();
+        const email = modal.querySelector('#b_email').value.trim();
+        const password = modal.querySelector('#b_pass').value;
+        const confirmPassword = modal.querySelector('#b_confirm_pass').value;
+        const transportName = modal.querySelector('#b_tname').value.trim();
+        const branchType = 'sub';
+        
+        // Validate inputs
+        if (!name || !email || !password || !confirmPassword || !transportName) {
+          alert('Please fill in all fields');
+          return;
+        }
+        
+        if (password !== confirmPassword) {
+          alert('Passwords do not match');
+          return;
+        }
+        
+        if (password.length < 6) {
+          alert('Password must be at least 6 characters');
+          return;
+        }
+        // Create branch auth using a secondary app so owner session is unaffected
+        let branchApp;
+        try {
+          const { initializeApp: init2, deleteApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+          const { getAuth: getAuth2, createUserWithEmailAndPassword: create2 } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+          const { getDatabase: getDb2, ref: ref2, set: set2 } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+          branchApp = init2(firebaseConfig, 'branchCreateApp');
+          const branchAuth = getAuth2(branchApp);
+          // Create the branch account on secondary app so owner session remains intact
+          try {
+            // Create user in Firebase Auth using secondary auth
+            const userCredential = await create2(branchAuth, email, password);
+            const branchUser = userCredential.user;
+            
+            // Create branch data in the database
+            const branchData = { name, email, type: branchType, transportName, createdAt: new Date().toISOString(), status: 'active', createdBy: coreAccountId };
+            await set(ref(db, `users/${coreAccountId}/branches/${branchUser.uid}`), branchData);
+            
+            // Map branch account under branchAccounts for quick login
+            await set(ref(db, `users/${coreAccountId}/branchAccounts/${branchUser.uid}`), { email, name, branchKey: branchUser.uid, createdAt: new Date().toISOString() });
+
+            // Update the branch user's profile with core account ID
+            await set(ref(db, `users/${branchUser.uid}`), { accountType: 'branch', branchType, coreAccountId, createdAt: new Date().toISOString(), email, name });
+            
+            alert('Branch account created successfully!');
+            modal.remove();
+            await loadBranches(coreAccountId);
+          } catch (error) {
+            console.error('Error creating branch:', error);
+            alert(`Error creating branch: ${error.message}`);
+          } finally {
+            try { if (branchApp) { const { deleteApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'); await deleteApp(branchApp); } } catch (_) {}
+          }
+        } catch (error) {
+          console.error('Error creating branch:', error);
+          alert(`Error creating branch: ${error.message}`);
+        }
+      };
+    }
+
     // Check if user is logged in and is a core account
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = 'login.html';
         return;
       }
-      
+
       // **DEBUG**: Log the subscription status of the core account.
       try {
         const subRef = ref(db, `users/${user.uid}/subscription`);
@@ -731,153 +952,24 @@
       if (branchSearch) {
         branchSearch.addEventListener('input', debounce(applyBranchFilter, 150));
       }
-      
-      // Handle create branch button click
-      btnCreate.onclick = async () => {
-        // Build a modal form
-        const modal = document.createElement('div');
-        modal.style.position = 'fixed';
-        modal.style.inset = '0';
-        modal.style.background = 'rgba(0,0,0,0.5)';
-        modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
-        modal.style.zIndex = '1000';
-        modal.style.backdropFilter = 'blur(5px)';
-        modal.innerHTML = `
-          <div class="modal-content">
-            <h3>Create New Branch</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="b_name">Branch Name</label>
-                <input id="b_name" class="form-control" placeholder="e.g., Jaipur Branch" />
-              </div>
-              <div class="form-group">
-                <label for="b_email">Branch Email</label>
-                <input id="b_email" type="email" class="form-control" placeholder="branch@example.com" />
-              </div>
-              <div class="form-group">
-                <label for="b_pass">Password</label>
-                <input id="b_pass" type="password" class="form-control" placeholder="********" />
-              </div>
-              <div class="form-group">
-                <label for="b_confirm_pass">Confirm Password</label>
-                <input id="b_confirm_pass" type="password" class="form-control" placeholder="********" />
-              </div>
-              <div class="form-group">
-                <label for="b_tname">Transport Name</label>
-                <input id="b_tname" class="form-control" placeholder="Transport Co." />
-              </div>
-              <div class="form-group">
-                <label for="b_oname">Owner Name</label>
-                <input id="b_oname" class="form-control" placeholder="Owner full name" />
-              </div>
-              <div class="form-group">
-                <label for="b_phone">Phone</label>
-                <input id="b_phone" class="form-control" placeholder="9876543210" />
-              </div>
-              <!-- Branch type selection removed; new branches are sub by default -->
-            </div>
-            <div class="modal-actions">
-              <button id="b_cancel" class="btn btn-secondary">Cancel</button>
-              <button id="b_create" class="btn btn-primary">Create Branch</button>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(modal);
-        modal.querySelector('#b_cancel').onclick = () => modal.remove();
-        modal.querySelector('#b_create').onclick = async () => {
-          const name = modal.querySelector('#b_name').value.trim();
-          const email = modal.querySelector('#b_email').value.trim();
-          const password = modal.querySelector('#b_pass').value;
-          const confirmPassword = modal.querySelector('#b_confirm_pass').value;
-          const transportName = modal.querySelector('#b_tname').value.trim();
-          const branchType = 'sub';
-          
-          // Validate inputs
-          if (!name || !email || !password || !confirmPassword || !transportName) {
-            alert('Please fill in all fields');
-            return;
-          }
-          
-          if (password !== confirmPassword) {
-            alert('Passwords do not match');
-            return;
-          }
-          
-          if (password.length < 6) {
-            alert('Password must be at least 6 characters');
-            return;
-          }
-          // Create branch auth using a secondary app so owner session is unaffected
-          let branchApp;
-          try {
-            const { initializeApp: init2, deleteApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-            const { getAuth: getAuth2, createUserWithEmailAndPassword: create2 } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-            const { getDatabase: getDb2, ref: ref2, set: set2 } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-            branchApp = init2(firebaseConfig, 'branchCreateApp');
-            const branchAuth = getAuth2(branchApp);
-            // Create the branch account on secondary app so owner session remains intact
-            try {
-              // Create user in Firebase Auth using secondary auth
-              const userCredential = await create2(branchAuth, email, password);
-              const branchUser = userCredential.user;
-              
-              // Create branch data in the database
-              const branchData = {
-                name: name,
-                email: email,
-                type: branchType,
-                transportName: transportName,
-                createdAt: new Date().toISOString(),
-                status: 'active',
-                createdBy: coreAccount.id
-              };
-              
-              // Save branch data under the core account
-              const branchRef = ref(db, `users/${coreAccount.id}/branches/${branchUser.uid}`);
-              await set(branchRef, branchData);
-              
-              // Map branch account under branchAccounts for quick login
-              const branchMapRef = ref(db, `users/${coreAccount.id}/branchAccounts/${branchUser.uid}`);
-              await set(branchMapRef, {
-                email: email,
-                name: name,
-                branchKey: branchUser.uid,
-                createdAt: new Date().toISOString()
-              });
 
-              // Update the branch user's profile with core account ID
-              const branchUserRef = ref(db, `users/${branchUser.uid}`);
-              await set(branchUserRef, {
-                accountType: 'branch',
-                branchType: branchType,
-                coreAccountId: coreAccount.id,
-                createdAt: new Date().toISOString(),
-                email: email,
-                name: name
-              });
-              
-              // Show success message
-              alert('Branch account created successfully!');
-              modal.remove();
-              
-              // Reload branches
-              await loadBranches(coreAccount.id);
-              
-            } catch (error) {
-              console.error('Error creating branch:', error);
-              alert(`Error creating branch: ${error.message}`);
-            } finally {
-              try { if (branchApp) { const { deleteApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'); await deleteApp(branchApp); } } catch (_) {}
-            }
-          } catch (error) {
-            console.error('Error creating branch:', error);
-            alert(`Error creating branch: ${error.message}`);
-          }
-        };
+      // --- MODIFIED: Handle create branch button click with limit check ---
+      btnCreate.onclick = async () => {
+        const branchesRef = ref(db, `users/${coreAccount.id}/branches`);
+        const branchesSnap = await get(branchesRef);
+        let branchCount = 0;
+        if (branchesSnap.exists()) {
+          branchCount = Object.keys(branchesSnap.val()).filter(key => key !== 'main').length;
+        }
+
+        if (branchCount < 2) {
+          showCreateBranchModal(coreAccount.id);
+        } else {
+          initiateBranchPayment(coreAccount.id);
+        }
       };
     });
   </script>
 </body>
 </html>
+
