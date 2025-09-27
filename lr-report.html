@@ -175,9 +175,20 @@
               <label class="form-label">Tyre Expenses (₹)</label>
               <input type="number" step="0.01" class="form-control" id="tyreExpenses" value="0">
             </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Diesel Expenses (₹)</label>
-              <input type="number" step="0.01" class="form-control" id="dieselExpenses" value="0">
+            <div class="col-md-8 mb-3">
+                <label class="form-label">Diesel Expenses</label>
+                <div class="input-group">
+                    <select id="dieselPumpName" class="form-select">
+                        <option value="">Select a Pump</option>
+                        <!-- Petrol pumps will be populated here -->
+                    </select>
+                    <input type="number" step="0.01" class="form-control" id="dieselLiters" placeholder="Liters" oninput="calculateDieselTotal()">
+                    <input type="number" step="0.01" class="form-control" id="dieselPerLiter" placeholder="Price/Liter" oninput="calculateDieselTotal()">
+                    <input type="number" step="0.01" class="form-control" id="dieselExpenses" placeholder="Total" readonly>
+                </div>
+                <div class="form-text">
+                    Select a pump, enter liters and price/liter to auto-calculate total.
+                </div>
             </div>
             <div class="col-md-4 mb-3">
               <label class="form-label">Toll Expenses (₹)</label>
@@ -679,11 +690,18 @@
             <div class="row">
               <div class="col-md-4 mb-3">
                 <label class="form-label">Tyre Expenses (₹)</label>
-                <input type="number" step="0.01" class="form-control" id="editTyreExpenses" value="0">
+                <input type="number" step="0.01" class="form-control" id="editTyreExpenses">
               </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label">Diesel Expenses (₹)</label>
-                <input type="number" step="0.01" class="form-control" id="editDieselExpenses" value="0">
+              <div class="col-md-8 mb-3">
+                  <label class="form-label">Diesel Expenses</label>
+                  <div class="input-group">
+                      <select id="editDieselPumpName" class="form-select">
+                          <option value="">Select a Pump</option>
+                      </select>
+                      <input type="number" step="0.01" class="form-control" id="editDieselLiters" placeholder="Liters" oninput="calculateEditDieselTotal()">
+                      <input type="number" step="0.01" class="form-control" id="editDieselPerLiter" placeholder="Price/Liter" oninput="calculateEditDieselTotal()">
+                      <input type="number" step="0.01" class="form-control" id="editDieselExpenses" placeholder="Total" readonly>
+                  </div>
               </div>
               <div class="col-md-4 mb-3">
                 <label class="form-label">Toll Expenses (₹)</label>
@@ -821,6 +839,8 @@
         if (user) {
           // Load data from Firebase
           loadLRData(user.uid);
+          loadPumpsForDropdown(user.uid); // Load pumps for diesel dropdown
+          loadPumpsForEditDropdown(user.uid); // Load pumps for edit modal dropdown
           loadClientsForDropdown(user.uid); // Load clients into the form
         } else {
           // Redirect to login if not authenticated
@@ -859,6 +879,40 @@
             }
         }, (error) => {
             console.error("Error loading clients for dropdown: ", error);
+        });
+    }
+
+    // Load pumps into the diesel dropdown
+    function loadPumpsForDropdown(uid) {
+        const pumpRef = db.ref(`users/${uid}/petrolPumps`);
+        pumpRef.on('value', (snapshot) => {
+            const select = $('#dieselPumpName');
+            select.empty().append('<option value="">Select a Pump</option>');
+            if (snapshot.exists()) {
+                snapshot.forEach(child => {
+                    const pump = child.val();
+                    select.append(`<option value="${pump.name}">${pump.name}</option>`);
+                });
+            }
+        }, (error) => {
+            console.error("Error loading pumps for dropdown: ", error);
+        });
+    }
+
+    // Load pumps into the EDIT modal dropdown
+    function loadPumpsForEditDropdown(uid) {
+        const pumpRef = db.ref(`users/${uid}/petrolPumps`);
+        pumpRef.on('value', (snapshot) => {
+            const select = $('#editDieselPumpName');
+            select.empty().append('<option value="">Select a Pump</option>');
+            if (snapshot.exists()) {
+                snapshot.forEach(child => {
+                    const pump = child.val();
+                    select.append(`<option value="${pump.name}">${pump.name}</option>`);
+                });
+            }
+        }, (error) => {
+            console.error("Error loading pumps for edit dropdown: ", error);
         });
     }
 
@@ -931,6 +985,22 @@
       const freightRate = parseFloat($('#freightRate').val()) || 0;
       $('#freightAmount').val((weight * freightRate).toFixed(2));
       calculateAmount();
+    }
+
+    // Calculate total diesel expenses
+    window.calculateDieselTotal = function() {
+        const liters = parseFloat($('#dieselLiters').val()) || 0;
+        const pricePerLiter = parseFloat($('#dieselPerLiter').val()) || 0;
+        const total = liters * pricePerLiter;
+        $('#dieselExpenses').val(total.toFixed(2));
+    }
+
+    // Calculate total diesel expenses for the EDIT modal
+    window.calculateEditDieselTotal = function() {
+        const liters = parseFloat($('#editDieselLiters').val()) || 0;
+        const pricePerLiter = parseFloat($('#editDieselPerLiter').val()) || 0;
+        const total = liters * pricePerLiter;
+        $('#editDieselExpenses').val(total.toFixed(2));
     }
 
     // Calculate freight rate based on amount and weight
@@ -1019,6 +1089,9 @@
         status: 'active',
         tyreExpenses: parseFloat($('#tyreExpenses').val()) || 0,
         dieselExpenses: parseFloat($('#dieselExpenses').val()) || 0,
+        dieselPumpName: $('#dieselPumpName').val(),
+        dieselLiters: parseFloat($('#dieselLiters').val()) || 0,
+        dieselPerLiter: parseFloat($('#dieselPerLiter').val()) || 0,
         tollExpenses: parseFloat($('#tollExpenses').val()) || 0,
         vehicleWork: parseFloat($('#vehicleWork').val()) || 0,
         foodExpenses: parseFloat($('#foodExpenses').val()) || 0,
@@ -1456,7 +1529,11 @@
       
       // NEW: Populate expense fields in edit modal
       $('#editTyreExpenses').val(lr.tyreExpenses || '0');
+      // **FIX**: Populate new diesel fields in edit modal
       $('#editDieselExpenses').val(lr.dieselExpenses || '0');
+      $('#editDieselPumpName').val(lr.dieselPumpName || ''); // This now works because the element exists
+      $('#editDieselLiters').val(lr.dieselLiters || '');
+      $('#editDieselPerLiter').val(lr.dieselPerLiter || '');
       $('#editTollExpenses').val(lr.tollExpenses || '0');
       $('#editVehicleWork').val(lr.vehicleWork || '0');
       $('#editFoodExpenses').val(lr.foodExpenses || '0');
@@ -1565,6 +1642,9 @@
         otherExpenses: parseFloat($('#editOtherExpenses').val()) || 0,
         tyreExpenses: parseFloat($('#editTyreExpenses').val()) || 0,
         dieselExpenses: parseFloat($('#editDieselExpenses').val()) || 0,
+        dieselPumpName: $('#editDieselPumpName').val(), // This now works
+        dieselLiters: parseFloat($('#editDieselLiters').val()) || 0, // This now works
+        dieselPerLiter: parseFloat($('#editDieselPerLiter').val()) || 0, // This now works
         tollExpenses: parseFloat($('#editTollExpenses').val()) || 0,
         vehicleWork: parseFloat($('#editVehicleWork').val()) || 0,
         foodExpenses: parseFloat($('#editFoodExpenses').val()) || 0,
