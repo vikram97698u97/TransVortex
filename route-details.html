@@ -109,6 +109,7 @@
                   <th>Contact</th>
                   <th>GSTIN</th>
                   <th class="text-end">Total Billed (₹)</th>
+                  <th class="text-end">Total Paid (₹)</th>
                   <th class="text-end">Outstanding (₹)</th>
                   <th class="text-center">Actions</th>
                 </tr>
@@ -261,7 +262,7 @@
         pumpTable = $('#pumpTable').DataTable({
           "pageLength": 10,
           "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-          "columnDefs": [{ "orderable": false, "targets": 6 }, { "className": "text-end", "targets": [4, 5] }],
+          "columnDefs": [{ "orderable": false, "targets": 7 }, { "className": "text-end", "targets": [4, 5, 6] }],
           "order": [[ 4, "desc" ]] 
         });
         transactionTable = $('#pumpTransactionTable').DataTable({
@@ -478,6 +479,7 @@
                   pump.contact || "-",
                   pump.gstin || "-",
                   `₹${totalBilled.toFixed(2)}`,
+                  `<span class="text-success">₹${totalPaid.toFixed(2)}</span>`,
                   `<span class="fw-bold ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
                   `<div class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1" onclick="viewPump('${child.key}')" title="View Details"><i class="fas fa-eye"></i></button>
