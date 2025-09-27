@@ -210,7 +210,7 @@
       <div id="paymentForm">
         <div class="plan-card">
           <h2 class="plan-name">Premium Plan</h2>
-          <div class="price">₹1999<span>/month</span></div>
+          <div class="price">₹999<span>/month</span></div>
           <p>Full access to all features</p>
           
           <div class="features">
@@ -229,7 +229,7 @@
           <div id="qrContainer" class="qr-container">
             <h3>Scan to Pay with UPI</h3>
             <div id="qrcode"></div>
-            <p>Amount: <strong>₹1999</strong></p>
+            <p>Amount: <strong>₹999</strong></p>
             <p>UPI ID: <strong>yourbusiness@upi</strong></p>
             <p>Reference: <strong id="paymentRef"></strong></p>
             <p>After successful payment, click below to verify</p>
@@ -484,7 +484,7 @@
           // Store payment in database
           await set(ref(db, `subscriptionPayments/${paymentRef}`), {
             userId: user.uid,
-            amount: 1999,
+            amount: 999,
             status: 'pending',
             createdAt: new Date().toISOString(), // Fulfills validation rule
             clientId: user.uid, // Fulfills validation rule, using user's ID for subscription
@@ -502,7 +502,7 @@
           
           // Generate UPI payment link with reference
           const upiId = 'singhvikram43210s@okhdfcbank';
-          const amount = '1999.00'; 
+          const amount = '999.00'; 
           const note = `Payment Ref: ${paymentRef}`;
           
           // Format UPI payment link
@@ -645,7 +645,7 @@
             paymentHistory: {
               ...(existingSubscription.paymentHistory || {}),
               [paymentReference]: {
-                amount: 1999, // ₹1999
+                amount: 999, // ₹999
                 currency: 'INR',
                 date: now.toISOString(),
                 status: 'completed'
@@ -787,7 +787,7 @@
             <h3 style="color: #2E8B57; margin-bottom: 10px;">Payment Successful! 🎉</h3>
             <p style="margin-bottom: 20px; font-size: 16px;">${message}</p>
             <div style="margin-top: 20px; padding: 15px; background: #E8F5E9; border-radius: 8px; text-align: left;">
-              <p style="margin: 5px 0;"><strong>Amount:</strong> ₹1999.00</p>
+              <p style="margin: 5px 0;"><strong>Amount:</strong> ₹999.00</p>
               <p style="margin: 5px 0;"><strong>Status:</strong> Verified</p>
               <p style="margin: 5px 0; color: #2E8B57;"><i class="fas fa-check"></i> Subscription Activated</p>
             </div>
