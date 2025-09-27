@@ -1,889 +1,636 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Route & Diesel Tracker</title>
-
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-
-  <!-- SheetJS for Excel export -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fuel Management - Transport System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
   <style>
-    :root{ --primary:#2E8B57; --accent:#43B97F; --dark:#1F1F1F; --bg:#F5F5F5; --card:#fff; }
-    body{ margin:0; font-family: "Segoe UI", Roboto, Arial, sans-serif; background:var(--bg); color:#111; }
-    #navbar{ margin-bottom:12px; }
-    .wrap { max-width:1100px; margin:18px auto; padding:16px; }
-    .header { display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:14px; }
-    .title { font-size:1.3rem; font-weight:700; color:var(--primary); }
-    .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .btn { background:var(--accent); color:#fff; border:none; padding:9px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
-    .btn.ghost { background:transparent; color:var(--dark); border:1px solid #ddd; }
-    .grid { display:grid; gap:12px; grid-template-columns: 1fr 360px; }
-    @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
-    .card { background:var(--card); padding:14px; border-radius:10px; box-shadow:0 6px 14px rgba(0,0,0,0.06); }
-    .card h3 { margin:0 0 10px 0; color:var(--primary); font-size:1.05rem; }
-    input[type=text], select, input[type=number], input[type=date], textarea { width:100%; padding:8px 10px; border-radius:8px; border:1px solid #ddd; font-size:14px; }
-    .table-wrap { overflow-x:auto; margin-top:10px; }
-    table { width:100%; border-collapse:collapse; font-size:14px; }
-    th, td { padding:10px 8px; text-align:left; border-bottom:1px solid #eee; vertical-align:middle; }
-    th { background:linear-gradient(180deg,#fff,#fbfbfb); cursor:pointer; user-select:none; }
-    th.sortable:hover{ background:#f2fff4; }
-    .activity-item { background:#e8f0fe; padding:10px; border-radius:6px; margin-bottom:6px; font-size:14px; border-left:5px solid #43B97F; }
-    .thumb { width:64px; height:48px; object-fit:cover; border-radius:6px; border:1px solid #ddd; }
-    .stats { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-    .stat { background:#f7fff7; padding:10px; border-radius:8px; border-left:4px solid var(--accent); min-width:160px; }
-    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:999; align-items:center; justify-content:center; }
-    .modal.show { display:flex; }
-    .modal-content { background:var(--card); padding:16px; border-radius:10px; width:100%; max-width:520px; box-shadow:0 12px 30px rgba(0,0,0,0.2); }
-    .chip { background:#eefaf1; color:var(--primary); padding:6px 8px; border-radius:8px; font-weight:600; display:inline-block; }
-    .small-note { font-size:12px; color:#666; margin-top:6px; }
-    td[contenteditable="true"]{ outline: 2px dashed rgba(67,185,127,0.2); padding:6px; border-radius:4px; }
-    @media (max-width:520px){ .header { flex-direction:column; align-items:flex-start; gap:8px; } .pumps-list { flex-direction:column; align-items:stretch; } }
+    body { padding: 0; margin: 0; background-color: #f8f9fa; }
+    .main-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .form-section {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dee2e6;
+    }
+    .nav-tabs .nav-link.active {
+      background-color: #2E8B57;
+      color: white;
+      border-color: #2E8B57;
+    }
+    .nav-tabs .nav-link {
+      color: #2E8B57;
+    }
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
   <script src="navbar-loader.js"></script>
-  <script src="table-pager.js"></script>
 
-  <div class="wrap">
-    <div class="header">
-      <div>
-        <div class="title">Route & Diesel Tracker</div>
-        <div class="small-note">Manage route entries, diesel expenses & proofs &mdash; photos stored on Cloudinary</div>
-      </div>
+  <div class="container mt-4">
+    <div class="main-content">
+      <!-- This div will contain the main list view -->
+      <div id="pumpListView">
+        <h2 class="mb-4"><i class="fas fa-gas-pump me-2"></i>Fuel Management</h2>
 
-      <div class="controls">
-        <button class="btn" id="openAddRecordBtn"><i class="fa fa-plus"></i> New Record</button>
-        <button class="btn ghost" id="openManagePumps"><i class="fa fa-gas-pump"></i> Manage Pumps</button>
-        <button class="btn ghost" id="downloadXlsx"><i class="fa fa-file-excel"></i> Export Excel</button>
-        <button class="btn ghost" id="printReport"><i class="fa fa-print"></i> Print Report</button>
+      <!-- Tabs -->
+      <ul class="nav nav-tabs" id="fuelTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="pumps-tab" data-bs-toggle="tab" data-bs-target="#pumps" type="button" role="tab" aria-controls="pumps" aria-selected="true">
+            <i class="fas fa-gas-pump me-1"></i> Manage Pumps
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab" aria-controls="payments" aria-selected="false">
+            <i class="fas fa-money-bill-wave me-1"></i> Fuel Payments
+          </button>
+        </li>
+      </ul>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="fuelTabsContent">
+        <!-- Pumps Tab -->
+        <div class="tab-pane fade show active p-3" id="pumps" role="tabpanel" aria-labelledby="pumps-tab">
+          <!-- Add Pump Form -->
+          <form id="pumpForm" class="form-section">
+            <h4 class="mb-3">Add New Pump</h4>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="pumpName" class="form-label">Pump Name <span class="text-danger">*</span></label>
+                <input type="text" id="pumpName" class="form-control" placeholder="Unique Pump Name" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="pumpPlace" class="form-label">Place / Location <span class="text-danger">*</span></label>
+                <input type="text" id="pumpPlace" class="form-control" placeholder="City, State" required>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="pumpContact" class="form-label">Contact Number</label>
+                <input type="tel" id="pumpContact" class="form-control" placeholder="Mobile Number">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="pumpEmail" class="form-label">Email</label>
+                <input type="email" id="pumpEmail" class="form-control" placeholder="Email Address">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="pumpGstin" class="form-label">GSTIN</label>
+                <input type="text" id="pumpGstin" class="form-control" placeholder="GST Identification Number">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Pump</button>
+          </form>
+
+          <!-- Search + Export -->
+          <div class="d-flex justify-content-between align-items-center my-3">
+            <h4>Pump List</h4>
+            <button id="exportExcel" class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Export to Excel</button>
+          </div>
+
+          <!-- Pump List Table -->
+          <div class="table-responsive">
+            <table id="pumpTable" class="table table-striped table-bordered" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Pump Name</th>
+                  <th>Place</th>
+                  <th>Contact</th>
+                  <th>GSTIN</th>
+                  <th class="text-end">Total Billed (₹)</th>
+                  <th class="text-end">Outstanding (₹)</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pumpTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Payments Tab -->
+        <div class="tab-pane fade p-3" id="payments" role="tabpanel" aria-labelledby="payments-tab">
+          <!-- Add Payment Form -->
+          <form id="fuelPaymentForm" class="form-section">
+            <h4 class="mb-3">Record a Fuel Payment</h4>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="fuelPaymentPumpSelect" class="form-label">Select Pump <span class="text-danger">*</span></label>
+                <select id="fuelPaymentPumpSelect" class="form-select" required>
+                  <option value="">Loading pumps...</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="fuelPaymentAmount" class="form-label">Amount (₹) <span class="text-danger">*</span></label>
+                <input type="number" id="fuelPaymentAmount" class="form-control" placeholder="Amount Paid" required step="0.01">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="fuelPaymentDate" class="form-label">Payment Date <span class="text-danger">*</span></label>
+                <input type="date" id="fuelPaymentDate" class="form-control" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="fuelPaymentMode" class="form-label">Payment Mode</label>
+                <select id="fuelPaymentMode" class="form-select">
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Cheque">Cheque</option>
+                </select>
+              </div>
+            </div>
+            <label for="fuelPaymentRemarks" class="form-label">Remarks / Notes</label>
+            <textarea id="fuelPaymentRemarks" class="form-control" rows="2" placeholder="e.g., Payment for the month of June"></textarea>
+            <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save me-2"></i>Save Payment</button>
+          </form>
+
+          <h4 class="mt-5 mb-3">Payment History</h4>
+          <div class="table-responsive">
+            <table id="fuelPaymentsTable" class="table table-striped table-bordered" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Pump Name</th>
+                  <th class="text-end">Amount (₹)</th>
+                  <th>Mode</th>
+                  <th>Remarks</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="fuelPaymentsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="grid">
-      <!-- main -->
-      <div class="card">
-        <h3>Records & Recent Activity</h3>
-
-        <!-- filters & presets -->
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
-          <select id="filterPump"><option value="">-- All Petrol Pumps --</option></select>
-          <select id="filterPayment" style="max-width:150px;">
-            <option value="">-- All Payments --</option>
-            <option value="Paid">Paid</option>
-            <option value="Remaining">Remaining</option>
-          </select>
-          <input type="text" id="filterVehicle" placeholder="Vehicle No. (search)" style="max-width:180px;">
-          <input type="date" id="filterFrom" style="max-width:160px;">
-          <input type="date" id="filterTo" style="max-width:160px;">
-          <button class="btn" id="applyFilter">Apply</button>
-          <button class="btn ghost" id="clearFilter">Clear</button>
+      <!-- Pump Detail View (Initially Hidden) -->
+      <div id="pumpDetailView" class="hidden">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2 id="pumpTitle" class="mb-0">Pump Details</h2>
+          <button class="btn btn-secondary" id="backBtn"><i class="fas fa-arrow-left me-2"></i>Back to List</button>
         </div>
 
-        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-          <div class="small-note">Date Preset:</div>
-          <button class="btn ghost" id="preset7">Last 7</button>
-          <button class="btn ghost" id="preset30">Last 30</button>
-          <button class="btn ghost" id="presetMonth">This Month</button>
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4"><strong>Contact:</strong> <span id="pumpDetailContact"></span></div>
+              <div class="col-md-4"><strong>GSTIN:</strong> <span id="pumpDetailGSTIN"></span></div>
+              <div class="col-md-4"><strong>Email:</strong> <span id="pumpDetailEmail"></span></div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-md-3"><strong>Total Billed:</strong> <span id="pumpDetailTotalSpent" class="fw-bold text-danger"></span></div>
+              <div class="col-md-3"><strong>Total Paid:</strong> <span id="pumpDetailTotalPaid" class="fw-bold text-success"></span></div>
+              <div class="col-md-3"><strong>Outstanding:</strong> <span id="pumpDetailOutstanding" class="fw-bold text-warning"></span></div>
+              <div class="col-md-3"><strong>Total Liters:</strong> <span id="pumpDetailTotalLiters" class="fw-bold"></span></div>
+            </div>
+          </div>
         </div>
 
-        <!-- pump stats -->
-        <div class="stats" id="pumpStats" style="margin-top:10px; display:none;">
-          <div class="stat"><div class="small">Diesel Taken (L)</div><div id="statDiesel">0</div></div>
-          <div class="stat"><div class="small">Paid Amount (₹)</div><div id="statPaid">0</div></div>
-          <div class="stat"><div class="small">Pending Amount (₹)</div><div id="statPending">0</div></div>
-        </div>
-
-        <!-- recent activity -->
-        <div style="margin-top:12px;">
-          <div style="font-weight:700; margin-bottom:6px;">Recent Activity</div>
-          <div id="recentList"></div>
-        </div>
-
-        <!-- table -->
-        <div class="table-wrap" style="margin-top:12px;">
-          <table id="recordsTable" data-paginate="true" data-page-sizes="10,20,50,100">
+        <h4 class="mt-4">Transaction History</h4>
+        <div class="table-responsive">
+          <table id="pumpTransactionTable" class="table table-striped table-bordered" style="width:100%">
             <thead>
-              <tr>
-                <th class="sortable" data-key="date">Date &#x25BC;</th>
-                <th class="sortable" data-key="vehicleNo">Vehicle</th>
-                <th>From &#x2192; To</th>
-                <th class="sortable" data-key="distance">Distance (km)</th>
-                <th class="sortable" data-key="diesel">Diesel (L)</th>
-                <th>Petrol Pump</th>
-                <th class="sortable" data-key="amount">Amount (₹)</th>
-                <th>Payment</th>
-                <th>Proof</th>
-                <th>Actions</th>
-              </tr>
+              <tr><th>Date</th><th>LR No.</th><th>Vehicle No.</th><th class="text-end">Liters</th><th class="text-end">Price/Liter</th><th class="text-end">Total Amount (₹)</th></tr>
             </thead>
-            <tbody id="recordsBody">
-              <tr><td colspan="10" class="small-note">Loading...</td></tr>
-            </tbody>
+            <tbody id="pumpTransactionTableBody"></tbody>
           </table>
         </div>
       </div>
-
-      <!-- right column -->
-      <div>
-        <div class="card" style="margin-bottom:12px;">
-          <h3>Diesel Calculator</h3>
-          <div style="display:grid; gap:10px;">
-            <div>
-              <label class="small-note">Distance (km)</label>
-              <input type="number" id="calcDistance" placeholder="Enter distance" step="0.1" min="0">
-            </div>
-            <div>
-              <label class="small-note">Vehicle Average (km/liter)</label>
-              <input type="number" id="calcAverage" placeholder="Enter average" step="0.1" min="0.1">
-            </div>
-            <div>
-              <label class="small-note">Diesel Price (₹/liter)</label>
-              <input type="number" id="calcPrice" placeholder="Price per liter" step="0.01" min="0">
-            </div>
-            <button class="btn" id="calculateBtn">Calculate</button>
-            <div id="calcResult" style="margin-top:10px; padding:10px; background:#f7fff7; border-radius:6px; display:none;">
-              <div class="small-note">Diesel Required:</div>
-              <div style="font-size:1.2em; font-weight:bold;" id="dieselRequired">0</div>
-              <div class="small-note">Estimated Cost:</div>
-              <div style="font-size:1.2em; font-weight:bold;" id="estimatedCost">₹0</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-bottom:12px;">
-          <h3>Petrol Pumps (editable)</h3>
-          <div style="display:flex; gap:8px; margin-bottom:10px;">
-            <input type="text" id="newPumpName" placeholder="Add new petrol pump">
-            <button class="btn" id="addPumpBtn">Add</button>
-          </div>
-          <div id="pumpsContainer" style="max-height:240px; overflow:auto;"></div>
-        </div>
-
-        <div class="card">
-          <h3>Quick Stats</h3>
-          <div class="small-note">Total records: <span id="totalRecords">0</span></div>
-          <div style="margin-top:10px;">
-            <div class="small-note">Click column headers to sort. Use presets for quick date ranges.</div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- Add/Edit Record Modal -->
-  <div class="modal" id="recordModal">
-    <div class="modal-content">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <h3 id="modalTitle">Add Record</h3>
-        <button class="btn ghost" id="closeModal"><i class="fa fa-times"></i></button>
-      </div>
-
-      <div style="display:grid; gap:8px;">
-        <div style="display:flex; gap:8px;">
-          <input type="date" id="recDate" style="flex:1;">
-          <input type="text" id="recVehicle" placeholder="Vehicle No." style="flex:1;">
-        </div>
-
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="recFrom" placeholder="From (place)" style="flex:1;">
-          <input type="text" id="recTo" placeholder="To (place)" style="flex:1;">
-        </div>
-
-        <div style="display:flex; gap:8px;">
-          <input type="number" id="recDistance" placeholder="Distance (km)" step="0.1" style="flex:1;">
-          <input type="number" id="recDiesel" placeholder="Diesel (L)" step="0.1" style="flex:1;">
-        </div>
-
-        <div style="display:flex; gap:8px;">
-          <select id="recPump" style="flex:1;"><option value="">-- Select Pump --</option></select>
-        </div>
-
-        <div style="display:flex; gap:8px;">
-          <input type="number" id="recDieselPrice" placeholder="Diesel Price (₹/L)" step="0.01" style="flex:1;">
-          <input type="number" id="recAmount" placeholder="Amount (₹)" step="0.01" style="flex:1;">
-        </div>
-
-        <div>
-          <select id="recPayment">
-            <option value="paid">Paid</option>
-            <option value="remaining">Remaining</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="small-note">Proof photo (optional) &mdash; will be resized and uploaded</label>
-          <input type="file" id="recProof" accept="image/*">
-          <img id="previewImg" style="max-width:120px;margin-top:8px;border-radius:6px;display:none;border:1px solid #ddd;">
-        </div>
-
-        <div style="display:flex; gap:8px; justify-content:flex-end;">
-          <button class="btn ghost" id="cancelModal">Cancel</button>
-          <button class="btn" id="saveRecordBtn">Save</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
   <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, push, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    // Firebase imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-/* ---------- CONFIG (your real project values already here) ---------- */
-const firebaseConfig = {
-  apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-  authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-  databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "transport-dashboard-ad69a",
-  storageBucket: "transport-dashboard-ad69a.appspot.com",
-  messagingSenderId: "526889676196",
-  appId: "1:526889676196:web:66032c80a4aede690ae531",
-  measurementId: "G-7F9R7HJYDH"
-};
-
-let allData = []; // Make sure this is declared globally
-
-// Fetch data from Firebase (example)
-function fetchData() {
-  const dbRef = ref(database, `users/${userId}/routeDiesel`);
-  onValue(dbRef, (snapshot) => {
-    const data = [];
-    snapshot.forEach((childSnapshot) => {
-      const item = childSnapshot.val();
-      data.push(item);
-    });
-    allData = data; // Store full dataset
-    displayData(allData);
-  });
-}
-
-// Apply Filters
-document.getElementById("applyFilter").addEventListener("click", function () {
-    const pump = document.getElementById("filterPump").value.trim().toLowerCase();
-    const vehicle = document.getElementById("filterVehicle").value.trim().toLowerCase();
-    const fromDate = document.getElementById("filterFrom").value;
-    const toDate = document.getElementById("filterTo").value;
-    const payment = document.getElementById("filterPayment").value.trim().toLowerCase(); // Added payment filter
-
-    const filteredData = allData.filter(item => {
-        const pumpMatch = !pump || (item.pump && item.pump.toLowerCase().includes(pump));
-        const vehicleMatch = !vehicle || (item.vehicle && item.vehicle.toLowerCase().includes(vehicle));
-        
-        const dateMatch =
-            (!fromDate || new Date(item.date) >= new Date(fromDate)) &&
-            (!toDate || new Date(item.date) <= new Date(toDate));
-
-        const paymentMatch = !payment || 
-            (item.payment && item.payment.toLowerCase() === payment); // Checks exact match
-
-        return pumpMatch && vehicleMatch && dateMatch && paymentMatch;
-    });
-
-    renderRecords(filteredData);
-});
-
-
-// Clear Filters
-document.getElementById('clearFilter').addEventListener('click', () => {
-  document.getElementById('filterPump').value = '';
-  document.getElementById('filterVehicle').value = '';
-  document.getElementById('filterFrom').value = '';
-  document.getElementById('filterTo').value = '';
-  document.getElementById('filterPayment').value = '';
-  displayData(allData);
-});
-
-// Display Data (your existing table rendering function)
-function displayData(data) {
-  // render table here...
-}
-
-const paymentStatus = document.getElementById('filterPayment').value.trim().toLowerCase();
-
-const filteredData = allData.filter(entry => {
-  const matchesPump = !pump || entry.pumpName === pump;
-  const matchesVehicle = !vehicle || entry.vehicleNumber.toLowerCase().includes(vehicle);
-  const matchesDate =
-    (!fromDate || entry.date >= fromDate) &&
-    (!toDate || entry.date <= toDate);
-  const matchesPayment = !paymentStatus || (entry.paymentStatus && entry.paymentStatus.toLowerCase() === paymentStatus);
-
-  return matchesPump && matchesVehicle && matchesDate && matchesPayment;
-});
-
-const CLOUDINARY_CLOUD_NAME = "doqapn15f";
-const CLOUDINARY_UPLOAD_PRESET = "fuel-track";
-/* ------------------------------------------------------------------- */
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth();
-
-//// DOM elements
-const openAddRecordBtn = document.getElementById('openAddRecordBtn');
-const recordModal = document.getElementById('recordModal');
-const closeModalBtn = document.getElementById('closeModal');
-const cancelModal = document.getElementById('cancelModal');
-const saveRecordBtn = document.getElementById('saveRecordBtn');
-const recProof = document.getElementById('recProof');
-const previewImg = document.getElementById('previewImg');
-
-const recDate = document.getElementById('recDate');
-const recVehicle = document.getElementById('recVehicle');
-const recFrom = document.getElementById('recFrom');
-const recTo = document.getElementById('recTo');
-const recDistance = document.getElementById('recDistance');
-const recDiesel = document.getElementById('recDiesel');
-const recDieselPrice = document.getElementById('recDieselPrice');
-const recPump = document.getElementById('recPump');
-const recAmount = document.getElementById('recAmount');
-const recPayment = document.getElementById('recPayment');
-
-const addPumpBtn = document.getElementById('addPumpBtn');
-const newPumpName = document.getElementById('newPumpName');
-const pumpsContainer = document.getElementById('pumpsContainer');
-const filterPump = document.getElementById('filterPump');
-const applyFilter = document.getElementById('applyFilter');
-const clearFilter = document.getElementById('clearFilter');
-const recordsBody = document.getElementById('recordsBody');
-const recordsTable = document.getElementById('recordsTable');
-const pumpStats = document.getElementById('pumpStats');
-const statDiesel = document.getElementById('statDiesel');
-const statPaid = document.getElementById('statPaid');
-const statPending = document.getElementById('statPending');
-const totalRecords = document.getElementById('totalRecords');
-const downloadXlsx = document.getElementById('downloadXlsx');
-const printReport = document.getElementById('printReport');
-const preset7 = document.getElementById('preset7');
-const preset30 = document.getElementById('preset30');
-const presetMonth = document.getElementById('presetMonth');
-const recentList = document.getElementById('recentList');
-
-let currentUser = null;
-let editKey = null;
-let pumps = {};
-let records = {};
-let sortKey = 'date';
-let sortDir = -1;
-
-// ===== Auth (fixed to behave like other pages) =====
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    // not logged in → go to login
-    window.location.replace('index.html');
-    return;
-  }
-  currentUser = user;
-  // load UI + data after auth ready
-  loadPumps();
-  loadRecords();
-  attachUI();
-});
-
-// ---------- pumps ----------
-addPumpBtn.addEventListener('click', () => {
-  const name = newPumpName.value.trim();
-  if (!name) return alert('Enter pump name');
-  push(ref(db, `users/${currentUser.uid}/petrolPumps`), { name });
-  newPumpName.value = '';
-});
-
-function loadPumps(){
-  const node = ref(db, `users/${currentUser.uid}/petrolPumps`);
-  onValue(node, snap => {
-    pumps = snap.val() || {};
-    renderPumps();
-    populatePumpSelects();
-  });
-}
-
-function renderPumps(){
-  pumpsContainer.innerHTML = '';
-  Object.entries(pumps).forEach(([k,v]) => {
-    const div = document.createElement('div');
-    div.style.display = 'flex';
-    div.style.justifyContent = 'space-between';
-    div.style.alignItems = 'center';
-    div.style.marginBottom = '6px';
-    div.innerHTML = `<div class="chip">${escapeHtml(v.name)}</div>
-      <div>
-        <button class="btn ghost" data-k="${k}" onclick="editPump(event)">Edit</button>
-        <button class="btn ghost" data-k="${k}" onclick="deletePump(event)"><i class="fa fa-trash"></i></button>
-      </div>`;
-    pumpsContainer.appendChild(div);
-  });
-}
-
-window.editPump = function(e){
-  const k = e.currentTarget.dataset.k;
-  const newName = prompt('Rename petrol pump', pumps[k].name);
-  if (!newName) return;
-  set(ref(db, `users/${currentUser.uid}/petrolPumps/${k}`), { name: newName });
-};
-window.deletePump = function(e){
-  const k = e.currentTarget.dataset.k;
-  if (!confirm('Delete this petrol pump?')) return;
-  remove(ref(db, `users/${currentUser.uid}/petrolPumps/${k}`));
-};
-
-function populatePumpSelects(){
-  filterPump.innerHTML = '<option value="">-- All Petrol Pumps --</option>';
-  recPump.innerHTML = '<option value="">-- Select Pump --</option>';
-  Object.entries(pumps).forEach(([k,v]) => {
-    const opt = `<option value="${escapeHtml(v.name)}">${escapeHtml(v.name)}</option>`;
-    filterPump.insertAdjacentHTML('beforeend', opt);
-    recPump.insertAdjacentHTML('beforeend', opt);
-  });
-}
-
-// ---------- records ----------
-function loadRecords(){
-  const node = ref(db, `users/${currentUser.uid}/dieselRecords`);
-  onValue(node, snap => {
-    records = snap.val() || {};
-    renderRecords();
-    renderRecent();
-  });
-}
-
-// render recent activity (latest 8)
-function renderRecent(){
-  recentList.innerHTML = '';
-  const arr = Object.entries(records).map(([k,v]) => ({key:k, ...v})).sort((a,b)=> (b.createdAt||0) - (a.createdAt||0)).slice(0,8);
-  if (!arr.length) return recentList.innerHTML = '<div class="small-note">No recent activity</div>';
-  arr.forEach(r => {
-    const div = document.createElement('div');
-    div.className = 'activity-item';
-    div.innerHTML = `<strong>${escapeHtml(r.vehicleNo||'')}</strong> &mdash; ${escapeHtml(r.petrolPump||'')} &mdash; ${r.diesel||0} L &mdash; ${r.amount||0} ₹ <div class="small-note">${escapeHtml(r.from||'')} → ${escapeHtml(r.to||'')} • ${escapeHtml(r.date||'')}</div>`;
-    recentList.appendChild(div);
-  });
-}
-
-function renderRecords(){
-  const rows = Object.entries(records).map(([k,v])=>({key:k,...v}));
-  
-  // Filters
-  const pumpFilter = filterPump.value;
-  const vehicleFilter = document.getElementById('filterVehicle').value.trim().toLowerCase();
-  const fromDate = document.getElementById('filterFrom').value;
-  const toDate = document.getElementById('filterTo').value;
-  const paymentFilter = document.getElementById('filterPayment') 
-    ? document.getElementById('filterPayment').value.trim().toLowerCase()
-    : '';
-
-  let filtered = rows.filter(r => {
-    if (pumpFilter && r.petrolPump !== pumpFilter) return false;
-    if (vehicleFilter && !r.vehicleNo.toLowerCase().includes(vehicleFilter)) return false;
-    if (fromDate && r.date < fromDate) return false;
-    if (toDate && r.date > toDate) return false;
-    if (paymentFilter && (!r.payment || r.payment.toLowerCase() !== paymentFilter)) return false;
-    return true;
-  });
-
-  // Sorting
-  filtered.sort((a,b) => {
-    let A = a[sortKey], B = b[sortKey];
-    if (sortKey === 'distance' || sortKey === 'diesel' || sortKey === 'amount') {
-      A = parseFloat(A||0); B = parseFloat(B||0);
-    }
-    if (A < B) return -1 * sortDir;
-    if (A > B) return 1 * sortDir;
-    return 0;
-  });
-
-  // Render table
-  recordsBody.innerHTML = '';
-  if (!filtered.length) {
-    recordsBody.innerHTML = '<tr><td colspan="10" class="small-note">No records found</td></tr>';
-  } else {
-    filtered.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td contenteditable="true" data-field="date" data-key="${r.key}">${escapeHtml(r.date||'')}</td>
-        <td contenteditable="true" data-field="vehicleNo" data-key="${r.key}">${escapeHtml(r.vehicleNo||'')}</td>
-        <td>
-          <span contenteditable="true" data-field="from" data-key="${r.key}" class="small-note">${escapeHtml(r.from||'')}</span> →
-          <span contenteditable="true" data-field="to" data-key="${r.key}" class="small-note">${escapeHtml(r.to||'')}</span>
-        </td>
-        <td contenteditable="true" data-field="distance" data-key="${r.key}">${numberOrDash(r.distance)}</td>
-        <td contenteditable="true" data-field="diesel" data-key="${r.key}">${numberOrDash(r.diesel)}</td>
-        <td contenteditable="true" data-field="petrolPump" data-key="${r.key}">${escapeHtml(r.petrolPump||'')}</td>
-        <td contenteditable="true" data-field="amount" data-key="${r.key}">${numberOrDash(r.amount)}</td>
-        <td contenteditable="true" data-field="payment" data-key="${r.key}">${escapeHtml(r.payment||'')}</td>
-        <td>${r.proofUrl ? `<a href="${r.proofUrl}" target="_blank"><img class="thumb" src="${r.proofUrl}" alt="proof"></a>` : '&mdash;'}</td>
-        <td>
-          <button class="btn ghost" data-k="${r.key}" onclick="openEditModal(event)"><i class="fa fa-edit"></i></button>
-          <button class="btn ghost" data-k="${r.key}" onclick="deleteRecord(event)"><i class="fa fa-trash"></i></button>
-        </td>
-      `;
-      recordsBody.appendChild(tr);
-    });
-
-    // Inline edit save events
-    document.querySelectorAll('[contenteditable="true"]').forEach(el => {
-      el.removeEventListener('keydown', handleEditableKeydown);
-      el.addEventListener('keydown', handleEditableKeydown);
-      el.removeEventListener('blur', handleEditableBlur);
-      el.addEventListener('blur', handleEditableBlur);
-    });
-  }
-
-  totalRecords.textContent = Object.keys(records).length;
-}
-
-
-// inline handlers
-function handleEditableKeydown(e){
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    e.target.blur();
-  }
-}
-function handleEditableBlur(e){
-  const el = e.target;
-  const key = el.dataset.key;
-  const field = el.dataset.field;
-  if (!key || !field) return;
-  let value = el.innerText.trim();
-  // normalize numeric fields
-  if (['distance','diesel','amount'].includes(field)) {
-    value = value === '' ? 0 : parseFloat(value.replace(/,/g,'')) || 0;
-  }
-  const updateObj = { [field]: value };
-  update(ref(db, `users/${currentUser.uid}/dieselRecords/${key}`), updateObj);
-}
-
-// open edit modal (with full form + ability to change photo)
-window.openEditModal = function(e){
-  const k = e.currentTarget.dataset.k;
-  const rec = records[k];
-  if (!rec) return alert('Record not found');
-  editKey = k;
-  openRecordModal(rec);
-};
-
-// delete record
-window.deleteRecord = function(e){
-  const k = e.currentTarget.dataset.k;
-  if (!confirm('Delete this record?')) return;
-  remove(ref(db, `users/${currentUser.uid}/dieselRecords/${k}`));
-};
-
-// ---------- UI attach ----------
-function attachUI(){
-  openAddRecordBtn.addEventListener('click', ()=> openRecordModal());
-  closeModalBtn.addEventListener('click', closeRecordModal);
-  cancelModal.addEventListener('click', closeRecordModal);
-
-  recProof.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) { previewImg.style.display='none'; return; }
-    const url = URL.createObjectURL(file);
-    previewImg.src = url;
-    previewImg.style.display = 'block';
-  });
-
-  let editKey = null; // Track the key of the record being edited
-
-  // Open edit modal with record data
-  window.openEditModal = function(e) {
-    editKey = e.currentTarget.dataset.k;
-    const rec = records[editKey];
-    if (!rec) return alert('Record not found');
-    
-    // Set form values
-    recDate.value = rec.date || '';
-    recVehicle.value = rec.vehicleNo || '';
-    recFrom.value = rec.from || '';
-    recTo.value = rec.to || '';
-    recDistance.value = rec.distance || '';
-    recDiesel.value = rec.diesel || '';
-    recDieselPrice.value = rec.dieselPrice || '';
-    recPump.value = rec.petrolPump || '';
-    recAmount.value = rec.amount || '';
-    recPayment.value = rec.payment || 'paid';
-    
-    // Handle proof image
-    previewImg.style.display = 'none';
-    if (rec.proofUrl) {
-      previewImg.src = rec.proofUrl;
-      previewImg.style.display = 'block';
-    }
-    
-    // Show the modal
-    document.getElementById('modalTitle').textContent = 'Edit Record';
-    recordModal.classList.add('show');
-  };
-
-  // Auto-calc amount whenever diesel or price changes
-  function updateCalculatedAmount(){
-    const liters = parseFloat(recDiesel.value || 0);
-    const price = parseFloat(recDieselPrice.value || 0);
-    const amt = +(liters * price).toFixed(2);
-    if (!isNaN(amt)) recAmount.value = amt;
-  }
-  recDiesel.addEventListener('input', updateCalculatedAmount);
-  recDieselPrice.addEventListener('input', updateCalculatedAmount);
-
-  saveRecordBtn.addEventListener('click', async () => {
-    if (!currentUser) return alert('Auth error');
-    
-    const rec = {
-      date: recDate.value || isoDate(new Date()),
-      vehicleNo: recVehicle.value.trim(),
-      from: recFrom.value.trim(),
-      to: recTo.value.trim(),
-      distance: parseFloat(recDistance.value || 0),
-      diesel: parseFloat(recDiesel.value || 0),
-      dieselPrice: parseFloat(recDieselPrice.value || 0),
-      petrolPump: recPump.value || '',
-      amount: parseFloat(recAmount.value || 0),
-      payment: recPayment.value || 'paid',
-      proofUrl: editKey && records[editKey] ? (records[editKey].proofUrl || '') : ''
+    // Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
     };
-    
-    if (!rec.vehicleNo) return alert('Enter vehicle no.');
-    
-    // Handle file upload if a new file is selected
-    const file = recProof.files && recProof.files[0];
-    if (file) {
-      try {
-        const resizedBlob = await resizeImage(file, 1200, 0.75);
-        const url = await uploadToCloudinary(resizedBlob);
-        rec.proofUrl = url;
-      } catch (err) {
-        console.error(err);
-        alert('Image upload failed — continuing without proof.');
-      }
-    }
 
-    try {
-      if (editKey) {
-        // Update existing record
-        await update(ref(db, `users/${currentUser.uid}/dieselRecords/${editKey}`), {
-          ...rec,
-          updatedAt: Date.now()
-        });
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let pumpTable;
+    let currentUser = null;
+    let transactionTable;
+    let fuelPaymentsTable;
+    let currentEditingPaymentId = null; // To track which payment is being edited
+
+    // Save active tab
+    const fuelTabs = document.querySelectorAll('#fuelTabs button');
+    fuelTabs.forEach(tab => {
+      tab.addEventListener('shown.bs.tab', event => localStorage.setItem('activeFuelTab', event.target.id));
+    });
+
+    // Auth Check
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "index.html";
       } else {
-        // Create new record
-        await push(ref(db, `users/${currentUser.uid}/dieselRecords`), {
-          ...rec,
-          createdAt: Date.now(),
-          updatedAt: Date.now()
+        currentUser = user;
+        pumpTable = $('#pumpTable').DataTable({
+          "pageLength": 10,
+          "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+          "columnDefs": [{ "orderable": false, "targets": 6 }, { "className": "text-end", "targets": [4, 5] }],
+          "order": [[ 4, "desc" ]] 
+        });
+        transactionTable = $('#pumpTransactionTable').DataTable({
+          "pageLength": 10,
+          "order": [[ 0, "desc" ]] // Default sort by Date descending
+        });
+        fuelPaymentsTable = $('#fuelPaymentsTable').DataTable({
+          "pageLength": 10,
+          "order": [[ 0, "desc" ]], // Sort by date descending
+          "columnDefs": [{ "orderable": false, "targets": 5 }, { "className": "text-end", "targets": 2 }]
+        });
+        loadPumps(user.uid);
+
+        // Restore active tab
+        const activeTabId = localStorage.getItem('activeFuelTab');
+        if (activeTabId) {
+          const activeTab = document.getElementById(activeTabId);
+          if (activeTab) new bootstrap.Tab(activeTab).show();
+        }
+
+        // **FIX**: Attach back button event listener after DOM is ready
+        const backBtn = document.getElementById('backBtn');
+        if (backBtn) {
+          backBtn.addEventListener('click', () => {
+            document.getElementById('pumpListView').classList.remove('hidden');
+            document.getElementById('pumpDetailView').classList.add('hidden');
+          });
+        }
+        loadPumpsForPaymentDropdown(user.uid);
+        loadFuelPayments(user.uid);
+      }
+    });
+
+    // Load pumps into the payment dropdown
+    function loadPumpsForPaymentDropdown(uid) {
+      const pumpRef = ref(db, `users/${uid}/petrolPumps`);
+      const select = document.getElementById('fuelPaymentPumpSelect');
+      onValue(pumpRef, (snapshot) => {
+        select.innerHTML = '<option value="">Select a Pump</option>';
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const pump = child.val();
+            const option = document.createElement('option');
+            option.value = pump.name;
+            option.textContent = pump.name;
+            select.appendChild(option);
+          });
+        }
+      });
+    }
+
+    // Handle fuel payment form submission
+    document.getElementById('fuelPaymentForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const saveButton = document.querySelector('#fuelPaymentForm button[type="submit"]');
+      const paymentData = {
+        pumpName: document.getElementById('fuelPaymentPumpSelect').value,
+        amount: parseFloat(document.getElementById('fuelPaymentAmount').value),
+        date: document.getElementById('fuelPaymentDate').value,
+        mode: document.getElementById('fuelPaymentMode').value,
+        remarks: document.getElementById('fuelPaymentRemarks').value,
+        createdAt: new Date().toISOString(),
+        userId: currentUser.uid
+      };
+
+      if (currentEditingPaymentId) {
+        // Update existing payment
+        update(ref(db, `users/${currentUser.uid}/fuelPayments/${currentEditingPaymentId}`), {
+          ...paymentData,
+          updatedAt: new Date().toISOString()
+        })
+        .then(() => {
+          alert('Payment updated successfully!');
+          currentEditingPaymentId = null; // Reset editing state
+          saveButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Payment'; // Reset button text
+          e.target.reset();
+          loadPumps(currentUser.uid); // Reload pumps to update outstanding balances
+        })
+        .catch(err => alert('Error updating payment: ' + err.message));
+      } else {
+        // Add new payment
+        push(ref(db, `users/${currentUser.uid}/fuelPayments`), paymentData)
+        .then(() => {
+          alert('Payment recorded successfully!');
+          e.target.reset();
+          loadPumps(currentUser.uid); // Reload pumps to update outstanding balances
+        })
+        .catch(err => alert('Error saving payment: ' + err.message));
+      }
+    });
+
+    // Load fuel payments into the table
+    function loadFuelPayments(uid) {
+      const paymentsRef = query(ref(db, `users/${uid}/fuelPayments`), orderByChild('date'));
+      onValue(paymentsRef, (snapshot) => {
+        fuelPaymentsTable.clear();
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const p = child.val();
+            fuelPaymentsTable.row.add([
+              p.date,
+              p.pumpName,
+              `₹${p.amount.toFixed(2)}`,
+              p.mode,
+              p.remarks || '-',
+              `<div class="text-center">
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editFuelPayment('${child.key}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteFuelPayment('${child.key}')"><i class="fas fa-trash"></i></button>
+              </div>`
+            ]);
+          });
+        }
+        fuelPaymentsTable.draw();
+      });
+    }
+
+    // Add Pump
+    document.getElementById("pumpForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const newPumpName = document.getElementById("pumpName").value.trim();
+      if (!newPumpName) {
+        alert('Pump name cannot be empty.');
+        return;
+      }
+
+      // Check for duplicates
+      const pumpRef = ref(db, `users/${currentUser.uid}/petrolPumps`);
+      const snapshot = await get(pumpRef);
+      let isDuplicate = false;
+      if (snapshot.exists()) {
+        snapshot.forEach(childSnapshot => {
+          if (childSnapshot.val().name.toLowerCase() === newPumpName.toLowerCase()) {
+            isDuplicate = true;
+          }
         });
       }
-      closeRecordModal();
-    } catch (error) {
-      console.error('Error saving record:', error);
-      alert('Error saving record. Please try again.');
-    }
-  });
 
-  applyFilter.addEventListener('click', ()=>{
-    computePumpStats();
-    renderRecords();
-  });
-  clearFilter.addEventListener('click', ()=>{
-    filterPump.value = '';
-    document.getElementById('filterVehicle').value = '';
-    document.getElementById('filterFrom').value = '';
-    document.getElementById('filterTo').value = '';
-    pumpStats.style.display = 'none';
-    renderRecords();
-  });
+      if (isDuplicate) {
+        alert('A pump with this name already exists.');
+        return;
+      }
 
-  preset7.addEventListener('click', ()=> { applyPresetDays(7); });
-  preset30.addEventListener('click', ()=> { applyPresetDays(30); });
-  presetMonth.addEventListener('click', ()=> { applyThisMonth(); });
+      const pumpData = {
+        name: newPumpName,
+        place: document.getElementById("pumpPlace").value,
+        contact: document.getElementById("pumpContact").value,
+        email: document.getElementById("pumpEmail").value,
+        gstin: document.getElementById("pumpGstin").value,
+        createdAt: new Date().toISOString()
+      };
 
-  // sorting columns
-  document.querySelectorAll('th.sortable').forEach(th => {
-    th.addEventListener('click', () => {
-      const key = th.dataset.key;
-      if (sortKey === key) sortDir *= -1;
-      else { sortKey = key; sortDir = -1; }
-      document.querySelectorAll('th.sortable').forEach(h => {
-        h.textContent = h.textContent.replace(' ▼','').replace(' ▴','');
-      });
-      th.textContent = th.textContent + (sortDir === -1 ? ' ▼' : ' ▴');
-      renderRecords();
+      push(pumpRef, pumpData)
+        .then(() => {
+          e.target.reset();
+          alert('Petrol pump added successfully!');
+        })
+        .catch((error) => {
+          alert('Error adding pump: ' + error.message);
+        });
     });
-  });
 
-  downloadXlsx.addEventListener('click', () => exportExcel());
-  printReport.addEventListener('click', ()=> printFilteredReport());
+    // Load Pumps
+    function loadPumps(uid) {
+      // First, fetch all LR reports to calculate totals
+      const lrReportsPromise = get(query(ref(db, 'lrReports'), orderByChild('userId'), equalTo(uid)));
+      const paymentsPromise = get(query(ref(db, `users/${uid}/fuelPayments`)));
 
-  // open pumps container
-  document.getElementById('openManagePumps').addEventListener('click', ()=> pumpsContainer.scrollIntoView({behavior:'smooth'}));
-}
+      Promise.all([lrReportsPromise, paymentsPromise]).then(([lrSnapshot, paymentSnapshot]) => {
+          const pumpTotals = {};
+          const pumpPayments = {};
 
-// ---------- modal open/close ----------
-function openRecordModal(data){
-  editKey = data ? data.key : null;
-  document.getElementById('modalTitle').textContent = editKey ? 'Edit Record' : 'Add Record';
-  recDate.value = data && data.date ? data.date : isoDate(new Date());
-  recVehicle.value = data ? data.vehicleNo : '';
-  recFrom.value = data ? data.from : '';
-  recTo.value = data ? data.to : '';
-  recDistance.value = data ? data.distance : '';
-  recDiesel.value = data ? data.diesel : '';
-  recDieselPrice.value = data ? (data.dieselPrice || '') : '';
-  recPump.value = data ? data.petrolPump : '';
-  recAmount.value = data ? data.amount : '';
-  recPayment.value = data ? data.payment : 'paid';
-  previewImg.style.display = data && data.proofUrl ? 'block' : 'none';
-  previewImg.src = data && data.proofUrl ? data.proofUrl : '';
-  recProof.value = '';
-  recordModal.classList.add('show');
-}
-function closeRecordModal(){ recordModal.classList.remove('show'); editKey=null; previewImg.style.display='none'; }
+          // Aggregate total spent from LR reports
+          if (lrSnapshot.exists()) {
+            lrSnapshot.forEach(lrChild => {
+              const lr = lrChild.val();
+              if (lr.dieselPumpName && lr.dieselExpenses > 0) {
+                if (!pumpTotals[lr.dieselPumpName]) {
+                  pumpTotals[lr.dieselPumpName] = { totalSpent: 0, totalLiters: 0 };
+                }
+                pumpTotals[lr.dieselPumpName].totalSpent += parseFloat(lr.dieselExpenses);
+                pumpTotals[lr.dieselPumpName].totalLiters += parseFloat(lr.dieselLiters || 0);
+              }
+            });
+          }
 
-// ---------- image resize & upload ----------
-async function resizeImage(file, maxDim = 1200, quality = 0.8){
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      let { width, height } = img;
-      let scale = 1;
-      if (width > maxDim || height > maxDim) scale = Math.min(maxDim / width, maxDim / height);
-      const cw = Math.round(width * scale), ch = Math.round(height * scale);
-      const canvas = document.createElement('canvas');
-      canvas.width = cw; canvas.height = ch;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, cw, ch);
-      canvas.toBlob((blob) => {
-        URL.revokeObjectURL(url);
-        if (!blob) return reject(new Error('Canvas toBlob failed'));
-        resolve(blob);
-      }, 'image/jpeg', quality);
+          // Aggregate total paid from fuel payments
+          if (paymentSnapshot.exists()) {
+              paymentSnapshot.forEach(paymentChild => {
+                  const payment = paymentChild.val();
+                  if (payment.pumpName && payment.amount > 0) {
+                      pumpPayments[payment.pumpName] = (pumpPayments[payment.pumpName] || 0) + parseFloat(payment.amount);
+                  }
+              });
+          }
+
+          // Now, load the pumps and display them with the calculated totals
+          const pumpRef = ref(db, `users/${uid}/petrolPumps`);
+          onValue(pumpRef, (pumpSnapshot) => {
+            pumpTable.clear();
+            if (pumpSnapshot.exists()) {
+              pumpSnapshot.forEach(child => {
+                const pump = child.val();
+                const totalBilled = pumpTotals[pump.name]?.totalSpent || 0;
+                const totalPaid = pumpPayments[pump.name] || 0;
+                const outstanding = totalBilled - totalPaid;
+
+                pumpTable.row.add([
+                  pump.name,
+                  pump.place || "-",
+                  pump.contact || "-",
+                  pump.gstin || "-",
+                  `₹${totalBilled.toFixed(2)}`,
+                  `<span class="fw-bold ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
+                  `<div class="text-center">
+                  <button class="btn btn-sm btn-outline-primary me-1" onclick="viewPump('${child.key}')" title="View Details"><i class="fas fa-eye"></i></button>
+                  <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPump('${child.key}', '${pump.name}', '${pump.place || ''}', '${pump.contact || ''}', '${pump.email || ''}', '${pump.gstin || ''}')" title="Edit"><i class="fas fa-edit"></i></button>
+                  <button class="btn btn-sm btn-outline-danger" onclick="deletePump('${child.key}')" title="Delete"><i class="fas fa-trash"></i></button>
+                </div>`
+              ]).node().id = `pump-row-${child.key}`;
+            });
+          }
+            pumpTable.draw();
+          });
+        }).catch(error => {
+          console.error("Error fetching data for pump totals:", error);
+          alert("Could not calculate pump totals due to a data loading error.");
+        });
+    }
+    
+    // View Pump Details
+    window.viewPump = async (pumpId) => {
+      document.getElementById('pumpListView').classList.add('hidden');
+      document.getElementById('pumpDetailView').classList.remove('hidden');
+
+      const pumpRef = ref(db, `users/${currentUser.uid}/petrolPumps/${pumpId}`);
+      const pumpSnap = await get(pumpRef);
+      if (!pumpSnap.exists()) return;
+      const pump = pumpSnap.val();
+
+      document.getElementById('pumpTitle').textContent = pump.name;
+      document.getElementById('pumpDetailContact').textContent = pump.contact || '-';
+      document.getElementById('pumpDetailGSTIN').textContent = pump.gstin || '-';
+      document.getElementById('pumpDetailEmail').textContent = pump.email || '-';
+
+      // Fetch and display transactions
+      const lrQuery = get(query(ref(db, 'lrReports'), orderByChild('userId'), equalTo(currentUser.uid)));
+      const paymentQuery = get(query(ref(db, `users/${currentUser.uid}/fuelPayments`), orderByChild('pumpName'), equalTo(pump.name)));
+
+      const [lrSnap, paymentSnap] = await Promise.all([lrQuery, paymentQuery]);
+
+        transactionTable.clear();
+        let totalSpent = 0, totalLiters = 0, totalPaid = 0;
+
+        if (lrSnap.exists()) {
+            lrSnap.forEach(child => {
+                const lr = child.val();
+                // **FIX**: Filter for the correct pump name on the client-side
+                if (lr.dieselPumpName === pump.name) {
+                    totalSpent += parseFloat(lr.dieselExpenses || 0);
+                    totalLiters += parseFloat(lr.dieselLiters || 0);
+                    transactionTable.row.add([
+                        lr.date,
+                        lr.lrNumber,
+                        lr.truckNumber,
+                        (lr.dieselLiters || 0).toFixed(2),
+                        `₹${(lr.dieselPerLiter || 0).toFixed(2)}`,
+                        `₹${(lr.dieselExpenses || 0).toFixed(2)}`
+                    ]);
+                }
+            });
+        }
+
+        if (paymentSnap.exists()) {
+            paymentSnap.forEach(child => {
+                totalPaid += parseFloat(child.val().amount || 0);
+            });
+        }
+
+      transactionTable.draw();
+      document.getElementById('pumpDetailTotalSpent').textContent = `₹${totalSpent.toFixed(2)}`;
+      document.getElementById('pumpDetailTotalPaid').textContent = `₹${totalPaid.toFixed(2)}`;
+      document.getElementById('pumpDetailOutstanding').textContent = `₹${(totalSpent - totalPaid).toFixed(2)}`;
+      document.getElementById('pumpDetailTotalLiters').textContent = `${totalLiters.toFixed(2)} L`;
     };
-    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
-    img.src = url;
-  });
-}
 
-async function uploadToCloudinary(blob){
-  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) throw new Error('Cloudinary not configured');
-  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
-  const fd = new FormData();
-  fd.append('file', blob, 'proof.jpg');
-  fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-  const res = await fetch(url, { method:'POST', body:fd });
-  if (!res.ok) throw new Error('Cloudinary upload failed: ' + res.statusText);
-  const data = await res.json();
-  return data.secure_url;
-}
+    // Edit Pump
+    window.editPump = (id, name, place, contact, email, gstin) => {
+      const newName = prompt("Enter new pump name:", name);
+      if (!newName) return;
+      const newPlace = prompt("Enter new place:", place);
+      const newContact = prompt("Enter new contact number:", contact);
+      const newEmail = prompt("Enter new email:", email);
+      const newGstin = prompt("Enter new GSTIN:", gstin);
 
-// export currently filtered -> excel
-function exportExcel(){
-  const headers = ['Date','Vehicle','From','To','Distance(km)','Diesel(L)','PetrolPump','Amount','Payment','ProofURL'];
-  const rows = [headers];
-  const pumpFilter = filterPump.value;
-  const vehicleFilter = document.getElementById('filterVehicle').value.trim().toLowerCase();
-  const fromDate = document.getElementById('filterFrom').value;
-  const toDate = document.getElementById('filterTo').value;
+      update(ref(db, `users/${currentUser.uid}/petrolPumps/${id}`), {
+        name: newName,
+        place: newPlace,
+        contact: newContact,
+        email: newEmail,
+        gstin: newGstin,
+        updatedAt: new Date().toISOString()
+      }).then(() => alert('Pump details updated.'))
+        .catch(err => alert('Update failed: ' + err.message));
+    };
 
-  Object.entries(records).forEach(([k,r])=>{
-    if (pumpFilter && r.petrolPump !== pumpFilter) return;
-    if (vehicleFilter && !r.vehicleNo.toLowerCase().includes(vehicleFilter)) return;
-    if (fromDate && r.date < fromDate) return;
-    if (toDate && r.date > toDate) return;
-    rows.push([r.date, r.vehicleNo, r.from, r.to, r.distance, r.diesel, r.petrolPump, r.amount, r.payment, r.proofUrl || '']);
-  });
+    // Delete Pump
+    window.deletePump = (id) => {
+      if (confirm("Are you sure you want to delete this petrol pump?")) {
+        remove(ref(db, `users/${currentUser.uid}/petrolPumps/${id}`))
+          .then(() => alert('Pump deleted.'))
+          .catch(err => alert('Deletion failed: ' + err.message));
+      }
+    };
 
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "DieselRecords");
-  XLSX.writeFile(wb, `diesel-records-${isoDate(new Date())}.xlsx`);
-}
+    // Export to Excel
+    document.getElementById("exportExcel").addEventListener("click", () => {
+      const table = document.getElementById("pumpTable");
+      // Create a clone to remove the "Actions" column before exporting
+      const tableClone = table.cloneNode(true);
+      Array.from(tableClone.rows).forEach(row => {
+        row.deleteCell(-1); // Delete the last cell (Actions)
+      });
+      const wb = XLSX.utils.table_to_book(tableClone, { sheet: "PetrolPumps" });
+      XLSX.writeFile(wb, "PetrolPumps.xlsx");
+    });
 
-// printable report
-function printFilteredReport(){
-  const pump = filterPump.value;
-  const vehicleFilter = document.getElementById('filterVehicle').value.trim().toLowerCase();
-  const fromDate = document.getElementById('filterFrom').value;
-  const toDate = document.getElementById('filterTo').value;
+    // Edit a fuel payment
+    window.editFuelPayment = async (paymentId) => {
+      const paymentRef = ref(db, `users/${currentUser.uid}/fuelPayments/${paymentId}`);
+      const snapshot = await get(paymentRef);
+      if (!snapshot.exists()) {
+        alert('Payment record not found.');
+        return;
+      }
+      const p = snapshot.val();
+      currentEditingPaymentId = paymentId; // Set the ID of the payment being edited
 
-  const rows = Object.entries(records).map(([k,r])=>({key:k,...r})).filter(r=>{
-    if (pump && r.petrolPump !== pump) return false;
-    if (vehicleFilter && !r.vehicleNo.toLowerCase().includes(vehicleFilter)) return false;
-    if (fromDate && r.date < fromDate) return false;
-    if (toDate && r.date > toDate) return false;
-    return true;
-  }).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      document.getElementById('fuelPaymentPumpSelect').value = p.pumpName;
+      document.getElementById('fuelPaymentAmount').value = p.amount;
+      document.getElementById('fuelPaymentDate').value = p.date;
+      document.getElementById('fuelPaymentMode').value = p.mode;
+      document.getElementById('fuelPaymentRemarks').value = p.remarks;
 
-  let totalDiesel=0, paid=0, pending=0;
-  rows.forEach(r=>{ totalDiesel += parseFloat(r.diesel||0); const amt = parseFloat(r.amount||0); if (r.payment==='paid') paid += amt; else pending += amt; });
+      document.querySelector('#fuelPaymentForm button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i>Update Payment';
+      document.getElementById('fuelPaymentForm').scrollIntoView({ behavior: 'smooth' });
+    };
 
-  let html = `<html><head><title>Report</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f7fff7}.stat{padding:8px;background:#f7fff7;margin-bottom:10px;border-left:4px solid ${getComputedStyle(document.documentElement).getPropertyValue('--accent')}}</style></head><body>`;
-  html += `<h2>Report ${pump?('&mdash; '+escapeHtml(pump)) : ''}</h2>`;
-  html += `<div class="stat">Diesel Taken: ${totalDiesel.toFixed(2)} L &nbsp;&nbsp; Paid: ₹${paid.toFixed(2)} &nbsp;&nbsp; Pending: ₹${pending.toFixed(2)}</div>`;
-  html += `<table><thead><tr><th>Date</th><th>Vehicle</th><th>From</th><th>To</th><th>Diesel(L)</th><th>Amount</th><th>Payment</th></tr></thead><tbody>`;
-  rows.forEach(r=> html += `<tr><td>${escapeHtml(r.date||'')}</td><td>${escapeHtml(r.vehicleNo||'')}</td><td>${escapeHtml(r.from||'')}</td><td>${escapeHtml(r.to||'')}</td><td>${numberOrDash(r.diesel)}</td><td>${numberOrDash(r.amount)}</td><td>${escapeHtml(r.payment||'')}</td></tr>`);
-  html += `</tbody></table></body></html>`;
+    // Delete a fuel payment
+    window.deleteFuelPayment = (paymentId) => {
+      if (confirm('Are you sure you want to delete this payment record?')) {
+        remove(ref(db, `users/${currentUser.uid}/fuelPayments/${paymentId}`))
+          .then(() => {
+            alert('Payment record deleted.');
+            loadPumps(currentUser.uid); // Reload pumps to update outstanding balances
+          })
+          .catch(err => alert('Deletion failed: ' + err.message));
+      }
+    };
 
-  const w = window.open('', '_blank');
-  w.document.write(html); w.document.close(); w.focus(); w.print();
-}
-
-// compute pump stats
-function computePumpStats(){
-  const pump = filterPump.value;
-  if (!pump) { pumpStats.style.display='none'; return; }
-  let totalDiesel=0, paid=0, pending=0;
-  Object.values(records).forEach(r=>{ if (r.petrolPump !== pump) return; totalDiesel += parseFloat(r.diesel||0); const amt = parseFloat(r.amount||0); if (r.payment === 'paid') paid += amt; else pending += amt; });
-  statDiesel.textContent = totalDiesel.toFixed(2);
-  statPaid.textContent = paid.toFixed(2);
-  statPending.textContent = pending.toFixed(2);
-  pumpStats.style.display = 'flex';
-}
-
-// presets
-function applyPresetDays(days){ const to = new Date(); const from = new Date(); from.setDate(from.getDate() - days + 1); document.getElementById('filterFrom').value = isoDate(from); document.getElementById('filterTo').value = isoDate(to); computePumpStats(); renderRecords(); }
-function applyThisMonth(){ const now = new Date(); const from = new Date(now.getFullYear(), now.getMonth(), 1); const to = new Date(now.getFullYear(), now.getMonth()+1, 0); document.getElementById('filterFrom').value = isoDate(from); document.getElementById('filterTo').value = isoDate(to); computePumpStats(); renderRecords(); }
-
-// utils
-function numberOrDash(v){ return (v || v === 0) ? (isNaN(v)? '&mdash;' : Number(v).toLocaleString(undefined, {maximumFractionDigits:2})) : '&mdash;'; }
-function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function isoDate(d){ return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
-
-// expose inline functions used by buttons
-window.deleteRecord = deleteRecord;
-window.editPump = editPump;
-window.deletePump = deletePump;
-
-// initial sort arrow
-document.querySelector('th.sortable[data-key="date"]').textContent += ' ▼';
-
-// Diesel Calculator
-document.getElementById('calculateBtn').addEventListener('click', function() {
-const distance = parseFloat(document.getElementById('calcDistance').value);
-const average = parseFloat(document.getElementById('calcAverage').value);
-const price = parseFloat(document.getElementById('calcPrice').value);
-  
-if (!distance || !average || !price) {
-alert('Please fill in all fields');
-return;
-}
-  
-const dieselRequired = distance / average;
-const estimatedCost = dieselRequired * price;
-  
-document.getElementById('dieselRequired').textContent = dieselRequired.toFixed(2) + ' liters';
-document.getElementById('estimatedCost').textContent = '₹' + estimatedCost.toFixed(2);
-document.getElementById('calcResult').style.display = 'block';
-});
-
-// expose navbar functions globally
-window.logout = function() { signOut(auth).then(()=> window.location.href="index.html").catch(e => alert("Logout error: "+e.message)); };
-window.toggleMenu = function(){ const el=document.getElementById("navLinks"); if(el) el.classList.toggle("show"); };
-
+    // Make functions globally accessible for onclick attributes
+    window.viewPump = viewPump;
+    window.editPump = editPump;
+    window.deletePump = deletePump;
+    window.editFuelPayment = editFuelPayment;
+    window.deleteFuelPayment = deleteFuelPayment;
 </script>
 </body>
 </html>
-
