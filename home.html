@@ -525,20 +525,35 @@
           });
         }
 
+        // Fetch general expenses from payment-billing.html
         const expensesRef = ref(db, `users/${user.uid}/expenses`);
         onValue(expensesRef, (expenseSnap) => {
-          let monthlyExpenses = 0;
+          let monthlyGeneralExpenses = 0;
           if (expenseSnap.exists()) {
             expenseSnap.forEach(child => {
               const expense = child.val();
               if (expense.date >= startOfMonth && expense.date <= endOfMonth) {
-                monthlyExpenses += parseFloat(expense.amount || 0);
+                monthlyGeneralExpenses += parseFloat(expense.amount || 0);
               }
             });
           }
 
-          const netRevenue = monthlyPayments - monthlyExpenses;
-          document.getElementById('totalPayments').textContent = `₹${netRevenue.toLocaleString('en-IN')}`;
+          // Fetch fuel payments from route-details.html
+          const fuelPaymentsRef = ref(db, `users/${user.uid}/fuelPayments`);
+          onValue(fuelPaymentsRef, (fuelSnap) => {
+            let monthlyFuelExpenses = 0;
+            if (fuelSnap.exists()) {
+              fuelSnap.forEach(child => {
+                const fuelPayment = child.val();
+                if (fuelPayment.date >= startOfMonth && fuelPayment.date <= endOfMonth) {
+                  monthlyFuelExpenses += parseFloat(fuelPayment.amount || 0);
+                }
+              });
+            }
+            const totalMonthlyExpenses = monthlyGeneralExpenses + monthlyFuelExpenses;
+            const netRevenue = monthlyPayments - totalMonthlyExpenses;
+            document.getElementById('totalPayments').textContent = `₹${netRevenue.toLocaleString('en-IN')}`;
+          });
         });
       });
     }
