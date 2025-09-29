@@ -229,7 +229,7 @@
   <script type="module">
     // Firebase imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, push, onValue, update, remove, query, orderByChild, equalTo, get } 
+    import { getDatabase, ref, push, onValue, update, remove, query, orderByChild, equalTo, get, set } 
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -244,7 +244,6 @@
       appId: "1:526889676196:web:66032c80a4aede690ae531",
       measurementId: "G-7F9R7HJYDH"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
@@ -747,4 +746,3 @@
   </script>
 </body>
 </html>
-
