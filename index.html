@@ -21,6 +21,7 @@
       padding: 0;
       box-sizing: border-box;
     }
+    
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -608,6 +609,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       VANTA.NET({
         el: "#vanta-bg",
+        THREE: THREE, 
         mouseControls: true,
         touchControls: true,
         gyroControls: false,
@@ -615,8 +617,8 @@
         minWidth: 200.00,
         scale: 1.00,
         scaleMobile: 1.50,
-        color: 0x2e8b57, // Reverted to primary green color for consistency
-        backgroundColor: 0xe4e8f0, // A light background color for the animation
+        color: 0x2e8b57, 
+        backgroundColor: 0xe4e8f0, 
         points: 14.00, // Increased point density
         maxDistance: 20.00, // Shorter connection lines
         spacing: 16.00 // Closer points
