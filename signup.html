@@ -198,9 +198,15 @@
 
         const subscriptionData = {
           status: 'trial',
+          // **FIX**: Add all required fields to satisfy the database validation rules.
+          planId: 'starter',
+          planName: 'starter', // Required by rules
+          vehicleLimit: 50,    // Default for starter plan
+          price: 699,          // Default for starter plan
           trialStart: trialStart.toISOString(),
           trialEnd: trialEnd.toISOString(),
-          createdAt: trialStart.toISOString()
+          createdAt: trialStart.toISOString(),
+          subscribedAt: new Date().getTime() // Required by rules
         };
 
         // Save user data to database
@@ -223,8 +229,8 @@
         sessionStorage.setItem('coreEmail', email);
         sessionStorage.setItem('corePassword', password);
         
-        // Redirect to create branch account (main branch setup)
-        window.location.href = 'create-branch-account.html';
+        // **FIX**: Redirect to create branch account, which will then lead to plan selection.
+        window.location.href = 'create-branch-account.html'; // This page will handle the next redirect
         
       } catch (error) {
         console.error('Signup error:', error);
