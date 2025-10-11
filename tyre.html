@@ -25,7 +25,7 @@
       border-radius: 8px;
     }
 
-    /* Scanner Styles from tyre1.html */
+    /* Scanner Styles */
     .scan-btn {
       display: flex;
       align-items: center;
@@ -40,7 +40,7 @@
       width: 100%;
       height: 100%;
       background-color: rgba(0, 0, 0, 0.9);
-      display: none; /* Initially hidden */
+      display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -95,7 +95,56 @@
       padding: 5px 10px;
       border-radius: 5px;
       font-size: 12px;
-      pointer-events: none; /* So it doesn't interfere with mouse controls */
+      pointer-events: none;
+    }
+
+    /* Vehicle validation styles */
+    .vehicle-input-container {
+      position: relative;
+    }
+    
+    .vehicle-suggestions {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      border-top: none;
+      z-index: 100;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .vehicle-suggestion {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .vehicle-suggestion:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .vehicle-not-found, .vehicle-valid {
+      font-size: 0.875em;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .vehicle-not-found {
+      color: #dc3545;
+    }
+    
+    .vehicle-valid {
+      color: #28a745;
+    }
+    
+    .is-valid {
+      border-color: #28a745 !important;
+    }
+    
+    .is-invalid {
+      border-color: #dc3545 !important;
     }
 
     /* Ensure body can scroll when modal is open */
@@ -243,8 +292,8 @@
 
     .card.expanded .card-body {
       padding: 15px;
-      max-height: 100vh; /* Use viewport height as a sensible limit */
-      overflow-y: auto; /* Add a scrollbar if content exceeds the viewport height */
+      max-height: 100vh;
+      overflow-y: auto;
     }
 
     .tyre-list {
@@ -278,15 +327,6 @@
       transform: translateY(-50%);
       display: flex;
       gap: 8px;
-    }
-    
-    .tyre-actions {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      gap: 5px;
     }
     
     .tyre-actions .btn {
@@ -579,21 +619,22 @@
 
     <div id="alertContainer"></div>
     
-    <!-- Search Section -->
-    <div class="search-section">
-      <h3>Search Vehicles</h3>
-      <input type="text" id="searchInput" class="search-input" placeholder="Search by vehicle number, model, or tyre details...">
-      <button class="btn btn-primary" onclick="searchVehicles()">Search</button>
-      <button class="btn btn-primary" onclick="loadVehicles()">Show All</button>
-    </div>
-    
     <!-- Add Vehicle Form -->
     <div class="form-section">
       <h3 id="formTitle">Add New Vehicle</h3>
       
       <div class="form-group">
-        <label for="vehicleNumber">Vehicle Number:</label>
-        <input type="text" id="vehicleNumber" placeholder="e.g., RJ38GA2433" required>
+        <label for="vehicleNumber">Vehicle Number: <span class="text-danger">*</span></label> 
+        <div class="vehicle-input-container" style="position: relative;">
+          <input type="text" id="vehicleNumber" class="form-control" placeholder="e.g., RJ38GA2433" required oninput="validateVehicleInput(this.value)"> 
+          <div id="vehicleSuggestions" class="vehicle-suggestions" style="display: none;"></div> 
+          <div id="vehicleNotFound" class="vehicle-not-found" style="display: none;"> 
+            <i class="fas fa-exclamation-triangle"></i> This vehicle is not registered.
+          </div> 
+          <div id="vehicleValid" class="vehicle-valid" style="display: none;"> 
+            <i class="fas fa-check-circle"></i> Vehicle is registered and valid.
+          </div>
+        </div>
       </div>
       
       <div class="form-group">
@@ -639,6 +680,11 @@
     <!-- Vehicle List Section -->
     <div class="form-section">
       <h3>Vehicle List</h3>
+      <!-- Search Section -->
+      <div class="search-section">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search by vehicle number, model, or tyre details..." oninput="searchVehicles()">
+      </div>
+
       <div id="vehicleList"></div>
       <!-- Pagination Controls (Tab System) for Vehicle Cards -->
       <div style="margin-top: 16px;">
@@ -691,7 +737,9 @@
     let currentUser = null;
     let editingVehicleId = null;
     let tyreCount = 1;
+    let coreAccountId = null;
     let allVehiclesData = {};
+    let registeredVehicles = [];
 
     // Pagination state for vehicle cards
     const entriesPerPageVehicles = document.getElementById('entriesPerPageVehicles');
@@ -708,7 +756,31 @@
     window.db = db;
     window.ref = ref;
     window.get = get;
-    window.currentUser = null; // Will be updated in onAuthStateChanged
+    window.currentUser = null;
+
+    // Function to load registered vehicles from add.html data
+    async function loadRegisteredVehicles() {
+      if (!coreAccountId) return;
+      
+      try {
+        const vehiclesRef = ref(db, `users/${coreAccountId}/vehicles`);
+        const snapshot = await get(vehiclesRef);
+        
+        if (snapshot.exists()) {
+          const vehicles = snapshot.val();
+          registeredVehicles = Object.values(vehicles).map(vehicle => 
+            vehicle.vehicleNumber ? vehicle.vehicleNumber.toUpperCase() : ''
+          ).filter(v => v !== '');
+          console.log("Registered vehicles loaded:", registeredVehicles);
+        } else {
+          registeredVehicles = [];
+          console.log("No registered vehicles found");
+        }
+      } catch (error) {
+        console.error("Error loading registered vehicles:", error);
+        registeredVehicles = [];
+      }
+    }
 
     // Navbar is now injected via navbar-loader.js
 
@@ -735,9 +807,22 @@
         return;
       }
       currentUser = user;
-      window.currentUser = user; // Update the global reference
+      window.currentUser = user;
 
-      // **NEW**: Handle voice command inputs from URL
+      // Determine the coreAccountId
+      const userRef = ref(db, `users/${user.uid}`);
+      const userSnap = await get(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.val();
+        coreAccountId = userData.coreAccountId || user.uid;
+      } else {
+        coreAccountId = user.uid;
+      }
+
+      // Load registered vehicles first
+      await loadRegisteredVehicles();
+
+      // Handle voice command inputs from URL
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('vehicleNumber')) {
         document.getElementById('vehicleNumber').value = urlParams.get('vehicleNumber') || '';
@@ -751,11 +836,72 @@
           if (urlParams.has('cost')) firstTyreContainer.querySelector('.tyre-cost').value = urlParams.get('cost');
         }
 
-        window.history.replaceState({}, document.title, window.location.pathname); // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       loadVehicles();
     });
+
+    // Live validation for vehicle number input
+    window.validateVehicleInput = function(query) {
+      const suggestionsContainer = document.getElementById('vehicleSuggestions');
+      const notFoundMessage = document.getElementById('vehicleNotFound');
+      const validMessage = document.getElementById('vehicleValid');
+      const truckNumberInput = document.getElementById('vehicleNumber');
+
+      if (!suggestionsContainer || !notFoundMessage || !validMessage || !truckNumberInput) return;
+
+      // Don't validate if in edit mode for a vehicle, as it might be a new number.
+      if (editingVehicleId && document.getElementById('formTitle').textContent.includes('Edit Vehicle')) {
+        return;
+      }
+
+      if (query.length < 1) {
+        suggestionsContainer.style.display = 'none';
+        notFoundMessage.style.display = 'none';
+        validMessage.style.display = 'none';
+        truckNumberInput.classList.remove('is-valid', 'is-invalid');
+        return;
+      }
+
+      const queryUpper = query.toUpperCase();
+      const filteredVehicles = registeredVehicles.filter(v => v.includes(queryUpper));
+
+      if (registeredVehicles.includes(queryUpper)) {
+        truckNumberInput.classList.add('is-valid');
+        truckNumberInput.classList.remove('is-invalid');
+        notFoundMessage.style.display = 'none';
+        suggestionsContainer.style.display = 'none';
+        validMessage.style.display = 'block';
+      } else if (filteredVehicles.length > 0) {
+        suggestionsContainer.innerHTML = '';
+        filteredVehicles.forEach(vehicleNo => {
+          const suggestion = document.createElement('div');
+          suggestion.className = 'vehicle-suggestion';
+          suggestion.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;';
+          suggestion.textContent = vehicleNo;
+          suggestion.onclick = () => {
+            truckNumberInput.value = vehicleNo;
+            suggestionsContainer.style.display = 'none';
+            truckNumberInput.classList.add('is-valid');
+            truckNumberInput.classList.remove('is-invalid');
+            notFoundMessage.style.display = 'none';
+            validMessage.style.display = 'block';
+          };
+          suggestionsContainer.appendChild(suggestion);
+        });
+        suggestionsContainer.style.display = 'block';
+        notFoundMessage.style.display = 'none';
+        validMessage.style.display = 'none';
+        truckNumberInput.classList.remove('is-valid', 'is-invalid');
+      } else {
+        suggestionsContainer.style.display = 'none';
+        notFoundMessage.style.display = 'block';
+        validMessage.style.display = 'none';
+        truckNumberInput.classList.add('is-invalid');
+        truckNumberInput.classList.remove('is-valid');
+      }
+    }
 
     // Show alert message
     window.showAlert = function(message, type) {
@@ -837,7 +983,7 @@
       tyreCount = tyreTitles.length;
     };
 
-    // Save vehicle and tyres
+    // Save vehicle and tyres - FIXED VERSION with vehicle validation
     window.saveVehicle = async function() {
       const vehicleNumber = document.getElementById('vehicleNumber').value.trim().toUpperCase();
       const vehicleModel = document.getElementById('vehicleModel').value.trim();
@@ -847,6 +993,23 @@
         return;
       }
       
+      // Validate if vehicle is registered
+      if (!registeredVehicles.includes(vehicleNumber)) {
+        showAlert(`Vehicle ${vehicleNumber} is not registered. Please register the vehicle first in the Vehicle & Driver section.`, 'danger');
+        return;
+      }
+      
+      // Check for duplicate vehicle number in tyre management system
+      if (!editingVehicleId) {
+        const vehicleExists = Object.values(allVehiclesData).some(
+          vehicle => vehicle.vehicleNumber && vehicle.vehicleNumber.toUpperCase() === vehicleNumber
+        );
+        if (vehicleExists) {
+          showAlert(`A vehicle with number ${vehicleNumber} already exists in the tyre management system.`, 'danger');
+          return;
+        }
+      }
+
       // Get all tyre inputs
       const tyreContainers = document.querySelectorAll('.tyre-container');
       const newTyres = [];
@@ -1008,8 +1171,8 @@
       onValue(vehiclesRef, (snapshot) => {
         const vehicles = snapshot.val() || {};
         allVehiclesData = vehicles;
-        updateSummaryDashboard(); // Update the new dashboard
-        renderVehiclesWithPagination(); // This will now handle pagination
+        updateSummaryDashboard();
+        renderVehiclesWithPagination();
       });
     };
 
@@ -1177,8 +1340,6 @@
       renderVehiclesWithPagination();
     };
 
-    // Remove duplicate searchVehicles; handled above with pagination
-
     // Edit vehicle
     window.editVehicle = function(vehicleId) {
       const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
@@ -1285,7 +1446,7 @@
                 ...tyre,
                 disposedAt: Date.now(),
                 disposalReason: 'Vehicle Deleted',
-                vehicleId: vehicleId, // Important for restore
+                vehicleId: vehicleId,
                 vehicleNumber: vehicle.vehicleNumber,
                 vehicleModel: vehicle.vehicleModel
               };
@@ -1297,7 +1458,6 @@
           // After archiving tyres, remove the vehicle
           remove(vehicleRef).then(() => {
             showAlert('Vehicle deleted and tyres moved to history.', 'success');
-            // loadVehicles() is called automatically by the onValue listener
           }).catch(error => showAlert(`Error deleting vehicle: ${error.message}`, 'danger'));
 
         }).catch(error => showAlert(`Error fetching vehicle data: ${error.message}`, 'danger'));
@@ -1589,7 +1749,7 @@
             disposedAt: Date.now(),
             disposalReason: reason,
             resellPrice: resellPrice,
-            vehicleId: vehicleId, // Important for restore
+            vehicleId: vehicleId,
             vehicleNumber: vehicle.vehicleNumber,
             vehicleModel: vehicle.vehicleModel
           };
@@ -1628,6 +1788,19 @@
       document.getElementById('vehicleNumber').disabled = false;
       document.getElementById('vehicleModel').disabled = false;
       
+      // Clear validation states
+      const suggestionsContainer = document.getElementById('vehicleSuggestions');
+      const notFoundMessage = document.getElementById('vehicleNotFound');
+      const validMessage = document.getElementById('vehicleValid');
+      const truckNumberInput = document.getElementById('vehicleNumber');
+      
+      if (suggestionsContainer) suggestionsContainer.style.display = 'none';
+      if (notFoundMessage) notFoundMessage.style.display = 'none';
+      if (validMessage) validMessage.style.display = 'none';
+      if (truckNumberInput) {
+        truckNumberInput.classList.remove('is-valid', 'is-invalid');
+      }
+      
       document.getElementById('tyresContainer').innerHTML = `
         <div class="tyre-container">
           <div class="tyre-header">
@@ -1664,6 +1837,13 @@
       document.getElementById('cancelEditBtn').style.display = 'none';
     }
 
+    // Search vehicles function
+    window.searchVehicles = function() {
+      searchTermVehicles = document.getElementById('searchInput').value.trim();
+      currentPageVehicles = 1; // Reset to first page on new search
+      renderVehiclesWithPagination();
+    };
+
     // Download PDF for a specific vehicle's tyres
     window.downloadVehicleTyrePDF = function(vehicleId) {
       const vehicle = allVehiclesData[vehicleId];
@@ -1679,11 +1859,7 @@
       }
 
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({
-        // Using a font that supports the Rupee symbol.
-        // jsPDF's default 'helvetica' font may not have it.
-        // 'arial' is a common fallback that often includes it.
-      });
+      const doc = new jsPDF();
 
       // Add a title
       doc.setFontSize(18);
@@ -1691,7 +1867,7 @@
       doc.setFontSize(11);
       doc.setTextColor(100);
       doc.text(`Model: ${vehicle.vehicleModel}`, 14, 30);
-      doc.setFont('arial', 'normal'); // Set font for the rest of the document
+      doc.setFont('arial', 'normal');
       // Define table columns and rows
       const tableColumn = ["Tyre Number", "Brand", "Position", "Added Date", "Cost (₹)"];
       const tableRows = [];
@@ -1756,273 +1932,5 @@
       }
     });
   </script>
-</body>
-</html>
-
-<!-- Add this CSS inside the existing style tag -->
-<style>
-  /* ... existing styles ... */
-  
-  /* Styles for tyre history */
-  .history-btn {
-    background-color: #17a2b8;
-    color: white;
-  }
-  
-  .history-btn:hover {
-    background-color: #138496;
-  }
-  
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
-  }
-  
-  .modal-content {
-    background-color: #fefefe;
-    margin: 10% auto;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    width: 80%;
-    max-width: 800px;
-  }
-  
-  .close-modal {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  
-  .close-modal:hover {
-    color: #555;
-  }
-  
-  .history-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-  }
-  
-  .history-table th, .history-table td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: left;
-  }
-  
-  .history-table th {
-    background-color: #2E8B57;
-    color: white;
-  }
-  
-  .history-table tr:nth-child(even) {
-    background-color: #f2f2f2;
-  }
-  
-  .tyre-stats {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
-  
-  .stat-card {
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    padding: 15px;
-    margin: 10px 0;
-    flex: 1;
-    min-width: 200px;
-    margin-right: 15px;
-    border-left: 4px solid #2E8B57;
-  }
-  
-  .stat-value {
-    font-size: 24px;
-    font-weight: bold;
-    color: #2E8B57;
-  }
-  
-  .stat-label {
-    color: #666;
-    font-size: 14px;
-  }
-  
-  .tyre-badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-    margin-left: 5px;
-  }
-  
-  .badge-new {
-    background-color: #28a745;
-    color: white;
-  }
-  
-  .badge-used {
-    background-color: #ffc107;
-    color: #212529;
-  }
-  
-  .badge-old {
-    background-color: #dc3545;
-    color: white;
-  }
-</style>
-
-<!-- Add this HTML right before the closing </div> of the container div -->
-<div id="tyreHistoryModal" class="modal">
-  <div class="modal-content">
-    <span class="close-modal" onclick="closeHistoryModal()">&times;</span>
-    <h2 id="historyTitle">Tyre History</h2>
-    
-    <div class="form-group">
-      <input type="text" id="historySearchInput" placeholder="Search vehicles..." class="form-control" onkeyup="searchVehicles()">
-    </div>
-    
-    <div id="historyVehicleList" class="card-deck">
-      <!-- Vehicles will be loaded here -->
-    </div>
-    
-    <div class="tyre-stats" id="tyreStats">
-      <!-- Stats will be populated dynamically -->
-    </div>
-    
-    <table class="history-table" id="historyTable" data-paginate="true" data-page-sizes="10,20,50,100">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Tyre Number</th>
-          <th>Brand</th>
-          <th>Size</th>
-          <th>Position</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="historyTableBody">
-        <!-- History entries will be populated dynamically -->
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Update the renderCard function in the JavaScript section -->
-<script>
-  // Add these functions to your existing script
-  
-  // Function to calculate tyre age in days
-  function getTyreAge(timestamp) {
-    if (!timestamp) return 0;
-    const now = Date.now();
-    const ageInMs = now - timestamp;
-    return Math.floor(ageInMs / (1000 * 60 * 60 * 24)); // Convert ms to days
-  }
-  
-  // Function to show tyre history modal
-  window.showTyreHistory = function(vehicleId) {
-    window.get(window.ref(window.db, `users/${window.currentUser.uid}/vehicles/${vehicleId}`)).then((snapshot) => {
-      if (snapshot.exists()) {
-        const vehicle = snapshot.val();
-        const tyres = vehicle.tyres || [];
-        
-        // Set modal title
-        document.getElementById('historyTitle').textContent = `Tyre History - ${vehicle.vehicleNumber}`;
-        
-        // Populate tyre stats
-        const statsContainer = document.getElementById('tyreStats');
-        const totalTyres = tyres.length;
-        const newTyres = tyres.filter(t => getTyreAge(t.addedAt) <= 30).length;
-        const usedTyres = tyres.filter(t => getTyreAge(t.addedAt) > 30 && getTyreAge(t.addedAt) <= 180).length;
-        const oldTyres = tyres.filter(t => getTyreAge(t.addedAt) > 180).length;
-        
-        statsContainer.innerHTML = `
-          <div class="stat-card">
-            <div class="stat-value">${totalTyres}</div>
-            <div class="stat-label">Total Tyres</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${newTyres}</div>
-            <div class="stat-label">New Tyres (<30 days)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${usedTyres}</div>
-            <div class="stat-label">Used Tyres (1-6 months)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${oldTyres}</div>
-            <div class="stat-label">Old Tyres (>6 months)</div>
-          </div>
-        `;
-        
-        // Populate history table
-        const historyTableBody = document.getElementById('historyTableBody');
-        historyTableBody.innerHTML = '';
-        
-        // Sort tyres by added date (newest first)
-        const sortedTyres = [...tyres].sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
-        
-        for (const tyre of sortedTyres) {
-          const row = document.createElement('tr');
-          const date = tyre.addedAt ? new Date(tyre.addedAt).toLocaleDateString() : 'Unknown';
-          
-          row.innerHTML = `
-            <td>${date}</td>
-            <td>${tyre.number}</td>
-            <td>${tyre.brand}</td>
-            <td>${tyre.size}</td>
-            <td>${tyre.position}</td>
-            <td>
-              <button class="action-btn edit-btn" onclick="editTyre('${vehicleId}', '${tyre.number}'); closeHistoryModal();">Edit</button>
-            </td>
-          `;
-          
-          historyTableBody.appendChild(row);
-        }
-        
-        // Show the modal
-        document.getElementById('tyreHistoryModal').style.display = 'block';
-      }
-    });
-  };
-  
-  // Function to close the history modal
-  window.closeHistoryModal = function() {
-    document.getElementById('tyreHistoryModal').style.display = 'none';
-  };
-  
-  // Close modal when clicking outside of it
-  window.onclick = function(event) {
-    const modal = document.getElementById('tyreHistoryModal');
-    if (event.target === modal) {
-      closeHistoryModal();
-    }
-  };
-  
-  // Modify the saveVehicle function to track tyre history
-  window.saveVehicle = async function() {
-    // ... existing code ...
-    
-    // Add timestamp to each tyre if not already present
-    for (const tyre of tyres) {
-      if (!tyre.addedAt) {
-        tyre.addedAt = Date.now();
-      }
-    }
-    
-    // ... rest of the existing function ...
-  };
-</script>
 </body>
 </html>
