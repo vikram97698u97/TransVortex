@@ -263,6 +263,8 @@
         // Write profile for branch auth user (used by invoice and other pages when logged into branch account)
         const dbBranch = getDatabase2(branchApp);
         await set(ref(dbBranch, `users/${branchUser.uid}`), {
+          // **FIX**: Set accountType to 'branch' and add branchType 'main'
+          // This makes it a special type of branch.
           accountType: 'branch',
           coreAccountId: owner.uid,
           email: email,
@@ -276,10 +278,10 @@
           }
         });
 
-        // **FIX**: Instead of complex auto-login, redirect to the login page with the new email pre-filled.
-        // This is a safer and more standard user flow.
-        alert('Main Branch created successfully! Please log in with your new branch credentials.');
-        window.location.href = `login.html?email=${encodeURIComponent(email)}&branch=main`;
+        // **FIX**: Redirect to the plan selection page after creating the main branch.
+        // This is the next step in the new user onboarding flow.
+        alert('Main Branch created successfully! Now, choose your plan to start your free trial.');
+        window.location.href = 'plan-selection.html';
 
       } catch (e) {
         console.error(e);
