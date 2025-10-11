@@ -354,8 +354,9 @@
       }, 3000);
     };
 
-    // Load tyre history
+    // Load tyre history - FIXED
     window.loadTyreHistory = function() {
+      // FIXED: Use currentUser.uid directly
       const historyRef = ref(db, `users/${currentUser.uid}/tyre_history`);
       
       onValue(historyRef, (snapshot) => {
@@ -680,12 +681,13 @@
       renderHistoryTable(pageData);
     }
 
-    // Restore Tyre
+    // Restore Tyre - FIXED
     window.restoreTyre = async function(historyId) {
       if (!confirm('Are you sure you want to restore this tyre to its original vehicle?')) {
         return;
       }
 
+      // FIXED: Use currentUser.uid directly
       const historyItemRef = ref(db, `users/${currentUser.uid}/tyre_history/${historyId}`);
       const historySnapshot = await get(historyItemRef);
 
@@ -703,6 +705,7 @@
         return;
       }
 
+      // FIXED: Use currentUser.uid directly
       const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
       const vehicleSnapshot = await get(vehicleRef);
 
