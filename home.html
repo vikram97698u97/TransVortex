@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Transport Dashboard - Home</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="global.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <style>
     :root {
       /* Saved Theme */
@@ -43,9 +44,7 @@
 
     /* Container */
     .main-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
+      padding: 0; /* Remove padding as it's now handled by the inner containers */
     }
     
     .container {
@@ -261,18 +260,101 @@
       color: #ffc107;
     }
 
+    /* Dashboard specific styles */
+    .profit-positive { color: #198754; font-weight: bold; }
+    .profit-negative { color: #dc3545; font-weight: bold; }
+    .payment-type-badge {
+      font-size: 0.7em;
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+    .table-responsive { border-radius: 8px; }
+
     @media (max-width: 768px) {
-      .welcome-title { font-size: 1.5rem; }
-      .reminders-grid { grid-template-columns: 1fr; }
+      .main-content { padding: 1rem; }
+
+      .welcome-section .welcome-header,
+      .payment-card-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+      }
+      .welcome-title { font-size: 1.6rem; }
+      .welcome-subtitle { font-size: 0.95rem; }
+      
+      /* Make all grids single-column on mobile */
+      .reminders-grid,
+      .summary-grid,
+      .activity-grid,
+      .quick-actions {
+        grid-template-columns: 1fr;
+      }
+      
+      /* Adjust summary card layout and font sizes */
+      .summary-card {
+        padding: 1rem;
+      }
+      .summary-details p {
+        font-size: 1.3rem; /* Reduce font size for summary values */
+      }
+      .payment-card h4 { 
+        font-size: 1.6rem; /* Reduce font size for payment card values */
+      }
+
+      /* Stack filter inputs and make buttons full-width for better touch interaction */
+      .container .row.mb-3 .col-md-3,
+      .container .row.mb-3 .col-md-4 {
+        margin-bottom: 1rem;
+      }
+      .container .row.mb-3 .d-flex {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .container .row.mb-3 .btn { width: 100%; }
+    }
+
+  </style>
+  <!-- NEW: Styles for the Payment Dashboard Cards -->
+  <style>
+    .payment-card {
+      background-color: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .payment-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .payment-card-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .payment-card-icon {
+      font-size: 1.5rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
     }
   </style>
 </head>
 <body>
-  <script src="navbar-loader.js"></script>
-  <div class="main-content">
+  <!-- Navbar will be loaded here by navbar-loader.js -->
+  <div id="navbar-placeholder"></div>
+
+  <div class="main-content container">
     <!-- Welcome Section -->
-    <div class="welcome-section">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div class="welcome-section ">
+      <div class="welcome-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
           <h1 class="welcome-title">Welcome back, <span id="ownerName">User</span>!</h1>
           <p class="welcome-subtitle">Here's what's happening with your business today</p>
@@ -332,8 +414,8 @@
       <h2 class="section-title">Business Overview</h2>
       <div class="summary-grid">
         <div class="summary-card">
-          <div class="summary-icon" style="background: rgba(67, 185, 127, 0.1);">
-            <i class="fas fa-truck" style="color: #43B97F;"></i>
+          <div class="summary-icon" style="background: rgba(59, 130, 246, 0.1);">
+            <i class="fas fa-truck" style="color: #3B82F6;"></i>
           </div>
           <div class="summary-details">
             <h3>Total Vehicles</h3>
@@ -341,21 +423,124 @@
           </div>
         </div>
         <div class="summary-card">
-          <div class="summary-icon" style="background: rgba(52, 152, 219, 0.1);">
-            <i class="fas fa-calendar-check" style="color: #3498DB;"></i>
+          <div class="summary-icon" style="background: rgba(14, 165, 233, 0.1);">
+            <i class="fas fa-calendar-check" style="color: #0EA5E9;"></i>
           </div>
           <div class="summary-details">
-            <h3>Active LR Reports</h3>
+            <h3>LR Reports</h3>
             <p id="activeLRCount">0</p>
           </div>
         </div>
         <div class="summary-card">
-          <div class="summary-icon" style="background: rgba(155, 89, 182, 0.1);">
-            <i class="fas fa-rupee-sign" style="color: #9B59B6;"></i>
+          <div class="summary-icon" style="background: rgba(16, 185, 129, 0.1);">
+            <i class="fas fa-rupee-sign" style="color: #10B981;"></i>
           </div>
           <div class="summary-details">
-            <h3>This Month's Net</h3>
-            <p id="totalPayments">₹0</p>
+            <h3>Total Profit</h3>
+            <p id="totalProfit">₹0</p>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon" style="background: rgba(249, 115, 22, 0.1);">
+            <i class="fas fa-gas-pump" style="color: #F97316;"></i>
+          </div>
+          <div class="summary-details">
+            <h3>Fuel Payments</h3>
+            <p id="totalFuelPayments">₹0.00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Summary Cards -->
+    <div class="container mt-4">
+      <h2 class="mb-4"><i class="fas fa-chart-line me-2"></i>Recent Payments & Profit Dashboard</h2>
+      
+      <!-- Summary Cards -->
+      <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+          <div class="payment-card">
+            <div class="payment-card-header">
+              <div class="payment-card-icon" style="background-color: rgba(99, 102, 241, 0.1); color: #6366F1;">
+                <i class="fas fa-user-tie"></i>
+              </div>
+              <h6 class="card-title text-muted mb-0">Total Driver Payments</h6>
+            </div>
+            <h4 id="totalDriverPayments" class="display-6 fw-bold mt-auto">₹0.00</h4>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="payment-card">
+            <div class="payment-card-header">
+              <div class="payment-card-icon" style="background-color: rgba(234, 179, 8, 0.1); color: #EAB308;">
+                <i class="fas fa-tools"></i>
+              </div>
+              <h6 class="card-title text-muted mb-0">Total Vehicle Work</h6>
+            </div>
+            <h4 id="totalVehicleWork" class="display-6 fw-bold mt-auto">₹0.00</h4>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="payment-card">
+            <div class="payment-card-header">
+              <div class="payment-card-icon" style="background-color: rgba(20, 184, 166, 0.1); color: #14B8A6;">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <h6 class="card-title text-muted mb-0">Monthly Profit</h6>
+            </div>
+            <h4 id="monthlyProfit" class="display-6 fw-bold mt-auto">₹0.00</h4>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label class="form-label">From Date</label>
+          <input type="date" class="form-control" id="fromDate">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">To Date</label>
+          <input type="date" class="form-control" id="toDate">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Payment Type</label>
+          <select class="form-select" id="paymentTypeFilter">
+            <option value="">All Types</option>
+            <option value="fuel">Fuel Payments</option>
+            <option value="driver">Driver Payments</option>
+            <option value="vehicle">Vehicle Work</option>
+            <option value="expense">Expenses</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button class="btn btn-primary me-2" id="applyFiltersBtn">Apply Filters</button>
+          <button class="btn btn-outline-secondary" id="resetFiltersBtn">Reset</button>
+        </div>
+      </div>
+
+      <!-- Recent Payments Table -->
+      <div class="card">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-list me-2"></i>Recent Payments</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table id="paymentsTable" class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                  <th>Vehicle/Recipient</th>
+                  <th class="text-end">Amount (₹)</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="paymentsTableBody">
+                <!-- Data will be populated by JavaScript -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -422,12 +607,20 @@
       </div>
     </div>
   </div>
-  <script type="module">
-    // Import Firebase modules
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue, query, orderByChild, limitToLast, get, update, push, remove, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    
+
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="navbar-loader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  
+  <script>
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
@@ -436,35 +629,60 @@
       projectId: "transport-dashboard-ad69a",
       storageBucket: "transport-dashboard-ad69a.appspot.com",
       messagingSenderId: "526889676196",
-      appId: "1:526889676196:web:66032c80a4aede690ae531"
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
     };
-    
-    // Initialize Firebase
-    // **FIX**: Safely initialize Firebase to prevent duplicate app errors.
-    let app;
-    if (!getApps().length) {
-      app = initializeApp(firebaseConfig);
-    } else {
-      app = getApp(); // Get the default app if it already exists
-    }
-    const db = getDatabase(app);
-    const auth = getAuth(app);
-    let currentUser = null;
-    
-    // Expose auth and signOut to the global scope for navbar-loader.js
-    window.auth = auth;
-    window.signOut = signOut;
 
-    // Main entry point
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUser = user;
-        // **FIX**: Pass the initialized Firebase app to the voice command script.
-        if (window.initVoiceRecognition) window.initVoiceRecognition(app);
-        initializePage(user);
-      } else {
-        window.location.href = 'login.html';
-      }
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    // Global variables
+    let paymentsTable;
+    let allPayments = [];
+    let coreAccountId = null;
+    let currentUser = null;
+
+    // Initialize the page
+    $(document).ready(function() {
+      auth.onAuthStateChanged((user) => {
+        if (!user) {
+          window.location.href = 'login.html';
+        } else {
+          currentUser = user;
+          
+          // Initialize all dashboard components
+          initializePage(user);
+          
+          // Determine the core account ID to fetch shared data
+          const userRef = db.ref(`users/${user.uid}`);
+          userRef.once('value').then((snapshot) => {
+            const userData = snapshot.val();
+            if (userData && userData.coreAccountId) {
+              coreAccountId = userData.coreAccountId;
+            } else {
+              coreAccountId = user.uid;
+            }
+
+            // Load all payment data
+            loadAllPayments();
+            
+            // Set default date range to current month
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            $('#fromDate').val(formatDateForInput(firstDay));
+            $('#toDate').val(formatDateForInput(today));
+          });
+
+          // Initialize DataTable
+          initializeDataTable();
+          setupEventListeners();
+        }
+      });
     });
 
     // Initialize all dashboard components
@@ -478,167 +696,231 @@
     }
 
     // Load user's name
-    async function loadUserProfile(user) {
-      const userRef = ref(db, `users/${user.uid}`);
-      const snapshot = await get(userRef);
-      if (snapshot.exists()) {
-        const userData = snapshot.val() || {};
-        // **FIX**: Consistently read from the 'profile' object.
-        const profileData = userData.profile || {};
-        // Use ownerName from profile, fallback to top-level name, then auth display name.
-        const name = profileData.ownerName || userData.name || user.displayName || 'User';
-        document.getElementById('ownerName').textContent = name.split(' ')[0]; // Show first name
-      }
+    function loadUserProfile(user) {
+      const userRef = db.ref(`users/${user.uid}`);
+      userRef.once('value').then((snapshot) => {
+        if (snapshot.exists()) {
+          const userData = snapshot.val() || {};
+          const profileData = userData.profile || {};
+          const name = profileData.ownerName || userData.name || user.displayName || 'User';
+          document.getElementById('ownerName').textContent = name.split(' ')[0]; // Show first name
+        }
+      });
     }
 
     // Load vehicle count, booking count, and total payments
     function loadBusinessSummary(user) {
-      // Vehicles
-      onValue(ref(db, `users/${user.uid}/vehicles`), (snap) => {
-        document.getElementById('vehiclesCount').textContent = snap.exists() ? Object.keys(snap.val()).length : 0;
-      });
-      // Active LR Reports
-      const lrQuery = query(ref(db, 'lrReports'), orderByChild('userId'), equalTo(user.uid));
-      onValue(lrQuery, (snap) => {
-        let activeCount = 0;
-        if (snap.exists()) {
-          snap.forEach(child => {
-            if (child.val().status === 'active') activeCount++;
-          });
-        }
-        document.getElementById('activeLRCount').textContent = activeCount;
-      });
-      // Payments - **FIX**: Calculate this month's net revenue (Client Payments - Expenses)
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      // Determine the correct core account ID to fetch shared data from.
+      const userProfileRef = db.ref(`users/${user.uid}`);
+      userProfileRef.once('value').then((userProfileSnap) => {
+        const userData = userProfileSnap.exists() ? userProfileSnap.val() : {};
+        const accountType = userData.accountType || 'core';
+        const effectiveCoreAccountId = accountType === 'branch' 
+          ? userData.coreAccountId 
+          : user.uid;
 
-      const paymentsQuery = query(ref(db, 'payments'), orderByChild('userId'), equalTo(user.uid));
-      onValue(paymentsQuery, (paymentSnap) => {
-        let monthlyPayments = 0;
-        if (paymentSnap.exists()) {
-          paymentSnap.forEach(child => {
-            const payment = child.val();
-            if (!payment.plan && payment.date >= startOfMonth && payment.date <= endOfMonth) {
-              monthlyPayments += parseFloat(payment.amount || 0);
-            }
-          });
+        if (!effectiveCoreAccountId) {
+          console.error("Could not determine core account ID for business summary.");
+          return;
         }
 
-        // Fetch general expenses from payment-billing.html
-        const expensesRef = ref(db, `users/${user.uid}/expenses`);
-        onValue(expensesRef, (expenseSnap) => {
-          let monthlyGeneralExpenses = 0;
-          if (expenseSnap.exists()) {
-            expenseSnap.forEach(child => {
-              const expense = child.val();
-              if (expense.date >= startOfMonth && expense.date <= endOfMonth) {
-                monthlyGeneralExpenses += parseFloat(expense.amount || 0);
-              }
+        // Vehicles - fixed path
+        db.ref(`users/${effectiveCoreAccountId}/vehicles`).on('value', (snap) => {
+          const vehiclesCount = snap.exists() ? Object.keys(snap.val()).length : 0;
+          document.getElementById('vehiclesCount').textContent = vehiclesCount;
+        });
+
+        // Active LR Reports - fixed path and counting logic
+        const lrReportsRef = db.ref(`users/${effectiveCoreAccountId}/lrReports`);
+        lrReportsRef.on('value', (snap) => {
+          let lrCount = 0;
+          if (snap.exists()) {
+            const lrReports = snap.val();
+            Object.values(lrReports).forEach(lr => {
+              // Count all LR reports regardless of status
+              lrCount++;
             });
           }
-
-          // Fetch fuel payments from route-details.html
-          const fuelPaymentsRef = ref(db, `users/${user.uid}/fuelPayments`);
-          onValue(fuelPaymentsRef, (fuelSnap) => {
-            let monthlyFuelExpenses = 0;
-            if (fuelSnap.exists()) {
-              fuelSnap.forEach(child => {
-                const fuelPayment = child.val();
-                if (fuelPayment.date >= startOfMonth && fuelPayment.date <= endOfMonth) {
-                  monthlyFuelExpenses += parseFloat(fuelPayment.amount || 0);
-                }
-              });
-            }
-            const totalMonthlyExpenses = monthlyGeneralExpenses + monthlyFuelExpenses;
-            const netRevenue = monthlyPayments - totalMonthlyExpenses;
-            document.getElementById('totalPayments').textContent = `₹${netRevenue.toLocaleString('en-IN')}`;
-          });
+          document.getElementById('activeLRCount').textContent = lrCount;
         });
+
+        // Calculate monthly profit
+        calculateProfitForPeriod(effectiveCoreAccountId, null, null).then(profitData => {
+          document.getElementById('totalProfit').textContent = formatCurrency(profitData.totalProfit);
+        });
+
+        // Load fuel payments total
+        loadFuelPaymentsTotal(effectiveCoreAccountId);
+      });
+    }
+
+    // Load total fuel payments
+    function loadFuelPaymentsTotal(accountId) {
+      const paymentsRef = db.ref('payments');
+      const fuelPaymentsRef = db.ref(`users/${accountId}/fuelPayments`); // Legacy path
+      const lrReportsRef = db.ref(`users/${accountId}/lrReports`); // Diesel expenses from trips
+
+      Promise.all([
+        paymentsRef.orderByChild('userId').equalTo(accountId).once('value'), 
+        fuelPaymentsRef.once('value'),
+        lrReportsRef.once('value')
+      ]).then(([paymentsSnap, fuelPaymentsSnap, lrReportsSnap]) => {
+        let totalFuel = 0;
+        // 1. Fuel payments from the root /payments node
+        paymentsSnap.forEach(s => { if (!s.val().plan && s.val().type === 'fuel') totalFuel += parseFloat(s.val().amount || 0); });
+        // 2. Fuel payments from the user-specific /fuelPayments node
+        fuelPaymentsSnap.forEach(s => totalFuel += parseFloat(s.val().amount || 0));
+        // 3. Diesel expenses recorded directly in LR reports
+        lrReportsSnap.forEach(s => {
+          totalFuel += parseFloat(s.val().dieselExpenses || 0);
+          if (s.val().emptyTripData) totalFuel += parseFloat(s.val().emptyTripData.dieselExpenses || 0);
+        });
+        document.getElementById('totalFuelPayments').textContent = formatCurrency(totalFuel);
       });
     }
 
     // Load latest entries for the activity section
     function loadRecentActivity(user) {
-      const renderList = (elementId, data, primaryField, secondaryField) => {
+      const renderList = (elementId, data, primaryField, secondaryField, customRenderer = null) => {
         const el = document.getElementById(elementId);
         el.innerHTML = '';
-        if (Object.keys(data).length === 0) {
+        
+        if (!data || Object.keys(data).length === 0) {
           el.innerHTML = '<div class="activity-item"><div class="activity-sub">No data yet</div></div>';
           return;
         }
-        Object.values(data).forEach(item => {
-          el.innerHTML += `
-            <div class="activity-item">
-              <div>${item[primaryField] || 'N/A'}</div>
-              <div class="activity-sub">${item[secondaryField] || ''}</div>
-            </div>`;
+        
+        // Convert to array and take last 3 items
+        const items = Object.values(data);
+        const recentItems = items.slice(-3).reverse(); // Show newest first
+        
+        recentItems.forEach(item => {
+          if (customRenderer) {
+            el.innerHTML += customRenderer(item);
+          } else {
+            el.innerHTML += `
+              <div class="activity-item">
+                <div>${item[primaryField] || 'N/A'}</div>
+                <div class="activity-sub">${item[secondaryField] || ''}</div>
+              </div>`;
+          }
         });
       };
 
-      onValue(query(ref(db, `users/${user.uid}/vehicles`), limitToLast(3)), (snap) => renderList('latestVehicles', snap.val() || {}, 'vehicleNumber', 'vehicleType'));
-      
-      // Fetch latest LRs instead of bookings
-      onValue(query(ref(db, 'lrReports'), orderByChild('userId'), equalTo(user.uid), limitToLast(3)), (snap) => {
-        const lrData = snap.val() || {};
-        // Custom rendering for LRs to show "From -> To"
-        const el = document.getElementById('latestLRs');
-        el.innerHTML = Object.values(lrData).map(lr => `
-          <div class="activity-item">
-            <div>#${lr.lrNumber || 'N/A'}</div>
-            <div class="activity-sub">${lr.fromLocation || ''} → ${lr.toLocation || ''}</div>
-          </div>`).join('');
-      });
+      // Get effective account ID for data fetching
+      const userProfileRef = db.ref(`users/${user.uid}`);
+      userProfileRef.once('value').then((userProfileSnap) => {
+        const userData = userProfileSnap.exists() ? userProfileSnap.val() : {};
+        const accountType = userData.accountType || 'core';
+        const effectiveCoreAccountId = accountType === 'branch' ? userData.coreAccountId : user.uid;
 
-      // **FIX**: Correctly display recent operational payments
-      onValue(query(ref(db, 'payments'), orderByChild('userId'), equalTo(user.uid), limitToLast(5)), (snap) => {
-        const paymentsData = snap.val() || {};
-        // Filter out subscription payments and then render
-        const operationalPayments = Object.fromEntries(Object.entries(paymentsData).filter(([key, payment]) => !payment.plan));
-        renderList('recentPayments', operationalPayments, 'amount', 'companyName');
+        // Latest Vehicles
+        db.ref(`users/${effectiveCoreAccountId}/vehicles`).limitToLast(3).on('value', (snap) => {
+          renderList('latestVehicles', snap.val(), 'vehicleNumber', 'vehicleType');
+        });
+        
+        // Latest LR Reports
+        db.ref(`users/${effectiveCoreAccountId}/lrReports`).limitToLast(3).on('value', (snap) => {
+          renderList('latestLRs', snap.val(), 'lrNumber', 'fromLocation', (lr) => {
+            return `
+              <div class="activity-item">
+                <div>#${lr.lrNumber || 'N/A'}</div>
+                <div class="activity-sub">${lr.fromLocation || ''} → ${lr.toLocation || ''}</div>
+              </div>`;
+          });
+        });
+
+        // **FIX**: Recent Payments - Combine all payment sources
+        const combineRecentPayments = async () => {
+            const rootPaymentsRef = db.ref('payments').orderByChild('userId').equalTo(effectiveCoreAccountId);
+            const fuelPaymentsRef = db.ref(`users/${effectiveCoreAccountId}/fuelPayments`);
+            const driverPaymentsRef = db.ref(`users/${effectiveCoreAccountId}/driverSalaryPayments`);
+
+            const [rootSnap, fuelSnap, driverSnap] = await Promise.all([
+                rootPaymentsRef.once('value'),
+                fuelPaymentsRef.once('value'),
+                driverPaymentsRef.once('value')
+            ]);
+
+            let allRecentPayments = [];
+
+            // 1. General expenses from /payments
+            if (rootSnap.exists()) {
+                rootSnap.forEach(s => { if (!s.val().plan) allRecentPayments.push({ ...s.val(), id: s.key }); });
+            }
+            // 2. Fuel payments from user's path
+            if (fuelSnap.exists()) {
+                fuelSnap.forEach(s => allRecentPayments.push({ ...s.val(), id: s.key, type: 'fuel' }));
+            }
+            // 3. Driver salary payments from user's path
+            if (driverSnap.exists()) {
+                driverSnap.forEach(s => allRecentPayments.push({ ...s.val(), id: s.key, type: 'driver' }));
+            }
+
+            // Sort all combined payments by date and take the last 5
+            allRecentPayments.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const recentPayments = allRecentPayments.slice(-5);
+
+            // Render the list
+            renderList('recentPayments', recentPayments, 'amount', 'type', (payment) => {
+                const paymentTypeMap = {
+                    'fuel': 'Fuel',
+                    'driver': 'Driver Salary',
+                    'vehicle': 'Vehicle Work',
+                    'expense': 'General Expense'
+                };
+                const description = payment.description || `${paymentTypeMap[payment.type] || 'Payment'} - ${payment.vehicleNumber || payment.pumpName || ''}`;
+                return `<div class="activity-item"><div>${formatCurrency(payment.amount)}</div><div class="activity-sub">${description}</div></div>`;
+            });
+        };
+        combineRecentPayments();
       });
     }
 
     // Load and display subscription status
-    // Load and display subscription status
-    async function loadSubscriptionStatus(user) {
-      try {
-        const statusEl = document.getElementById('subscriptionStatusText');
-        
-        // 1. Get the current user's data to find their core account ID
-        const userProfileRef = ref(db, `users/${user.uid}`);
-        const userProfileSnap = await get(userProfileRef);
-
+    function loadSubscriptionStatus(user) {
+      const statusEl = document.getElementById('subscriptionStatusText');
+      
+      // Get the current user's data to find their core account ID
+      const userProfileRef = db.ref(`users/${user.uid}`);
+      userProfileRef.once('value').then((userProfileSnap) => {
         if (!userProfileSnap.exists()) {
-            statusEl.textContent = 'User profile not found.';
-            return;
+          statusEl.textContent = 'User profile not found.';
+          return;
         }
 
         const userData = userProfileSnap.val();
         // Determine the correct ID to check for the subscription
-        // **FIX**: Correctly identify the coreAccountId for 'main' and 'branch' accounts.
-        const accountType = userData.accountType || 'user';
-        const effectiveCoreAccountId = (accountType === 'branch' || accountType === 'main') ? userData.coreAccountId : user.uid;
+        const accountType = userData.accountType || 'core';
+        const effectiveCoreAccountId = accountType === 'branch' ? userData.coreAccountId : user.uid;
 
-        // 2. For branch accounts, first check the coreSubscriptions node
+        // For branch accounts, first check the coreSubscriptions node
         if (accountType !== 'core') {
-          const coreSubRef = ref(db, `coreSubscriptions/${effectiveCoreAccountId}`);
-          const coreSubSnap = await get(coreSubRef);
-          
-          if (coreSubSnap.exists()) {
-            const coreSub = coreSubSnap.val();
-            const endDate = new Date(coreSub.endDate);
-            const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
-            statusEl.textContent = daysLeft > 0 ? `Active (${daysLeft} days left)` : 'Expired';
-            return;
-          }
-          // Fall through to regular check if coreSubscriptions doesn't exist
+          const coreSubRef = db.ref(`coreSubscriptions/${effectiveCoreAccountId}`);
+          coreSubRef.once('value').then((coreSubSnap) => {
+            if (coreSubSnap.exists()) {
+              const coreSub = coreSubSnap.val();
+              const endDate = new Date(coreSub.endDate);
+              const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+              statusEl.textContent = daysLeft > 0 ? `Active (${daysLeft} days left)` : 'Expired';
+              return;
+            }
+            // Fall through to regular check if coreSubscriptions doesn't exist
+            checkRegularSubscription(effectiveCoreAccountId, statusEl);
+          });
+        } else {
+          checkRegularSubscription(effectiveCoreAccountId, statusEl);
         }
+      }).catch((error) => {
+        console.error("Error loading subscription status:", error);
+        document.getElementById('subscriptionStatusText').textContent = 'Error';
+      });
+    }
 
-        // 3. Fetch the subscription using the core account ID (fallback for both core and branch)
-        const subRef = ref(db, `users/${effectiveCoreAccountId}/subscription`);
-        const snapshot = await get(subRef);
-
+    function checkRegularSubscription(accountId, statusEl) {
+      // Fetch the subscription using the core account ID
+      const subRef = db.ref(`users/${accountId}/subscription`);
+      subRef.once('value').then((snapshot) => {
         if (snapshot.exists()) {
           const sub = snapshot.val();
           const endDate = new Date(sub.endDate || sub.trialEnd);
@@ -647,10 +929,7 @@
         } else {
           statusEl.textContent = 'No Subscription';
         }
-      } catch (error) {
-        console.error("Error loading subscription status:", error);
-        document.getElementById('subscriptionStatusText').textContent = 'Error';
-      }
+      });
     }
 
     // Set up the reminder form submission
@@ -666,7 +945,8 @@
           createdAt: Date.now(),
           status: 'active'
         };
-        push(ref(db, `users/${user.uid}/reminders`), reminder)
+        // **FIX**: Save reminder to the currently logged-in user's own path, not the core account.
+        db.ref(`users/${user.uid}/reminders`).push(reminder)
           .then(() => {
             alert('Reminder set successfully!');
             form.reset();
@@ -678,39 +958,316 @@
     // Load and display upcoming reminders
     function loadReminders(user) {
       const remindersContainer = document.getElementById('upcomingReminders');
-      const remindersRef = query(ref(db, `users/${user.uid}/reminders`), orderByChild('dueDate'), limitToLast(5));
-      onValue(remindersRef, (snap) => {
+      // **FIX**: Load reminders from the currently logged-in user's own path.
+      const remindersRef = db.ref(`users/${user.uid}/reminders`).orderByChild('dueDate').limitToLast(5);
+      remindersRef.on('value', (snap) => {
         remindersContainer.innerHTML = '';
         if (!snap.exists()) {
           remindersContainer.innerHTML = '<div class="no-reminders">No upcoming reminders</div>';
           return;
         }
+        const reminders = [];
         snap.forEach(child => {
-          const r = child.val();
-          const dueDate = new Date(r.dueDate);
-          const daysLeft = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
-          const icon = {
-            service: 'fa-tools', payment: 'fa-credit-card', permit: 'fa-id-card',
-            insurance: 'fa-shield-alt', puc: 'fa-smog'
-          }[r.type] || 'fa-bell';
-
+          const reminder = child.val();
+          reminder.id = child.key;
+          if (reminder.status !== 'dismissed') {
+            reminders.push(reminder);
+          }
+        });
+        if (reminders.length === 0) {
+          remindersContainer.innerHTML = '<div class="no-reminders">No upcoming reminders</div>';
+          return;
+        }
+        reminders.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        reminders.forEach(reminder => {
+          const dueDate = new Date(reminder.dueDate);
+          const today = new Date();
+          const daysDiff = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+          let statusText = '';
+          let statusClass = '';
+          if (daysDiff < 0) {
+            statusText = 'Overdue';
+            statusClass = 'text-danger';
+          } else if (daysDiff === 0) {
+            statusText = 'Due Today';
+            statusClass = 'text-warning';
+          } else if (daysDiff <= 7) {
+            statusText = `Due in ${daysDiff} days`;
+            statusClass = 'text-warning';
+          } else {
+            statusText = `Due in ${daysDiff} days`;
+            statusClass = 'text-success';
+          }
           remindersContainer.innerHTML += `
             <div class="reminder-item">
-              <i class="fas ${icon}"></i>
-              <div>
-                <strong>${r.vehicleNumber}: ${r.type}</strong>
-                <div class="activity-sub">Due in ${daysLeft} days (${dueDate.toLocaleDateString()})</div>
+              <i class="fas fa-bell"></i>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">${reminder.type} - ${reminder.vehicleNumber}</div>
+                <div style="font-size: 0.85rem; color: var(--muted);">${reminder.notes || 'No additional notes'}</div>
+                <div class="${statusClass}" style="font-size: 0.8rem; margin-top: 4px;">${statusText}</div>
               </div>
             </div>`;
         });
       });
     }
 
-    // Handle retry button click (in case of initial error)
-    document.getElementById('retryButton').addEventListener('click', () => {
-      window.location.reload();
-    });
+    // Calculate monthly profit
+    async function calculateProfitForPeriod(accountId, startDate, endDate) {
+      const paymentsRef = db.ref('payments').orderByChild('userId').equalTo(accountId);
+      const lrReportsRef = db.ref(`users/${accountId}/lrReports`);
+      const fuelPaymentsRef = db.ref(`users/${accountId}/fuelPayments`);
+      const driverPaymentsRef = db.ref(`users/${accountId}/driverSalaryPayments`);
+      const expensesRef = db.ref(`users/${accountId}/expenses`); // General expenses
+      
+      // Use Promise.all to fetch all data sources concurrently
+      try {
+        const [lrReportsSnap, fuelPaymentsSnap, driverPaymentsSnap, expensesSnap] = await Promise.all([
+          lrReportsRef.once('value'),
+          fuelPaymentsRef.once('value'),
+          driverPaymentsRef.once('value'),
+          expensesRef.once('value')
+        ]);
+        
+        let totalRevenue = 0;
+        let totalExpenses = 0;
+        let tripCount = 0;
+        
+        // 1. Calculate revenue and LR-specific expenses from lrReports
+        lrReportsSnap.forEach(child => {
+          const lr = child.val();
+          const lrDate = new Date(lr.date);
+          if ((!startDate || lrDate >= startDate) && (!endDate || lrDate <= endDate)) {
+            tripCount++;
+            totalRevenue += parseFloat(lr.billingAmount) || 0; // Use billingAmount for revenue
 
+            // Add all direct expenses from this LR report
+            totalExpenses += (parseFloat(lr.tyreExpenses) || 0) + (parseFloat(lr.dieselExpenses) || 0) + (parseFloat(lr.tollExpenses) || 0) + (parseFloat(lr.vehicleWork) || 0) + (parseFloat(lr.otherExpenses) || 0) + (parseFloat(lr.foodExpenses) || 0) + (parseFloat(lr.advance) || 0);
+            const shortageDeduction = ((parseFloat(lr.shortage) || 0) / 1000) * (parseFloat(lr.billingRate) || 0);
+            totalExpenses += shortageDeduction;
+            if (lr.emptyTrip && lr.emptyTripData) {
+                totalExpenses += (parseFloat(lr.emptyTripData.tyreExpenses) || 0) + (parseFloat(lr.emptyTripData.dieselExpenses) || 0) + (parseFloat(lr.emptyTripData.tollExpenses) || 0) + (parseFloat(lr.emptyTripData.otherExpenses) || 0) + (parseFloat(lr.emptyTripData.foodExpenses) || 0);
+            }
+          }
+        });
+        
+        // 2. Add expenses from users/{uid}/fuelPayments (legacy path)
+        fuelPaymentsSnap.forEach(child => {
+            const payment = child.val();
+            const pDate = new Date(payment.date);
+            if (payment.amount && (!startDate || pDate >= startDate) && (!endDate || pDate <= endDate)) totalExpenses += parseFloat(payment.amount) || 0;
+        });
+
+        // 3. Add expenses from users/{uid}/driverSalaryPayments
+        driverPaymentsSnap.forEach(child => {
+            const payment = child.val();
+            const pDate = new Date(payment.date);
+            if (payment.amount && (!startDate || pDate >= startDate) && (!endDate || pDate <= endDate)) totalExpenses += parseFloat(payment.amount) || 0;
+        });
+        
+        // 4. Add general expenses from users/{uid}/expenses
+        expensesSnap.forEach(child => {
+            const expense = child.val();
+            const eDate = new Date(expense.date);
+            if (expense.amount && (!startDate || eDate >= startDate) && (!endDate || eDate <= endDate)) {
+                totalExpenses += parseFloat(expense.amount) || 0;
+            }
+        });
+        
+        return { totalProfit: totalRevenue - totalExpenses, tripCount };
+      } catch (error) {
+        console.error("Error calculating profit for period:", error);
+        return { totalProfit: 0, tripCount: 0 };
+      }
+    }
+
+    async function calculateAllTimeProfit(accountId) {
+        return calculateProfitForPeriod(accountId, null, null);
+    }
+
+    // Initialize DataTable for payments
+    function initializeDataTable() {
+      paymentsTable = $('#paymentsTable').DataTable({
+        data: allPayments,
+        columns: [
+          { data: 'date', render: function(data) { return data || 'N/A'; } },
+          { data: 'type', render: function(data) { 
+            const typeMap = {
+              'fuel': 'Fuel Payment',
+              'driver': 'Driver Payment',
+              'vehicle': 'Vehicle Work',
+              'expense': 'Expense'
+            };
+            return typeMap[data] || data || 'N/A';
+          }},
+          { data: 'description', render: function(data) { return data || 'N/A'; } },
+          { data: 'vehicleNumber', render: function(data) { return data || 'N/A'; } },
+          { data: 'amount', render: function(data) { 
+            return `<span class="text-end">${formatCurrency(data || 0)}</span>`;
+          }},
+          { data: 'status', render: function(data) { 
+            const statusClass = data === 'completed' ? 'badge bg-success' : 'badge bg-warning';
+            return `<span class="${statusClass}">${data || 'pending'}</span>`;
+          }}
+        ],
+        order: [[0, 'desc']],
+        responsive: true,
+        pageLength: 10,
+        language: {
+          search: "Search payments:",
+          lengthMenu: "Show _MENU_ entries",
+          info: "Showing _START_ to _END_ of _TOTAL_ payments",
+          infoEmpty: "No payments available",
+          zeroRecords: "No matching payments found"
+        }
+      });
+    }
+
+    // Set up event listeners for filters
+    function setupEventListeners() {
+      $('#applyFiltersBtn').on('click', function() {
+        applyFilters();
+      });
+      
+      $('#resetFiltersBtn').on('click', function() {
+        resetFilters();
+      });
+
+      // Apply filters when date or type changes
+      $('#fromDate, #toDate, #paymentTypeFilter').on('change', function() {
+          applyFilters();
+          updateMonthlyProfit();
+      });
+    }
+
+    // **NEW**: Load all payments from multiple sources for the dashboard
+    function loadAllPayments() {
+        const effectiveCoreAccountId = coreAccountId || (currentUser && currentUser.uid);
+        if (!effectiveCoreAccountId) return;
+
+        const rootPaymentsRef = db.ref('payments').orderByChild('userId').equalTo(effectiveCoreAccountId);
+        const fuelPaymentsRef = db.ref(`users/${effectiveCoreAccountId}/fuelPayments`);
+        const driverPaymentsRef = db.ref(`users/${effectiveCoreAccountId}/driverSalaryPayments`);
+        const lrReportsRef = db.ref(`users/${effectiveCoreAccountId}/lrReports`);
+
+        // Use .on() to listen for real-time updates
+        const refs = [rootPaymentsRef, fuelPaymentsRef, driverPaymentsRef, lrReportsRef];
+        refs.forEach(ref => ref.on('value', () => combineAllPayments(effectiveCoreAccountId)));
+    }
+
+    async function combineAllPayments(accountId) {
+        const [rootPaymentsSnap, fuelPaymentsSnap, driverPaymentsSnap, lrReportsSnap] = await Promise.all([
+            db.ref('payments').orderByChild('userId').equalTo(accountId).once('value'),
+            db.ref(`users/${accountId}/fuelPayments`).once('value'),
+            db.ref(`users/${accountId}/driverSalaryPayments`).once('value'),
+            db.ref(`users/${accountId}/lrReports`).once('value')
+        ]);
+
+        allPayments = [];
+        let totalFuel = 0, totalDriver = 0, totalVehicleWork = 0;
+
+        // 1. From root /payments
+        rootPaymentsSnap.forEach(s => { if (!s.val().plan) allPayments.push({ ...s.val(), id: s.key }); });
+
+        // 2. From users/{uid}/fuelPayments
+        fuelPaymentsSnap.forEach(s => allPayments.push({ ...s.val(), id: s.key, type: 'fuel' }));
+
+        // 3. From users/{uid}/driverSalaryPayments
+        driverPaymentsSnap.forEach(s => allPayments.push({ ...s.val(), id: s.key, type: 'driver' }));
+
+        // 4. From lrReports for vehicleWork
+        lrReportsSnap.forEach(s => {
+            const lr = s.val();
+            if (lr.vehicleWork && parseFloat(lr.vehicleWork) > 0) {
+                allPayments.push({ id: s.key, date: lr.date, type: 'vehicle', description: `Work for LR ${lr.lrNumber}`, vehicleNumber: lr.truckNumber, amount: lr.vehicleWork, status: 'completed' });
+            }
+        });
+
+        // Recalculate totals and update UI
+        applyFilters();
+        updateDashboardTotals();
+    }
+
+    // Apply filters to the payments table
+    function applyFilters() {
+      const fromDate = $('#fromDate').val();
+      const toDate = $('#toDate').val();
+      const paymentType = $('#paymentTypeFilter').val();
+      
+      paymentsTable.search('').columns().search('').draw();
+      
+      let filteredData = allPayments;
+      
+      // Filter by date range
+      if (fromDate) {
+        filteredData = filteredData.filter(payment => {
+          return payment.date >= fromDate;
+        });
+      }
+      
+      if (toDate) {
+        filteredData = filteredData.filter(payment => {
+          return payment.date <= toDate;
+        });
+      }
+      
+      // Filter by payment type
+      if (paymentType) {
+        filteredData = filteredData.filter(payment => {
+          return payment.type === paymentType;
+        });
+      }
+      
+      // Update table with filtered data
+      paymentsTable.clear().rows.add(filteredData).draw();
+    }
+
+    // **NEW**: Update the main dashboard summary cards
+    function updateDashboardTotals() {
+        let totalFuel = 0, totalDriver = 0, totalVehicleWork = 0;
+
+        allPayments.forEach(p => {
+            const amount = parseFloat(p.amount) || 0;
+            if (p.type === 'fuel') totalFuel += amount;
+            else if (p.type === 'driver') totalDriver += amount;
+            else if (p.type === 'vehicle') totalVehicleWork += amount;
+        });
+
+        document.getElementById('totalDriverPayments').textContent = formatCurrency(totalDriver);
+        document.getElementById('totalVehicleWork').textContent = formatCurrency(totalVehicleWork);
+
+        updateMonthlyProfit();
+    }
+
+    // **NEW**: Update the monthly profit card based on date filters
+    function updateMonthlyProfit() {
+        const effectiveCoreAccountId = coreAccountId || (currentUser && currentUser.uid);
+        const fromDate = $('#fromDate').val() ? new Date($('#fromDate').val()) : null;
+        const toDate = $('#toDate').val() ? new Date($('#toDate').val()) : null;
+        if (toDate) toDate.setHours(23, 59, 59);
+
+    calculateProfitForPeriod(effectiveCoreAccountId, fromDate, toDate).then(profitData => {
+        document.getElementById('monthlyProfit').textContent = formatCurrency(profitData.totalProfit);
+        });
+    }
+
+    // Reset all filters
+    function resetFilters() {
+      $('#fromDate').val('');
+      $('#toDate').val('');
+      $('#paymentTypeFilter').val('');
+      paymentsTable.search('').columns().search('').draw();
+      paymentsTable.clear().rows.add(allPayments).draw();
+    }
+
+    // Utility function to format currency
+    function formatCurrency(amount) {
+      return '₹' + parseFloat(amount || 0).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+
+    // Utility function to format date for input fields
+    function formatDateForInput(date) {
+      return date.toISOString().split('T')[0];
+    }
   </script>
 </body>
 </html>
