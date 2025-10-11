@@ -75,6 +75,9 @@
           <button type="button" class="btn btn-primary" onclick="printInvoiceDetail()">
             <i class="fas fa-print me-2"></i>Print
           </button>
+          <button type="button" class="btn btn-success" onclick="downloadInvoicePDF()">
+            <i class="fas fa-file-pdf me-2"></i>Download PDF
+          </button>
         </div>
       </div>
     </div>
@@ -84,6 +87,10 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+  <!-- PDF Generation Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -106,12 +113,25 @@
     const auth = getAuth(app);
 
     let invoicesTable;
+    let coreAccountId = null; // To store the correct data path
+    let currentInvoiceData = null; // To store data for PDF download
 
     onAuthStateChanged(auth, user => {
       if (!user) {
         window.location.href = "index.html";
       } else {
-        initializePage(user);
+        // **FIX**: Determine the core account ID before initializing the page.
+        // This ensures that invoices are loaded from the correct shared path.
+        const userRef = ref(db, `users/${user.uid}`);
+        get(userRef).then(snapshot => {
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            coreAccountId = userData.coreAccountId || user.uid;
+          } else {
+            coreAccountId = user.uid; // Fallback for safety
+          }
+          initializePage(user);
+        });
       }
     });
 
@@ -119,7 +139,7 @@
       invoicesTable = $('#invoicesTable').DataTable({
         order: [[1, 'desc']]
       });
-      loadInvoices(user.uid);
+      loadInvoices(coreAccountId); // **FIX**: Use coreAccountId
 
       // Check for URL param to auto-show an invoice
       const urlParams = new URLSearchParams(window.location.search);
@@ -130,7 +150,8 @@
     }
 
     async function loadInvoices(userId) {
-      const invoicesRef = query(ref(db, 'invoices'), orderByChild('userId'), equalTo(userId));
+      // **FIX**: Use the determined coreAccountId to fetch shared invoices.
+      const invoicesRef = ref(db, `users/${coreAccountId}/invoices`);
       const snapshot = await get(invoicesRef);
 
       invoicesTable.clear();
@@ -147,7 +168,7 @@
             new Date(inv.createdAt).toLocaleDateString('en-IN'),
             inv.companyDetails.name,
             `<span class="text-end d-block">₹${(inv.grandTotal || 0).toFixed(2)}</span>`,
-            `<span class="badge bg-secondary">${inv.lrIds.length}</span>`,
+            `<span class="badge bg-secondary">${inv.lrEntries.length}</span>`,
             `<button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('${inv.id}')">
               <i class="fas fa-eye"></i> View
             </button>
@@ -185,17 +206,36 @@
       $('#invoiceDetailModal').modal('show');
 
       try {
-        const invoiceSnap = await get(ref(db, `invoices/${invoiceId}`));
+        const user = auth.currentUser;
+        if (!user) throw new Error("User not authenticated.");
+
+        // **FIX**: Use coreAccountId to fetch the specific invoice.
+        const invoiceSnap = await get(ref(db, `users/${coreAccountId}/invoices/${invoiceId}`));
         if (!invoiceSnap.exists()) {
           modalBody.innerHTML = '<p class="text-danger text-center">Invoice not found.</p>';
           return;
         }
         const invoice = invoiceSnap.val();
+        currentInvoiceData = invoice; // Store for PDF download
 
-        // Fetch all associated LRs
-        const lrPromises = invoice.lrIds.map(lrId => get(ref(db, `lrReports/${lrId}`)));
-        const lrSnaps = await Promise.all(lrPromises);
-        const lrs = lrSnaps.map(snap => snap.val()).filter(Boolean);
+        // **FIX**: Fetch client details using the clientId from the invoice.
+        // The clientDetails object was not being saved, causing 'undefined' errors.
+        let clientName = invoice.companyDetails.name || 'Client Not Found'; // FIX: Provide a safe fallback
+        let clientAddress = 'N/A';
+        if (invoice.clientId) {
+            const clientSnap = await get(ref(db, `users/${coreAccountId}/clients/${invoice.clientId}`));
+            if (clientSnap.exists()) {
+                clientName = clientSnap.val().clientName;
+                clientAddress = clientSnap.val().billingAddress || 'No address provided';
+            }
+        }
+
+        // **FIX**: Use the `invoice.items` array directly.
+        // The invoice object already contains a simplified list of LR entries (`items`)
+        // for display purposes. Re-fetching the full LR reports was unnecessary and
+        // was causing the 'undefined' error because the data structure was different.
+        const lrs = invoice.items || [];
+
 
         // Build the invoice HTML
         const invoiceHtml = `
@@ -203,15 +243,15 @@
             <div class="row mb-4">
               <div class="col-12 text-center">
                 <h2 class="mb-1 fw-bold text-success">${invoice.companyDetails.name || 'Transport Company'}</h2>
-                <p class="mb-1 text-muted">${invoice.companyDetails.address || 'Company Address'}</p>
-                <p class="mb-0 text-muted"><strong>GST:</strong> ${invoice.companyDetails.gst || 'N/A'}</p>
+                <p class="mb-1 text-muted">${invoice.companyDetails.address || 'N/A'}</p>
+                <p class="mb-0 text-muted"><strong>GST:</strong> ${invoice.companyDetails.gstNumber || 'N/A'}</p>
               </div>
             </div>
             <hr>
             <div class="row mb-4">
               <div class="col-sm-6">
-                <h6 class="fw-bold">Bill To:</h6>
-                <p class="mb-0">${invoice.clientDetails?.name || invoice.companyDetails.name}</p>
+                <h6 class="fw-bold">Consignor:</h6>
+                <p class="mb-0">${lrs[0]?.consignor || 'No consignor provided'}</p>
               </div>
               <div class="col-sm-6 text-sm-end mt-3 mt-sm-0">
                 <h6 class="fw-bold">Invoice Details:</h6>
@@ -229,15 +269,15 @@
                 <tbody>
                   ${lrs.map(lr => `
                     <tr>
-                      <td>${lr.date}</td>
-                      <td>${lr.lrNumber}</td>
-                      <td>${lr.truckNumber}</td>
-                      <td>${lr.consignor}</td>
-                      <td>${lr.consignee}</td>
-                      <td>${lr.fromLocation}</td>
-                      <td>${lr.toLocation}</td>
+                      <td>${new Date(lr.date).toLocaleDateString('en-IN') || 'N/A'}</td>
+                      <td>${lr.lrNumber || 'N/A'}</td>
+                      <td>${lr.truckNumber || 'N/A'}</td>
+                      <td>${lr.consignor || 'N/A'}</td>
+                      <td>${lr.consignee || 'N/A'}</td>
+                      <td>${lr.from || 'N/A'}</td>
+                      <td>${lr.to || 'N/A'}</td>
                       <td class="text-end">${(lr.weight || 0).toFixed(2)}</td>
-                      <td class="text-end">₹${(lr.billingAmount || 0).toFixed(2)}</td>
+                      <td class="text-end">₹${(lr.amount || 0).toFixed(2)}</td>
                     </tr>
                   `).join('')}
                 </tbody>
@@ -247,8 +287,8 @@
                       <p class="mb-1"><strong>Bank Details:</strong></p>
                       <p class="mb-1 small">Bank: <span>${invoice.bankDetails.bankName}</span></p>
                       <p class="mb-1 small">A/C No: <span>${invoice.bankDetails.accountNumber}</span></p>
-                      <p class="mb-1 small">Holder: <span>${invoice.bankDetails.accountHolder}</span></p>
-                      <p class="mb-0 small">IFSC: <span>${invoice.bankDetails.ifsc}</span></p>
+                      <p class="mb-1 small">Holder: <span>${invoice.bankDetails.accountHolder || 'N/A'}</span></p>
+                      <p class="mb-0 small">IFSC: <span>${invoice.bankDetails.ifscCode || 'N/A'}</span></p>
                       <div class="mt-3">
                         <p class="mb-1"><strong>Amount in Words:</strong></p>
                         <p class="mb-0 small">${numberToWords(invoice.grandTotal || 0)}</p>
@@ -297,6 +337,78 @@
       window.print();
     }
 
+    window.downloadInvoicePDF = function() {
+      if (!currentInvoiceData) {
+        alert('No invoice data loaded. Please view an invoice first.');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const invoice = currentInvoiceData;
+
+      // --- Header ---
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(invoice.companyDetails.name || 'Transport Company', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100);
+      doc.text(invoice.companyDetails.address || 'Company Address', doc.internal.pageSize.getWidth() / 2, 26, { align: 'center' });
+      doc.text(`GST: ${invoice.companyDetails.gst || 'N/A'}`, doc.internal.pageSize.getWidth() / 2, 31, { align: 'center' });
+
+      // --- Bill To & Invoice Details ---
+      doc.setLineWidth(0.5);
+      doc.line(14, 35, 196, 35);
+      doc.setFontSize(11);
+      doc.setTextColor(0);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Consignor:', 14, 42);
+      doc.setFont('helvetica', 'normal');
+      doc.text(invoice.items[0]?.consignor || 'No consignor provided', 14, 48);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Invoice #: ${invoice.invoiceNumber}`, 196, 42, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Date: ${new Date(invoice.createdAt).toLocaleDateString('en-IN')}`, 196, 48, { align: 'right' });
+
+      // --- Table ---
+      const head = [['Date', 'LR No', 'Truck No', 'From', 'To', 'Weight', 'Amount']];
+      const body = invoice.items.map(lr => [
+        lr.date || 'N/A',
+        lr.lrNumber || 'N/A',
+        lr.truckNumber || 'N/A',
+        lr.from || 'N/A',
+        lr.to || 'N/A',
+        (lr.weight || 0).toFixed(2),
+        `Rs. ${(lr.amount || 0).toFixed(2)}`
+      ]);
+
+      doc.autoTable({
+        head: head,
+        body: body,
+        startY: 55,
+        theme: 'grid',
+        headStyles: { fillColor: [46, 139, 87] },
+        styles: { fontSize: 8 },
+        didDrawPage: function (data) {
+          // --- Footer Totals ---
+          doc.setFontSize(10);
+          doc.text(`Subtotal:`, 150, doc.internal.pageSize.height - 30, { align: 'right' });
+          doc.text(`Rs. ${(invoice.subtotal || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 30, { align: 'right' });
+          doc.text(`CGST:`, 150, doc.internal.pageSize.height - 25, { align: 'right' });
+          doc.text(`Rs. ${(invoice.cgstAmount || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 25, { align: 'right' });
+          doc.text(`SGST:`, 150, doc.internal.pageSize.height - 20, { align: 'right' });
+          doc.text(`Rs. ${(invoice.sgstAmount || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 20, { align: 'right' });
+          doc.setFont('helvetica', 'bold');
+          doc.text(`Grand Total:`, 150, doc.internal.pageSize.height - 15, { align: 'right' });
+          doc.text(`Rs. ${(invoice.grandTotal || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 15, { align: 'right' });
+        }
+      });
+
+      doc.save(`Invoice_${invoice.invoiceNumber}.pdf`);
+    }
+
     window.undoInvoice = async function(invoiceId) {
       if (!confirm('Are you sure you want to undo this invoice? This will move all associated LRs back to the LR Report page and delete this invoice.')) {
         return;
@@ -309,8 +421,10 @@
           return;
         }
 
+        const dataRoot = coreAccountId || user.uid;
+
         // 1. Get the invoice data
-        const invoiceRef = ref(db, `invoices/${invoiceId}`);
+        const invoiceRef = ref(db, `users/${dataRoot}/invoices/${invoiceId}`);
         const invoiceSnap = await get(invoiceRef);
         if (!invoiceSnap.exists()) {
           throw new Error('Invoice not found. It may have already been deleted.');
@@ -321,19 +435,19 @@
         const updates = {};
 
         // 3. Revert each LR status
-        if (invoiceData.lrIds && invoiceData.lrIds.length > 0) {
-          invoiceData.lrIds.forEach(lrId => {
-            updates[`/lrReports/${lrId}/status`] = 'active';
-            updates[`/lrReports/${lrId}/invoiceId`] = null; // Remove invoice link
+        if (invoiceData.lrEntries && invoiceData.lrEntries.length > 0) {
+          invoiceData.lrEntries.forEach(lrId => {
+            updates[`/users/${dataRoot}/lrReports/${lrId}/status`] = 'active';
+            updates[`/users/${dataRoot}/lrReports/${lrId}/invoiceId`] = null; // Remove invoice link
           });
         }
 
         // 4. Delete the invoice
-        updates[`/invoices/${invoiceId}`] = null;
+        updates[`/users/${dataRoot}/invoices/${invoiceId}`] = null;
 
         // 5. Adjust client's outstanding balance
         if (invoiceData.clientId && invoiceData.grandTotal) {
-          const clientOutstandingRef = ref(db, `users/${user.uid}/clients/${invoiceData.clientId}/outstanding`);
+          const clientOutstandingRef = ref(db, `users/${dataRoot}/clients/${invoiceData.clientId}/outstanding`);
           // Use a transaction to safely decrement the outstanding balance
           await runTransaction(clientOutstandingRef, (currentValue) => {
             return (currentValue || 0) - invoiceData.grandTotal;
