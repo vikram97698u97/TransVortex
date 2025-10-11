@@ -34,6 +34,106 @@
     .action-btns button {
       margin-right: 5px;
     }
+    
+    /* Modern Card Styles */
+    .modern-card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
+    }
+    .modern-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    .modern-card .card-header {
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      font-weight: 600;
+      padding: 15px 20px;
+    }
+    .modern-card .list-group-item {
+      border: none;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      padding: 12px 20px;
+      transition: background-color 0.2s;
+    }
+    .modern-card .list-group-item:last-child {
+      border-bottom: none;
+    }
+    .modern-card .list-group-item:hover {
+      background-color: rgba(0,0,0,0.02);
+    }
+    
+    /* Status badges */
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-paid {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .status-overdue {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    /* Payment progress */
+    .payment-progress {
+      height: 8px;
+      border-radius: 4px;
+      background-color: #e9ecef;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .payment-progress-bar {
+      height: 100%;
+      border-radius: 4px;
+    }
+    
+    /* Enhanced table styling */
+    .table-modern {
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .table-modern thead th {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+      padding: 12px 15px;
+    }
+    .table-modern tbody td {
+      padding: 12px 15px;
+      vertical-align: middle;
+    }
+    
+    /* LR Detail Modal */
+    .lr-detail-modal .modal-content {
+      border-radius: 12px;
+      border: none;
+    }
+    .lr-detail-modal .modal-header {
+      background-color: #0d6efd;
+      color: white;
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+    }
+    .lr-detail-modal .detail-row {
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .lr-detail-modal .detail-row:last-child {
+      border-bottom: none;
+    }
   </style>
 </head>
 <body>
@@ -101,7 +201,10 @@
           <textarea id="dispatchAddress" class="form-control" placeholder="Dispatch Address"></textarea>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Client</button>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Client</button>
+        <button type="button" id="cancelClientEditBtn" class="btn btn-secondary" style="display: none;"><i class="fas fa-times me-2"></i>Cancel Edit</button>
+      </div>
     </form>
 
     <!-- Search + Export -->
@@ -112,7 +215,7 @@
 
     <!-- Client List -->
     <div class="table-responsive">
-      <table id="clientTable" class="table table-striped table-bordered" style="width:100%">
+      <table id="clientTable" class="table table-striped table-bordered table-modern" style="width:100%">
         <thead>
           <tr>
             <th>Name</th>
@@ -153,17 +256,29 @@
               <img id="preview" class="mt-2" style="display:none; max-width: 100px; border-radius: 6px;" />
             </div>
           </div>
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label for="paymentNotes">Notes:</label>
+              <textarea id="paymentNotes" class="form-control" placeholder="Add any notes about this payment"></textarea>
+            </div>
+          </div>
           <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Payment</button>
         </form>
-        <input type="text" id="paymentSearchInput" class="form-control mb-3" placeholder="Search by company..." />
+        
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+          <h4>Payment History</h4>
+          <input type="text" id="paymentSearchInput" class="form-control w-auto" placeholder="Search by company..." />
+        </div>
+        
         <div class="table-responsive">
-          <table id="paymentTable" class="table table-striped table-bordered" style="width:100%">
+          <table id="paymentTable" class="table table-striped table-bordered table-modern" style="width:100%">
             <thead>
               <tr>
                 <th>Company</th>
                 <th>Amount</th>
                 <th>Date</th>
                 <th>Proof</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -181,7 +296,7 @@
         <button class="btn btn-secondary" id="backBtn"><i class="fas fa-arrow-left me-2"></i>Back to List</button>
       </div>
 
-      <div class="card mb-4">
+      <div class="card mb-4 modern-card">
         <div class="card-body">
           <div class="row">
             <div class="col-md-4"><strong>Contact:</strong> <span id="clientContact"></span></div>
@@ -192,28 +307,69 @@
           <div class="row">
             <div class="col-md-4"><strong>Outstanding:</strong> <span id="clientOutstanding" class="fw-bold text-danger"></span></div>
             <div class="col-md-4"><strong>Total Trips:</strong> <span id="clientTrips" class="fw-bold"></span></div>
+            <div class="col-md-4"><strong>Payment Status:</strong> <span id="paymentStatus" class="fw-bold"></span></div>
+          </div>
+          <div class="payment-progress mt-3">
+            <div id="paymentProgressBar" class="payment-progress-bar bg-success" style="width: 0%"></div>
+          </div>
+          <div class="d-flex justify-content-between mt-1">
+            <small class="text-muted">Paid: ₹<span id="paidAmount">0</span></small>
+            <small class="text-muted">Total: ₹<span id="totalAmount">0</span></small>
           </div>
         </div>
       </div>
 
       <div class="row">
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-header bg-primary text-white"><h5><i class="fas fa-file-invoice me-2"></i>Invoices</h5></div>
-            <ul id="invoiceList" class="list-group list-group-flush"></ul>
+        <div class="col-md-4 mb-4">
+          <div class="card modern-card h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Invoices</h5>
+              <span class="badge bg-light text-dark" id="invoiceCount">0</span>
+            </div>
+            <div class="card-body p-0">
+              <ul id="invoiceList" class="list-group list-group-flush"></ul>
+            </div>
           </div>
         </div>
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-header bg-info text-white"><h5><i class="fas fa-receipt me-2"></i>LR Reports</h5></div>
-            <ul id="lrList" class="list-group list-group-flush"></ul>
+        <div class="col-md-4 mb-4">
+          <div class="card modern-card h-100">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+              <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>LR Reports</h5>
+              <span class="badge bg-light text-dark" id="lrCount">0</span>
+            </div>
+            <div class="card-body p-0">
+              <ul id="lrList" class="list-group list-group-flush"></ul>
+            </div>
           </div>
         </div>
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-header bg-success text-white"><h5><i class="fas fa-money-bill-wave me-2"></i>Payments</h5></div>
-            <ul id="paymentList" class="list-group list-group-flush"></ul>
+        <div class="col-md-4 mb-4">
+          <div class="card modern-card h-100">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+              <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payments</h5>
+              <span class="badge bg-light text-dark" id="paymentCount">0</span>
+            </div>
+            <div class="card-body p-0">
+              <ul id="paymentList" class="list-group list-group-flush"></ul>
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LR Detail Modal -->
+  <div class="modal fade lr-detail-modal" id="lrDetailModal" tabindex="-1" aria-labelledby="lrDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="lrDetailModalLabel">LR Report Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="lrDetailContent">
+          <!-- LR details will be loaded here -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
@@ -251,7 +407,10 @@
     let clientTable;
     let currentUser = null;
     let paymentTable;
+    let coreAccountId = null;
+    let currentEditingClientId = null;
     let currentEditingPaymentId = null;
+    let currentClientId = null;
 
     // Auth Check
     onAuthStateChanged(auth, user => {
@@ -259,22 +418,51 @@
         window.location.href = "index.html";
       } else {
         currentUser = user;
+        // Determine the core account ID for data fetching
+        const userProfileRef = ref(db, `users/${user.uid}`);
+        get(userProfileRef).then(snapshot => {
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            coreAccountId = userData.coreAccountId || user.uid;
+          } else {
+            coreAccountId = user.uid; // Fallback
+          }
+          // Load clients after coreAccountId is determined
+          loadClients(user.uid);
+          loadClientsForPaymentDropdown(user.uid);
+          loadClientPayments(user.uid);
+        });
+        
+        // Initialize DataTables
         clientTable = $('#clientTable').DataTable({
           "pageLength": 10,
           "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
           "columnDefs": [{ "orderable": false, "targets": 5 }]
         });
+        
         paymentTable = $('#paymentTable').DataTable({
           "pageLength": 10,
           "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
           "order": [[ 2, "desc" ]], // Sort by date descending
-          "columnDefs": [{ "orderable": false, "targets": 4 }]
+          "columnDefs": [{ "orderable": false, "targets": 5 }]
         });
-        loadClients(user.uid);
-        loadClientsForPaymentDropdown(user.uid);
-        loadClientPayments(user.uid);
       }
     });
+
+    // Function to cancel client editing
+    function cancelClientEdit() {
+      currentEditingClientId = null;
+      const form = document.getElementById("clientForm");
+      form.reset();
+      
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Add Client';
+      
+      const cancelBtn = document.getElementById('cancelClientEditBtn');
+      if (cancelBtn) {
+        cancelBtn.style.display = 'none';
+      }
+    }
 
     // Add Client
     document.getElementById("clientForm").addEventListener("submit", async (e) => {
@@ -287,28 +475,8 @@
         return;
       }
 
-      // Check for duplicates before saving
-      const clientRef = ref(db, `users/${currentUser.uid}/clients`);
-      const snapshot = await get(clientRef);
-      let isDuplicate = false;
-      if (snapshot.exists()) {
-        snapshot.forEach(childSnapshot => {
-          const client = childSnapshot.val();
-          if (client.clientName && client.clientName.toLowerCase() === newClientName.toLowerCase()) {
-            isDuplicate = true;
-          }
-        });
-      }
-
-      if (isDuplicate) {
-        alert('A client with this name already exists. Please use a different name.');
-        return; // Stop the function if a duplicate is found
-      }
-
-      // If not a duplicate, proceed to save
-      const now = new Date().toISOString();
       const clientData = {
-        clientName: newClientName, // Use the trimmed name
+        clientName: newClientName,
         gstin: document.getElementById("gstin").value,
         pan: document.getElementById("pan").value,
         contactPerson: document.getElementById("contactPerson").value,
@@ -316,20 +484,53 @@
         email: document.getElementById("email").value,
         billingAddress: document.getElementById("billingAddress").value,
         dispatchAddress: document.getElementById("dispatchAddress").value,
-        outstanding: 0,
-        totalTrips: 0,
-        createdAt: now,
-        updatedAt: now
+        updatedAt: new Date().toISOString()
       };
 
-      push(ref(db, `users/${currentUser.uid}/clients`), clientData)
-        .then(() => {
-          e.target.reset();
-          alert('Client added successfully!');
-        })
-        .catch((error) => {
-          alert('Error adding client: ' + error.message);
-        });
+      if (currentEditingClientId) {
+        // Update existing client
+        const clientRef = ref(db, `users/${currentUser.uid}/clients/${currentEditingClientId}`);
+        update(clientRef, clientData)
+          .then(() => {
+            alert('Client updated successfully!');
+            cancelClientEdit();
+          })
+          .catch((error) => {
+            alert('Error updating client: ' + error.message);
+          });
+      } else {
+        // Add new client
+        // Check for duplicates before saving
+        const clientRef = ref(db, `users/${currentUser.uid}/clients`);
+        const snapshot = await get(clientRef);
+        let isDuplicate = false;
+        if (snapshot.exists()) {
+          snapshot.forEach(childSnapshot => {
+            const client = childSnapshot.val();
+            if (client.clientName && client.clientName.toLowerCase() === newClientName.toLowerCase()) {
+              isDuplicate = true;
+            }
+          });
+        }
+
+        if (isDuplicate) {
+          alert('A client with this name already exists. Please use a different name.');
+          return;
+        }
+
+        clientData.outstanding = 0;
+        clientData.totalTrips = 0;
+        clientData.createdAt = new Date().toISOString();
+
+        push(clientRef, clientData)
+          .then(() => {
+            e.target.reset();
+            alert('Client added successfully!');
+          })
+          .catch((error) => {
+            alert('Error adding client: ' + error.message);
+          });
+      }
     });
 
     // --- CLIENT PAYMENT LOGIC ---
@@ -349,6 +550,8 @@
                     option.dataset.name = client.clientName;
                     select.appendChild(option);
                 });
+            } else {
+                select.innerHTML = '<option value="">No clients found</option>';
             }
         });
     }
@@ -415,6 +618,7 @@
       const selectedClientName = clientSelect.options[clientSelect.selectedIndex].dataset.name;
       const amount = parseFloat(document.getElementById("amount").value) || 0;
       const date = document.getElementById("date").value;
+      const notes = document.getElementById("paymentNotes").value;
     
       if (!selectedClientId) {
           alert("Please select a client.");
@@ -438,6 +642,7 @@
         updates[`/payments/${currentEditingPaymentId}/date`] = date;
         updates[`/payments/${currentEditingPaymentId}/companyName`] = selectedClientName;
         updates[`/payments/${currentEditingPaymentId}/clientId`] = selectedClientId;
+        updates[`/payments/${currentEditingPaymentId}/notes`] = notes;
         if (file) updates[`/payments/${currentEditingPaymentId}/proof`] = fileURL;
 
         // Adjust outstanding balance
@@ -450,22 +655,132 @@
         alert('Payment updated successfully!');
         currentEditingPaymentId = null;
         saveButton.innerHTML = '<i class="fas fa-plus me-2"></i>Add Payment';
+        
+        // Refresh payment status if we're viewing this client
+        if (currentClientId === selectedClientId) {
+          updatePaymentStatus(selectedClientId);
+        }
       } else {
         // Add new logic
         const paymentRef = push(ref(db, `payments`));
-        const paymentData = { companyName: selectedClientName, amount, date, proof: fileURL, id: paymentRef.key, clientId: selectedClientId, userId: currentUser.uid, createdAt: new Date().toISOString() };
+        const paymentData = { 
+          companyName: selectedClientName, 
+          amount, 
+          date, 
+          proof: fileURL, 
+          notes,
+          id: paymentRef.key, 
+          clientId: selectedClientId, 
+          userId: currentUser.uid, 
+          createdAt: new Date().toISOString(),
+          status: 'completed'
+        };
         await set(paymentRef, paymentData);
+        
+        // Update client outstanding balance
         const clientRef = ref(db, `users/${currentUser.uid}/clients/${selectedClientId}/outstanding`);
         const snapshot = await get(clientRef);
         const currentOutstanding = snapshot.val() || 0;
         await set(clientRef, currentOutstanding - amount);
+        
+        // Update invoice/LR payment status
+        await updateInvoiceAndLRStatus(selectedClientId, amount);
+        
         alert('Payment added successfully!');
+        
+        // Refresh payment status if we're viewing this client
+        if (currentClientId === selectedClientId) {
+          updatePaymentStatus(selectedClientId);
+        }
       }
       
       e.target.reset();
       document.getElementById("preview").style.display = "none";
       saveButton.disabled = false;
     });
+
+    // Update invoice and LR status based on payment
+    async function updateInvoiceAndLRStatus(clientId, paymentAmount) {
+      const dataRoot = coreAccountId || currentUser.uid;
+      
+      // Get all invoices for this client
+      const invoicesQuery = query(ref(db, `users/${dataRoot}/invoices`), orderByChild('clientId'), equalTo(clientId));
+      const invoicesSnap = await get(invoicesQuery);
+      
+      let remainingAmount = paymentAmount;
+      
+      if (invoicesSnap.exists()) {
+        // Sort invoices by date (oldest first)
+        const invoices = [];
+        invoicesSnap.forEach(child => {
+          invoices.push({ key: child.key, ...child.val() });
+        });
+        
+        invoices.sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date));
+        
+        // Apply payment to invoices
+        for (const invoice of invoices) {
+          if (remainingAmount <= 0) break;
+          
+          const invoiceAmount = invoice.grandTotal || 0;
+          const paidAmount = invoice.paidAmount || 0;
+          const outstanding = invoiceAmount - paidAmount;
+          
+          if (outstanding > 0) {
+            const paymentToApply = Math.min(remainingAmount, outstanding);
+            const newPaidAmount = paidAmount + paymentToApply;
+            const newStatus = newPaidAmount >= invoiceAmount ? 'paid' : 'partial';
+            
+            // Update invoice
+            await update(ref(db, `users/${dataRoot}/invoices/${invoice.key}`), {
+              paidAmount: newPaidAmount,
+              paymentStatus: newStatus,
+              lastPaymentDate: new Date().toISOString()
+            });
+            
+            remainingAmount -= paymentToApply;
+          }
+        }
+      }
+      
+      // If there's still remaining amount after paying invoices, apply to LRs
+      if (remainingAmount > 0) {
+        const lrsQuery = query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('clientId'), equalTo(clientId));
+        const lrsSnap = await get(lrsQuery);
+        
+        if (lrsSnap.exists()) {
+          const lrs = [];
+          lrsSnap.forEach(child => {
+            lrs.push({ key: child.key, ...child.val() });
+          });
+          
+          lrs.sort((a, b) => new Date(a.date) - new Date(b.date));
+          
+          for (const lr of lrs) {
+            if (remainingAmount <= 0) break;
+            
+            const lrAmount = lr.totalAmount || 0;
+            const paidAmount = lr.paidAmount || 0;
+            const outstanding = lrAmount - paidAmount;
+            
+            if (outstanding > 0) {
+              const paymentToApply = Math.min(remainingAmount, outstanding);
+              const newPaidAmount = paidAmount + paymentToApply;
+              const newStatus = newPaidAmount >= lrAmount ? 'paid' : 'partial';
+              
+              // Update LR
+              await update(ref(db, `users/${dataRoot}/lrReports/${lr.key}`), {
+                paidAmount: newPaidAmount,
+                paymentStatus: newStatus,
+                lastPaymentDate: new Date().toISOString()
+              });
+              
+              remainingAmount -= paymentToApply;
+            }
+          }
+        }
+      }
+    }
 
     // Load client payments into the DataTable
     function loadClientPayments(uid) {
@@ -476,11 +791,16 @@
           snapshot.forEach(child => {
             const payment = child.val();
             if (!payment.plan) { // Filter out subscription payments
+              const statusBadge = payment.status === 'completed' 
+                ? '<span class="status-badge status-paid">Completed</span>'
+                : '<span class="status-badge status-pending">Pending</span>';
+                
               paymentTable.row.add([
                 payment.companyName,
                 `₹${(payment.amount || 0).toFixed(2)}`,
                 payment.date,
-                payment.proof ? `<a href="${payment.proof}" target="_blank">View</a>` : '—',
+                payment.proof ? `<a href="${payment.proof}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye me-1"></i>View</a>` : '—',
+                statusBadge,
                 `<div class="action-btns text-center">
                   <button class="btn btn-sm btn-outline-secondary me-1" onclick="editClientPayment('${child.key}')"><i class="fas fa-edit"></i></button>
                   <button class="btn btn-sm btn-outline-danger" onclick="deleteClientPayment('${child.key}', '${payment.clientId}', ${payment.amount})"><i class="fas fa-trash"></i></button>
@@ -507,6 +827,7 @@
       document.getElementById('clientSelect').value = payment.clientId;
       document.getElementById('amount').value = payment.amount;
       document.getElementById('date').value = payment.date;
+      document.getElementById('paymentNotes').value = payment.notes || '';
       const preview = document.getElementById('preview');
       preview.src = payment.proof || '';
       preview.style.display = payment.proof ? 'block' : 'none';
@@ -515,234 +836,541 @@
       document.getElementById('paymentForm').scrollIntoView({ behavior: 'smooth' });
     };
 
-    // Delete a client payment and update outstanding balance
+    // Delete Client Payment
     window.deleteClientPayment = async (paymentId, clientId, amount) => {
-      if (!confirm("Are you sure you want to delete this payment record? This will update the client's outstanding balance.")) return;
-
-      const updates = {};
-      updates[`/payments/${paymentId}`] = null; // Delete payment record
-
-      // Add the payment amount back to the client's outstanding balance
-      if (clientId && amount) {
-        const clientRef = ref(db, `users/${currentUser.uid}/clients/${clientId}/outstanding`);
-        const snapshot = await get(clientRef);
-        const currentOutstanding = snapshot.val() || 0;
-        updates[`/users/${currentUser.uid}/clients/${clientId}/outstanding`] = currentOutstanding + amount;
+      if (!confirm("Are you sure you want to delete this payment? This will update the client's outstanding balance.")) {
+        return;
       }
-
+      
       try {
-        await update(ref(db), updates);
-        alert('Payment deleted and client balance updated.');
+        const paymentRef = ref(db, `payments/${paymentId}`);
+        
+        // Get payment details before deleting
+        const paymentSnap = await get(paymentRef);
+        const payment = paymentSnap.val();
+        
+        // Delete the payment
+        await remove(paymentRef);
+        
+        // Update client's outstanding balance by adding back the payment amount
+        const clientRef = ref(db, `users/${currentUser.uid}/clients/${clientId}/outstanding`);
+        const clientSnap = await get(clientRef);
+        const currentOutstanding = clientSnap.val() || 0;
+        await set(clientRef, currentOutstanding + amount);
+        
+        // Update invoice/LR status by removing this payment
+        await reversePaymentFromInvoicesAndLRs(clientId, amount);
+        
+        alert('Payment deleted successfully!');
+        
+        // Refresh payment status if we're viewing this client
+        if (currentClientId === clientId) {
+          updatePaymentStatus(clientId);
+        }
       } catch (error) {
-        alert('Error deleting payment: ' + error.message);
+        console.error("Error deleting payment:", error);
+        alert("Failed to delete payment. Please try again.");
       }
     };
 
-    // Search functionality for payment table
-    $('#paymentSearchInput').on('keyup', function () {
-        paymentTable.search(this.value).draw();
-    });
+    // Reverse payment from invoices and LRs
+    async function reversePaymentFromInvoicesAndLRs(clientId, amount) {
+      const dataRoot = coreAccountId || currentUser.uid;
+      let remainingAmount = amount;
+      
+      // Get all invoices for this client (newest first for reversal)
+      const invoicesQuery = query(ref(db, `users/${dataRoot}/invoices`), orderByChild('clientId'), equalTo(clientId));
+      const invoicesSnap = await get(invoicesQuery);
+      
+      if (invoicesSnap.exists()) {
+        const invoices = [];
+        invoicesSnap.forEach(child => {
+          invoices.push({ key: child.key, ...child.val() });
+        });
+        
+        // Sort by date descending (newest first)
+        invoices.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+        
+        // Reverse payment from invoices
+        for (const invoice of invoices) {
+          if (remainingAmount <= 0) break;
+          
+          const paidAmount = invoice.paidAmount || 0;
+          if (paidAmount > 0) {
+            const amountToReverse = Math.min(remainingAmount, paidAmount);
+            const newPaidAmount = paidAmount - amountToReverse;
+            const newStatus = newPaidAmount > 0 ? 'partial' : 'pending';
+            
+            // Update invoice
+            await update(ref(db, `users/${dataRoot}/invoices/${invoice.key}`), {
+              paidAmount: newPaidAmount,
+              paymentStatus: newStatus
+            });
+            
+            remainingAmount -= amountToReverse;
+          }
+        }
+      }
+      
+      // If there's still remaining amount, reverse from LRs
+      if (remainingAmount > 0) {
+        const lrsQuery = query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('clientId'), equalTo(clientId));
+        const lrsSnap = await get(lrsQuery);
+        
+        if (lrsSnap.exists()) {
+          const lrs = [];
+          lrsSnap.forEach(child => {
+            lrs.push({ key: child.key, ...child.val() });
+          });
+          
+          // Sort by date descending (newest first)
+          lrs.sort((a, b) => new Date(b.date) - new Date(a.date));
+          
+          // Reverse payment from LRs
+          for (const lr of lrs) {
+            if (remainingAmount <= 0) break;
+            
+            const paidAmount = lr.paidAmount || 0;
+            if (paidAmount > 0) {
+              const amountToReverse = Math.min(remainingAmount, paidAmount);
+              const newPaidAmount = paidAmount - amountToReverse;
+              const newStatus = newPaidAmount > 0 ? 'partial' : 'pending';
+              
+              // Update LR
+              await update(ref(db, `users/${dataRoot}/lrReports/${lr.key}`), {
+                paidAmount: newPaidAmount,
+                paymentStatus: newStatus
+              });
+              
+              remainingAmount -= amountToReverse;
+            }
+          }
+        }
+      }
+    }
 
     // Load Clients
     function loadClients(uid) {
-      const clientRef = ref(db, "users/" + uid + "/clients");
-      onValue(clientRef, (snapshot) => {
+      const clientsRef = ref(db, `users/${uid}/clients`);
+      
+      // Use coreAccountId to fetch shared data like LRs and invoices
+      const dataRoot = coreAccountId || uid;
+      const invoicesRef = ref(db, `users/${dataRoot}/invoices`);
+      const lrsRef = ref(db, `users/${dataRoot}/lrReports`);
+      const paymentsQuery = query(ref(db, 'payments'), orderByChild('userId'), equalTo(uid));
+
+      // Use onValue to listen for real-time updates
+      onValue(clientsRef, async (clientSnap) => {
+        if (!clientSnap.exists()) {
+          clientTable.clear().draw();
+          return;
+        }
+
+        const [invoiceSnap, lrSnap, paymentSnap] = await Promise.all([get(invoicesRef), get(lrsRef), get(paymentsQuery)]);
+        const invoicesByClient = {};
+        const lrsByClient = {};
+        const paymentsByClient = {};
+
+        if (invoiceSnap.exists()) {
+          invoiceSnap.forEach(child => {
+            const inv = child.val();
+            if (!invoicesByClient[inv.clientId]) invoicesByClient[inv.clientId] = [];
+            invoicesByClient[inv.clientId].push(inv);
+          });
+        }
+
+        if (lrSnap.exists()) {
+          lrSnap.forEach(child => {
+            const lr = child.val();
+            if (!lrsByClient[lr.clientId]) lrsByClient[lr.clientId] = [];
+            lrsByClient[lr.clientId].push(lr);
+          });
+        }
+
+        if (paymentSnap.exists()) {
+          paymentSnap.forEach(child => {
+            const payment = child.val();
+            if (!payment.plan) { // Filter out subscription payments
+              if (!paymentsByClient[payment.clientId]) paymentsByClient[payment.clientId] = [];
+              paymentsByClient[payment.clientId].push(payment);
+            }
+          });
+        }
+
         clientTable.clear();
-        snapshot.forEach(child => {
+        clientSnap.forEach(child => {
           const client = child.val();
+          const clientId = child.key;
+          const invoices = invoicesByClient[clientId] || [];
+          const lrs = lrsByClient[clientId] || [];
+          const payments = paymentsByClient[clientId] || [];
+          
+          // **FIX**: Calculate total billed from invoices and total paid from payments.
+          let totalAmount = 0;
+          let paidAmount = 0;
+          
+          // Sum total billed from all invoices for the client.
+          invoices.forEach(inv => { totalAmount += inv.grandTotal || 0; });
+          // **FIX**: Sum total paid from all payments made by the client.
+          payments.forEach(p => {
+            paidAmount += p.amount || 0;
+          });
+          
+          // Calculate outstanding
+          const outstanding = totalAmount - paidAmount;
+          
+          // Update client's outstanding in database if different
+          if (client.outstanding !== outstanding) {
+            update(ref(db, `users/${uid}/clients/${clientId}`), { outstanding });
+          }
+
           clientTable.row.add([
             client.clientName,
-            client.gstin || "-",
-            client.mobile,
-            `₹${(client.outstanding || 0).toFixed(2)}`,
-            client.totalTrips || 0,
-            `<div class="text-center">
-              <button class="btn btn-sm btn-outline-primary me-1" onclick="viewClient('${child.key}')"><i class="fas fa-eye"></i></button>
-              <button class="btn btn-sm btn-outline-secondary me-1" onclick="editClient('${child.key}')"><i class="fas fa-edit"></i></button>
-              <button class="btn btn-sm btn-outline-danger" onclick="deleteClient('${child.key}')"><i class="fas fa-trash"></i></button>
+            client.gstin || '—',
+            client.mobile || '—',
+            `<span class="fw-bold ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
+            `<span class="text-center d-block">${lrs.length}</span>`, // Trip count = total LRs
+            `<div class="action-btns text-center">
+              <button class="btn btn-sm btn-outline-primary me-1" onclick="viewClientDetails('${clientId}')"><i class="fas fa-eye me-1"></i>View</button>
+              <button class="btn btn-sm btn-outline-secondary me-1" onclick="editClient('${clientId}')"><i class="fas fa-edit"></i></button>
             </div>`
-          ]).node().id = `client-row-${child.key}`;
+          ]);
         });
         clientTable.draw();
       });
     }
 
-    // View Client
-    window.viewClient = (id) => {
-      document.getElementById("clientDetail").classList.remove("hidden");
-      document.getElementById("clientListView").classList.add("hidden");
-
-      const clientRef = ref(db, "users/" + currentUser.uid + "/clients/" + id);
-      get(clientRef).then((snapshot) => {
-        const c = snapshot.val();
-        document.getElementById("clientTitle").textContent = c.clientName;
-        document.getElementById("clientContact").textContent = c.contactPerson + " (" + c.mobile + ")";
-        document.getElementById("clientGSTIN").textContent = c.gstin || "-";
-        document.getElementById("clientPAN").textContent = c.pan || "-";
-        document.getElementById("clientOutstanding").textContent = `₹${(c.outstanding || 0).toFixed(2)}`;
-        document.getElementById("clientTrips").textContent = c.totalTrips || 0;
+    // Edit Client
+    window.editClient = (clientId) => {
+      const clientRef = ref(db, `users/${currentUser.uid}/clients/${clientId}`);
+      get(clientRef).then(snapshot => {
+        if (snapshot.exists()) {
+          const client = snapshot.val();
+          document.getElementById('clientName').value = client.clientName || '';
+          document.getElementById('gstin').value = client.gstin || '';
+          document.getElementById('pan').value = client.pan || '';
+          document.getElementById('contactPerson').value = client.contactPerson || '';
+          document.getElementById('mobile').value = client.mobile || '';
+          document.getElementById('email').value = client.email || '';
+          document.getElementById('billingAddress').value = client.billingAddress || '';
+          document.getElementById('dispatchAddress').value = client.dispatchAddress || '';
+          
+          currentEditingClientId = clientId;
+          
+          const submitBtn = document.querySelector('#clientForm button[type="submit"]');
+          submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Client';
+          
+          const cancelBtn = document.getElementById('cancelClientEditBtn');
+          if (cancelBtn) {
+            cancelBtn.style.display = 'inline-block';
+          }
+        }
       });
-
-      // Load linked data
-      loadLinkedData(id);
     };
 
-    async function loadLinkedData(clientId) {
-      // Clear previous data
-      const invoiceList = document.getElementById("invoiceList");
-      const lrList = document.getElementById("lrList");
-      const paymentList = document.getElementById("paymentList");
-      const outstandingEl = document.getElementById("clientOutstanding");
+    // Cancel client edit button
+    document.getElementById('cancelClientEditBtn').addEventListener('click', cancelClientEdit);
 
-      invoiceList.innerHTML = '<li>Loading...</li>';
-      lrList.innerHTML = '<li>Loading...</li>';
-      paymentList.innerHTML = '<li>Loading...</li>';
-      outstandingEl.textContent = 'Calculating...';
+    // View Client Details
+    window.viewClientDetails = async (clientId) => {
+      currentClientId = clientId;
+      
+      const clientRef = ref(db, `users/${currentUser.uid}/clients/${clientId}`);
+      const clientSnap = await get(clientRef);
+      
+      if (!clientSnap.exists()) {
+        alert('Client not found.');
+        return;
+      }
+      
+      const client = clientSnap.val();
+      document.getElementById('clientTitle').textContent = client.clientName;
+      document.getElementById('clientContact').textContent = client.mobile || '—';
+      document.getElementById('clientGSTIN').textContent = client.gstin || '—';
+      document.getElementById('clientPAN').textContent = client.pan || '—';
+      document.getElementById('clientOutstanding').textContent = `₹${(client.outstanding || 0).toFixed(2)}`;
+      
+      // Use coreAccountId to fetch shared data
+      const dataRoot = coreAccountId || currentUser.uid;
+      const invoicesQuery = query(ref(db, `users/${dataRoot}/invoices`), orderByChild('clientId'), equalTo(clientId));
+      const lrsQuery = query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('clientId'), equalTo(clientId));
+      const paymentsQuery = query(ref(db, 'payments'), orderByChild('clientId'), equalTo(clientId));
+      
+      const [invoicesSnap, lrsSnap, paymentsSnap] = await Promise.all([
+        get(invoicesQuery),
+        get(lrsQuery),
+        get(paymentsQuery)
+      ]);
+      
+      // Update trip count (total LRs)
+      document.getElementById('clientTrips').textContent = lrsSnap.exists() ? lrsSnap.size : 0;
+      
+      // Calculate payment statistics
+      await updatePaymentStatus(clientId, invoicesSnap, lrsSnap, paymentsSnap);
+      
+      // Process invoices
+      const invoiceList = document.getElementById('invoiceList');
+      invoiceList.innerHTML = '';
+      if (invoicesSnap.exists()) {
+        invoicesSnap.forEach(child => {
+          const invoice = child.val();
+          const status = invoice.paymentStatus || 'pending';
+          const statusClass = status === 'paid' ? 'status-paid' : 
+                            status === 'partial' ? 'status-pending' : 'status-overdue';
+          
+          const listItem = document.createElement('li');
+          listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+          listItem.innerHTML = `
+            <div>
+              <div class="fw-bold">${invoice.invoiceNumber || 'N/A'}</div>
+              <small class="text-muted">₹${(invoice.grandTotal || 0).toFixed(2)}</small>
+            </div>
+            <div>
+              <span class="status-badge ${statusClass} me-2">${status}</span>
+              <button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('${child.key}')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          `;
+          invoiceList.appendChild(listItem);
+        });
+      } else {
+        invoiceList.innerHTML = '<li class="list-group-item text-center text-muted">No invoices found</li>';
+      }
+      document.getElementById('invoiceCount').textContent = invoicesSnap.exists() ? invoicesSnap.size : 0;
+      
+      // Process LR reports
+      const lrList = document.getElementById('lrList');
+      lrList.innerHTML = '';
+      if (lrsSnap.exists()) {
+        lrsSnap.forEach(child => {
+          const lr = child.val();
+          const status = lr.paymentStatus || 'pending';
+          const statusClass = status === 'paid' ? 'status-paid' : 
+                            status === 'partial' ? 'status-pending' : 'status-overdue';
+          
+          const listItem = document.createElement('li');
+          listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+          listItem.innerHTML = `
+            <div>
+              <div class="fw-bold">${lr.lrNumber || 'N/A'}</div>
+              <small class="text-muted">₹${(lr.totalAmount || 0).toFixed(2)}</small>
+            </div>
+            <div>
+              <span class="status-badge ${statusClass} me-2">${status}</span>
+              <button class="btn btn-sm btn-outline-primary" onclick="viewLRDetails('${child.key}')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          `;
+          lrList.appendChild(listItem);
+        });
+      } else {
+        lrList.innerHTML = '<li class="list-group-item text-center text-muted">No LR reports found</li>';
+      }
+      document.getElementById('lrCount').textContent = lrsSnap.exists() ? lrsSnap.size : 0;
+      
+      // Process payments
+      const paymentList = document.getElementById('paymentList');
+      paymentList.innerHTML = '';
+      if (paymentsSnap.exists()) {
+        paymentsSnap.forEach(child => {
+          const payment = child.val();
+          if (!payment.plan) { // Filter out subscription payments
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            listItem.innerHTML = `
+              <div>
+                <div class="fw-bold">${payment.date || 'N/A'}</div>
+                <small class="text-muted">${payment.notes || 'Payment'}</small>
+              </div>
+              <span class="fw-bold text-success">₹${(payment.amount || 0).toFixed(2)}</span>
+            `;
+            paymentList.appendChild(listItem);
+          }
+        });
+      } else {
+        paymentList.innerHTML = '<li class="list-group-item text-center text-muted">No payments found</li>';
+      }
+      document.getElementById('paymentCount').textContent = paymentsSnap.exists() ? paymentsSnap.size : 0;
+      
+      // Show the detail view
+      document.getElementById('clientListView').classList.add('hidden');
+      document.getElementById('clientDetail').classList.remove('hidden');
+    };
 
-      try {
-        // Fetch all data concurrently
-        const [invoiceSnap, lrSnap, paymentSnap] = await Promise.all([
-          get(query(ref(db, "invoices"), orderByChild('userId'), equalTo(currentUser.uid))),
-          get(query(ref(db, "lrReports"), orderByChild('userId'), equalTo(currentUser.uid))),
-          get(query(ref(db, "payments"), orderByChild('userId'), equalTo(currentUser.uid)))
+    // Update payment status and progress bar
+    async function updatePaymentStatus(clientId, invoicesSnap = null, lrsSnap = null, paymentsSnap = null) {
+      const dataRoot = coreAccountId || currentUser.uid;
+      
+      // Fetch data if not provided
+      if (!invoicesSnap || !lrsSnap || !paymentsSnap) {
+        const invoicesQuery = query(ref(db, `users/${dataRoot}/invoices`), orderByChild('clientId'), equalTo(clientId));
+        const lrsQuery = query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('clientId'), equalTo(clientId));
+        const paymentsQuery = query(ref(db, 'payments'), orderByChild('clientId'), equalTo(clientId));
+        
+        [invoicesSnap, lrsSnap, paymentsSnap] = await Promise.all([
+          get(invoicesQuery),
+          get(lrsQuery),
+          get(paymentsQuery)
         ]);
+      }
+      
+      // **FIX**: Calculate total billed from invoices and total paid from payments.
+      let totalAmount = 0;
+      let paidAmount = 0;
+      
+      // Sum total billed from all invoices for the client.
+      if (invoicesSnap.exists()) {
+        invoicesSnap.forEach(child => {
+          const invoice = child.val();
+          totalAmount += invoice.grandTotal || 0;
+        });
+      }
 
-        // Process Invoices
-        let totalInvoiced = 0;
-        invoiceList.innerHTML = "";
-        if (invoiceSnap.exists()) {
-          invoiceSnap.forEach(child => {
-            const inv = child.val();
-            if (inv.clientId !== clientId) return; // Filter for the correct client
-            totalInvoiced += (inv.grandTotal || 0);
-            invoiceList.innerHTML += `<li class="list-group-item"><a href="invoice.html?view=${child.key}" target="_blank">#${inv.invoiceNumber}</a> - ₹${(inv.grandTotal || 0).toFixed(2)}</li>`;
-          });
-        }
-        if (!invoiceList.innerHTML) invoiceList.innerHTML = '<li class="list-group-item text-muted">No invoices found.</li>';
-
-        // Process LRs
-        let totalNonInvoiced = 0;
-        lrList.innerHTML = "";
-        if (lrSnap.exists()) {
-          lrSnap.forEach(child => {
-            const lr = child.val();
-            if (lr.clientId !== clientId) return; // Filter for the correct client
-            lrList.innerHTML += `<li class="list-group-item"><a href="lr-report.html?view=${child.key}" target="_blank">#${lr.lrNumber || 'N/A'}</a> - ${lr.fromLocation || ''} → ${lr.toLocation || ''} - ₹${(lr.totalAmount || 0).toFixed(2)}</li>`;
-            if (!lr.invoiceId && lr.status !== 'Generated') {
-              totalNonInvoiced += (lr.totalAmount || 0);
-            }
-          });
-        }
-        if (!lrList.innerHTML) lrList.innerHTML = '<li class="list-group-item text-muted">No LR reports found.</li>';
-
-        // Process Payments
-        let totalPaid = 0;
-        const list = document.getElementById("paymentList");
-        list.innerHTML = "";
-        if (paymentSnap.exists()) {
-          paymentSnap.forEach(child => {
-            const pay = child.val();
-            // Filter for the correct client and ensure it's an operational payment
-            if (pay.clientId === clientId && !pay.plan) {
-              totalPaid += parseFloat(pay.amount || 0);
-              list.innerHTML += `<li class="list-group-item">₹${parseFloat(pay.amount || 0).toFixed(2)} on ${pay.date || 'N/A'}</li>`;
-            }
-          });
-        }
-        if (!list.innerHTML) list.innerHTML = '<li class="list-group-item text-muted">No payments found.</li>';
-
-        // Final Calculation
-        const finalOutstanding = totalInvoiced + totalNonInvoiced - totalPaid;
-        outstandingEl.textContent = `₹${finalOutstanding.toFixed(2)}`;
-
-      } catch (error) {
-        console.error("Error loading linked data:", error);
-        outstandingEl.textContent = 'Error';
-        invoiceList.innerHTML = '<li class="list-group-item text-danger">Could not load invoices.</li>';
-        lrList.innerHTML = '<li class="list-group-item text-danger">Could not load LRs.</li>';
-        paymentList.innerHTML = '<li class="list-group-item text-danger">Could not load payments.</li>';
+      // **FIX**: Sum total paid from all payments made by the client.
+      if (paymentsSnap.exists()) {
+        paymentsSnap.forEach(child => { if (!child.val().plan) paidAmount += child.val().amount || 0; });
+      }
+      
+      // Update payment progress
+      const progressPercentage = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
+      document.getElementById('paymentProgressBar').style.width = `${progressPercentage}%`;
+      document.getElementById('paidAmount').textContent = paidAmount.toFixed(2);
+      document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+      
+      // Update payment status text
+      const paymentStatus = document.getElementById('paymentStatus');
+      if (progressPercentage >= 100) {
+        paymentStatus.textContent = 'Fully Paid';
+        paymentStatus.className = 'fw-bold text-success';
+      } else if (progressPercentage > 0) {
+        paymentStatus.textContent = 'Partially Paid';
+        paymentStatus.className = 'fw-bold text-warning';
+      } else {
+        paymentStatus.textContent = 'Pending';
+        paymentStatus.className = 'fw-bold text-danger';
       }
     }
 
-    // Back button
-    document.getElementById("backBtn").addEventListener("click", () => {
-      document.getElementById("clientDetail").classList.add("hidden");
-      document.getElementById("clientListView").classList.remove("hidden");
-    });
-
-    // Edit Client
-    window.editClient = (id) => {
-      const newName = prompt("Enter new name:");
-      if (newName) {
-        update(ref(db, "users/" + currentUser.uid + "/clients/" + id), { 
-          clientName: newName,
-          updatedAt: new Date().toISOString()
-        });
-      }
+    // View Invoice
+    window.viewInvoice = (invoiceId) => {
+      // Redirect to invoice page or open in new tab
+      window.open(`invoice.html?view=${invoiceId}`, '_blank');
     };
 
-    // Delete Client
-    window.deleteClient = async (clientId) => {
-      if (!confirm("Are you sure you want to delete this client? This will also delete all associated LR reports, invoices, and payments. This action cannot be undone.")) {
+    // View LR Details
+    window.viewLRDetails = async (lrId) => {
+      const dataRoot = coreAccountId || currentUser.uid;
+      const lrRef = ref(db, `users/${dataRoot}/lrReports/${lrId}`);
+      const lrSnap = await get(lrRef);
+      
+      if (!lrSnap.exists()) {
+        alert('LR report not found.');
         return;
       }
-      if (!currentUser) return alert('Not authenticated.');
+      
+      const lr = lrSnap.val();
+      const modalContent = document.getElementById('lrDetailContent');
+      
+      // Calculate total expenses from the LR data
+      const totalExpenses = (
+        (parseFloat(lr.tyreExpenses) || 0) +
+        (parseFloat(lr.dieselExpenses) || 0) +
+        (parseFloat(lr.tollExpenses) || 0) +
+        (parseFloat(lr.vehicleWork) || 0) +
+        (parseFloat(lr.foodExpenses) || 0) +
+        (parseFloat(lr.otherExpenses) || 0) +
+        (parseFloat(lr.advance) || 0)
+      );
+      const profit = (lr.billingAmount || 0) - totalExpenses;
 
-      try {
-        const updates = {};
-        updates[`/users/${currentUser.uid}/clients/${clientId}`] = null;
-
-        // Find and delete associated LRs
-        const lrQuery = query(ref(db, "lrReports"), orderByChild('clientId'), equalTo(clientId));
-        const lrSnap = await get(lrQuery);
-        if (lrSnap.exists()) {
-          lrSnap.forEach(child => {
-            updates[`/lrReports/${child.key}`] = null;
-          });
-        }
-
-        // Find and delete associated invoices
-        const invQuery = query(ref(db, "invoices"), orderByChild('clientId'), equalTo(clientId));
-        const invSnap = await get(invQuery);
-        if (invSnap.exists()) {
-          invSnap.forEach(child => {
-            updates[`/invoices/${child.key}`] = null;
-          });
-        }
-
-        // Find and delete associated payments
-        const payQuery = query(ref(db, "payments"), orderByChild('clientId'), equalTo(clientId));
-        const paySnap = await get(payQuery);
-        if (paySnap.exists()) {
-          paySnap.forEach(child => {
-            updates[`/payments/${child.key}`] = null;
-          });
-        }
-
-        // Perform atomic update
-        await update(ref(db), updates);
-        alert('Client and all associated data deleted successfully.');
-        // The onValue listener in loadClients will handle the UI update automatically.
-
-      } catch (error) {
-        console.error("Error deleting client and associated data:", error);
-        alert("Failed to delete client. Please try again.");
-      }
+      modalContent.innerHTML = `
+        <div class="row">
+          <div class="col-md-6">
+            <div class="detail-row"><strong>LR Number:</strong> ${lr.lrNumber || 'N/A'}</div>
+            <div class="detail-row"><strong>Date:</strong> ${lr.date || 'N/A'}</div>
+            <div class="detail-row"><strong>Vehicle:</strong> ${lr.truckNumber || 'N/A'}</div>
+            <div class="detail-row"><strong>Route:</strong> ${lr.fromLocation || 'N/A'} to ${lr.toLocation || 'N/A'}</div>
+            <div class="detail-row"><strong>Item:</strong> ${lr.item || 'N/A'}</div>
+            <div class="detail-row"><strong>Weight:</strong> ${lr.weight || 0} tonnes</div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-row"><strong>Billing Amount:</strong> ₹${(lr.billingAmount || 0).toFixed(2)}</div>
+            <div class="detail-row"><strong>Freight Amount:</strong> ₹${(lr.freightAmount || 0).toFixed(2)}</div>
+            <div class="detail-row"><strong>Advance Paid:</strong> ₹${(lr.advance || 0).toFixed(2)}</div>
+            <div class="detail-row"><strong>Balance:</strong> ₹${(lr.balance || 0).toFixed(2)}</div>
+            <div class="detail-row"><strong>Total Amount (inc. GST):</strong> ₹${(lr.totalAmount || 0).toFixed(2)}</div>
+            <div class="detail-row">
+              <strong>Payment Status:</strong> 
+              <span class="status-badge ${lr.paymentStatus === 'paid' ? 'status-paid' : lr.paymentStatus === 'partial' ? 'status-pending' : 'status-overdue'}">
+                ${lr.paymentStatus || 'pending'}
+              </span>
+            </div>
+          </div>
+        </div>
+        <hr>
+        <h5 class="mt-3">Expense Breakdown</h5>
+        <div class="row">
+            <div class="col-md-4"><div class="detail-row"><strong>Tyre:</strong> ₹${(lr.tyreExpenses || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Diesel:</strong> ₹${(lr.dieselExpenses || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Toll:</strong> ₹${(lr.tollExpenses || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Vehicle Work:</strong> ₹${(lr.vehicleWork || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Food:</strong> ₹${(lr.foodExpenses || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Other:</strong> ₹${(lr.otherExpenses || 0).toFixed(2)}</div></div>
+        </div>
+        <hr>
+        <div class="row fw-bold fs-5 mt-3">
+            <div class="col-6 text-end">Total Expenses:</div>
+            <div class="col-6 text-start">₹${totalExpenses.toFixed(2)}</div>
+        </div>
+        <div class="row fw-bold fs-5 mt-1 ${profit >= 0 ? 'text-success' : 'text-danger'}">
+            <div class="col-6 text-end">Net Profit:</div>
+            <div class="col-6 text-start">₹${profit.toFixed(2)}</div>
+        </div>
+      `;
+      
+      // Show the modal
+      const modal = new bootstrap.Modal(document.getElementById('lrDetailModal'));
+      modal.show();
     };
 
-    // Export to Excel
-    document.getElementById("exportExcel").addEventListener("click", () => {
-      const table = document.getElementById("clientTable");
-      const wb = XLSX.utils.table_to_book(table, { sheet: "Clients" });
-      XLSX.writeFile(wb, "Clients.xlsx");
+    // Back to List
+    document.getElementById('backBtn').addEventListener('click', () => {
+      document.getElementById('clientDetail').classList.add('hidden');
+      document.getElementById('clientListView').classList.remove('hidden');
+      currentClientId = null;
     });
 
-    // Make functions globally accessible for onclick attributes
-    window.viewClient = viewClient;
-    window.editClient = editClient;
-    window.deleteClient = deleteClient;
-    window.editClientPayment = editClientPayment;
-    window.deleteClientPayment = deleteClientPayment;
+    // Export to Excel
+    document.getElementById('exportExcel').addEventListener('click', () => {
+      const data = [];
+      const headers = ['Name', 'GSTIN', 'Contact', 'Outstanding', 'Total Trips'];
+      
+      data.push(headers);
+      
+      const rows = document.querySelectorAll('#clientTableBody tr');
+      rows.forEach(row => {
+        const rowData = [];
+        const cells = row.querySelectorAll('td');
+        cells.forEach((cell, index) => {
+          if (index !== 5) { // Skip actions column
+            rowData.push(cell.textContent.trim());
+          }
+        });
+        data.push(rowData);
+      });
+      
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Clients');
+      XLSX.writeFile(wb, 'clients.xlsx');
+    });
+
+    // Payment search functionality
+    document.getElementById('paymentSearchInput').addEventListener('input', (e) => {
+      paymentTable.search(e.target.value).draw();
+    });
   </script>
 </body>
 </html>
