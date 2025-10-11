@@ -435,7 +435,7 @@
   <!-- Firebase and main script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, onValue, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, onValue, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -445,7 +445,8 @@
       projectId: "transport-dashboard-ad69a",
       storageBucket: "transport-dashboard-ad69a.appspot.com",
       messagingSenderId: "526889676196",
-      appId: "1:526889676196:web:66032c80a4aede690ae531"
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -455,6 +456,7 @@
     let currentUser = null;
     let allExpensesData = [];
     let filteredData = [];
+    let coreAccountId = null;
 
     // UI elements
     const vehiclesContainer = document.getElementById("vehiclesContainer");
@@ -519,8 +521,17 @@
         return;
       }
       currentUser = user;
+      
+      const userProfileRef = ref(db, `users/${user.uid}`);
+      get(userProfileRef).then(snapshot => {
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          coreAccountId = userData.coreAccountId || user.uid;
+        } else {
+          coreAccountId = user.uid; // Fallback
+        }
 
-      // **NEW**: Load the last active tab from localStorage
+        // Load the last active tab from localStorage
       try {
         const savedTabId = localStorage.getItem('combined_ca_activeTab');
         if (savedTabId) {
@@ -535,9 +546,9 @@
       } catch (e) {
         console.warn('Could not load active tab from localStorage:', e);
       }
-
-      showLoading();
-      listenExpenses();
+        showLoading();
+        listenExpenses();
+    });
     });
 
     // Add event listener for entries per page change
@@ -559,7 +570,12 @@
 
     // Listen expenses
     function listenExpenses() {
-      const expensesRef = query(ref(db, 'lrReports'), orderByChild('userId'), equalTo(currentUser.uid));
+      if (!coreAccountId) {
+        console.error("Core Account ID not set. Cannot load data.");
+        vehiclesContainer.innerHTML = '<div class="no-data">Error: Could not verify account.</div>';
+        return;
+      }
+      const expensesRef = ref(db, `users/${coreAccountId}/lrReports`);
       onValue(expensesRef, (snapshot) => {
         allExpensesData = [];
         if (snapshot.exists()) {
@@ -568,7 +584,7 @@
             lr.key = child.key;
 
             // Calculate total expenses and profit from the LR report data
-            const totalExpenses = 
+            let totalExpenses = 
               (parseFloat(lr.tyreExpenses) || 0) +
               (parseFloat(lr.dieselExpenses) || 0) +
               (parseFloat(lr.tollExpenses) || 0) +
@@ -578,22 +594,41 @@
               (parseFloat(lr.shortage) || 0) +
               (parseFloat(lr.advance) || 0);
             
+            // Add empty trip expenses if they exist
+            if (lr.emptyTrip && lr.emptyTripData) {
+              const emptyTripExpenses = 
+                (parseFloat(lr.emptyTripData.tyreExpenses) || 0) +
+                (parseFloat(lr.emptyTripData.dieselExpenses) || 0) +
+                (parseFloat(lr.emptyTripData.tollExpenses) || 0) +
+                (parseFloat(lr.emptyTripData.otherExpenses) || 0) +
+                (parseFloat(lr.emptyTripData.foodExpenses) || 0);
+              totalExpenses += emptyTripExpenses;
+            }
+            
             const profit = (parseFloat(lr.billingAmount) || 0) - totalExpenses;
+
+            // Combine main and empty trip expenses for individual categories
+            const combinedDiesel = (parseFloat(lr.dieselExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.dieselExpenses) || 0 : 0);
+            const combinedTyre = (parseFloat(lr.tyreExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.tyreExpenses) || 0 : 0);
+            const combinedToll = (parseFloat(lr.tollExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.tollExpenses) || 0 : 0);
+            const combinedOther = (parseFloat(lr.otherExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.otherExpenses) || 0 : 0);
+            const combinedFood = (parseFloat(lr.foodExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.foodExpenses) || 0 : 0);
 
             // Map to the structure expected by the rest of the page
             allExpensesData.push({
               key: lr.key,
               date: lr.date,
               vehicle: lr.truckNumber,
-              driver: lr.driverName || 'N/A',
+              // driver: lr.driverName || 'N/A', // Removed as per request
               gain: parseFloat(lr.billingAmount) || 0,
-              diesel: parseFloat(lr.dieselExpenses) || 0,
-              tyre: parseFloat(lr.tyreExpenses) || 0,
+              diesel: combinedDiesel,
+              tyre: combinedTyre,
               advance: parseFloat(lr.advance) || 0,
-              toll: parseFloat(lr.tollExpenses) || 0,
+              toll: combinedToll,
               vehicleWork: parseFloat(lr.vehicleWork) || 0,
-              other: parseFloat(lr.otherExpenses) || 0,
-              food: parseFloat(lr.foodExpenses) || 0,
+              other: combinedOther,
+              food: combinedFood,
+              shortage: parseFloat(lr.shortage) || 0, // Add shortage to the data object
               total: totalExpenses,
               profit: profit
             });
@@ -1051,7 +1086,6 @@
       // Prepare table data
       const tableData = trips.map(trip => [
         formatDisplayDate(new Date(trip.date)),
-        trip.driver,
         `₹${(Number(trip.gain) || 0).toFixed(2)}`,
         `₹${(Number(trip.diesel) || 0).toFixed(2)}`,
         `₹${(Number(trip.tyre) || 0).toFixed(2)}`,
@@ -1060,6 +1094,7 @@
         `₹${(Number(trip.vehicleWork) || 0).toFixed(2)}`,
         `₹${(Number(trip.other) || 0).toFixed(2)}`,
         `₹${(Number(trip.food) || 0).toFixed(2)}`,
+        `₹${(Number(trip.shortage) || 0).toFixed(2)}`,
         `₹${(Number(trip.total) || 0).toFixed(2)}`,
         `₹${(Number(trip.profit) || 0).toFixed(2)}`
       ]);
@@ -1067,7 +1102,7 @@
       // Add table
       doc.autoTable({
         startY: 35,
-        head: [['Date', 'Driver', 'Revenue', 'Diesel', 'Tyre', 'Advance', 'Toll', 'Vehicle Work', 'Other', 'Food', 'Total Expenses', 'Profit']],
+        head: [['Date', 'Revenue', 'Diesel', 'Tyre', 'Advance', 'Toll', 'Vehicle Work', 'Other', 'Food', 'Shortage', 'Total Expenses', 'Profit']],
         body: tableData,
         theme: 'grid',
         headStyles: {
@@ -1101,6 +1136,7 @@
       const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
       const otherExpenses = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
       const foodExpenses = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+      const shortageExpenses = trips.reduce((sum, trip) => sum + (Number(trip.shortage) || 0), 0);
       
       // Add summary section
       const finalY = doc.lastAutoTable.finalY + 10;
@@ -1137,7 +1173,8 @@
           ['Toll Expenses', `₹${tollExpenses.toFixed(2)}`],
           ['Vehicle Work', `₹${vehicleWorkExpenses.toFixed(2)}`],
           ['Other Expenses', `₹${otherExpenses.toFixed(2)}`],
-          ['Food Expenses', `₹${foodExpenses.toFixed(2)}`]
+          ['Food Expenses', `₹${foodExpenses.toFixed(2)}`],
+          ['Shortage', `₹${shortageExpenses.toFixed(2)}`]
         ],
         theme: 'grid',
         tableLineWidth: 0.1,
