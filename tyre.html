@@ -17,6 +17,12 @@
       color: #333;
     }
 
+    mark {
+      background-color: #ffc107; /* A nice yellow highlight */
+      padding: 0.2em 0;
+      border-radius: 3px;
+    }
+
     #modelContainer {
       width: 100%;
       height: 450px;
@@ -1192,6 +1198,13 @@
       });
     }
 
+    // Helper function to highlight search terms
+    function highlightText(text, term) {
+      if (!term) return text;
+      const regex = new RegExp(`(${term})`, 'gi');
+      return text.replace(regex, '<mark>$1</mark>');
+    }
+
     function renderVehiclesWithPagination() {
       const vehicleListContainer = document.getElementById('vehicleList');
       const filtered = computeFilteredVehicles();
@@ -1211,13 +1224,15 @@
       pageEntries.forEach(([id, vehicle]) => {
         const tyreCountLocal = vehicle.tyres ? Object.keys(vehicle.tyres).length : 0;
         const totalTyreCost = (vehicle.tyres || []).reduce((sum, tyre) => sum + (parseFloat(tyre.cost) || 0), 0);
+        const isSearchActive = searchTermVehicles && searchTermVehicles.length > 0;
+        const searchTerm = (searchTermVehicles || '').toLowerCase();
         html += `
-          <div class="card" id="vehicle-${id}">
+          <div class="card ${isSearchActive ? 'expanded' : ''}" id="vehicle-${id}">
             <div class="card-header" onclick="toggleVehicleCard('${id}')">
               <h3>
                 <span class="vehicle-number">
                   <i class="fas fa-truck vehicle-icon"></i>
-                  ${vehicle.vehicleNumber || 'N/A'}
+                  ${highlightText(vehicle.vehicleNumber || 'N/A', searchTerm)}
                 </span>
               </h3>
               <span class="rotate-icon">▼</span>
@@ -1232,7 +1247,7 @@
                   ${Object.entries(vehicle.tyres || {}).map(([tyreId, tyre]) => `
                     <li class="tyre-item">
                       <div class="tyre-details">
-                        <div><strong>#${tyre.number || 'N/A'}</strong> - ${tyre.brand || ''}</div>
+                        <div><strong>#${highlightText(tyre.number || 'N/A', searchTerm)}</strong> - ${highlightText(tyre.brand || '', searchTerm)}</div>
                         <div>Status: <span class="status-badge ${tyre.status ? tyre.status.toLowerCase() : 'active'}">${tyre.status || 'Active'}</span></div>
                         <div>Position: <strong>${tyre.position || 'N/A'}</strong> | Added: <strong>${tyre.addedAt ? new Date(tyre.addedAt).toLocaleDateString() : 'N/A'}</strong> | Cost: <strong>₹${(tyre.cost || 0).toFixed(2)}</strong></div>
                       </div>
