@@ -9,6 +9,11 @@
   <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
   <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- **NEW**: Added Bootstrap for consistent styling -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- **NEW**: Added html2canvas for capturing HTML elements as images -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background:#F5F5F5; margin:0; padding:0; }
@@ -25,7 +30,7 @@
     .card h3 { display: flex; justify-content: space-between; align-items: center; margin-top: 0; color: #333; font-size: 1.1rem; }
     
     /* KPI Cards */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
     .kpi-card { background: #f9f9f9; padding: 15px; border-radius: 10px; border-left: 4px solid #2E8B57; }
     .kpi-card .label { font-size: 0.9rem; color: #666; margin-bottom: 5px; }
     .kpi-card .value { font-size: 1.8rem; font-weight: 700; color: #2E8B57; }
@@ -44,6 +49,13 @@
       max-height: 200px; /* Make insights smaller */
       overflow-y: auto; /* Add scroll for long content */
       font-size: 0.95rem;
+    }
+    .btn {
+      background: #2E8B57; color: #fff; border: none; padding: 10px 16px; border-radius: 10px;
+      font-weight: 600; cursor: pointer; transition: transform .15s ease, opacity .2s;
+    }
+    .btn:hover {
+      transform: translateY(-1px); opacity: .95;
     }
 
     @media (max-width: 900px) {
@@ -66,6 +78,22 @@
   <div class="main-content">
     <h1>📊 Analytics & AI Insights</h1>
 
+    <!-- **NEW**: Date Range Filter -->
+    <div class="card mb-4">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-3">
+          <label for="startDate" class="form-label fw-bold">Start Date</label>
+          <input type="date" id="startDate" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label for="endDate" class="form-label fw-bold">End Date</label>
+          <input type="date" id="endDate" class="form-control">
+        </div>
+        <div class="col-md-3 mt-auto"><button id="applyFilterBtn" class="btn w-100">Apply Filter</button></div>
+        <div class="col-md-3 mt-auto"><button id="exportDashboardBtn" class="btn btn-success w-100"><i class="fas fa-file-pdf me-2"></i>Export Dashboard</button></div>
+      </div>
+    </div>
+
     <div class="analytics-container">
       <!-- Primary Content Area -->
       <div class="primary-content">
@@ -83,6 +111,10 @@
             <div class="label">Net Profit</div>
             <div class="value" id="kpiProfit">₹0</div>
           </div>
+          <div class="kpi-card">
+            <div class="label">Profit Margin</div>
+            <div class="value" id="kpiProfitMargin">0%</div>
+          </div>
         </div>
 
         <div class="card">
@@ -92,6 +124,15 @@
         <div class="card">
           <h3>Route Profitability</h3>
           <canvas id="routeChart"></canvas>
+        </div>
+        <div class="card">
+          <h3>Profit by Vehicle</h3>
+          <canvas id="vehicleProfitChart"></canvas>
+          <button id="exportVehicleProfitBtn" class="btn" style="margin-top: 15px; display: none;">Download as PDF</button>
+        </div>
+        <div class="card">
+          <h3>Top 5 Most Profitable Routes</h3>
+          <canvas id="topRoutesChart"></canvas>
         </div>
       </div>
 
@@ -131,11 +172,15 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // === Gemini API Function ===
+    // **NEW**: Global variables for chart instances and data
+    let chartInstances = {}; let allLrsData = {}; let clientMap = {};
+
+    // === AI Insights Function (Using Gemini) ===
     async function getAIInsights(summary, language) {
-      const API_KEY = "AIzaSyDjv2Wr5dW8hWLRAh_GjDcTKzgBdhxsOQc"; // Your Gemini API key
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+      const API_KEY = "AIzaSyBKewjvZPpkBqhVoKx8uGYYGatNI_neTnk";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${API_KEY}`;
       const langName = language === 'hi-IN' ? 'Hindi' : 'English';
+      
       const body = {
         contents: [{
           parts: [{ text: `Analyze this logistics data and give 5 smart, actionable insights in ${langName}:\n\n${summary}` }]
@@ -145,10 +190,13 @@
       try {
         const res = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify(body)
         });
         const data = await res.json();
+        // Parse the response from the Google Gemini format
         return data.candidates?.[0]?.content?.parts?.[0]?.text || "No insights generated.";
       } catch (error) {
         console.error("AI Error:", error);
@@ -194,101 +242,290 @@
     }
     speakBtn.addEventListener('click', speakInsights);
 
+    // **NEW**: Function to destroy existing charts before re-rendering
+    function destroyCharts() {
+      Object.values(chartInstances).forEach(chart => chart.destroy());
+      chartInstances = {};
+    }
+
+    // **NEW**: Main function to update the dashboard with filtered data
+    async function updateDashboard(startDate, endDate) {
+      destroyCharts();
+
+      const filteredLrs = Object.values(allLrsData).filter(lr => {
+        if (!lr.date) return false;
+        const lrDate = new Date(lr.date);
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+        if (end) end.setHours(23, 59, 59, 999); // Include the whole end day
+
+        if (start && end) return lrDate >= start && lrDate <= end;
+        if (start) return lrDate >= start;
+        if (end) return lrDate <= end;
+        return true; // No date filter applied
+      });
+
+      if (filteredLrs.length === 0) {
+        document.getElementById('aiList').innerHTML = '<li>No data for the selected period.</li>';
+        document.getElementById('kpiRevenue').textContent = '₹0';
+        document.getElementById('kpiExpenses').textContent = '₹0';
+        document.getElementById('kpiProfit').textContent = '₹0';
+        document.getElementById('kpiProfitMargin').textContent = '0%';
+        document.getElementById('kpiProfitMargin').classList.remove('negative');
+        return;
+      }
+
+      let totalRevenue = 0, totalExpenses = 0;
+      let clientData = {}, routeData = {}, monthlyData = Array(12).fill({revenue: 0, expenses: 0}), vehicleProfitData = {};
+
+      filteredLrs.forEach(lr => {
+        const revenue = Number(lr.billingAmount || 0);
+        const expenses = (Number(lr.tyreExpenses) || 0) + (Number(lr.dieselExpenses) || 0) + (Number(lr.tollExpenses) || 0) +
+                         (Number(lr.vehicleWork) || 0) + (Number(lr.foodExpenses) || 0) + (Number(lr.otherExpenses) || 0) +
+                         (Number(lr.advance) || 0) + (Number(lr.shortage) || 0);
+        
+        totalRevenue += revenue;
+        totalExpenses += expenses;
+        
+        const clientName = clientMap[lr.clientId] || 'Unknown Client';
+        clientData[clientName] = (clientData[clientName] || 0) + revenue;
+
+        const routeName = `${lr.fromLocation || 'Start'} to ${lr.toLocation || 'End'}`;
+        routeData[routeName] = (routeData[routeName] || 0) + (revenue - expenses);
+
+        const vehicleNumber = lr.truckNumber || 'Unknown Vehicle';
+        vehicleProfitData[vehicleNumber] = (vehicleProfitData[vehicleNumber] || 0) + (revenue - expenses);
+
+        const month = new Date(lr.date).getMonth();
+        if (month >= 0 && month < 12) {
+          monthlyData[month] = {
+            revenue: monthlyData[month].revenue + revenue,
+            expenses: monthlyData[month].expenses + expenses
+          };
+        }
+      });
+
+      // Populate KPI Cards
+      const netProfit = totalRevenue - totalExpenses;
+      document.getElementById('kpiRevenue').textContent = `₹${totalRevenue.toLocaleString('en-IN')}`;
+      document.getElementById('kpiExpenses').textContent = `₹${totalExpenses.toLocaleString('en-IN')}`;
+      document.getElementById('kpiProfit').textContent = `₹${netProfit.toLocaleString('en-IN')}`;
+      document.getElementById('kpiProfit').classList.toggle('negative', netProfit < 0);
+
+      const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+      document.getElementById('kpiProfitMargin').textContent = `${profitMargin.toFixed(2)}%`;
+      document.getElementById('kpiProfitMargin').classList.toggle('negative', profitMargin < 0);
+
+      // Revenue vs Expenses Chart
+      chartInstances.revenueChart = new Chart(document.getElementById("revenueChart"), {
+        type: 'bar',
+        data: {
+          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+          datasets: [
+            { label: "Revenue", data: monthlyData.map(d => d.revenue), backgroundColor: "#2E8B57" },
+            { label: "Expenses", data: monthlyData.map(d => d.expenses), backgroundColor: "#FF6384" }
+          ]
+        }
+      });
+
+      // Client Chart
+      chartInstances.clientChart = new Chart(document.getElementById("clientChart"), {
+        type: 'pie',
+        data: { labels: Object.keys(clientData), datasets: [{ data: Object.values(clientData) }] }
+      });
+
+      // Route Chart
+      chartInstances.routeChart = new Chart(document.getElementById("routeChart"), {
+        type: 'line',
+        data: { labels: Object.keys(routeData), datasets: [{ label: "Profit", data: Object.values(routeData), borderColor:"#2E8B57", tension: 0.1 }] }
+      });
+
+      // Profit by Vehicle Chart
+      chartInstances.vehicleProfitChart = new Chart(document.getElementById("vehicleProfitChart"), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(vehicleProfitData),
+          datasets: [{
+            label: 'Net Profit',
+            data: Object.values(vehicleProfitData),
+            backgroundColor: Object.values(vehicleProfitData).map(profit => profit >= 0 ? 'rgba(46, 139, 87, 0.7)' : 'rgba(231, 76, 60, 0.7)'),
+            borderColor: Object.values(vehicleProfitData).map(profit => profit >= 0 ? '#2E8B57' : '#e74c3c'),
+            borderWidth: 1
+          }]
+        },
+        options: { indexAxis: 'y' }
+      });
+
+      // Top 5 Profitable Routes Chart
+      const sortedRoutes = Object.entries(routeData).sort(([, a], [, b]) => b - a).slice(0, 5);
+      chartInstances.topRoutesChart = new Chart(document.getElementById("topRoutesChart"), {
+        type: 'doughnut',
+        data: {
+          labels: sortedRoutes.map(([route]) => route),
+          datasets: [{
+            label: 'Profit',
+            data: sortedRoutes.map(([, profit]) => profit),
+            backgroundColor: ['#2E8B57', '#3CB371', '#20B2AA', '#66CDAA', '#8FBC8F']
+          }]
+        }
+      });
+
+      document.getElementById('exportVehicleProfitBtn').style.display = 'block';
+
+      // AI Insights
+      const summaryForAI = `Total Revenue: ${totalRevenue}, Total Expenses: ${totalExpenses}, Net Profit: ${netProfit}, Profit Margin: ${profitMargin.toFixed(2)}%, Clients: ${JSON.stringify(clientData)}, Routes: ${JSON.stringify(routeData)}`;
+      const selectedLang = languageSelect.value;
+      aiList.innerHTML = '<li><i class="fas fa-spinner fa-spin"></i> Loading insights...</li>';
+      const aiText = await getAIInsights(summaryForAI, selectedLang);
+      aiList.innerHTML = aiText.split(/[\n*-]/).filter(line => line.trim()).map(line => `<li>${line.trim()}</li>`).join("");
+    }
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "index.html";
       } else {
-        const uid = user.uid;
-        // Corrected the path to query the root 'lrReports' collection
-        const lrsRef = query(ref(db, 'lrReports'), orderByChild('userId'), equalTo(uid));
-        const snapshot = await get(lrsRef);
+        // **FIX**: Determine the correct core account ID to fetch shared data.
+        const userProfileRef = ref(db, `users/${user.uid}`);
+        const userProfileSnap = await get(userProfileRef);
+        const userData = userProfileSnap.exists() ? userProfileSnap.val() : {};
+        const coreAccountId = userData.coreAccountId || user.uid;
 
-        let fullSummary = ''; // Store summary to re-use on language change
+        if (!coreAccountId) {
+          console.error("Could not determine core account ID. Analytics will not load.");
+          document.getElementById('aiList').innerHTML = '<li>Error: Could not verify account.</li>';
+          document.getElementById('kpiRevenue').textContent = 'Error';
+          document.getElementById('kpiExpenses').textContent = 'Error';
+          document.getElementById('kpiProfit').textContent = 'Error';
+          return;
+        }
 
-        if (snapshot.exists()) {
-          const lrs = snapshot.val();
-          let totalRevenue = 0, totalExpenses = 0;
-          let clientData = {}, routeData = {}, monthlyData = Array(12).fill({revenue: 0, expenses: 0});
+        // Fetch LR reports from the correct core account path.
+        const lrsRef = ref(db, `users/${coreAccountId}/lrReports`);
+        // **FIX**: Fetch clients from the currently logged-in user's own path, not the core account path.
+        const clientsRef = ref(db, `users/${user.uid}/clients`);
 
-          Object.values(lrs).forEach(lr => {
-            const revenue = Number(lr.freightAmount || 0);
-            // Calculate total expenses from individual fields
-            const expenses = (Number(lr.tyreExpenses) || 0) + (Number(lr.dieselExpenses) || 0) + (Number(lr.tollExpenses) || 0) +
-                             (Number(lr.vehicleWork) || 0) + (Number(lr.foodExpenses) || 0) + (Number(lr.otherExpenses) || 0) +
-                             (Number(lr.advance) || 0) + (Number(lr.shortage) || 0);
-            
-            totalRevenue += revenue;
-            totalExpenses += expenses;
-            
-            const clientName = lr.consignor || 'Unknown Client';
-            clientData[clientName] = (clientData[clientName] || 0) + revenue;
+        const [lrsSnapshot, clientsSnapshot] = await Promise.all([
+          get(lrsRef),
+          get(clientsRef)
+        ]);
 
-            const routeName = `${lr.fromLocation || 'Start'} to ${lr.toLocation || 'End'}`;
-            routeData[routeName] = (routeData[routeName] || 0) + (revenue - expenses);
-
-            const month = new Date(lr.date).getMonth();
-            if (month >= 0 && month < 12) {
-              monthlyData[month] = {
-                revenue: monthlyData[month].revenue + revenue,
-                expenses: monthlyData[month].expenses + expenses
-              };
-            }
+        if (lrsSnapshot.exists()) {
+          allLrsData = lrsSnapshot.val();
+          const clients = clientsSnapshot.exists() ? clientsSnapshot.val() : {};
+          Object.entries(clients).forEach(([key, value]) => {
+            clientMap[key] = value.clientName;
           });
+        }
 
-          // Populate KPI Cards
-          const netProfit = totalRevenue - totalExpenses;
-          document.getElementById('kpiRevenue').textContent = `₹${totalRevenue.toLocaleString('en-IN')}`;
-          document.getElementById('kpiExpenses').textContent = `₹${totalExpenses.toLocaleString('en-IN')}`;
-          document.getElementById('kpiProfit').textContent = `₹${netProfit.toLocaleString('en-IN')}`;
-          if(netProfit < 0) document.getElementById('kpiProfit').classList.add('negative');
+        // **NEW**: Set default date range to the current month and load initial data
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+        document.getElementById('startDate').value = firstDay;
+        document.getElementById('endDate').value = lastDay;
+        updateDashboard(firstDay, lastDay);
 
-          // Revenue vs Expenses Chart
-          new Chart(document.getElementById("revenueChart"), {
-            type: 'bar',
-            data: {
-              labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-              datasets: [
-                { label: "Revenue", data: monthlyData.map(d => d.revenue), backgroundColor: "#2E8B57" },
-                { label: "Expenses", data: monthlyData.map(d => d.expenses), backgroundColor: "#FF6384" }
-              ]
-            }
-          });
+        // **NEW**: Add event listener for the filter button
+        document.getElementById('applyFilterBtn').addEventListener('click', () => {
+          document.getElementById('exportDashboardBtn').disabled = true; // Disable while loading
+          const startDate = document.getElementById('startDate').value;
+          const endDate = document.getElementById('endDate').value;
+          updateDashboard(startDate, endDate);
+        });
 
-          // Client Chart
-          new Chart(document.getElementById("clientChart"), {
-            type: 'pie',
-            data: { labels: Object.keys(clientData), datasets: [{ data: Object.values(clientData) }] }
-          });
-
-          // Route Chart
-          new Chart(document.getElementById("routeChart"), {
-            type: 'line',
-            data: { labels: Object.keys(routeData), datasets: [{ label: "Profit", data: Object.values(routeData), borderColor:"#2E8B57", tension: 0.1 }] }
-          });
-
-          // === Prepare summary for AI ===
-          fullSummary = `
-            Total Revenue: ${totalRevenue}
-            Total Expenses: ${totalExpenses}
-            Clients: ${JSON.stringify(clientData)}
-            Routes: ${JSON.stringify(routeData)}
-          `;
-
-          async function fetchAndRenderAIInsights() {
-            const selectedLang = languageSelect.value;
-            aiList.innerHTML = '<li><i class="fas fa-spinner fa-spin"></i> Loading insights...</li>';
-            const aiText = await getAIInsights(fullSummary, selectedLang);
-            aiList.innerHTML = aiText.split(/[\n*-]/).filter(line => line.trim()).map(line => `<li>${line.trim()}</li>`).join("");
+        // Add event listener for the export button
+        document.getElementById('exportVehicleProfitBtn').addEventListener('click', () => {
+          if (!chartInstances.vehicleProfitChart) {
+            alert('Chart is not ready yet.');
+            return;
           }
 
-          // Initial fetch
-          fetchAndRenderAIInsights();
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF('landscape');
 
-          // Re-fetch on language change
-          languageSelect.addEventListener('change', fetchAndRenderAIInsights);
-        }
+          // Get the chart as a base64 image
+          const chartImage = chartInstances.vehicleProfitChart.toBase64Image();
+
+          // Add title
+          doc.setFontSize(18);
+          doc.text('Profit by Vehicle Report', 14, 22);
+          doc.setFontSize(11);
+          doc.setTextColor(100);
+          doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+
+          // Add the chart image to the PDF
+          doc.addImage(chartImage, 'PNG', 15, 40, 267, 150); // Adjust position and size as needed
+
+          doc.save('Profit_by_Vehicle_Report.pdf');
+        });
+
+        // **NEW**: Add event listener for the new export dashboard button
+        document.getElementById('exportDashboardBtn').addEventListener('click', exportDashboardPDF);
       }
     });
+
+    // **NEW**: Function to export the entire dashboard as a PDF
+    async function exportDashboardPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const margin = 15;
+      const docWidth = doc.internal.pageSize.getWidth();
+      const docHeight = doc.internal.pageSize.getHeight();
+      const contentWidth = docWidth - (margin * 2);
+      let yPos = margin;
+
+      // --- Helper function to add elements and handle page breaks ---
+      const addElementToPDF = async (element, isChart = false) => {
+        let imgData;
+        if (isChart) {
+          imgData = element.toBase64Image();
+        } else {
+          const canvas = await html2canvas(element, { scale: 2 });
+          imgData = canvas.toDataURL('image/png');
+        }
+        
+        const imgProps = doc.getImageProperties(imgData);
+        const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
+
+        if (yPos + imgHeight + margin > docHeight) {
+          doc.addPage();
+          yPos = margin;
+        }
+        
+        doc.addImage(imgData, 'PNG', margin, yPos, contentWidth, imgHeight);
+        yPos += imgHeight + 10; // Add some space after the element
+      };
+
+      // --- PDF Header ---
+      doc.setFontSize(22);
+      doc.setTextColor(46, 139, 87);
+      doc.text('Analytics Dashboard Report', docWidth / 2, yPos, { align: 'center' });
+      yPos += 10;
+      doc.setFontSize(12);
+      doc.setTextColor(100);
+      const dateRange = `From: ${document.getElementById('startDate').value} To: ${document.getElementById('endDate').value}`;
+      doc.text(dateRange, docWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+
+      // --- Add Dashboard Elements ---
+      const kpiGrid = document.querySelector('.kpi-grid');
+      const aiCard = document.querySelector('.ai-suggestions');
+
+      // 1. KPI Cards
+      await addElementToPDF(kpiGrid);
+      // 2. AI Insights
+      await addElementToPDF(aiCard);
+      // 3. Charts
+      await addElementToPDF(chartInstances.revenueChart, true);
+      await addElementToPDF(chartInstances.clientChart, true);
+      await addElementToPDF(chartInstances.routeChart, true);
+      await addElementToPDF(chartInstances.vehicleProfitChart, true);
+      await addElementToPDF(chartInstances.topRoutesChart, true);
+
+      // --- Save the PDF ---
+      const fileName = `Dashboard_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+    }
   </script>
 </body>
 </html>
