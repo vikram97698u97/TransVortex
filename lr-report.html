@@ -212,7 +212,6 @@
     }
 
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
 
@@ -396,20 +395,14 @@
               <label class="form-label">Tyre Expenses (₹)</label>
               <input type="number" step="0.01" class="form-control" id="tyreExpenses" value="0">
             </div>
-            <div class="col-md-8 mb-3">
-                <label class="form-label">Diesel Expenses</label>
-                <div class="input-group">
-                    <select id="dieselPumpName" class="form-select">
-                        <option value="">Select a Pump</option>
-                        <!-- Petrol pumps will be populated here -->
-                    </select>
-                    <input type="number" step="0.01" class="form-control" id="dieselLiters" placeholder="Liters" oninput="calculateDieselTotal()">
-                    <input type="number" step="0.01" class="form-control" id="dieselPerLiter" placeholder="Price/Liter" oninput="calculateDieselTotal()">
-                    <input type="number" step="0.01" class="form-control" id="dieselExpenses" placeholder="Total" readonly>
-                </div>
-                <div class="form-text">
-                    Select a pump, enter liters and price/liter to auto-calculate total.
-                </div>
+            <div class="col-md-8 mb-3" id="dieselEntriesContainer">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                <span>Diesel Expenses</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addDieselEntry('dieselEntriesContainer', dieselPumpOptions)">
+                  <i class="fas fa-plus"></i> Add Stop
+                </button>
+              </label>
+              <!-- Diesel entries will be added here by JavaScript -->
             </div>
             <div class="col-md-4 mb-3">
               <label class="form-label">Toll Expenses (₹)</label>
@@ -431,6 +424,23 @@
               <input type="number" step="0.01" class="form-control" id="otherExpenses" value="0" oninput="calculateAmount()">
             </div>
           </div>
+
+          <!-- NEW: Empty Return Trip Expenses -->
+          <div class="accordion mt-4" id="emptyTripAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                  <i class="fas fa-undo me-2"></i> Add Empty Return Trip Expenses (Optional)
+                </button>
+              </h2>
+              <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#emptyTripAccordion">
+                <div class="accordion-body">
+                  <div id="emptyDieselEntriesContainer"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- END NEW EXPENSE FIELDS -->
           
           <div class="row">
@@ -946,19 +956,15 @@
                 <input type="number" step="0.01" class="form-control" id="editTyreExpenses" value="0">
               </div>
               <div class="col-md-8 mb-3">
-                  <label class="form-label">Diesel Expenses</label>
-                  <div class="input-group">
-                      <select id="editDieselPumpName" class="form-select">
-                          <option value="">Select a Pump</option>
-                          <!-- Petrol pumps will be populated here -->
-                      </select>
-                      <input type="number" step="0.01" class="form-control" id="editDieselLiters" placeholder="Liters" oninput="calculateEditDieselTotal()">
-                      <input type="number" step="0.01" class="form-control" id="editDieselPerLiter" placeholder="Price/Liter" oninput="calculateEditDieselTotal()">
-                      <input type="number" step="0.01" class="form-control" id="editDieselExpenses" placeholder="Total" readonly>
-                  </div>
-                  <div class="form-text">
-                      Select a pump, enter liters and price/liter to auto-calculate total.
-                  </div>
+                <label class="form-label d-flex justify-content-between align-items-center">
+                  <span>Diesel Expenses</span>
+                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="addDieselEntry('editDieselEntriesContainer', dieselPumpOptions)">
+                    <i class="fas fa-plus"></i> Add Stop
+                  </button>
+                </label>
+                <div id="editDieselEntriesContainer">
+                  <!-- Diesel entries for editing will be added here by JavaScript -->
+                </div>
               </div>
               <div class="col-md-4 mb-3">
                 <label class="form-label">Toll Expenses (₹)</label>
@@ -1042,18 +1048,21 @@
     </div>
   </div>
 
+  <!-- SCRIPT LOADING ORDER FIX: Move all scripts to the end of the body -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  
   <script src="navbar-loader.js"></script>
   <script>
     // Firebase configuration
@@ -1069,8 +1078,10 @@
     };
 
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
     const auth = firebase.auth();
 
     // Global Constants
@@ -1079,9 +1090,11 @@
     let allVehicles = [];
     let allClients = [];
     let allPetrolPumps = [];
+    let dieselPumpOptions = ''; // To store pump options HTML
     let selectedLRs = [];
     let currentEditingLRId = null;
     let currentCoreAccountId = null;
+    let lrTable; // Define lrTable globally
 
     // Load all vehicles from Firebase - COMPLETELY FIXED VERSION
     async function loadAllVehicles(userId) {
@@ -1089,7 +1102,7 @@
         console.log("🔍 Starting vehicle load for user:", userId);
         
         // Method 1: Try to get coreAccountId from user profile first
-        const userProfileRef = database.ref(`users/${userId}`);
+        const userProfileRef = db.ref(`users/${userId}`);
         const userSnapshot = await userProfileRef.once('value');
         const userData = userSnapshot.val();
         
@@ -1114,7 +1127,7 @@
 
         console.log("🚗 Loading vehicles from path: users/" + currentCoreAccountId + "/vehicles");
         
-        const vehiclesRef = database.ref(`users/${currentCoreAccountId}/vehicles`);
+        const vehiclesRef = db.ref(`users/${currentCoreAccountId}/vehicles`);
         vehiclesRef.on('value', (snapshot) => {
           allVehicles = [];
           if (snapshot.exists()) {
@@ -1182,7 +1195,7 @@
 
       // **FIX**: Fetch from the user-specific path
       const coreAccountId = await getCoreAccountId(user.uid);
-      const clientsRef = database.ref(`users/${coreAccountId}/clients`);
+      const clientsRef = db.ref(`users/${coreAccountId}/clients`);
 
       clientsRef.on('value', (snapshot) => {
         allClients = [];
@@ -1223,38 +1236,31 @@
     async function loadAllPetrolPumps() {
       const user = auth.currentUser;
       if (!user) return;
- 
-      // **FIX**: Fetch pumps from the currently logged-in user's own data path.
-      const pumpsRef = database.ref(`users/${user.uid}/petrolPumps`);
+      const pumpsRef = db.ref(`users/${user.uid}/petrolPumps`);
  
       pumpsRef.on('value', (snapshot) => {
-        allPetrolPumps = [];
-        const pumpSelect = document.getElementById('dieselPumpName');
-        const editPumpSelect = document.getElementById('editDieselPumpName');
-        
-        pumpSelect.innerHTML = '<option value="">Select a Pump</option>';
-        editPumpSelect.innerHTML = '<option value="">Select a Pump</option>';
-        
+        allPetrolPumps = []; // Reset the array
+        dieselPumpOptions = '<option value="">Select a Pump</option>'; // Reset options string
         if (snapshot.exists()) {
           snapshot.forEach((childSnapshot) => {
             const pump = childSnapshot.val();
             const pumpData = { id: childSnapshot.key, ...pump };
             allPetrolPumps.push(pumpData);
-            
-            // Add to pump select dropdowns
-            const option = document.createElement('option');
-            option.value = pumpData.name;
-            option.textContent = `${pumpData.name} - ${pumpData.place || 'N/A'}`;
-            pumpSelect.appendChild(option);
-            
-            const editOption = document.createElement('option');
-            editOption.value = pumpData.name;
-            editOption.textContent = `${pumpData.name} - ${pumpData.location}`;
-            editPumpSelect.appendChild(editOption);
+            const optionHtml = `<option value="${pumpData.name}">${pumpData.name} - ${pumpData.place || 'N/A'}</option>`;
+            dieselPumpOptions += optionHtml;
           });
-          console.log("✅ Loaded petrol pumps:", allPetrolPumps.length);
+          console.log("✅ Loaded petrol pumps and generated options:", allPetrolPumps.length);
         } else {
-          console.log("❌ No petrol pumps found");
+          const noPumpsOption = '<option value="" disabled>No pumps registered</option>';
+          dieselPumpOptions += noPumpsOption;
+        }
+        // Add the first diesel entry field to the 'Add New LR' form
+        if (document.querySelectorAll('#dieselEntriesContainer .diesel-entry').length === 0) {
+          addDieselEntry('dieselEntriesContainer', dieselPumpOptions);
+        }
+        // **NEW**: Add the first diesel entry field for the optional empty return trip
+        if (document.querySelectorAll('#emptyDieselEntriesContainer .diesel-entry').length === 0) {
+            addDieselEntry('emptyDieselEntriesContainer', dieselPumpOptions);
         }
       });
     }
@@ -1262,7 +1268,7 @@
     // **NEW**: Helper function to get the core account ID for any user
     async function getCoreAccountId(userId) {
         if (!userId) return null;
-        const userProfileRef = database.ref(`users/${userId}/profile`);
+        const userProfileRef = db.ref(`users/${userId}/profile`);
         const userProfileSnap = await userProfileRef.once('value');
         if (userProfileSnap.exists()) {
             const profileData = userProfileSnap.val();
@@ -1368,6 +1374,11 @@
 
     // Initialize the page
     document.addEventListener('DOMContentLoaded', function() {
+      // Initialize DataTable
+      lrTable = $('#lrTable').DataTable({
+        pageLength: 10,
+        order: [[1, 'desc']] // Sort by date descending
+      });
       auth.onAuthStateChanged(async (user) => {
         if (user) {
           console.log("👤 User authenticated:", user.uid);
@@ -1400,14 +1411,6 @@
       document.getElementById('saveLRBtn').addEventListener('click', saveLR);
       document.getElementById('updateLRBtn').addEventListener('click', updateLR);
       document.getElementById('applyFiltersBtn').addEventListener('click', loadLRData);
-      document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
-      
-      // Initialize DataTable
-      $('#lrTable').DataTable({
-        pageLength: 10,
-        responsive: true,
-        autoWidth: false
-      });
     });
 
     // Generate LR Number
@@ -1426,11 +1429,11 @@
       const user = auth.currentUser;
       if (!user) return;
       
-      const lrRef = database.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
+      const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
       // **FIX**: The company profile details (transportName, address, gstNumber) are stored
       // directly under the core account's profile, not in a nested 'profile' object
       // for the main branch user. This change points to the correct location.
-      const userProfileRef = database.ref(`users/${currentCoreAccountId}`);
+      const userProfileRef = db.ref(`users/${currentCoreAccountId}`);
       
       Promise.all([lrRef.once('value'), userProfileRef.once('value')]).then(([lrSnapshot, profileSnapshot]) => {
         const lr = lrSnapshot.val();
@@ -1643,14 +1646,6 @@
       calculateAmount();
     }
 
-    function calculateDieselTotal() {
-      const liters = parseFloat(document.getElementById('dieselLiters').value) || 0;
-      const perLiter = parseFloat(document.getElementById('dieselPerLiter').value) || 0;
-      const total = liters * perLiter;
-      document.getElementById('dieselExpenses').value = total.toFixed(2);
-      calculateAmount();
-    }
-
     function calculateAmount() {
       const billingAmount = parseFloat(document.getElementById('billingAmount').value) || 0;
       const advance = parseFloat(document.getElementById('advance').value) || 0;
@@ -1734,14 +1729,6 @@
       calculateEditAmount();
     }
 
-    function calculateEditDieselTotal() {
-      const liters = parseFloat(document.getElementById('editDieselLiters').value) || 0;
-      const perLiter = parseFloat(document.getElementById('editDieselPerLiter').value) || 0;
-      const total = liters * perLiter;
-      document.getElementById('editDieselExpenses').value = total.toFixed(2);
-      calculateEditAmount();
-    }
-
     function calculateEditAmount() {
       const billingAmount = parseFloat(document.getElementById('editBillingAmount').value) || 0;
       const advance = parseFloat(document.getElementById('editAdvance').value) || 0;
@@ -1786,6 +1773,39 @@
         return;
       }
 
+      // Collect all diesel entries
+      const dieselEntries = [];
+      let totalDieselExpenses = 0;
+      document.querySelectorAll('#dieselEntriesContainer .diesel-entry').forEach(entry => {
+        const entryData = {
+          pumpName: entry.querySelector('.diesel-pump-name').value,
+          liters: parseFloat(entry.querySelector('.diesel-liters').value) || 0,
+          perLiter: parseFloat(entry.querySelector('.diesel-per-liter').value) || 0,
+          total: parseFloat(entry.querySelector('.diesel-total').value) || 0,
+        };
+        if (entryData.pumpName && entryData.total > 0) {
+          dieselEntries.push(entryData);
+          totalDieselExpenses += entryData.total;
+        }
+      });
+
+      // **NEW**: Collect all empty return trip diesel entries
+      const emptyDieselEntries = [];
+      let emptyTotalDieselExpenses = 0;
+      document.querySelectorAll('#emptyDieselEntriesContainer .diesel-entry').forEach(entry => {
+          const entryData = {
+              pumpName: entry.querySelector('.diesel-pump-name').value,
+              liters: parseFloat(entry.querySelector('.diesel-liters').value) || 0,
+              perLiter: parseFloat(entry.querySelector('.diesel-per-liter').value) || 0,
+              total: parseFloat(entry.querySelector('.diesel-total').value) || 0,
+          };
+          if (entryData.pumpName && entryData.total > 0) {
+              emptyDieselEntries.push(entryData);
+              emptyTotalDieselExpenses += entryData.total;
+          }
+      });
+
+
       const lrData = {
         date: document.getElementById('lrDate').value,
         lrNumber: document.getElementById('lrNumber').value,
@@ -1805,14 +1825,17 @@
         freightAmount: parseFloat(document.getElementById('freightAmount').value) || 0,
         // --- TRIP EXPENSES - INCLUDING VEHICLE WORK ---
         tyreExpenses: parseFloat(document.getElementById('tyreExpenses').value) || 0,
-        dieselPumpName: document.getElementById('dieselPumpName').value,
-        dieselLiters: parseFloat(document.getElementById('dieselLiters').value) || 0,
-        dieselPerLiter: parseFloat(document.getElementById('dieselPerLiter').value) || 0,
-        dieselExpenses: parseFloat(document.getElementById('dieselExpenses').value) || 0,
+        dieselEntries: dieselEntries, // Save the array of entries
+        dieselExpenses: totalDieselExpenses, // Save the calculated total
         tollExpenses: parseFloat(document.getElementById('tollExpenses').value) || 0,
         vehicleWork: parseFloat(document.getElementById('vehicleWork').value) || 0, // Key field for vehicle work
         foodExpenses: parseFloat(document.getElementById('foodExpenses').value) || 0,
         otherExpenses: parseFloat(document.getElementById('otherExpenses').value) || 0,
+        // **NEW**: Add empty trip data to the LR object
+        emptyTripData: {
+            dieselEntries: emptyDieselEntries,
+            dieselExpenses: emptyTotalDieselExpenses
+        },
         // ----------------------------------------------
         paymentType: document.getElementById('paymentType').value,
         bankName: document.getElementById('bankName').value,
@@ -1835,11 +1858,13 @@
           alert('Error: Core account ID not found. Cannot save LR.');
           return;
       }
-      const newLRRef = database.ref(`users/${currentCoreAccountId}/lrReports`).push();
+      const newLRRef = db.ref(`users/${currentCoreAccountId}/lrReports`).push();
       newLRRef.set(lrData)
         .then(() => {
           alert('LR saved successfully!');
           form.reset();
+          document.getElementById('dieselEntriesContainer').innerHTML = ''; // Clear diesel entries
+          document.getElementById('emptyDieselEntriesContainer').innerHTML = ''; // Clear empty trip diesel entries
           generateLRNumber();
           document.getElementById('lrDate').value = new Date().toISOString().split('T')[0];
           loadLRData();
@@ -1860,10 +1885,10 @@
       const user = auth.currentUser;
       if (!user) return;
 
-      const lrRef = database.ref(`users/${currentCoreAccountId}/lrReports`);
+      const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports`);
       lrRef.on('value', (snapshot) => {
-        const tbody = document.querySelector('#lrTable tbody');
-        if ($.fn.DataTable.isDataTable('#lrTable')) { $('#lrTable').DataTable().clear(); } else { tbody.innerHTML = ''; }
+        // Use the global lrTable variable
+        if (lrTable) { lrTable.clear(); }
         selectedLRs = [];
         
         snapshot.forEach((childSnapshot) => {
@@ -1883,7 +1908,7 @@
           // Find client name
           const client = allClients.find(c => c.id === lr.clientId) || {};
           
-          $('#lrTable').DataTable().row.add([
+          lrTable.row.add([
             `<div class="form-check">
                <input class="form-check-input lr-checkbox" type="checkbox" value="${lrId}" onchange="toggleLRSelection('${lrId}', this.checked)">
              </div>`,
@@ -1911,7 +1936,7 @@
           ]);
         });
         
-        $('#lrTable').DataTable().draw();
+        if (lrTable) { lrTable.draw(); }
 
         // Update generate invoice button state
         document.getElementById('generateInvoiceBtn').disabled = selectedLRs.length === 0;
@@ -1956,7 +1981,7 @@
         alert("Error: Cannot determine the account to fetch data from. Please reload.");
         return;
       }
-      const lrRef = database.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
+      const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
       lrRef.once('value').then((snapshot) => {
         const lr = snapshot.val();
         
@@ -1978,12 +2003,18 @@
         document.getElementById('editFreightRate').value = lr.freightRate || '';
         document.getElementById('editFreightAmount').value = lr.freightAmount || '';
         
-        // Populate expense fields
+        // --- Populate Diesel Expense Fields ---
+        const editDieselContainer = document.getElementById('editDieselEntriesContainer');
+        editDieselContainer.innerHTML = ''; // Clear previous entries
+        const editDieselPumpOptions = dieselPumpOptions; // Use a local constant for clarity
+        if (lr.dieselEntries && lr.dieselEntries.length > 0) {
+          lr.dieselEntries.forEach(entry => addDieselEntry('editDieselEntriesContainer', editDieselPumpOptions, entry));
+        } else {
+          addDieselEntry('editDieselEntriesContainer', editDieselPumpOptions, { pumpName: lr.dieselPumpName, liters: lr.dieselLiters, perLiter: lr.dieselPerLiter, total: lr.dieselExpenses });
+        }
+        
+        // Populate other expense fields
         document.getElementById('editTyreExpenses').value = lr.tyreExpenses || 0;
-        document.getElementById('editDieselPumpName').value = lr.dieselPumpName || '';
-        document.getElementById('editDieselLiters').value = lr.dieselLiters || '';
-        document.getElementById('editDieselPerLiter').value = lr.dieselPerLiter || '';
-        document.getElementById('editDieselExpenses').value = lr.dieselExpenses || '';
         document.getElementById('editTollExpenses').value = lr.tollExpenses || 0;
         document.getElementById('editVehicleWork').value = lr.vehicleWork || 0; // Key field for vehicle work
         document.getElementById('editFoodExpenses').value = lr.foodExpenses || 0;
@@ -2017,6 +2048,22 @@
         return;
       }
 
+      // Collect all diesel entries from the edit form
+      const dieselEntries = [];
+      let totalDieselExpenses = 0;
+      document.querySelectorAll('#editDieselEntriesContainer .diesel-entry').forEach(entry => {
+        const entryData = {
+          pumpName: entry.querySelector('.diesel-pump-name').value,
+          liters: parseFloat(entry.querySelector('.diesel-liters').value) || 0,
+          perLiter: parseFloat(entry.querySelector('.diesel-per-liter').value) || 0,
+          total: parseFloat(entry.querySelector('.diesel-total').value) || 0,
+        };
+        if (entryData.pumpName && entryData.total > 0) {
+          dieselEntries.push(entryData);
+          totalDieselExpenses += entryData.total;
+        }
+      });
+
       const lrData = {
         date: document.getElementById('editLrDate').value,
         lrNumber: document.getElementById('editLrNumber').value,
@@ -2036,10 +2083,8 @@
         freightAmount: parseFloat(document.getElementById('editFreightAmount').value) || 0,
         // --- TRIP EXPENSES - INCLUDING VEHICLE WORK ---
         tyreExpenses: parseFloat(document.getElementById('editTyreExpenses').value) || 0,
-        dieselPumpName: document.getElementById('editDieselPumpName').value,
-        dieselLiters: parseFloat(document.getElementById('editDieselLiters').value) || 0,
-        dieselPerLiter: parseFloat(document.getElementById('editDieselPerLiter').value) || 0,
-        dieselExpenses: parseFloat(document.getElementById('editDieselExpenses').value) || 0,
+        dieselEntries: dieselEntries,
+        dieselExpenses: totalDieselExpenses,
         tollExpenses: parseFloat(document.getElementById('editTollExpenses').value) || 0,
         vehicleWork: parseFloat(document.getElementById('editVehicleWork').value) || 0, // Key field for vehicle work
         foodExpenses: parseFloat(document.getElementById('editFoodExpenses').value) || 0,
@@ -2065,7 +2110,7 @@
           alert('Error: Core account ID not found. Cannot update LR.');
           return;
       }
-      database.ref(`users/${currentCoreAccountId}/lrReports/${currentEditingLRId}`).update(lrData)
+      db.ref(`users/${currentCoreAccountId}/lrReports/${currentEditingLRId}`).update(lrData)
         .then(() => {
           alert('LR updated successfully!');
           const editModal = bootstrap.Modal.getInstance(document.getElementById('editLRModal'));
@@ -2081,7 +2126,7 @@
     // Delete LR
     function deleteLR(lrId) {
       if (confirm('Are you sure you want to delete this LR?')) {
-        database.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`).remove()
+        db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`).remove()
           .then(() => {
             alert('LR deleted successfully!');
             loadLRData();
@@ -2107,7 +2152,7 @@
 
         // Create promises to fetch all selected LR data at once.
         const promises = selectedLRs.map(lrId => 
-          database.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`).once('value')
+          db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`).once('value')
         );
 
         const snapshots = await Promise.all(promises);
@@ -2176,7 +2221,7 @@
       const promises = selectedLRs.map(lrId => {
         // **FIX**: Use the correct `currentCoreAccountId` to fetch LR data,
         // ensuring it works for both core and branch accounts.
-        return database.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`).once('value').then(snapshot => {
+        return db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`).once('value').then(snapshot => {
           const lr = snapshot.val();
           // **FIX**: Add a check to ensure the LR data exists before processing it.
           if (!lr) {
@@ -2233,8 +2278,8 @@
         // Also, use `currentCoreAccountId` to ensure LRs are updated in the shared data location,
         // which is critical for branch accounts.
         const updates = {};
-        const dataRoot = currentCoreAccountId || user.uid;
-        const newInvoiceKey = database.ref(`users/${dataRoot}/invoices`).push().key;
+        const dataRoot = currentCoreAccountId || user.uid; // Should be coreAccountId
+        const newInvoiceKey = db.ref(`users/${dataRoot}/invoices`).push().key;
         
         // 1. Add the new invoice to the updates object.
         updates[`/users/${dataRoot}/invoices/${newInvoiceKey}`] = invoiceData;
@@ -2246,7 +2291,7 @@
         });
 
         // 3. Execute the atomic update.
-        database.ref().update(updates)
+        db.ref().update(updates)
           .then(() => {
             const bankModal = bootstrap.Modal.getInstance(document.getElementById('bankDetailsModal'));
             bankModal.hide();
@@ -2324,6 +2369,52 @@
       // Reload the page to restore functionality
       window.location.reload();
     }
+
+    // --- NEW DIESEL ENTRY FUNCTIONS ---
+
+    // Dynamically add a new diesel entry row
+    window.addDieselEntry = function(containerId, optionsHtml, data = {}) {
+      const container = document.getElementById(containerId);
+      const entryDiv = document.createElement('div');
+      entryDiv.className = 'input-group mb-2 diesel-entry';
+      entryDiv.innerHTML = `
+        <select class="form-select diesel-pump-name" style="flex: 2;">${optionsHtml}</select>
+        <input type="number" step="0.01" class="form-control diesel-liters" placeholder="Liters" value="${data.liters || ''}">
+        <input type="number" step="0.01" class="form-control diesel-per-liter" placeholder="Price/L" value="${data.perLiter || ''}">
+        <input type="number" step="0.01" class="form-control diesel-total bg-light" placeholder="Total" value="${data.total || ''}" readonly>
+        <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove(); calculateAmount();"><i class="fas fa-trash"></i></button>
+      `;
+      
+      // Set the selected pump
+      if (data.pumpName) {
+        entryDiv.querySelector('.diesel-pump-name').value = data.pumpName;
+      }
+
+      // Add event listeners to the new inputs
+      const litersInput = entryDiv.querySelector('.diesel-liters');
+      const perLiterInput = entryDiv.querySelector('.diesel-per-liter');
+      litersInput.addEventListener('input', () => calculateDieselRowTotal(entryDiv));
+      perLiterInput.addEventListener('input', () => calculateDieselRowTotal(entryDiv));
+
+      container.appendChild(entryDiv);
+    }
+
+    // Calculate total for a single diesel entry row
+    window.calculateDieselRowTotal = function(entryDiv) {
+      const liters = parseFloat(entryDiv.querySelector('.diesel-liters').value) || 0;
+      const perLiter = parseFloat(entryDiv.querySelector('.diesel-per-liter').value) || 0;
+      const totalInput = entryDiv.querySelector('.diesel-total');
+      totalInput.value = (liters * perLiter).toFixed(2);
+      
+      // Recalculate the main form totals
+      if (entryDiv.closest('#lrForm')) {
+        calculateAmount();
+      } else if (entryDiv.closest('#editLrForm')) {
+        calculateEditAmount();
+      }
+    }
+
+    // --- END NEW DIESEL ENTRY FUNCTIONS ---
 
     // Convert number to words (Indian numbering system)
     function convertNumberToWords(num) {
