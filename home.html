@@ -270,52 +270,295 @@
     }
     .table-responsive { border-radius: 8px; }
 
-    @media (max-width: 768px) {
-      .main-content { padding: 1rem; }
-
-      .welcome-section .welcome-header,
-      .payment-card-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-      }
-      .welcome-title { font-size: 1.6rem; }
-      .welcome-subtitle { font-size: 0.95rem; }
-      
-      /* Make all grids single-column on mobile */
-      .reminders-grid,
-      .summary-grid,
-      .activity-grid,
-      .quick-actions {
-        grid-template-columns: 1fr;
-      }
-      
-      /* Adjust summary card layout and font sizes */
-      .summary-card {
-        padding: 1rem;
-      }
-      .summary-details p {
-        font-size: 1.3rem; /* Reduce font size for summary values */
-      }
-      .payment-card h4 { 
-        font-size: 1.6rem; /* Reduce font size for payment card values */
-      }
-
-      /* Stack filter inputs and make buttons full-width for better touch interaction */
-      .container .row.mb-3 .col-md-3,
-      .container .row.mb-3 .col-md-4 {
-        margin-bottom: 1rem;
-      }
-      .container .row.mb-3 .d-flex {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-      .container .row.mb-3 .btn { width: 100%; }
+    /* Business Card Generator Styles */
+    .business-card-preview {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      min-height: 300px;
+    }
+    
+    .business-card {
+      width: 350px;
+      height: 200px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    
+    .business-card.green-modern {
+      background: linear-gradient(135deg, var(--primary), var(--mint));
+      color: white;
+      /* subtle diagonal stripe overlay */
+      background-image:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 8px),
+        linear-gradient(135deg, var(--primary), var(--mint));
+      background-blend-mode: overlay, normal;
+    }
+    
+    .business-card.dark-minimal {
+      background-color: var(--charcoal);
+      color: white;
+      /* dotted texture */
+      background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1.2px);
+      background-size: 8px 8px;
+    }
+    
+    .business-card.classic-white {
+      background-color: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+      /* subtle grid */
+      background-image:
+        linear-gradient(0deg, rgba(0,0,0,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    
+    /* Newly added templates */
+    .business-card.blue-professional {
+      background: linear-gradient(135deg, #3a7bd5, #3a6073);
+      color: #ffffff;
+      /* fine diagonal lines */
+      background-image:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 10px),
+        linear-gradient(135deg, #3a7bd5, #3a6073);
+      background-blend-mode: overlay, normal;
+    }
+    
+    .business-card.elegant-gold {
+      background: #1a1a1a;
+      color: #f4d03f; /* soft gold text */
+      border: 1px solid rgba(244, 208, 63, 0.35);
+      /* gold hatch */
+      background-image:
+        repeating-linear-gradient(135deg, rgba(244,208,63,0.12) 0 1px, transparent 1px 6px);
+    }
+    
+    .business-card.vibrant-gradient {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      color: #ffffff;
+      /* soft dot overlay */
+      background-image:
+        radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(135deg, #ff416c, #ff4b2b);
+      background-size: 10px 10px, auto;
+      background-blend-mode: overlay, normal;
     }
 
-  </style>
-  <!-- NEW: Styles for the Payment Dashboard Cards -->
-  <style>
+    /* Rolling gallery active state */
+    .rolling-gallery-item.active .business-card {
+      transform: scale(0.8);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+      outline: 2px solid rgba(46,139,87,.35);
+      outline-offset: 4px;
+    }
+    
+    .card-content {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      height: 100%;
+    }
+    
+    .logo-section {
+      flex-shrink: 0;
+    }
+    
+    .logo-img {
+      width: 70px;
+      height: 70px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 5px;
+    }
+    
+    .classic-white .logo-img {
+      background: rgba(0, 0, 0, 0.05);
+    }
+    
+    .details-section {
+      flex: 1;
+    }
+    
+    .company-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+    
+    .contact-info {
+      font-size: 0.8rem;
+    }
+    
+    .contact-item {
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .contact-item i {
+      width: 14px;
+      text-align: center;
+    }
+    
+    .template-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .template-option {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .template-option:hover {
+      border-color: var(--primary);
+    }
+    
+    .template-option.active {
+      border-color: var(--primary);
+      background: rgba(46, 139, 87, 0.05);
+    }
+    
+    .template-preview {
+      width: 100%;
+      height: 60px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    
+    .template-preview.green-modern {
+      background: linear-gradient(135deg, var(--primary), var(--mint));
+    }
+    
+    .template-preview.dark-minimal {
+      background: var(--charcoal);
+    }
+    
+    .template-preview.classic-white {
+      background: white;
+      border: 1px solid var(--border);
+    }
+
+    .template-preview.blue-professional {
+      background: linear-gradient(135deg, #3a7bd5, #3a6073);
+    }
+
+    .template-preview.elegant-gold {
+      background: #1a1a1a;
+    }
+
+    .template-preview.vibrant-gradient {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    }
+    .template-option span {
+      font-size: 0.8rem;
+    }
+
+    /* Rolling Gallery Styles */
+    .rolling-gallery-container {
+      position: relative;
+      height: 250px; /* Adjusted height for business cards */
+      width: 100%;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .rolling-gallery-gradient {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 100px; /* Wider gradient for a softer fade */
+      z-index: 10;
+      pointer-events: none; /* allow clicks to pass through to cards */
+    }
+
+    .rolling-gallery-gradient-left {
+      left: 0;
+      background: linear-gradient(to right, var(--card) 20%, transparent 100%);
+    }
+
+    .rolling-gallery-gradient-right {
+      right: 0;
+      background: linear-gradient(to left, var(--card) 20%, transparent 100%);
+    }
+
+    .rolling-gallery-content {
+      display: flex;
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .rolling-gallery-track {
+      display: flex;
+      height: 100%;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      width: 100%;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding: 8px 70px; /* leave space for gradients/buttons */
+    }
+
+    .rolling-gallery-track::-webkit-scrollbar { height: 6px; }
+    .rolling-gallery-track::-webkit-scrollbar-thumb { background: rgba(0,0,0,.1); border-radius: 999px; }
+
+    .rolling-gallery-item {
+      position: relative;
+      backface-visibility: hidden;
+      transform-origin: center;
+      transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      flex: 0 0 auto;
+      scroll-snap-align: center;
+    }
+
+    .rolling-gallery-item .business-card {
+      transform: scale(0.9);
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .rolling-gallery-item.active .business-card,
+    .rolling-gallery-item .business-card:hover {
+      transform: scale(1);
+      box-shadow: 0 14px 32px rgba(0,0,0,0.18);
+    }
+
+    /* Selection pop animation */
+    @keyframes tpl-pop {
+      0%   { transform: scale(0.78); box-shadow: 0 0 0 rgba(0,0,0,0); }
+      60%  { transform: scale(0.86); box-shadow: 0 14px 34px rgba(0,0,0,0.25); }
+      100% { transform: scale(0.8);  box-shadow: 0 12px 28px rgba(0,0,0,0.22); }
+    }
+    .business-card.selection-anim {
+      animation: tpl-pop 300ms ease-out forwards;
+    }
+
+    /* Subtle tilt for active */
+    .rolling-gallery-item.active {
+      transition: transform 600ms cubic-bezier(.2,.8,.2,1);
+    }
+    /* Payment Dashboard Cards */
     .payment-card {
       background-color: var(--card);
       border-radius: var(--radius);
@@ -345,6 +588,71 @@
       display: grid;
       place-items: center;
     }
+
+    @media (max-width: 768px) {
+      .main-content { padding: 1rem; }
+
+      .welcome-section .welcome-header,
+      .payment-card-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+      }
+      .welcome-title { font-size: 1.6rem; }
+      .welcome-subtitle { font-size: 0.95rem; }
+      
+      /* Make all grids single-column on mobile */
+      .reminders-grid,
+      .summary-grid,
+      .activity-grid,
+      .quick-actions,
+      .template-options {
+        grid-template-columns: 1fr;
+      }
+      
+      /* Adjust summary card layout and font sizes */
+      .summary-card {
+        padding: 1rem;
+      }
+      .summary-details p {
+        font-size: 1.3rem; /* Reduce font size for summary values */
+      }
+      .payment-card h4 { 
+        font-size: 1.6rem; /* Reduce font size for payment card values */
+      }
+      
+      .business-card {
+        width: 100%;
+        max-width: 320px;
+      }
+      
+      .card-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+      }
+      
+      .logo-img {
+        width: 60px;
+        height: 60px;
+      }
+      
+      .company-name {
+        font-size: 1.1rem;
+      }
+
+      /* Stack filter inputs and make buttons full-width for better touch interaction */
+      .container .row.mb-3 .col-md-3,
+      .container .row.mb-3 .col-md-4 {
+        margin-bottom: 1rem;
+      }
+      .container .row.mb-3 .d-flex {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .container .row.mb-3 .btn { width: 100%; }
+    }
+
   </style>
 </head>
 <body>
@@ -546,6 +854,111 @@
       </div>
     </div>
 
+    <!-- Business Card Generator Section -->
+    <div class="container mt-4">
+      <h2 class="section-title"><i class="fas fa-id-card me-2"></i>Business Card Generator</h2>
+      
+      <div class="row">
+        <!-- Form Section -->
+        <div class="col-md-6">
+          <div class="card p-4 h-100">
+            <form id="businessCardForm">
+              <div class="mb-3">
+                <label for="companyName" class="form-label">Company Name</label>
+                <input type="text" class="form-control" id="companyName" placeholder="Enter company name">
+              </div>
+              
+              <div class="mb-3">
+                <label for="companyLogo" class="form-label">Company Logo</label>
+                <input type="file" class="form-control" id="companyLogo" accept="image/*">
+                <div class="form-text">Upload your company logo (PNG, JPG, SVG)</div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="phone" class="form-label">Phone Number</label>
+                <input type="tel" class="form-control" id="phone" placeholder="Enter phone number">
+              </div>
+              
+              <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="email" placeholder="Enter email address">
+              </div>
+              
+              <div class="mb-3">
+                <label for="website" class="form-label">Website</label>
+                <input type="url" class="form-control" id="website" placeholder="Enter website URL">
+              </div>
+              
+              <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea class="form-control" id="address" rows="2" placeholder="Enter company address"></textarea>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label">Card Template</label>
+                <!-- Rolling Gallery -->
+                <div class="rolling-gallery-container">
+                  <div class="rolling-gallery-gradient rolling-gallery-gradient-left"></div>
+                  <div class="rolling-gallery-content">
+                    <div id="rollingGalleryTrack" class="rolling-gallery-track">
+                      <!-- Gallery items will be injected here by JavaScript -->
+                    </div>
+                  </div>
+                <!-- Carousel controls -->
+                <button type="button" id="galleryPrev" aria-label="Previous" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">‹</button>
+                <button type="button" id="galleryNext" aria-label="Next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">›</button>
+                  <div class="rolling-gallery-gradient rolling-gallery-gradient-right"></div>
+                </div>
+              </div>
+              
+              <div class="d-grid gap-2 d-md-flex">
+                <button type="button" id="generateCardBtn" class="btn btn-primary flex-fill">
+                  <i class="fas fa-sync-alt me-2"></i>Generate Card
+                </button>
+                <button type="button" id="saveCardBtn" class="btn btn-outline-primary">
+                  <i class="fas fa-save me-2"></i>Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Preview Section -->
+        <div class="col-md-6">
+          <div class="card p-4 h-100">
+            <h5 class="mb-3">Live Preview</h5>
+            <div id="cardPreview" class="business-card-preview">
+              <div id="businessCard" class="business-card green-modern">
+                <div class="card-content">
+                  <div class="logo-section">
+                    <img id="previewLogo" src="" alt="Company Logo" class="logo-img" style="display: none;">
+                  </div>
+                  <div class="details-section">
+                    <h3 id="previewCompanyName" class="company-name">Your Company Name</h3>
+                    <div class="contact-info">
+                      <p id="previewPhone" class="contact-item"><i class="fas fa-phone"></i> Phone: +1234567890</p>
+                      <p id="previewEmail" class="contact-item"><i class="fas fa-envelope"></i> Email: info@example.com</p>
+                      <p id="previewWebsite" class="contact-item"><i class="fas fa-globe"></i> Website: www.example.com</p>
+                      <p id="previewAddress" class="contact-item"><i class="fas fa-map-marker-alt"></i> Address: Your Company Address</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-4 d-grid gap-2 d-md-flex justify-content-md-end">
+              <button id="downloadCardBtn" class="btn btn-success" disabled>
+                <i class="fas fa-download me-2"></i>Download as PNG
+              </button>
+              <button id="shareCardBtn" class="btn btn-outline-success" disabled>
+                <i class="fas fa-share-alt me-2"></i>Share
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Recent Activity -->
     <div class="recent-activity">
       <h2 class="section-title">Recent Activity</h2>
@@ -620,6 +1033,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   
+  <!-- html2canvas for downloading business card -->
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  
   <script>
     // Firebase configuration
     const firebaseConfig = {
@@ -681,6 +1097,9 @@
           // Initialize DataTable
           initializeDataTable();
           setupEventListeners();
+          
+          // Initialize Business Card Generator
+          initBusinessCardGenerator();
         }
       });
     });
@@ -691,6 +1110,7 @@
       loadBusinessSummary(user);
       loadRecentActivity(user);
       loadSubscriptionStatus(user);
+      // **FIX**: The reminder functions are now called inside initializePage
       setupReminderForm(user);
       loadReminders(user);
     }
@@ -1267,6 +1687,353 @@
     // Utility function to format date for input fields
     function formatDateForInput(date) {
       return date.toISOString().split('T')[0];
+    }
+
+    // Business Card Generator functionality
+    function initBusinessCardGenerator() {
+      // DOM Elements
+      const businessCardForm = document.getElementById('businessCardForm');
+      const companyNameInput = document.getElementById('companyName');
+      const companyLogoInput = document.getElementById('companyLogo');
+      const phoneInput = document.getElementById('phone');
+      const emailInput = document.getElementById('email');
+      const websiteInput = document.getElementById('website');
+      const addressInput = document.getElementById('address');
+      const rollingTrack = document.getElementById('rollingGalleryTrack');
+      const generateCardBtn = document.getElementById('generateCardBtn');
+      const saveCardBtn = document.getElementById('saveCardBtn');
+      const downloadCardBtn = document.getElementById('downloadCardBtn');
+      const shareCardBtn = document.getElementById('shareCardBtn');
+      
+      // Preview Elements
+      const previewCompanyName = document.getElementById('previewCompanyName');
+      const previewLogo = document.getElementById('previewLogo');
+      const previewPhone = document.getElementById('previewPhone');
+      const previewEmail = document.getElementById('previewEmail');
+      const previewWebsite = document.getElementById('previewWebsite');
+      const previewAddress = document.getElementById('previewAddress');
+      const businessCard = document.getElementById('businessCard');
+      
+      // State
+      let cardData = {};
+      let logoDataUrl = '';
+      
+      // Templates configuration for gallery (must be defined before building)
+      const templates = [
+        { key: 'green-modern', label: 'Green Modern' },
+        { key: 'dark-minimal', label: 'Dark Minimal' },
+        { key: 'classic-white', label: 'Classic White' },
+        { key: 'blue-professional', label: 'Blue Pro' },
+        { key: 'elegant-gold', label: 'Elegant Gold' },
+        { key: 'vibrant-gradient', label: 'Vibrant' }
+      ];
+      
+      // Build scroll-snap carousel of templates
+      function buildRollingGallery() {
+        if (!rollingTrack) return;
+        rollingTrack.innerHTML = '';
+        templates.forEach((tpl, i) => {
+          const item = document.createElement('div');
+          item.className = 'rolling-gallery-item' + (i === 0 ? ' active' : '');
+          item.dataset.template = tpl.key;
+          item.innerHTML = `
+            <div class="business-card ${tpl.key}">
+              <div class="card-content">
+                <div class="logo-section">
+                  <div class="logo-img" style="display:none;"></div>
+                </div>
+                <div class="details-section">
+                  <h3 class="company-name">${tpl.label}</h3>
+                  <div class="contact-info">
+                    <p class="contact-item"><i class="fas fa-palette"></i> Click to select</p>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+          rollingTrack.appendChild(item);
+        });
+        // Snap to the first item explicitly
+        setActiveTemplate(templates[0].key, true);
+      }
+      
+      // Set active state and update preview
+      function setActiveTemplate(templateKey, focus = true) {
+        [...rollingTrack.children].forEach(child => child.classList.remove('active'));
+        const active = [...rollingTrack.children].find(el => el.dataset.template === templateKey);
+        if (active) active.classList.add('active');
+        const card = active && active.querySelector('.business-card');
+        if (card) {
+          card.classList.remove('selection-anim');
+          void card.offsetWidth; // restart animation
+          card.classList.add('selection-anim');
+        }
+        updateTemplate(templateKey);
+        if (focus && active) {
+          const left = active.offsetLeft - (rollingTrack.clientWidth - active.clientWidth) / 2;
+          rollingTrack.scrollTo({ left, behavior: 'smooth' });
+        }
+      }
+      
+      function getSelectedTemplateKey() {
+        const active = rollingTrack && rollingTrack.querySelector('.rolling-gallery-item.active');
+        return active ? active.dataset.template : 'green-modern';
+      }
+      
+      // Initialize
+      loadUserData();
+      buildRollingGallery();
+      setupEventListeners();
+      
+      // Set up event listeners
+      function setupEventListeners() {
+        // Form inputs - update preview in real-time
+        companyNameInput.addEventListener('input', updatePreview);
+        phoneInput.addEventListener('input', updatePreview);
+        emailInput.addEventListener('input', updatePreview);
+        websiteInput.addEventListener('input', updatePreview);
+        addressInput.addEventListener('input', updatePreview);
+        
+        // Rolling gallery selection (event delegation)
+        rollingTrack.addEventListener('click', function(e) {
+          const item = e.target.closest('.rolling-gallery-item');
+          if (!item) return;
+          setActiveTemplate(item.dataset.template);
+        });
+        // Normalize wheel to step exactly one card at a time
+        let wheelCooldown = false;
+        rollingTrack.addEventListener('wheel', function(e) {
+          if (wheelCooldown) return;
+          if (!e.ctrlKey) e.preventDefault();
+          wheelCooldown = true;
+          const dir = (e.deltaY || e.deltaX) > 0 ? 1 : -1;
+          stepActive(dir);
+          setTimeout(() => { wheelCooldown = false; }, 220);
+        }, { passive: false });
+        // Keyboard navigation
+        rollingTrack.tabIndex = 0;
+        rollingTrack.addEventListener('keydown', function(e) {
+          if (e.key === 'ArrowRight') stepActive(1);
+          else if (e.key === 'ArrowLeft') stepActive(-1);
+        });
+        // Buttons
+        const prevBtn = document.getElementById('galleryPrev');
+        const nextBtn = document.getElementById('galleryNext');
+        if (prevBtn) prevBtn.addEventListener('click', () => stepActive(-1));
+        if (nextBtn) nextBtn.addEventListener('click', () => stepActive(1));
+        
+        // Logo upload
+        companyLogoInput.addEventListener('change', handleLogoUpload);
+        
+        // Buttons
+        generateCardBtn.addEventListener('click', generateCard);
+        saveCardBtn.addEventListener('click', saveCardData);
+        downloadCardBtn.addEventListener('click', downloadCard);
+        shareCardBtn.addEventListener('click', shareCard);
+      }
+      
+      function stepActive(step) {
+        const items = [...rollingTrack.children];
+        if (items.length === 0) return;
+        const currentIndex = items.findIndex(el => el.classList.contains('active'));
+        const nextIndex = (currentIndex + step + items.length) % items.length;
+        const next = items[nextIndex];
+        if (!next) return;
+        setActiveTemplate(next.dataset.template, true);
+      }
+
+      // Load user data from Firebase
+      function loadUserData() {
+        if (!currentUser) return;
+        
+        const userRef = db.ref(`users/${currentUser.uid}`);
+        userRef.once('value').then((snapshot) => {
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            
+            // Auto-fill company name if available
+            if (userData.companyName) {
+              companyNameInput.value = userData.companyName;
+            } else if (userData.profile && userData.profile.companyName) {
+              companyNameInput.value = userData.profile.companyName;
+            }
+            
+            // Load saved business card data if exists
+            if (userData.businessCard) {
+              cardData = userData.businessCard;
+              populateFormFromData();
+            }
+            
+            // Update preview with loaded data
+            updatePreview();
+          }
+        }).catch((error) => {
+          console.error("Error loading user data:", error);
+        });
+      }
+      
+      // Populate form from saved data
+      function populateFormFromData() {
+        if (cardData.companyName) companyNameInput.value = cardData.companyName;
+        if (cardData.phone) phoneInput.value = cardData.phone;
+        if (cardData.email) emailInput.value = cardData.email;
+        if (cardData.website) websiteInput.value = cardData.website;
+        if (cardData.address) addressInput.value = cardData.address;
+        
+        // Set template via rolling gallery
+        if (cardData.template) {
+          setActiveTemplate(cardData.template, false);
+        }
+        
+        // Handle logo if saved
+        if (cardData.logoDataUrl) {
+          logoDataUrl = cardData.logoDataUrl;
+          previewLogo.src = logoDataUrl;
+          previewLogo.style.display = 'block';
+        }
+      }
+      
+      // Handle logo upload
+      function handleLogoUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          logoDataUrl = e.target.result;
+          previewLogo.src = logoDataUrl;
+          previewLogo.style.display = 'block';
+          updatePreview();
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      // Update preview with current form data
+      function updatePreview() {
+        previewCompanyName.textContent = companyNameInput.value || 'Your Company Name';
+        previewPhone.innerHTML = `<i class="fas fa-phone"></i> ${phoneInput.value ? 'Phone: ' + phoneInput.value : 'Phone: +1234567890'}`;
+        previewEmail.innerHTML = `<i class="fas fa-envelope"></i> ${emailInput.value ? 'Email: ' + emailInput.value : 'Email: info@example.com'}`;
+        previewWebsite.innerHTML = `<i class="fas fa-globe"></i> ${websiteInput.value ? 'Website: ' + websiteInput.value : 'Website: www.example.com'}`;
+        previewAddress.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${addressInput.value ? 'Address: ' + addressInput.value : 'Address: Your Company Address'}`;
+      }
+      
+      // Update card template
+      function updateTemplate(template) {
+        businessCard.className = `business-card ${template}`;
+      }
+      
+      // Generate card (enable download and share buttons)
+      function generateCard() {
+        // Validate form
+        if (!companyNameInput.value.trim()) {
+          alert('Please enter a company name');
+          return;
+        }
+        
+        // Update card data object
+        cardData = {
+          companyName: companyNameInput.value,
+          phone: phoneInput.value,
+          email: emailInput.value,
+          website: websiteInput.value,
+          address: addressInput.value,
+          template: getSelectedTemplateKey(),
+          logoDataUrl: logoDataUrl,
+          lastUpdated: Date.now()
+        };
+        
+        // Enable download and share buttons
+        downloadCardBtn.disabled = false;
+        shareCardBtn.disabled = false;
+        
+        // Show success message
+        alert('Business card generated successfully! You can now download or share it.');
+      }
+      
+      // Save card data to Firebase
+      function saveCardData() {
+        if (!currentUser) {
+          alert('You must be logged in to save your card');
+          return;
+        }
+        
+        // Update card data with current form values
+        cardData = {
+          companyName: companyNameInput.value,
+          phone: phoneInput.value,
+          email: emailInput.value,
+          website: websiteInput.value,
+          address: addressInput.value,
+          template: getSelectedTemplateKey(),
+          logoDataUrl: logoDataUrl,
+          lastUpdated: Date.now()
+        };
+        
+        // Save to Firebase
+        const userRef = db.ref(`users/${currentUser.uid}/businessCard`);
+        userRef.set(cardData)
+          .then(() => {
+            alert('Business card saved successfully!');
+          })
+          .catch((error) => {
+            console.error("Error saving business card:", error);
+            alert('Error saving business card. Please try again.');
+          });
+      }
+      
+      // Download card as PNG
+      function downloadCard() {
+        if (typeof html2canvas === 'undefined') {
+          alert('Download feature is still loading. Please try again in a moment.');
+          return;
+        }
+        
+        html2canvas(businessCard, {
+          scale: 3, // Higher scale for better quality
+          useCORS: true,
+          logging: false
+        }).then(canvas => {
+          // Convert canvas to data URL
+          const dataUrl = canvas.toDataURL('image/png');
+          
+          // Create download link
+          const link = document.createElement('a');
+          link.download = `${companyNameInput.value || 'business-card'}.png`;
+          link.href = dataUrl;
+          link.click();
+        });
+      }
+      
+      // Share card using Web Share API
+      function shareCard() {
+        if (typeof html2canvas === 'undefined') {
+          alert('Share feature is still loading. Please try again in a moment.');
+          return;
+        }
+        
+        html2canvas(businessCard, {
+          scale: 2,
+          useCORS: true,
+          logging: false
+        }).then(canvas => {
+          canvas.toBlob(blob => {
+            const file = new File([blob], `${companyNameInput.value || 'business-card'}.png`, { type: 'image/png' });
+            
+            if (navigator.share && navigator.canShare({ files: [file] })) {
+              navigator.share({
+                files: [file],
+                title: `${companyNameInput.value} Business Card`,
+                text: `Check out ${companyNameInput.value}'s business card`
+              })
+              .catch(error => {
+                console.log('Sharing failed', error);
+                alert('Sharing is not supported on this device/browser.');
+              });
+            } else {
+              alert('Sharing is not supported on this device/browser. Please use the download option instead.');
+            }
+          });
+        });
+      }
     }
   </script>
 </body>
