@@ -91,7 +91,6 @@
           <div class="d-flex justify-content-between align-items-center my-4">
             <h4 class="mb-0">Pump List</h4>
             <div class="d-flex gap-2 align-items-center">
-              <input type="text" id="pumpSearchInput" class="form-control" placeholder="Search pumps..." style="max-width: 300px;">
               <button id="exportExcel" class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Export</button>
             </div>
           </div>
@@ -308,9 +307,6 @@
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
             "columnDefs": [{ "orderable": false, "targets": 7 }, { "className": "text-end", "targets": [4, 5, 6] }],
             "order": [[ 4, "desc" ]] 
-          });
-          $('#pumpSearchInput').on('keyup', function() {
-              pumpTable.search(this.value).draw();
           });
 
           transactionTable = $('#pumpTransactionTable').DataTable({
@@ -534,22 +530,27 @@
           if (lrSnapshot.exists()) {
             lrSnapshot.forEach(lrChild => {
               const lr = lrChild.val();
-              // Main trip diesel expenses
-              if (lr.dieselPumpName && parseFloat(lr.dieselExpenses) > 0) {
-                if (!pumpTotals[lr.dieselPumpName]) {
-                  pumpTotals[lr.dieselPumpName] = { totalSpent: 0, totalLiters: 0 };
-                }
-                pumpTotals[lr.dieselPumpName].totalSpent += parseFloat(lr.dieselExpenses);
-                pumpTotals[lr.dieselPumpName].totalLiters += parseFloat(lr.dieselLiters || 0);
+              // **FIX**: Iterate through the dieselEntries array for the main trip
+              if (lr.dieselEntries && Array.isArray(lr.dieselEntries)) {
+                lr.dieselEntries.forEach(entry => {
+                  if (entry.pumpName && parseFloat(entry.total) > 0) {
+                    if (!pumpTotals[entry.pumpName]) {
+                      pumpTotals[entry.pumpName] = { totalSpent: 0, totalLiters: 0 };
+                    }
+                    pumpTotals[entry.pumpName].totalSpent += parseFloat(entry.total);
+                    pumpTotals[entry.pumpName].totalLiters += parseFloat(entry.liters || 0);
+                  }
+                });
               }
-              // Add empty return trip diesel expenses
-              if (lr.emptyTripData && parseFloat(lr.emptyTripData.dieselExpenses) > 0) {
-                const pumpNameForEmptyTrip = lr.emptyTripData.dieselPumpName;
-                if (pumpNameForEmptyTrip) {
-                  if (!pumpTotals[pumpNameForEmptyTrip]) pumpTotals[pumpNameForEmptyTrip] = { totalSpent: 0, totalLiters: 0 };
-                  pumpTotals[pumpNameForEmptyTrip].totalSpent += parseFloat(lr.emptyTripData.dieselExpenses);
-                  pumpTotals[pumpNameForEmptyTrip].totalLiters += parseFloat(lr.emptyTripData.dieselLiters || 0);
-                }
+              // **FIX**: Iterate through the dieselEntries array for the empty return trip
+              if (lr.emptyTripData && lr.emptyTripData.dieselEntries && Array.isArray(lr.emptyTripData.dieselEntries)) {
+                  lr.emptyTripData.dieselEntries.forEach(entry => {
+                      if (entry.pumpName && parseFloat(entry.total) > 0) {
+                          if (!pumpTotals[entry.pumpName]) pumpTotals[entry.pumpName] = { totalSpent: 0, totalLiters: 0 };
+                          pumpTotals[entry.pumpName].totalSpent += parseFloat(entry.total);
+                          pumpTotals[entry.pumpName].totalLiters += parseFloat(entry.liters || 0);
+                      }
+                  });
               }
             });
           }
@@ -630,32 +631,35 @@
         if (lrSnap.exists()) {
             lrSnap.forEach(child => {
                 const lr = child.val();
-                // Main trip transactions
-                if (lr.dieselPumpName === pump.name) {
-                    totalSpent += parseFloat(lr.dieselExpenses || 0);
-                    totalLiters += parseFloat(lr.dieselLiters || 0);
-                    transactionTable.row.add([
-                        lr.date,
-                        lr.lrNumber,
-                        lr.truckNumber,
-                        (lr.dieselLiters || 0).toFixed(2),
-                        `₹${(lr.dieselPerLiter || 0).toFixed(2)}`,
-                        `₹${(lr.dieselExpenses || 0).toFixed(2)}`
-                    ]);
+                // **FIX**: Iterate through main trip diesel entries
+                if (lr.dieselEntries && Array.isArray(lr.dieselEntries)) {
+                    lr.dieselEntries.forEach(entry => {
+                        if (entry.pumpName === pump.name) {
+                            totalSpent += parseFloat(entry.total || 0);
+                            totalLiters += parseFloat(entry.liters || 0);
+                            transactionTable.row.add([
+                                lr.date, lr.lrNumber, lr.truckNumber,
+                                (entry.liters || 0).toFixed(2),
+                                `₹${(entry.perLiter || 0).toFixed(2)}`,
+                                `₹${(entry.total || 0).toFixed(2)}`
+                            ]);
+                        }
+                    });
                 }
-                // Also include transactions from empty return trips
-                if (lr.emptyTripData && lr.emptyTripData.dieselPumpName === pump.name) {
-                    const emptyData = lr.emptyTripData;
-                    totalSpent += parseFloat(emptyData.dieselExpenses || 0);
-                    totalLiters += parseFloat(emptyData.dieselLiters || 0);
-                    transactionTable.row.add([
-                        emptyData.date || lr.date, 
-                        `${lr.lrNumber} (Return)`, 
-                        lr.truckNumber,
-                        (emptyData.dieselLiters || 0).toFixed(2),
-                        `₹${(emptyData.dieselPerLiter || 0).toFixed(2)}`,
-                        `₹${(emptyData.dieselExpenses || 0).toFixed(2)}`
-                    ]);
+                // **FIX**: Iterate through empty return trip diesel entries
+                if (lr.emptyTripData && lr.emptyTripData.dieselEntries && Array.isArray(lr.emptyTripData.dieselEntries)) {
+                    lr.emptyTripData.dieselEntries.forEach(entry => {
+                        if (entry.pumpName === pump.name) {
+                            totalSpent += parseFloat(entry.total || 0);
+                            totalLiters += parseFloat(entry.liters || 0);
+                            transactionTable.row.add([
+                                lr.date, `${lr.lrNumber} (Return)`, lr.truckNumber,
+                                (entry.liters || 0).toFixed(2),
+                                `₹${(entry.perLiter || 0).toFixed(2)}`,
+                                `₹${(entry.total || 0).toFixed(2)}`
+                            ]);
+                        }
+                    });
                 }
             });
         }
