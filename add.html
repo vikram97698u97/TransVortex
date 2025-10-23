@@ -190,9 +190,8 @@
         max-width: none;
       }
     }
-  </style>
-  <!-- Extra styles for the detail view -->
-  <style>
+
+    /* Extra styles for the detail view */
     .detail-view-card {
       background-color: #fff;
       border: 1px solid #dee2e6;
@@ -231,9 +230,8 @@
       padding: 0.5rem 0;
       border-bottom: 1px solid #f5f5f5;
     }
-  </style>
-  <!-- **NEW**: Styles for the vehicle limit feature -->
-  <style>
+
+    /* **NEW**: Styles for the vehicle limit feature */
     .limit-reached-container {
       background-color: #fff3cd;
       color: #856404;
@@ -281,6 +279,243 @@
     .limit-reached-container p {
       margin: 0 0 10px 0;
       font-weight: 500;
+    }
+
+    /* ============================================= */
+    /* CARD VIEW STYLES - NEW IMPLEMENTATION */
+    /* ============================================= */
+    
+    .card-view-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .vehicle-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 1px solid #eaeaea;
+    }
+    
+    .vehicle-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    
+    .card-header {
+      background: linear-gradient(135deg, #2E8B57 0%, #3CB371 100%);
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .vehicle-number {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    
+    .vehicle-type {
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.2);
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    
+    .card-body {
+      padding: 20px;
+    }
+    
+    .driver-info {
+      margin-bottom: 15px;
+    }
+    
+    .driver-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .driver-details {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .documents-section {
+      margin: 15px 0;
+      padding: 15px 0;
+      border-top: 1px solid #eee;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .documents-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #444;
+    }
+    
+    .documents-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    
+    .document-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+    
+    .document-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.8rem;
+    }
+    
+    .document-icon.license {
+      background: #3498db;
+    }
+    
+    .document-icon.puc {
+      background: #2ecc71;
+    }
+    
+    .document-icon.insurance {
+      background: #9b59b6;
+    }
+    
+    .document-icon.fitness {
+      background: #e74c3c;
+    }
+    
+    .document-status {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+      margin-left: auto;
+    }
+    
+    .status-valid {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .status-warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .status-expired {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .card-footer {
+      padding: 15px 20px;
+      background: #f8f9fa;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .action-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    
+    .action-btn:hover {
+      transform: scale(1.1);
+    }
+    
+    .view-btn {
+      background: #3498db;
+    }
+    
+    .edit-btn {
+      background: #f39c12;
+    }
+    
+    .delete-btn {
+      background: #e74c3c;
+    }
+    
+    /* View Toggle */
+    .view-toggle {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+    }
+    
+    .toggle-btn {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 8px 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .toggle-btn:first-child {
+      border-radius: 5px 0 0 5px;
+      border-right: none;
+    }
+    
+    .toggle-btn:last-child {
+      border-radius: 0 5px 5px 0;
+    }
+    
+    .toggle-btn.active {
+      background: #2E8B57;
+      color: white;
+      border-color: #2E8B57;
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6c757d;
+      grid-column: 1 / -1;
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 15px;
+      color: #dee2e6;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .card-view-container {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -388,9 +623,6 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="driver-payments-tab" data-bs-toggle="tab" data-bs-target="#driver-payments-content" type="button" role="tab">Driver Salary Payments</button>
         </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="vehicle-work-tab" data-bs-toggle="tab" data-bs-target="#vehicle-work-content" type="button" role="tab">Vehicle Work Expenses</button>
-        </li>
       </ul>
 
       <div class="tab-content" id="mainView">
@@ -405,82 +637,126 @@
           <!-- Vehicle & Driver Entry Form -->
           <form id="vehicleDriverForm" class="form-section">
             <h4 class="mb-3">Add Vehicle & Driver Details</h4>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="vehicleNumber" class="form-label"><i class="fas fa-truck"></i> Vehicle Number *</label>
-                <input type="text" id="vehicleNumber" class="form-control" required placeholder="e.g. KA01AB1234" />
+            
+            <!-- Vehicle Information Card -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Vehicle Information</h5>
               </div>
-              <div class="col-md-6 mb-3">
-                <label for="vehicleType" class="form-label"><i class="fas fa-car"></i> Vehicle Type</label>
-                <input type="text" id="vehicleType" class="form-control" placeholder="e.g. Truck, Mini Truck" />
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label for="driverName" class="form-label"><i class="fas fa-user"></i> Driver Name</label>
-                <input type="text" id="driverName" class="form-control" placeholder="Driver's full name" />
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="driverLicense" class="form-label"><i class="fas fa-id-card"></i> Driver License No.</label>
-                <input type="text" id="driverLicense" class="form-control" placeholder="License number" />
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="licenseExpiryDate" class="form-label"><i class="fas fa-calendar-alt"></i> License Expiry Date</label>
-                <input type="date" id="licenseExpiryDate" class="form-control" />
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="vehicleNumber" class="form-label">Vehicle Number *</label>
+                    <input type="text" id="vehicleNumber" class="form-control" required placeholder="e.g. KA01AB1234" />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="vehicleType" class="form-label">Vehicle Type</label>
+                    <input type="text" id="vehicleType" class="form-control" placeholder="e.g. Truck, Mini Truck" />
+                  </div>
+                </div>
               </div>
             </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="contactNumber" class="form-label"><i class="fas fa-phone"></i> Driver Contact Number</label>
-                <input type="tel" id="contactNumber" class="form-control" placeholder="+91 1234567890" />
+            
+            <!-- Driver Information Card -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Driver Information</h5>
               </div>
-              <div class="col-md-6 mb-3">
-                <label for="licenseImage" class="form-label"><i class="fas fa-id-card"></i> License Image (photo)</label>
-                <input type="file" id="licenseImage" class="form-control" accept="image/*" />
-                <img id="licensePreview" class="preview" style="display:none" />
-                <div id="licenseProgress" class="progress-wrap small"></div>
-                <span id="licenseFileInfo" class="file-info"></span>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label for="pucFile" class="form-label"><i class="fas fa-file-certificate"></i> PUC Certificate (image/pdf)</label>
-                <input type="file" id="pucFile" class="form-control" accept="image/*,application/pdf" />
-                <img id="pucPreview" class="preview" style="display:none" />
-                <div id="pucProgress" class="progress-wrap small"></div>
-                <span id="pucFileInfo" class="file-info"></span>
-              </div>
-              <div class="col-md-2 mb-3">
-                <label for="pucExpiryDate" class="form-label"><i class="fas fa-calendar-alt"></i> PUC Expiry</label>
-                <input type="date" id="pucExpiryDate" class="form-control" />
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="insuranceFile" class="form-label"><i class="fas fa-file-contract"></i> Insurance Paper (image/pdf)</label>
-                <input type="file" id="insuranceFile" class="form-control" accept="image/*,application/pdf" />
-                <img id="insurancePreview" class="preview" style="display:none" />
-                <div id="insuranceProgress" class="progress-wrap small"></div>
-                <span id="insuranceFileInfo" class="file-info"></span>
-              </div>
-              <div class="col-md-2 mb-3">
-                <label for="insuranceExpiryDate" class="form-label"><i class="fas fa-calendar-alt"></i> Insurance Expiry</label>
-                <input type="date" id="insuranceExpiryDate" class="form-control" />
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4 mb-3">
+                    <label for="driverName" class="form-label">Driver Name</label>
+                    <input type="text" id="driverName" class="form-control" placeholder="Driver's full name" />
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label for="contactNumber" class="form-label">Driver Contact Number</label>
+                    <input type="tel" id="contactNumber" class="form-control" placeholder="+91 1234567890" />
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label for="driverLicense" class="form-label">Driver License No.</label>
+                    <input type="text" id="driverLicense" class="form-control" placeholder="License number" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="licenseExpiryDate" class="form-label">License Expiry Date</label>
+                    <input type="date" id="licenseExpiryDate" class="form-control" />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="licenseImage" class="form-label">License Image (photo)</label>
+                    <input type="file" id="licenseImage" class="form-control" accept="image/*" />
+                    <img id="licensePreview" class="preview" style="display:none" />
+                    <div id="licenseProgress" class="progress-wrap small"></div>
+                    <span id="licenseFileInfo" class="file-info"></span>
+                  </div>
+                </div>
               </div>
             </div>
-
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label for="fitnessFile" class="form-label"><i class="fas fa-heartbeat"></i> Fitness Certificate (image/pdf)</label>
-                <input type="file" id="fitnessFile" class="form-control" accept="image/*,application/pdf" />
-                <img id="fitnessPreview" class="preview" style="display:none" />
-                <div id="fitnessProgress" class="progress-wrap small"></div>
-                <span id="fitnessFileInfo" class="file-info"></span>
+            
+            <!-- Financial Information Card -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Financial Information</h5>
               </div>
-              <div class="col-md-2 mb-3">
-                <label for="fitnessExpiryDate" class="form-label"><i class="fas fa-calendar-alt"></i> Fitness Expiry</label>
-                <input type="date" id="fitnessExpiryDate" class="form-control" />
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="monthlySalary" class="form-label">Monthly Salary (₹)</label>
+                    <input type="number" id="monthlySalary" class="form-control" placeholder="e.g., 15000" step="0.01" />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="monthlyInstallment" class="form-label">Monthly Installment (EMI)</label>
+                    <input type="number" id="monthlyInstallment" class="form-control" placeholder="e.g., 25000" step="0.01" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Vehicle Documents Card -->
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Vehicle Documents</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="pucFile" class="form-label"><i class="fas fa-file-certificate"></i> PUC Certificate (image/pdf)</label>
+                    <input type="file" id="pucFile" class="form-control" accept="image/*,application/pdf" />
+                    <img id="pucPreview" class="preview" style="display:none" />
+                    <div id="pucProgress" class="progress-wrap small"></div>
+                    <span id="pucFileInfo" class="file-info"></span>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="pucExpiryDate" class="form-label">PUC Expiry Date</label>
+                    <input type="date" id="pucExpiryDate" class="form-control" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="insuranceFile" class="form-label"><i class="fas fa-file-contract"></i> Insurance Paper (image/pdf)</label>
+                    <input type="file" id="insuranceFile" class="form-control" accept="image/*,application/pdf" />
+                    <img id="insurancePreview" class="preview" style="display:none" />
+                    <div id="insuranceProgress" class="progress-wrap small"></div>
+                    <span id="insuranceFileInfo" class="file-info"></span>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="insuranceExpiryDate" class="form-label">Insurance Expiry Date</label>
+                    <input type="date" id="insuranceExpiryDate" class="form-control" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="fitnessFile" class="form-label"><i class="fas fa-heartbeat"></i> Fitness Certificate (image/pdf)</label>
+                    <input type="file" id="fitnessFile" class="form-control" accept="image/*,application/pdf" />
+                    <img id="fitnessPreview" class="preview" style="display:none" />
+                    <div id="fitnessProgress" class="progress-wrap small"></div>
+                    <span id="fitnessFileInfo" class="file-info"></span>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="fitnessExpiryDate" class="form-label">Fitness Expiry Date</label>
+                    <input type="date" id="fitnessExpiryDate" class="form-control" />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -524,14 +800,32 @@
             </div>
           </div>
           
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5>Vehicle & Driver List</h5>
-            <button class="btn btn-success" onclick="downloadExcel()"><i class="fas fa-file-excel me-2"></i> Export Excel</button>
+          <!-- View Toggle -->
+          <div class="view-toggle">
+            <div class="btn-group" role="group">
+              <button type="button" class="toggle-btn active" id="cardViewBtn">
+                <i class="fas fa-th-large me-2"></i>Card View
+              </button>
+              <button type="button" class="toggle-btn" id="tableViewBtn">
+                <i class="fas fa-table me-2"></i>Table View
+              </button>
+            </div>
           </div>
 
-          <div class="entries-info mb-3 text-muted" id="entriesInfo"></div>
+          <!-- Card View Container -->
+          <div id="cardView" class="card-view-container">
+            <!-- Cards will be dynamically inserted here -->
+          </div>
 
-          <div class="table-responsive">
+          <!-- Table View (Initially Hidden) -->
+          <div id="tableView" class="table-responsive" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5>Vehicle & Driver List</h5>
+              <button class="btn btn-success" onclick="downloadExcel()"><i class="fas fa-file-excel me-2"></i> Export Excel</button>
+            </div>
+
+            <div class="entries-info mb-3 text-muted" id="entriesInfo"></div>
+
             <table id="vehicleDriverTable" class="table table-striped table-bordered" style="width:100%">
               <thead>
                 <tr>
@@ -565,31 +859,70 @@
 
         <div class="tab-pane fade" id="driver-payments-content" role="tabpanel">
           <!-- Driver Salary Payments Section -->
+          <!-- NEW: Summary Cards for Driver Salaries -->
+          <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+              <div class="card summary-card bg-light">
+                <div class="card-body text-center">
+                  <h6 class="card-title text-muted">Total Drivers</h6>
+                  <h4 id="summaryTotalDrivers" class="text-primary fw-bold">0</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="card summary-card bg-light">
+                <div class="card-body text-center">
+                  <h6 class="card-title text-muted">Total Paid This Year (₹)</h6>
+                  <h4 id="summaryTotalPaid" class="text-success fw-bold">₹0.00</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="card summary-card bg-light">
+                <div class="card-body text-center">
+                  <h6 class="card-title text-muted">Total Pending This Year (₹)</h6>
+                  <h4 id="summaryTotalPending" class="text-danger fw-bold">₹0.00</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- END: Summary Cards -->
+
           <form id="driverPaymentForm" class="form-section">
             <h4 class="mb-3">Add Driver Salary Payment</h4>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="vehicleSelect" class="form-label">Select Vehicle/Driver:</label>
-                <select id="vehicleSelect" class="form-select" required>
-                  <option value="">Loading vehicles...</option>
-                </select>
+            
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Information</h5>
               </div>
-              <div class="col-md-6 mb-3">
-                <label for="paymentAmount" class="form-label">Amount:</label>
-                <input type="number" id="paymentAmount" class="form-control" required step="0.01" />
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="vehicleSelect" class="form-label"><i class="fas fa-truck me-1"></i> Select Vehicle/Driver:</label>
+                    <select id="vehicleSelect" class="form-select" required>
+                      <option value="">Loading vehicles...</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="paymentDate" class="form-label"><i class="fas fa-calendar-alt me-1"></i> Payment Date:</label>
+                    <input type="date" id="paymentDate" class="form-control" required />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="paymentAmount" class="form-label"><i class="fas fa-rupee-sign me-1"></i> Payment Amount (₹):</label>
+                    <input type="number" id="paymentAmount" class="form-control" required step="0.01" />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="paymentRemarks" class="form-label"><i class="fas fa-comment-alt me-1"></i> Remarks:</label>
+                    <input type="text" id="paymentRemarks" class="form-control" placeholder="Purpose of payment" />
+                  </div>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                  <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i> Save Payment</button>
+                </div>
               </div>
             </div>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="paymentDate" class="form-label">Date:</label>
-                <input type="date" id="paymentDate" class="form-control" required />
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="paymentRemarks" class="form-label">Remarks:</label>
-                <input type="text" id="paymentRemarks" class="form-control" />
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i> Save Payment</button>
           </form>
           
           <div class="mb-3">
@@ -612,98 +945,29 @@
               <tbody id="driverPaymentTableBody"></tbody>
             </table>
           </div>
-        </div>
 
-        <div class="tab-pane fade" id="vehicle-work-content" role="tabpanel">
-          <h4 class="mb-3">Vehicle Work Expenses</h4>
-          
-          <!-- Summary Cards -->
-          <div class="row mb-4">
-            <div class="col-md-3 mb-3">
-              <div class="card summary-card bg-primary text-white">
-                <div class="card-body text-center">
-                  <h6 class="card-title">Total Vehicle Work</h6>
-                  <h4 id="totalVehicleWork">₹0.00</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3 mb-3">
-              <div class="card summary-card bg-success text-white">
-                <div class="card-body text-center">
-                  <h6 class="card-title">Completed Trips</h6>
-                  <h4 id="completedTrips">0</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3 mb-3">
-              <div class="card summary-card bg-info text-white">
-                <div class="card-body text-center">
-                  <h6 class="card-title">Pending Trips</h6>
-                  <h4 id="pendingTrips">0</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3 mb-3">
-              <div class="card summary-card bg-warning text-white">
-                <div class="card-body text-center">
-                  <h6 class="card-title">This Month</h6>
-                  <h4 id="monthlyVehicleWork">₹0.00</h4>
-                </div>
-              </div>
+          <!-- NEW: Driver Salary Summary Section -->
+          <div class="mt-5">
+            <h4 class="mb-3">Driver Salary Summary (Current Year)</h4>
+            <div class="table-responsive">
+              <table id="driverSalarySummaryTable" class="table table-striped table-bordered" style="width:100%">
+                <thead>
+                  <tr>
+                    <th>Driver</th>
+                    <th>Vehicle</th>
+                    <th class="text-end">Monthly Salary (₹)</th>
+                    <th class="text-end">Total Paid (₹)</th>
+                    <th>Pending Months</th>
+                    <th class="text-end">Remaining Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody id="driverSalarySummaryBody">
+                  <!-- Summary data will be populated here -->
+                </tbody>
+              </table>
             </div>
           </div>
-
-          <!-- Filters -->
-          <div class="row mb-3">
-            <div class="col-md-4">
-              <label for="vehicleWorkFromDate" class="form-label">From Date</label>
-              <input type="date" id="vehicleWorkFromDate" class="form-control">
-            </div>
-            <div class="col-md-4">
-              <label for="vehicleWorkToDate" class="form-label">To Date</label>
-              <input type="date" id="vehicleWorkToDate" class="form-control">
-            </div>
-            <div class="col-md-4">
-              <label for="vehicleWorkActionFilter" class="form-label">Action Status</label>
-              <select id="vehicleWorkActionFilter" class="form-select">
-                <option value="">All</option>
-                <option value="Pending">Pending</option>
-                <option value="Completed">Completed</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <button class="btn btn-primary me-2" onclick="applyVehicleWorkFilters()">
-                <i class="fas fa-filter me-2"></i>Apply Filters
-              </button>
-              <button class="btn btn-outline-secondary" onclick="clearVehicleWorkFilters()">
-                <i class="fas fa-times me-2"></i>Clear
-              </button>
-            </div>
-            <button class="btn btn-success" onclick="exportVehicleWorkExcel()">
-              <i class="fas fa-file-excel me-2"></i> Export Excel
-            </button>
-          </div>
-
-          <div class="table-responsive">
-            <table id="vehicleWorkTable" class="table table-striped table-bordered" style="width:100%">
-              <thead>
-                <tr>
-                  <th>Vehicle No.</th>
-                  <th>Date</th>
-                  <th>LR No.</th>
-                  <th>From Location</th>
-                  <th>To Location</th>
-                  <th class="text-end">Vehicle Work (₹)</th>
-                  <th>Status</th>
-                  <th class="text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="vehicleWorkTableBody"></tbody>
-            </table>
-          </div>
+          <!-- END: Driver Salary Summary Section -->
         </div>
       </div>
     </div>
@@ -785,6 +1049,21 @@
      // Cloudinary Configuration
      const CLOUDINARY_CLOUD_NAME = 'doqapn15f';
      const CLOUDINARY_UPLOAD_PRESET = 'vehicle-driver';
+
+     // Ensure DOM-related setups run once DOM is ready
+     document.addEventListener('DOMContentLoaded', () => {
+       // Call basic UI initializers so toggles and pagination work immediately
+       try {
+         setupViewToggle();
+       } catch (e) {
+         console.warn('setupViewToggle() not ready yet:', e);
+       }
+       try {
+         initTabInterface();
+       } catch (e) {
+         console.warn('initTabInterface() not ready yet:', e);
+       }
+     });
      
      // Resize image before upload
      async function resizeImage(file, maxWidth, quality = 0.8) {
@@ -882,7 +1161,6 @@
      let isEditing = false;
      let editingKey = null;
      let currentVehicleData = {};
-      let detailVehicleWorkTable; // For detail view
       let detailDriverPaymentsTable; // For detail view
      let driverPaymentTable;
      let vehicleWorkTable;
@@ -906,6 +1184,12 @@
      const branchInfo = document.getElementById("branchInfo");
      const branchInfoText = document.getElementById("branchInfoText");
      
+     // Card view elements
+     const cardView = document.getElementById("cardView");
+     const tableView = document.getElementById("tableView");
+     const cardViewBtn = document.getElementById("cardViewBtn");
+     const tableViewBtn = document.getElementById("tableViewBtn");
+     
      // Show branch information
      function showBranchInfo() {
        if (accountType === 'branch') {
@@ -925,6 +1209,7 @@
        onValue(vehiclesRef, (snapshot) => {
          allVehiclesData = snapshot.val() || {};
          renderTableWithPagination();
+         renderCardView();
          checkVehicleLimit(); // **NEW**: Check limit whenever vehicle data changes
          
          // Show notification if data was updated by another branch/user
@@ -945,6 +1230,7 @@
            if (snapshot.exists()) {
              snapshot.forEach(child => {
                const p = child.val();
+            if (!p) return;
                driverPaymentTable.row.add([
                  p.vehicleNumber || 'N/A',
                  p.driverName || 'N/A',
@@ -1082,6 +1368,41 @@
          
          return result;
        }, {});
+     }
+
+     // **FIX**: Moved these functions before their first call in `renderTable` to prevent ReferenceError.
+     
+     // Get driver's salary status for the current month
+     function getDriverSalaryStatus(driverName) {
+       if (!driverName || allDriverPayments.length === 0) {
+         return 'Pending';
+       }
+       const now = new Date();
+       const currentYear = now.getFullYear();
+       const currentMonth = now.getMonth();
+
+       const hasPaid = allDriverPayments.some(payment => {
+         const paymentDate = new Date(payment.date);
+         return payment.driverName === driverName &&
+                paymentDate.getFullYear() === currentYear &&
+                paymentDate.getMonth() === currentMonth;
+       });
+       return hasPaid ? 'Paid' : 'Pending';
+     }
+
+     // Sort data based on salary status
+     function sortDataBySalaryStatus(order = 'asc') {
+       const dataArray = Object.entries(filteredVehiclesData);
+       dataArray.sort(([, a], [, b]) => {
+         const statusA = getDriverSalaryStatus(a.driverName);
+         const statusB = getDriverSalaryStatus(b.driverName);
+         // 'Pending' should come before 'Paid'
+         if (statusA === 'Pending' && statusB === 'Paid') return order === 'asc' ? -1 : 1;
+         if (statusA === 'Paid' && statusB === 'Pending') return order === 'asc' ? 1 : -1;
+         return 0;
+       });
+       filteredVehiclesData = Object.fromEntries(dataArray);
+       renderTableWithPagination();
      }
      
      // Update pagination controls
@@ -1222,6 +1543,173 @@
        });
      }
      
+     // =============================================
+     // CARD VIEW FUNCTIONS - NEW IMPLEMENTATION
+     // =============================================
+     
+     // Render the card view
+     function renderCardView() {
+       // Get filtered data
+       filterData();
+       
+       if (Object.keys(filteredVehiclesData).length === 0) {
+         cardView.innerHTML = `
+           <div class="empty-state">
+             <i class="fas fa-truck"></i>
+             <h4>No Vehicles Found</h4>
+             <p>Try adjusting your search or filter criteria</p>
+           </div>
+         `;
+         return;
+       }
+       
+       cardView.innerHTML = '';
+       
+       Object.entries(filteredVehiclesData).forEach(([key, vehicle]) => {
+         const card = createVehicleCard(key, vehicle);
+         cardView.appendChild(card);
+       });
+     }
+
+     // Create a vehicle card
+     function createVehicleCard(key, vehicle) {
+       const card = document.createElement('div');
+       card.className = 'vehicle-card';
+       
+       // Get expiry status for each document
+       const licenseStatus = getExpiryStatus(vehicle.licenseExpiry);
+       const pucStatus = getExpiryStatus(vehicle.pucExpiry);
+       const insuranceStatus = getExpiryStatus(vehicle.insuranceExpiry);
+       const fitnessStatus = getExpiryStatus(vehicle.fitnessExpiry);
+       
+       card.innerHTML = `
+         <div class="card-header">
+           <div class="vehicle-number">${vehicle.vehicleNumber || 'N/A'}</div>
+           <div class="vehicle-type">${vehicle.vehicleType || '-'}</div>
+         </div>
+         
+         <div class="card-body">
+           <div class="driver-info">
+             <div class="driver-name">${vehicle.driverName || '-'}</div>
+             <div class="driver-details">
+               <div><i class="fas fa-id-card me-2"></i>License: ${vehicle.driverLicense || '-'}</div>
+               <div><i class="fas fa-phone me-2"></i>Contact: ${vehicle.contactNumber || '-'}</div>
+             </div>
+           </div>
+           
+           <div class="documents-section">
+             <div class="documents-title">Documents & Status</div>
+             <div class="documents-grid">
+               <div class="document-item">
+                 <div class="document-icon license">
+                   <i class="fas fa-id-card"></i>
+                 </div>
+                 <span>License</span>
+                 <div class="document-status ${licenseStatus ? getStatusClass(licenseStatus.class) : 'status-warning'}">
+                   ${licenseStatus ? licenseStatus.text : 'No Data'}
+                 </div>
+               </div>
+               
+               <div class="document-item">
+                 <div class="document-icon puc">
+                   <i class="fas fa-file-certificate"></i>
+                 </div>
+                 <span>PUC</span>
+                 <div class="document-status ${pucStatus ? getStatusClass(pucStatus.class) : 'status-warning'}">
+                   ${pucStatus ? pucStatus.text : 'No Data'}
+                 </div>
+               </div>
+               
+               <div class="document-item">
+                 <div class="document-icon insurance">
+                   <i class="fas fa-file-contract"></i>
+                 </div>
+                 <span>Insurance</span>
+                 <div class="document-status ${insuranceStatus ? getStatusClass(insuranceStatus.class) : 'status-warning'}">
+                   ${insuranceStatus ? insuranceStatus.text : 'No Data'}
+                 </div>
+               </div>
+               
+               <div class="document-item">
+                 <div class="document-icon fitness">
+                   <i class="fas fa-heartbeat"></i>
+                 </div>
+                 <span>Fitness</span>
+                 <div class="document-status ${fitnessStatus ? getStatusClass(fitnessStatus.class) : 'status-warning'}">
+                   ${fitnessStatus ? fitnessStatus.text : 'No Data'}
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+         
+         <div class="card-footer">
+           <div class="last-updated">
+             <small class="text-muted">Last updated: ${formatDate(new Date(vehicle.lastUpdated || Date.now()))}</small>
+           </div>
+           <div class="action-buttons">
+             <button class="action-btn view-btn" title="View Details" onclick="viewDetails('${key}')">
+               <i class="fas fa-eye"></i>
+             </button>
+             <button class="action-btn edit-btn" title="Edit" onclick="editEntry('${key}')">
+               <i class="fas fa-edit"></i>
+             </button>
+             <button class="action-btn delete-btn" title="Delete" onclick="deleteEntry('${key}')">
+               <i class="fas fa-trash"></i>
+             </button>
+           </div>
+         </div>
+       `;
+       
+       return card;
+     }
+     
+     // Convert expiry status class to card status class
+     function getStatusClass(expiryClass) {
+       switch(expiryClass) {
+         case 'expiry-valid': return 'status-valid';
+         case 'expiry-warning': return 'status-warning';
+         case 'expiry-expired': return 'status-expired';
+         default: return 'status-warning';
+       }
+     }
+     
+     // Format date for display
+     function formatDate(date) {
+       return date.toLocaleDateString('en-IN', {
+         day: '2-digit',
+         month: 'short',
+         year: 'numeric'
+       });
+     }
+     
+     // Set up view toggle functionality
+     function setupViewToggle() {
+       // Guard against duplicate listeners by cloning nodes (simple way to remove existing listeners)
+       const newCardBtn = cardViewBtn.cloneNode(true);
+       const newTableBtn = tableViewBtn.cloneNode(true);
+       cardViewBtn.parentNode.replaceChild(newCardBtn, cardViewBtn);
+       tableViewBtn.parentNode.replaceChild(newTableBtn, tableViewBtn);
+
+       newCardBtn.addEventListener('click', function() {
+         newCardBtn.classList.add('active');
+         newTableBtn.classList.remove('active');
+         cardView.style.display = 'grid';
+         tableView.style.display = 'none';
+         // Re-render card view to ensure it is up-to-date
+         try { renderCardView(); } catch (e) {}
+       });
+       
+       newTableBtn.addEventListener('click', function() {
+         newTableBtn.classList.add('active');
+         newCardBtn.classList.remove('active');
+         tableView.style.display = 'block';
+         cardView.style.display = 'none';
+         // Render the table and pagination for the current filters
+         try { renderTableWithPagination(); } catch (e) {}
+       });
+     }
+     
      // Get expiry status for a date
      function getExpiryStatus(expiryDate) {
        if (!expiryDate) return null;
@@ -1278,9 +1766,6 @@
        // --- NEW: Populate vehicle-specific tables ---
 
        // Initialize DataTables if they don't exist
-       if (!detailVehicleWorkTable) {
-           detailVehicleWorkTable = $('#detailVehicleWorkTable').DataTable({ "pageLength": 5, "searching": false, "info": false, "lengthChange": false, "order": [[0, "desc"]] });
-       }
        if (!detailDriverPaymentsTable) {
            detailDriverPaymentsTable = $('#detailDriverPaymentsTable').DataTable({ "pageLength": 5, "searching": false, "info": false, "lengthChange": false, "order": [[0, "desc"]] });
        }
@@ -1333,6 +1818,7 @@
                 });
             }
             detailDriverPaymentsTable.draw();
+        updateDriverSalarySummary(); // Update summary when payments load/change
         });
      }
      
@@ -1354,6 +1840,7 @@
        document.getElementById('vehicleNumber').value = vehicle.vehicleNumber || '';
        document.getElementById('vehicleType').value = vehicle.vehicleType || '';
        document.getElementById('driverName').value = vehicle.driverName || '';
+       document.getElementById('monthlyInstallment').value = vehicle.monthlyInstallment || '';
        document.getElementById('driverLicense').value = vehicle.driverLicense || '';
        document.getElementById('contactNumber').value = vehicle.contactNumber || '';
        
@@ -1503,6 +1990,10 @@
      
      // Initialize the application
      function initApp() {
+       // Initialize UI toggles and pagination early
+       try { setupViewToggle(); } catch (e) {}
+       try { initTabInterface(); } catch (e) {}
+
        onAuthStateChanged(auth, (user) => {
          if (user) {
            currentUser = user;
@@ -1520,7 +2011,6 @@
                checkVehicleLimit();
                initTabInterface();
                loadDriverPayments();
-               loadVehicleWork();
                populateVehicleSelect();
              }
            });
@@ -1540,8 +2030,16 @@
        document.getElementById('cancelEdit').addEventListener('click', cancelEdit);
        
        // Set up search and filter events
-       searchInput.addEventListener('input', debounce(renderTableWithPagination, 300));
-       typeFilter.addEventListener('change', renderTableWithPagination);
+       searchInput.addEventListener('input', debounce(function() {
+         renderCardView();
+         // **FIX**: Also re-render the table view when searching so it's up-to-date
+         // when the user switches views.
+         renderTableWithPagination();
+       }, 300));
+       typeFilter.addEventListener('change', function() {
+         renderTableWithPagination();
+         renderCardView();
+       });
        
        // Set up file preview for license image
        document.getElementById('licenseImage').addEventListener('change', function(e) {
@@ -1645,6 +2143,7 @@
            vehicleNumber: document.getElementById('vehicleNumber').value.trim(),
            vehicleType: document.getElementById('vehicleType').value.trim(),
            driverName: document.getElementById('driverName').value.trim(),
+           monthlyInstallment: parseFloat(document.getElementById('monthlyInstallment').value) || 0,
            driverLicense: document.getElementById('driverLicense').value.trim(),
            contactNumber: document.getElementById('contactNumber').value.trim(),
            lastUpdated: new Date().toISOString(),
@@ -2010,303 +2509,6 @@
        }
      }
      
-     // =============================================
-     // VEHICLE WORK FUNCTIONS - UPDATED & FIXED
-     // =============================================
-     
-     function loadVehicleWork() {
-       vehicleWorkTable = $('#vehicleWorkTable').DataTable({
-         searching: true,
-         paging: true,
-         info: true,
-         autoWidth: false,
-         order: [[1, 'desc']], // Sort by date descending
-         columns: [
-           { data: 'vehicleNumber' },
-           { data: 'date' },
-           {
-             data: 'lrNumber',
-             render: function(data, type, row) { return `${data} <a href="#" onclick="event.preventDefault(); viewLRDetails('${row.id}')" class="ms-2 text-primary" title="View LR Details"><i class="fas fa-eye"></i></a>`; }
-           },
-           { data: 'fromLocation' },
-           { data: 'toLocation' },
-           { 
-             data: 'vehicleWork',
-             className: 'text-end',
-             render: function(data) {
-               return `₹${(parseFloat(data) || 0).toFixed(2)}`;
-             }
-           },
-           { 
-             data: 'status',
-             render: function(data) {
-               const statusClass = data === 'Completed' ? 'badge bg-success' : 
-                                 data === 'Invoiced' ? 'badge bg-info' : 'badge bg-warning';
-               return `<span class="${statusClass}">${data || 'Active'}</span>`;
-             }
-           },
-           { // **FIX**: Added the missing payment status toggle button to the Actions column
-             data: null,
-             className: 'text-center',
-             render: function(data, type, row) {
-               // **FIX**: Use a Bootstrap switch toggle for a better UX.
-               const isCompleted = row.paymentStatus === 'Completed';
-               const statusText = isCompleted ? 'Completed' : 'Pending';
-               const statusClass = isCompleted ? 'payment-status-completed' : 'payment-status-pending';
-
-               return `
-                 <div class="form-check form-switch d-flex flex-column align-items-center justify-content-center">
-                   <input 
-                     class="form-check-input" 
-                     type="checkbox" 
-                     role="switch" 
-                     ${row.paymentStatus === 'Completed' ? 'checked' : ''}
-                     onclick="togglePaymentStatus('${row.id}', '${row.paymentStatus || 'Pending'}', '${row.lrNumber.includes('(Empty Return)') ? 'empty' : 'main'}')">
-                   <label class="form-check-label payment-status-label ${statusClass}">${statusText}</label>
-                 </div>`;
-             }
-           }
-         ]
-       });
-       
-       // Load vehicle work data from LR reports
-       loadVehicleWorkData();
-     }
-
-     // Load vehicle work data from LR reports
-     function loadVehicleWorkData() {
-       const vehicleWorkRef = ref(database, `users/${coreAccountId}/lrReports`);
-       onValue(vehicleWorkRef, (snapshot) => {
-         const vehicleWorkData = [];
-         let totalVehicleWork = 0;
-         let completedTrips = 0;
-         let pendingTrips = 0;
-         let monthlyTotal = 0;
-         
-         const currentMonth = new Date().getMonth();
-         const currentYear = new Date().getFullYear();
-         
-         if (snapshot.exists()) {
-           snapshot.forEach(child => {
-             const lr = child.val();
-             const lrId = child.key;
-             
-             // Only include entries that have vehicle work expense
-             if (lr && parseFloat(lr.vehicleWork) > 0) {
-               const vehicleWorkAmount = parseFloat(lr.vehicleWork) || 0;
-               totalVehicleWork += vehicleWorkAmount;
-               
-               // Count by status
-               if (lr.status === 'Completed' || lr.status === 'Invoiced') {
-                 completedTrips++;
-               } else {
-                 pendingTrips++;
-               }
-               
-               // Calculate monthly total
-               if (lr.date) {
-                 const lrDate = new Date(lr.date);
-                 if (lrDate.getMonth() === currentMonth && lrDate.getFullYear() === currentYear) {
-                   monthlyTotal += vehicleWorkAmount;
-                 }
-               }
-               
-               vehicleWorkData.push({
-                 id: lrId,
-                 vehicleNumber: lr.truckNumber || 'N/A',
-                 date: lr.date || '-', // Keep date as plain text
-                 lrNumber: lr.lrNumber || '-',
-                 fromLocation: lr.fromLocation || '-',
-                 toLocation: lr.toLocation || '-',
-                 vehicleWork: vehicleWorkAmount,
-                 status: lr.status || 'Active',
-                 paymentStatus: lr.paymentStatus || 'Pending' // **FIX**: Pass the correct payment status
-               });
-             }
-             
-             // Also include empty trip vehicle work if exists
-             if (lr.emptyTripData && parseFloat(lr.emptyTripData.vehicleWork) > 0) {
-               const emptyTripWorkAmount = parseFloat(lr.emptyTripData.vehicleWork) || 0;
-               totalVehicleWork += emptyTripWorkAmount;
-               
-               // For empty trips, count as completed if main trip is completed
-               if (lr.status === 'Completed' || lr.status === 'Invoiced') {
-                 completedTrips++;
-               } else {
-                 pendingTrips++;
-               }
-               
-               // Calculate monthly total for empty trips
-               if (lr.date) {
-                 const lrDate = new Date(lr.date);
-                 if (lrDate.getMonth() === currentMonth && lrDate.getFullYear() === currentYear) {
-                   monthlyTotal += emptyTripWorkAmount;
-                 }
-               }
-               
-               vehicleWorkData.push({
-                 id: lrId,
-                 vehicleNumber: lr.truckNumber || 'N/A',
-                 date: lr.date || '-', // Keep date as plain text
-                 lrNumber: `${lr.lrNumber || '-'} (Empty Return)`,
-                 fromLocation: lr.toLocation || '-', // Return trip: from becomes the original destination
-                 toLocation: lr.fromLocation || '-', // Return trip: to becomes the original source
-                 vehicleWork: emptyTripWorkAmount,
-                 status: lr.status || 'Active',
-                 // **FIX**: Pass the correct payment status for the empty trip
-                 paymentStatus: lr.emptyTripData.paymentStatus || 'Pending'
-               });
-             }
-           });
-         }
-         
-         // Update summary cards
-         updateVehicleWorkSummary(totalVehicleWork, completedTrips, pendingTrips, monthlyTotal);
-         
-         // Update DataTable
-         if (vehicleWorkTable) {
-           vehicleWorkTable.clear();
-           if (vehicleWorkData.length > 0) {
-             vehicleWorkTable.rows.add(vehicleWorkData);
-           }
-           vehicleWorkTable.draw();
-         }
-         
-         // Update vehicle filter dropdown
-         updateVehicleWorkVehicleFilter(vehicleWorkData);
-       });
-     }
-
-     // Update vehicle work summary cards
-     function updateVehicleWorkSummary(total, completed, pending, monthly) {
-       document.getElementById('totalVehicleWork').textContent = `₹${total.toFixed(2)}`;
-       document.getElementById('completedTrips').textContent = completed;
-       document.getElementById('pendingTrips').textContent = pending;
-       document.getElementById('monthlyVehicleWork').textContent = `₹${monthly.toFixed(2)}`;
-     }
-
-     // Update vehicle filter dropdown for vehicle work
-     function updateVehicleWorkVehicleFilter(vehicleWorkData) {
-       const vehicleFilter = document.getElementById('vehicleWorkVehicleFilter');
-       if (!vehicleFilter) return;
-       
-       const currentValue = vehicleFilter.value;
-       const uniqueVehicles = [...new Set(vehicleWorkData.map(item => item.vehicleNumber))].filter(v => v && v !== 'N/A');
-       
-       vehicleFilter.innerHTML = '<option value="">All Vehicles</option>';
-       uniqueVehicles.sort().forEach(vehicle => {
-         const option = document.createElement('option');
-         option.value = vehicle;
-         option.textContent = vehicle;
-         vehicleFilter.appendChild(option);
-       });
-       
-       // Restore selection if it still exists
-       if (currentValue && uniqueVehicles.includes(currentValue)) {
-         vehicleFilter.value = currentValue;
-       }
-     }
-
-     // Apply filters to vehicle work table
-     function applyVehicleWorkFilters() {
-       const fromDate = document.getElementById('vehicleWorkFromDate').value;
-       const toDate = document.getElementById('vehicleWorkToDate').value;
-       const actionFilter = document.getElementById('vehicleWorkActionFilter').value;
-       
-       // Custom filtering function
-       $.fn.dataTable.ext.search.push(
-         function(settings, data, dataIndex) {
-           if (settings.nTable.id !== 'vehicleWorkTable') {
-             return true;
-           }
-           
-           const row = vehicleWorkTable.row(dataIndex).data();
-           if (!row) return true;
-           
-           const rowDate = row.date;
-           const rowPaymentStatus = row.paymentStatus || 'Pending';
-           
-           let showRow = true;
-           
-           // Date filter
-           if (fromDate && rowDate < fromDate) showRow = false;
-           if (toDate && rowDate > toDate) showRow = false;
-           
-           // Action status filter
-           if (actionFilter && rowPaymentStatus !== actionFilter) showRow = false;
-           
-           return showRow;
-         }
-       );
-       
-       vehicleWorkTable.draw();
-       
-       // Remove the custom filter function after drawing
-       $.fn.dataTable.ext.search.pop();
-     }
-
-     // --- NEW: Toggle Payment Status ---
-     function togglePaymentStatus(lrId, currentStatus, tripType) {
-       const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
-       // **FIX**: Determine the correct database path based on the trip type.
-       const pathSuffix = tripType === 'main' ? 'paymentStatus' : 'emptyTripData/paymentStatus';
-
-       if (confirm(`Change payment status to "${newStatus}"?`)) {
-         const updatePath = ref(database, `users/${coreAccountId}/lrReports/${lrId}/${pathSuffix}`);
-         set(updatePath, newStatus)
-           .then(() => {
-             showSuccess('Payment status updated successfully!');
-             // The table will auto-refresh due to the 'on' listener.
-           })
-           .catch(error => {
-             showError('Error updating status: ' + error.message);
-           });
-       }
-     }
-
-     // Make the new function globally accessible for the onclick attribute
-     window.togglePaymentStatus = togglePaymentStatus;
-
-
-     // Clear vehicle work filters
-     function clearVehicleWorkFilters() {
-       document.getElementById('vehicleWorkFromDate').value = '';
-       document.getElementById('vehicleWorkToDate').value = '';
-       document.getElementById('vehicleWorkActionFilter').value = '';
-       
-       vehicleWorkTable.search('').columns().search('').draw();
-     }
-
-     // Export vehicle work to Excel
-     function exportVehicleWorkExcel() {
-       try {
-         const data = vehicleWorkTable.rows({ search: 'applied' }).data().toArray();
-         
-         const excelData = data.map(row => ({
-           'Vehicle Number': row.vehicleNumber,
-           'Date': row.date,
-           'LR Number': row.lrNumber,
-           'From Location': row.fromLocation,
-           'To Location': row.toLocation,
-           'Vehicle Work Amount': parseFloat(row.vehicleWork) || 0,
-           'Status': row.status
-         }));
-         
-         // Create worksheet and workbook
-         const ws = XLSX.utils.json_to_sheet(excelData);
-         const wb = XLSX.utils.book_new();
-         XLSX.utils.book_append_sheet(wb, ws, 'Vehicle Work');
-         
-         // Generate Excel file and download
-         const fileName = `vehicle_work_data_${new Date().toISOString().split('T')[0]}.xlsx`;
-         XLSX.writeFile(wb, fileName);
-         
-         showSuccess('Vehicle work Excel file downloaded successfully');
-       } catch (error) {
-         showError('Error downloading vehicle work Excel file: ' + error.message);
-       }
-     }
-
      // View LR Details (Copied from booking.html, adapted for add.html)
      async function viewLRDetails(lrId) {
        const dataRoot = coreAccountId || currentUser.uid;
@@ -2384,9 +2586,6 @@
      }
 
      // Make functions globally accessible
-     window.applyVehicleWorkFilters = applyVehicleWorkFilters;
-     window.clearVehicleWorkFilters = clearVehicleWorkFilters;
-     window.exportVehicleWorkExcel = exportVehicleWorkExcel;
      // **FIX**: Expose functions called by onclick attributes to the global scope.
      window.viewLRDetails = viewLRDetails; // Expose the new function
      window.editEntry = editEntry;
@@ -2403,4 +2602,3 @@
   </script>
 </body>
 </html>
-
