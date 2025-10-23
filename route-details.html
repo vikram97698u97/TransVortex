@@ -55,6 +55,11 @@
             <i class="fas fa-money-bill-wave me-1"></i> Fuel Payments
           </button>
         </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="vehicle-fuel-tab" data-bs-toggle="tab" data-bs-target="#vehicle-fuel" type="button" role="tab" aria-controls="vehicle-fuel" aria-selected="false">
+            <i class="fas fa-truck me-1"></i> Vehicle Fuel
+          </button>
+        </li>
       </ul>
 
       <div class="tab-content" id="fuelTabsContent">
@@ -166,6 +171,46 @@
             </table>
           </div>
         </div>
+
+        <div class="tab-pane fade p-3" id="vehicle-fuel" role="tabpanel" aria-labelledby="vehicle-fuel-tab">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0"><i class="fas fa-truck me-2"></i>Vehicle Fuel</h4>
+            <div class="d-flex gap-2">
+              <input type="text" id="vehicleFuelSearch" class="form-control form-control-sm" placeholder="Search vehicle..." style="max-width: 220px;">
+              <button class="btn btn-sm btn-outline-secondary" id="refreshVehicleFuel"><i class="fas fa-rotate"></i></button>
+            </div>
+          </div>
+          
+          <div id="vehicleFuelCards" class="row g-3"></div>
+        </div>
+        <div class="modal fade" id="vfLogsModal" tabindex="-1" aria-labelledby="vfLogsModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header bg-light">
+                <h5 class="modal-title" id="vfLogsModalLabel">Fuel Log</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped table-bordered mb-0">
+                    <thead>
+                      <tr>
+                        <th>Vehicle</th>
+                        <th>Date</th>
+                        <th>Pump</th>
+                        <th class="text-end">Liters</th>
+                        <th class="text-end">Price/L</th>
+                        <th class="text-end">Total (₹)</th>
+                        <th>Details</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vfLogsTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -249,7 +294,7 @@
   <script type="module">
     // Firebase imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, push, onValue, update, remove, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, push, onValue, update, remove, get, query, orderByChild, equalTo, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     // Config
@@ -278,6 +323,285 @@
     let currentEditingPaymentId = null; 
     let coreAccountId = null; 
 
+    // Vehicle Fuel tab state
+    let vf_pumpsOptionsHtml = '<option value="">Select Pump</option>';
+    let vf_allVehicles = [];
+    let allPumpTransactions = [];
+    let allFuelPayments = [];
+
+    // Load pump options for Vehicle Fuel tab
+    function loadPumpsForVehicleFuel(uid) {
+      const pumpRef = ref(db, `users/${uid}/petrolPumps`);
+      onValue(pumpRef, (snapshot) => {
+        const opts = [];
+        opts.push('<option value="">Select Pump</option>');
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const p = child.val();
+            if (p && p.name) opts.push(`<option value="${p.name}">${p.name}</option>`);
+          });
+        }
+        vf_pumpsOptionsHtml = opts.join('');
+        renderVehicleFuelCards();
+      });
+    }
+
+    // Load vehicles list for Vehicle Fuel tab
+    function loadVehiclesForFuel() {
+      if (!coreAccountId) return;
+      const vref = ref(db, `users/${coreAccountId}/vehicles`);
+      onValue(vref, (snap) => {
+        vf_allVehicles = [];
+        if (snap.exists()) {
+          snap.forEach(child => {
+            const v = child.val() || {};
+            vf_allVehicles.push({ id: child.key, ...v });
+          });
+        }
+        renderVehicleFuelCards();
+      });
+    }
+
+    // Helper to get a vehicle's number consistently
+    function getVehicleNumber(v) {
+      return (v?.vehicleNo || v?.vehicleNumber || v?.number || '').toString();
+    }
+
+    // Render vehicle cards
+    function renderVehicleFuelCards(filterText = '') {
+      const wrap = document.getElementById('vehicleFuelCards');
+      if (!wrap) return;
+      const q = (filterText || document.getElementById('vehicleFuelSearch')?.value || '').toLowerCase();
+      wrap.innerHTML = '';
+      vf_allVehicles
+        .filter(v => !q || getVehicleNumber(v).toLowerCase().includes(q))
+        .sort((a, b) => getVehicleNumber(a).localeCompare(getVehicleNumber(b)))
+        .forEach(v => {
+          const cur = parseFloat(v.currentFuel) || 0;
+          const card = document.createElement('div');
+          card.className = 'col-12 col-md-6 col-lg-4';
+          card.innerHTML = `
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h5 class="card-title mb-0"><i class="fas fa-truck me-2"></i>${getVehicleNumber(v) || '(unnamed)'} </h5>
+                  <span class="badge bg-secondary">${v.type || 'Vehicle'}</span>
+                </div>
+                <div class="mb-2"><strong>Current Fuel:</strong> <span id="vf-cur-${v.id}">${cur.toFixed(2)}</span> L</div>
+                <div class="row g-2 align-items-end">
+                  <div class="col-4">
+                    <label class="form-label">Liters</label>
+                    <input type="number" class="form-control" id="vf-liters-${v.id}" step="0.01" min="0" placeholder="e.g., 300">
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label">Price/L</label>
+                    <input type="number" class="form-control" id="vf-perl-${v.id}" step="0.01" min="0" placeholder="e.g., 95">
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label">Pump</label>
+                    <select class="form-select" id="vf-pump-${v.id}">${vf_pumpsOptionsHtml}</select>
+                  </div>
+                </div>
+                <div class="d-flex gap-2 mt-2">
+                  <button class="btn btn-outline-primary" onclick="window.vfAddFuel && window.vfAddFuel('${v.id}')"><i class=\"fas fa-plus me-1\"></i>Add Fuel</button>
+                  <div class="input-group" style="max-width: 200px;">
+                    <input type="number" class="form-control" id="vf-editcur-${v.id}" step="0.01" min="0" placeholder="Set current fuel">
+                    <button class="btn btn-outline-secondary" onclick="window.vfSaveCurrent && window.vfSaveCurrent('${v.id}')"><i class=\"fas fa-save\"></i></button>
+                  </div>
+                  <button class="btn btn-outline-info" onclick="window.vfViewFuel && window.vfViewFuel('${v.id}')"><i class=\"fas fa-list\"></i> View</button>
+                </div>
+              </div>
+            </div>`;
+          wrap.appendChild(card);
+        });
+    }
+
+    /**
+     * Adds a fuel entry for a specific vehicle. This function is designed to be robust
+     * and secure, performing three distinct database writes and providing clear feedback.
+     * 1. Updates the vehicle's current fuel level.
+     * 2. Creates a new fuel log entry.
+     * 3. Creates a new pump transaction record.
+     */
+    window.vfAddFuel = async function(vehicleId) {
+      const v = vf_allVehicles.find(x => x.id === vehicleId);
+      if (!v) {
+        alert('Error: Vehicle data not found. Please refresh and try again.');
+        return;
+      }
+
+      const litersInput = document.getElementById(`vf-liters-${vehicleId}`);
+      const perLInput = document.getElementById(`vf-perl-${vehicleId}`);
+      const pumpSelect = document.getElementById(`vf-pump-${vehicleId}`);
+
+      const liters = parseFloat(litersInput.value) || 0;
+      const perL = parseFloat(perLInput.value) || 0;
+      const pumpName = (pumpSelect.value || '').trim();
+
+      if (liters <= 0 || perL <= 0 || !pumpName) {
+        alert('Please enter valid Liters, Price/L, and select a Pump.');
+        return;
+      }
+
+      const totalAmount = liters * perL;
+      const vehicleRef = ref(db, `users/${coreAccountId}/vehicles/${vehicleId}`);
+
+      try {
+        // --- Step 1: Get current fuel level ---
+        const curSnap = await get(vehicleRef);
+        const currentData = curSnap.val() || {};
+        const before = parseFloat(currentData.currentFuel) || 0;
+        const after = before + liters;
+
+        // --- Step 2: Prepare data for all writes ---
+        const now = new Date();
+        const timestamp = now.toISOString();
+        const date = timestamp.split('T')[0];
+        const authenticatedUserId = auth.currentUser.uid;
+
+        const fuelLogData = {
+          timestamp,
+          source: 'vehicle-fuel-tab',
+          addedLiters: liters,
+          pricePerLiter: perL,
+          totalAmount,
+          pumpName,
+          beforeLiters: before,
+          afterLiters: after,
+          userId: authenticatedUserId,
+          coreAccountId: coreAccountId
+        };
+
+        const pumpTransactionData = {
+          timestamp,
+          date,
+          pumpName,
+          vehicleId,
+          vehicleNumber: getVehicleNumber(v),
+          liters,
+          perLiter: perL,
+          total: totalAmount,
+          source: 'vehicle-fuel',
+          userId: authenticatedUserId,
+          coreAccountId: coreAccountId
+        };
+
+        // --- Step 3: Perform all database writes ---
+        const fuelLogRef = ref(db, `users/${coreAccountId}/vehicles/${vehicleId}/fuelLogs`);
+        const pumpTransRef = ref(db, `users/${coreAccountId}/pumpTransactions`);
+
+        // Use a multi-path update for atomicity where possible, though push needs separate calls.
+        // We will perform them sequentially with error checks.
+        await update(vehicleRef, { currentFuel: after });
+        await push(fuelLogRef, fuelLogData);
+        await push(pumpTransRef, pumpTransactionData);
+
+        // --- Step 4: Update UI on success ---
+        document.getElementById(`vf-cur-${vehicleId}`).textContent = after.toFixed(2);
+        litersInput.value = '';
+        perLInput.value = '';
+        // Do not reset pump selection, user might add fuel from the same pump again.
+
+        // Optional: Show a temporary success message
+        const originalTitle = v.vehicleNumber || '(unnamed)';
+        const titleEl = document.querySelector(`#vf-cur-${vehicleId}`).closest('.card-body').querySelector('.card-title');
+        if(titleEl) {
+          titleEl.innerHTML = `<i class="fas fa-check-circle text-success"></i> Fuel Added!`;
+          setTimeout(() => { titleEl.innerHTML = `<i class="fas fa-truck me-2"></i>${originalTitle}`; }, 2000);
+        }
+
+      } catch (error) {
+        console.error('vfAddFuel error:', error);
+        alert(`Failed to add fuel. Please check your permissions and try again.\n\nError: ${error.message}`);
+      }
+    }
+
+    window.vfSaveCurrent = async function(vehicleId) {
+      const inputEl = document.getElementById(`vf-editcur-${vehicleId}`);
+      const val = parseFloat(inputEl.value);
+
+      if (isNaN(val) || val < 0) {
+        alert('Please enter a valid, non-negative fuel amount.');
+        return;
+      }
+
+      const vehicleRef = ref(db, `users/${coreAccountId}/vehicles/${vehicleId}`);
+
+      try {
+        await update(vehicleRef, { currentFuel: val });
+
+        // Update UI on success
+        inputEl.value = '';
+        document.getElementById(`vf-cur-${vehicleId}`).textContent = val.toFixed(2);
+
+      } catch (error) {
+        console.error('vfSaveCurrent error:', error);
+        alert(`Failed to update current fuel. Please check permissions.\n\nError: ${error.message}`);
+      }
+    }
+
+    // View a vehicle's fuel log
+    window.vfViewFuel = async function(vehicleId) {
+      const v = vf_allVehicles.find(x => x.id === vehicleId);
+      if (!v) {
+        alert('Vehicle not found');
+        return;
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('vfLogsModal'));
+      const modalLabel = document.getElementById('vfLogsModalLabel');
+      const tableBody = document.getElementById('vfLogsTableBody');
+
+      modalLabel.textContent = `Fuel Log for ${getVehicleNumber(v)}`;
+      tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading logs...</td></tr>';
+      modal.show();
+
+      const logsRef = query(ref(db, `users/${coreAccountId}/vehicles/${vehicleId}/fuelLogs`), orderByChild('timestamp'));
+
+      try {
+        const snap = await get(logsRef);
+
+        if (!snap.exists()) {
+          tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No fuel logs found for this vehicle.</td></tr>';
+          return;
+        }
+
+        const logs = [];
+        snap.forEach(child => logs.push(child.val()));
+        logs.reverse(); // Sorts from newest to oldest since we ordered by timestamp ascending
+
+        tableBody.innerHTML = '';
+        logs.forEach(log => {
+          const date = new Date(log.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          let liters = 0;
+          let price = 0;
+          let total = 0;
+          let details = log.source || 'N/A';
+
+          if (log.source === 'vehicle-fuel-tab') {
+            liters = `<span class="text-success">+${(log.addedLiters || 0).toFixed(2)}</span>`;
+            price = log.pricePerLiter || 0;
+            total = log.totalAmount || 0;
+            details = `Fuel added`;
+          } else if (log.source && log.source.includes('lr-')) {
+            liters = `<span class="text-danger">-${(log.usedLiters || log.usedLitersDelta || 0).toFixed(2)}</span>`;
+            price = '-';
+            total = '-';
+            details = `Usage for LR #${log.lrNumber || 'N/A'}`;
+          }
+
+          const row = `
+            <tr>
+              <td>${getVehicleNumber(v)}</td><td>${date}</td><td>${log.pumpName || '-'}</td><td class="text-end">${liters}</td><td class="text-end">${price > 0 ? `₹${price.toFixed(2)}` : price}</td><td class="text-end">${total > 0 ? `₹${total.toFixed(2)}` : total}</td><td>${details}</td>
+            </tr>`;
+          tableBody.innerHTML += row;
+        });
+      } catch (error) {
+        console.error('vfViewFuel error:', error);
+        alert(`Failed to load fuel logs.\n\nError: ${error.message}`);
+      }
+    }
+
     // Save active tab
     const fuelTabs = document.querySelectorAll('#fuelTabs button');
     fuelTabs.forEach(tab => {
@@ -298,10 +622,10 @@
             const userData = snapshot.val();
             coreAccountId = userData.coreAccountId || user.uid;
           } else {
-            coreAccountId = user.uid; // Fallback
+            coreAccountId = user.uid;
           }
 
-          // Initialize tables and load data once coreAccountId is ready
+          // Initialize tables
           pumpTable = $('#pumpTable').DataTable({
             "pageLength": 10,
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
@@ -327,6 +651,9 @@
           loadPumps(user.uid);
           loadPumpsForPaymentDropdown(user.uid); 
           loadFuelPayments(user.uid);
+          loadPumpsForVehicleFuel(user.uid);
+          loadAllPumpData(coreAccountId, user.uid); // **NEW**: Load all data needed for calculations
+          loadVehiclesForFuel();
         });
 
         // Restore active tab
@@ -380,12 +707,62 @@
             document.getElementById('pumpDetailView').classList.add('hidden');
           });
         }
+
+        // Vehicle Fuel tab events
+        const vSearch = document.getElementById('vehicleFuelSearch');
+        if (vSearch) vSearch.addEventListener('input', () => renderVehicleFuelCards(vSearch.value));
+        const refreshBtn = document.getElementById('refreshVehicleFuel');
+        if (refreshBtn) refreshBtn.addEventListener('click', () => { 
+          loadVehiclesForFuel(); 
+          loadPumpsForVehicleFuel(currentUser.uid);
+        });
       }
     });
 
-    // **FIX**: Load pumps from the currently logged-in user's own data path.
+    // **NEW**: Load all transactions and payments to enable calculations
+    function loadAllPumpData(coreId, userId) {
+      const transactionsRef = ref(db, `users/${coreId}/pumpTransactions`);
+      onValue(transactionsRef, (snapshot) => {
+        allPumpTransactions = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(child => allPumpTransactions.push(child.val()));
+        }
+        // Once data is loaded, re-render the pumps table with correct totals
+        loadPumps(userId); 
+      });
+
+      const paymentsRef = ref(db, `users/${userId}/fuelPayments`);
+      onValue(paymentsRef, (snapshot) => {
+        allFuelPayments = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(child => allFuelPayments.push({ id: child.key, ...child.val() }));
+        }
+        // Re-render pumps table when payments change
+        loadPumps(userId);
+      });
+    }
+
+    // **NEW**: Helper function to calculate totals for a given pump name
+    function getPumpTotals(pumpName, pumpId) {
+      const transactions = allPumpTransactions.filter(t => t.pumpName === pumpName);
+      const payments = allFuelPayments.filter(p => p.pumpId === pumpId);
+
+      const totalBilled = transactions.reduce((sum, t) => sum + (parseFloat(t.total) || 0), 0);
+      const totalPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+      const totalLiters = transactions.reduce((sum, t) => sum + (parseFloat(t.liters) || 0), 0);
+      const outstanding = totalBilled - totalPaid;
+
+      return {
+        totalBilled,
+        totalPaid,
+        outstanding,
+        totalLiters
+      };
+    }
+
+    // Load pumps for payment dropdown
     function loadPumpsForPaymentDropdown(uid) {
-      const pumpRef = ref(db, `users/${uid}/petrolPumps`); 
+      const pumpRef = ref(db, `users/${uid}/petrolPumps`);
       const select = document.getElementById('fuelPaymentPumpSelect');
       onValue(pumpRef, (snapshot) => {
         select.innerHTML = '<option value="">Select a Pump</option>';
@@ -393,7 +770,7 @@
           snapshot.forEach(child => {
             const pump = child.val();
             const option = document.createElement('option');
-            option.value = pump.name; 
+            option.value = child.key;
             option.textContent = pump.name;
             select.appendChild(option);
           });
@@ -408,7 +785,7 @@
 
       const saveButton = document.querySelector('#fuelPaymentForm button[type="submit"]');
       const paymentData = {
-        pumpName: document.getElementById('fuelPaymentPumpSelect').value,
+        pumpId: document.getElementById('fuelPaymentPumpSelect').value,
         amount: parseFloat(document.getElementById('fuelPaymentAmount').value),
         date: document.getElementById('fuelPaymentDate').value,
         mode: document.getElementById('fuelPaymentMode').value,
@@ -428,7 +805,6 @@
           currentEditingPaymentId = null; 
           saveButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Payment'; 
           e.target.reset();
-          loadPumps(currentUser.uid); 
         })
         .catch(err => alert('Error updating payment: ' + err.message));
       } else {
@@ -437,7 +813,6 @@
         .then(() => {
           alert('Payment recorded successfully!');
           e.target.reset();
-          loadPumps(currentUser.uid); 
         })
         .catch(err => alert('Error saving payment: ' + err.message));
       }
@@ -451,20 +826,26 @@
         if (snapshot.exists()) {
           snapshot.forEach(child => {
             const p = child.val();
-            fuelPaymentsTable.row.add([
-              p.date,
-              p.pumpName,
-              `₹${p.amount.toFixed(2)}`,
-              p.mode,
-              p.remarks || '-',
-              `<div class="text-center">
-                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editFuelPayment('${child.key}')"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteFuelPayment('${child.key}')"><i class="fas fa-trash"></i></button>
-              </div>`
-            ]);
+            // Get pump name for display
+            const pumpRef = ref(db, `users/${uid}/petrolPumps/${p.pumpId}`);
+            get(pumpRef).then(pumpSnap => {
+              const pumpName = pumpSnap.exists() ? pumpSnap.val().name : 'Unknown Pump';
+              
+              fuelPaymentsTable.row.add([
+                p.date,
+                pumpName,
+                `₹${p.amount.toFixed(2)}`,
+                p.mode,
+                p.remarks || '-',
+                `<div class="text-center">
+                  <button class="btn btn-sm btn-outline-secondary me-1" onclick="editFuelPayment('${child.key}')"><i class="fas fa-edit"></i></button>
+                  <button class="btn btn-sm btn-outline-danger" onclick="deleteFuelPayment('${child.key}')"><i class="fas fa-trash"></i></button>
+                </div>`
+              ]);
+              fuelPaymentsTable.draw();
+            });
           });
         }
-        fuelPaymentsTable.draw();
       });
     }
 
@@ -479,23 +860,6 @@
         return;
       }
 
-      // Check for duplicates
-      const pumpRef = ref(db, `users/${currentUser.uid}/petrolPumps`);
-      const snapshot = await get(pumpRef);
-      let isDuplicate = false;
-      if (snapshot.exists()) {
-        snapshot.forEach(childSnapshot => {
-          if (childSnapshot.val().name.toLowerCase() === newPumpName.toLowerCase()) {
-            isDuplicate = true;
-          }
-        });
-      }
-
-      if (isDuplicate) {
-        alert('A pump with this name already exists.');
-        return;
-      }
-
       const pumpData = {
         name: newPumpName,
         place: document.getElementById("pumpPlace").value,
@@ -505,6 +869,7 @@
         createdAt: new Date().toISOString()
       };
 
+      const pumpRef = ref(db, `users/${currentUser.uid}/petrolPumps`);
       push(pumpRef, pumpData)
         .then(() => {
           e.target.reset();
@@ -517,87 +882,33 @@
 
     // Load Pumps
     function loadPumps(uid) {
-      // Fetch LR reports using coreAccountId for financial calculations
-      const lrReportsPromise = get(ref(db, `users/${coreAccountId}/lrReports`));
-      // Fetch payments using user's UID
-      const paymentsPromise = get(query(ref(db, `users/${uid}/fuelPayments`)));
+      const pumpRef = ref(db, `users/${uid}/petrolPumps`);
+      onValue(pumpRef, (snapshot) => {
+        pumpTable.clear();
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const pumpId = child.key;
+            const pump = child.val();
+            const totals = getPumpTotals(pump.name, pumpId);
 
-      Promise.all([lrReportsPromise, paymentsPromise]).then(([lrSnapshot, paymentSnapshot]) => {
-          const pumpTotals = {};
-          const pumpPayments = {};
-
-          // Aggregate total spent from LR reports
-          if (lrSnapshot.exists()) {
-            lrSnapshot.forEach(lrChild => {
-              const lr = lrChild.val();
-              // **FIX**: Iterate through the dieselEntries array for the main trip
-              if (lr.dieselEntries && Array.isArray(lr.dieselEntries)) {
-                lr.dieselEntries.forEach(entry => {
-                  if (entry.pumpName && parseFloat(entry.total) > 0) {
-                    if (!pumpTotals[entry.pumpName]) {
-                      pumpTotals[entry.pumpName] = { totalSpent: 0, totalLiters: 0 };
-                    }
-                    pumpTotals[entry.pumpName].totalSpent += parseFloat(entry.total);
-                    pumpTotals[entry.pumpName].totalLiters += parseFloat(entry.liters || 0);
-                  }
-                });
-              }
-              // **FIX**: Iterate through the dieselEntries array for the empty return trip
-              if (lr.emptyTripData && lr.emptyTripData.dieselEntries && Array.isArray(lr.emptyTripData.dieselEntries)) {
-                  lr.emptyTripData.dieselEntries.forEach(entry => {
-                      if (entry.pumpName && parseFloat(entry.total) > 0) {
-                          if (!pumpTotals[entry.pumpName]) pumpTotals[entry.pumpName] = { totalSpent: 0, totalLiters: 0 };
-                          pumpTotals[entry.pumpName].totalSpent += parseFloat(entry.total);
-                          pumpTotals[entry.pumpName].totalLiters += parseFloat(entry.liters || 0);
-                      }
-                  });
-              }
-            });
-          }
-
-          // Aggregate total paid from fuel payments
-          if (paymentSnapshot.exists()) {
-              paymentSnapshot.forEach(paymentChild => {
-                  const payment = paymentChild.val();
-                  if (payment.pumpName && payment.amount > 0) {
-                      pumpPayments[payment.pumpName] = (pumpPayments[payment.pumpName] || 0) + parseFloat(payment.amount);
-                  }
-              });
-          }
-
-          // **FIX**: Load pumps from the currently logged-in user's own data path.
-          const pumpRef = ref(db, `users/${uid}/petrolPumps`);
-          onValue(pumpRef, (pumpSnapshot) => {
-            pumpTable.clear();
-            if (pumpSnapshot.exists()) {
-              pumpSnapshot.forEach(child => {
-                const pump = child.val();
-                const totalBilled = pumpTotals[pump.name]?.totalSpent || 0;
-                const totalPaid = pumpPayments[pump.name] || 0;
-                const outstanding = totalBilled - totalPaid;
-
-                pumpTable.row.add([
-                  pump.name,
-                  pump.place || "-",
-                  pump.contact || "-",
-                  pump.gstin || "-",
-                  `₹${totalBilled.toFixed(2)}`,
-                  `<span class="text-success">₹${totalPaid.toFixed(2)}</span>`,
-                  `<span class="fw-bold ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
-                  `<div class="text-center">
-                  <button class="btn btn-sm btn-outline-primary me-1" onclick="viewPump('${child.key}')" title="View Details"><i class="fas fa-eye"></i></button>
-                  <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPump('${child.key}', '${pump.name}', '${pump.place || ''}', '${pump.contact || ''}', '${pump.email || ''}', '${pump.gstin || ''}')" title="Edit"><i class="fas fa-edit"></i></button>
-                  <button class="btn btn-sm btn-outline-danger" onclick="deletePump('${child.key}')" title="Delete"><i class="fas fa-trash"></i></button>
-                </div>`
-              ]).node().id = `pump-row-${child.key}`;
-            });
-          }
-            pumpTable.draw();
+            pumpTable.row.add([
+              pump.name,
+              pump.place || "-",
+              pump.contact || "-",
+              pump.gstin || "-",
+              `₹${totals.totalBilled.toFixed(2)}`,
+              `₹${totals.totalPaid.toFixed(2)}`,
+              `<span class="fw-bold ${totals.outstanding > 0 ? 'text-danger' : 'text-success'}">₹${totals.outstanding.toFixed(2)}</span>`,
+              `<div class="text-center">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewPump('${child.key}')" title="View Details"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPump('${child.key}')" title="Edit"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deletePump('${child.key}')" title="Delete"><i class="fas fa-trash"></i></button>
+              </div>`
+            ]).node().id = `pump-row-${child.key}`;
           });
-        }).catch(error => {
-          console.error("Error fetching data for pump totals:", error);
-          alert("Could not calculate pump totals due to a data loading error.");
-        });
+        }
+        pumpTable.draw();
+      });
     }
     
     // View Pump Details
@@ -618,73 +929,61 @@
       document.getElementById('pumpDetailGSTIN').textContent = pump.gstin || '-';
       document.getElementById('pumpDetailEmail').textContent = pump.email || '-';
 
-      // Fetch transactions using coreAccountId
-      const lrQuery = get(ref(db, `users/${coreAccountId}/lrReports`)); 
-      const paymentQuery = get(query(ref(db, `users/${currentUser.uid}/fuelPayments`), orderByChild('pumpName'), equalTo(pump.name)));
+      // **FIX**: Calculate and display totals in the detail view
+      const totals = getPumpTotals(pump.name, pumpId);
+      document.getElementById('pumpDetailTotalSpent').textContent = `₹${totals.totalBilled.toFixed(2)}`;
+      document.getElementById('pumpDetailTotalPaid').textContent = `₹${totals.totalPaid.toFixed(2)}`;
+      document.getElementById('pumpDetailOutstanding').textContent = `₹${totals.outstanding.toFixed(2)}`;
+      document.getElementById('pumpDetailTotalLiters').textContent = `${totals.totalLiters.toFixed(2)} L`;
 
-      const [lrSnap, paymentSnap] = await Promise.all([lrQuery, paymentQuery]);
-
-        transactionTable.clear();
-        pumpPaymentHistoryTable.clear(); 
-        let totalSpent = 0, totalLiters = 0, totalPaid = 0;
-
-        if (lrSnap.exists()) {
-            lrSnap.forEach(child => {
-                const lr = child.val();
-                // **FIX**: Iterate through main trip diesel entries
-                if (lr.dieselEntries && Array.isArray(lr.dieselEntries)) {
-                    lr.dieselEntries.forEach(entry => {
-                        if (entry.pumpName === pump.name) {
-                            totalSpent += parseFloat(entry.total || 0);
-                            totalLiters += parseFloat(entry.liters || 0);
-                            transactionTable.row.add([
-                                lr.date, lr.lrNumber, lr.truckNumber,
-                                (entry.liters || 0).toFixed(2),
-                                `₹${(entry.perLiter || 0).toFixed(2)}`,
-                                `₹${(entry.total || 0).toFixed(2)}`
-                            ]);
-                        }
-                    });
-                }
-                // **FIX**: Iterate through empty return trip diesel entries
-                if (lr.emptyTripData && lr.emptyTripData.dieselEntries && Array.isArray(lr.emptyTripData.dieselEntries)) {
-                    lr.emptyTripData.dieselEntries.forEach(entry => {
-                        if (entry.pumpName === pump.name) {
-                            totalSpent += parseFloat(entry.total || 0);
-                            totalLiters += parseFloat(entry.liters || 0);
-                            transactionTable.row.add([
-                                lr.date, `${lr.lrNumber} (Return)`, lr.truckNumber,
-                                (entry.liters || 0).toFixed(2),
-                                `₹${(entry.perLiter || 0).toFixed(2)}`,
-                                `₹${(entry.total || 0).toFixed(2)}`
-                            ]);
-                        }
-                    });
-                }
-            });
-        }
-
-        if (paymentSnap.exists()) {
-            paymentSnap.forEach(child => {
-                const payment = child.val();
-                totalPaid += parseFloat(payment.amount || 0);
-                pumpPaymentHistoryTable.row.add([
-                    payment.date,
-                    `₹${(payment.amount || 0).toFixed(2)}`,
-                    payment.mode || '-',
-                    payment.remarks || '-'
-                ]);
-            });
-        }
-
-      transactionTable.draw();
-      pumpPaymentHistoryTable.draw(); 
-
-      document.getElementById('pumpDetailTotalSpent').textContent = `₹${totalSpent.toFixed(2)}`;
-      document.getElementById('pumpDetailTotalPaid').textContent = `₹${totalPaid.toFixed(2)}`;
-      document.getElementById('pumpDetailOutstanding').textContent = `₹${(totalSpent - totalPaid).toFixed(2)}`;
-      document.getElementById('pumpDetailTotalLiters').textContent = `${totalLiters.toFixed(2)} L`;
+      // Load transactions and payments for this pump
+      loadPumpTransactions(pump.name);
+      loadPumpPaymentHistory(pump.name);
     };
+
+    // Load pump transactions
+    function loadPumpTransactions(pumpName) {
+      const transactionsRef = query(ref(db, `users/${coreAccountId}/pumpTransactions`), orderByChild('pumpName'), equalTo(pumpName));
+      onValue(transactionsRef, (snapshot) => {
+        transactionTable.clear();
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const tr = child.val();
+            transactionTable.row.add([
+              tr.date || (tr.timestamp || '').slice(0,10),
+              '-',
+              tr.vehicleNumber || '-',
+              (parseFloat(tr.liters || 0)).toFixed(2),
+              `₹${(parseFloat(tr.perLiter || 0)).toFixed(2)}`,
+              `₹${(parseFloat(tr.total || 0)).toFixed(2)}`
+            ]);
+          });
+        }
+        transactionTable.draw();
+      });
+    }
+
+    // Load pump payment history
+    function loadPumpPaymentHistory(pumpName) {
+      const paymentsRef = query(ref(db, `users/${currentUser.uid}/fuelPayments`));
+      // **FIX**: Use the pre-loaded `allFuelPayments` data instead of re-fetching
+      pumpPaymentHistoryTable.clear();
+      const relevantPayments = allFuelPayments.filter(async (payment) => {
+        const pumpRef = ref(db, `users/${currentUser.uid}/petrolPumps/${payment.pumpId}`);
+        const pumpSnap = await get(pumpRef);
+        return pumpSnap.exists() && pumpSnap.val().name === pumpName;
+      });
+
+      relevantPayments.forEach(payment => {
+        pumpPaymentHistoryTable.row.add([
+          payment.date,
+          `₹${(payment.amount || 0).toFixed(2)}`,
+          payment.mode || '-',
+          payment.remarks || '-'
+        ]);
+      });
+      pumpPaymentHistoryTable.draw();
+    }
 
     // Download Payment History as PDF
     async function downloadPaymentHistoryPDF() {
@@ -692,24 +991,6 @@
         alert('No pump selected. Please view a pump first.');
         return;
       }
-
-      // Fetch payment data for the current pump
-      const paymentQuery = query(ref(db, `users/${currentUser.uid}/fuelPayments`), orderByChild('pumpName'), equalTo(currentViewingPumpName));
-      const paymentSnap = await get(paymentQuery);
-
-      if (!paymentSnap.exists()) {
-        alert('No payment history to export for this pump.');
-        return;
-      }
-
-      const payments = [];
-      let totalPaid = 0;
-      paymentSnap.forEach(child => {
-        const p = child.val();
-        payments.push(p);
-        totalPaid += parseFloat(p.amount || 0);
-      });
-      payments.sort((a, b) => new Date(b.date) - new Date(a.date)); 
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -721,35 +1002,41 @@
       doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, 14, 30);
 
       const tableColumn = ["Date", "Amount (₹)", "Mode", "Remarks"];
-      const tableRows = payments.map(p => [
-        p.date,
-        (p.amount || 0).toFixed(2),
-        p.mode || '-',
-        p.remarks || '-'
-      ]);
+      const tableRows = [];
+
+      // Get payment data from the table
+      const tableData = pumpPaymentHistoryTable.rows().data().toArray();
+      tableData.forEach(row => {
+        tableRows.push([row[0], row[1].replace('₹', ''), row[2], row[3]]);
+      });
 
       doc.autoTable({
         head: [tableColumn],
         body: tableRows,
         startY: 35
       });
-      doc.text(`Total Paid: ₹${totalPaid.toFixed(2)}`, 14, doc.autoTable.previous.finalY + 10);
 
       doc.save(`Payment_History_${currentViewingPumpName}.pdf`);
     }
 
     // Edit Pump
-    window.editPump = (id, name, place, contact, email, gstin) => {
-      const newName = prompt("Enter new pump name:", name);
-      if (!newName) return;
-      const newPlace = prompt("Enter new place:", place);
-      const newContact = prompt("Enter new contact number:", contact);
-      const newEmail = prompt("Enter new email:", email);
-      const newGstin = prompt("Enter new GSTIN:", gstin);
+    window.editPump = (id) => {
+      const pumpRef = ref(db, `users/${currentUser.uid}/petrolPumps/${id}`);
+      get(pumpRef).then(snapshot => {
+        if (snapshot.exists()) {
+          const pump = snapshot.val();
+          const newName = prompt("Enter new pump name:", pump.name);
+          if (!newName) return;
+          const newPlace = prompt("Enter new place:", pump.place || '');
+          const newContact = prompt("Enter new contact number:", pump.contact || '');
+          const newEmail = prompt("Enter new email:", pump.email || '');
+          const newGstin = prompt("Enter new GSTIN:", pump.gstin || '');
 
-      update(ref(db, `users/${currentUser.uid}/petrolPumps/${id}`), {
-        name: newName, place: newPlace, contact: newContact, email: newEmail, gstin: newGstin, updatedAt: new Date().toISOString()
-      }).then(() => alert('Pump details updated.')).catch(err => alert('Update failed: ' + err.message));
+          update(pumpRef, {
+            name: newName, place: newPlace, contact: newContact, email: newEmail, gstin: newGstin, updatedAt: new Date().toISOString()
+          }).then(() => alert('Pump details updated.')).catch(err => alert('Update failed: ' + err.message));
+        }
+      });
     };
 
     // Delete Pump
@@ -764,12 +1051,7 @@
     // Export to Excel
     document.getElementById("exportExcel").addEventListener("click", () => {
       const table = document.getElementById("pumpTable");
-      // Create a clone to remove the "Actions" column before exporting
-      const tableClone = table.cloneNode(true);
-      Array.from(tableClone.rows).forEach(row => {
-        row.deleteCell(-1); 
-      });
-      const wb = XLSX.utils.table_to_book(tableClone, { sheet: "PetrolPumps" });
+      const wb = XLSX.utils.table_to_book(table, { sheet: "PetrolPumps" });
       XLSX.writeFile(wb, "PetrolPumps.xlsx");
     });
 
@@ -784,7 +1066,7 @@
       const p = snapshot.val();
       currentEditingPaymentId = paymentId; 
 
-      document.getElementById('fuelPaymentPumpSelect').value = p.pumpName;
+      document.getElementById('fuelPaymentPumpSelect').value = p.pumpId;
       document.getElementById('fuelPaymentAmount').value = p.amount;
       document.getElementById('fuelPaymentDate').value = p.date;
       document.getElementById('fuelPaymentMode').value = p.mode;
@@ -800,18 +1082,22 @@
         remove(ref(db, `users/${currentUser.uid}/fuelPayments/${paymentId}`))
           .then(() => {
             alert('Payment record deleted.');
-            loadPumps(currentUser.uid); 
           })
           .catch(err => alert('Deletion failed: ' + err.message));
       }
     };
 
-    // Make functions globally accessible for onclick attributes
+    // Set default date for payment form
+    document.getElementById('fuelPaymentDate').valueAsDate = new Date();
+
+    // Make functions globally accessible
     window.viewPump = viewPump;
     window.editPump = editPump;
     window.deletePump = deletePump;
     window.editFuelPayment = editFuelPayment;
     window.deleteFuelPayment = deleteFuelPayment;
-</script>
+    window.vfViewFuel = vfViewFuel;
+
+  </script>
 </body>
 </html>
