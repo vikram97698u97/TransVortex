@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Work Management - Transport System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { padding: 0; margin: 0; background-color: #f8f9fa; }
+    .main-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .hidden { display: none !important; }
+    .form-section {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dee2e6;
+    }
+    .nav-tabs .nav-link.active {
+      background-color: #2E8B57; /* Changed color for distinction */
+      color: white;
+    }
+    .table-modern {
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .table-modern thead th {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+      padding: 12px 15px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar will be loaded here by navbar-loader.js -->
+  <div id="navbar-placeholder"></div>
+
+  <!-- Main Content -->
+  <div class="container mt-4">
+    <div class="main-content" id="vendorListView">
+      <h2 class="mb-4"><i class="fas fa-tools me-2"></i>Vehicle Work Management</h2>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3" id="vendorTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="vendors-tab" data-bs-toggle="tab" data-bs-target="#vendors-content" type="button" role="tab">Vendors</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments-content" type="button" role="tab">Vendor Payments</button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="vendorTabsContent">
+      <div class="tab-pane fade show active" id="vendors-content" role="tabpanel">
+
+    <!-- Add Vendor Form -->
+    <form id="vendorForm" class="form-section">
+      <h4 class="mb-3">Add New Vendor</h4>
+      
+      <!-- Vendor Information Card -->
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0"><i class="fas fa-store me-2"></i>Vendor Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="vendorName" class="form-label"><i class="fas fa-building me-1"></i> Vendor Name / Workshop <span class="text-danger">*</span></label>
+              <input type="text" id="vendorName" class="form-control" placeholder="e.g., Sharma Auto Works" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="contactPerson" class="form-label"><i class="fas fa-user me-1"></i> Contact Person</label>
+              <input type="text" id="contactPerson" class="form-control" placeholder="Contact Person Name">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="mobile" class="form-label"><i class="fas fa-phone me-1"></i> Mobile Number</label>
+              <input type="tel" id="mobile" class="form-control" placeholder="Mobile Number">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="gstin" class="form-label"><i class="fas fa-file-invoice me-1"></i> GSTIN</label>
+              <input type="text" id="gstin" class="form-control" placeholder="GSTIN">
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary" style="background-color: #2E8B57; border-color: #2E8B57;"><i class="fas fa-plus me-2"></i>Add Vendor</button>
+        <button type="button" id="cancelVendorEditBtn" class="btn btn-secondary" style="display: none;"><i class="fas fa-times me-2"></i>Cancel Edit</button>
+      </div>
+    </form>
+
+    <!-- Search + Export -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4>Vendor List</h4>
+      <button id="exportExcel" class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Export Excel</button>
+    </div>
+
+    <!-- Vendor List -->
+    <div class="table-responsive">
+      <table id="vendorTable" class="table table-striped table-bordered table-modern" style="width:100%">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>GSTIN</th>
+            <th>Contact</th>
+            <th class="text-center">Work Entries</th>
+            <th class="text-end">Total Work (₹)</th>
+            <th class="text-end">Total Paid (₹)</th>
+            <th class="text-end">Outstanding (₹)</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="vendorTableBody"></tbody>
+      </table>
+    </div>
+      </div>
+      <div class="tab-pane fade" id="payments-content" role="tabpanel">
+        <form id="paymentForm" class="form-section">
+          <h4 class="mb-3">Add New Payment</h4>
+          
+          <!-- Payment Information Card -->
+          <div class="card mb-4">
+            <div class="card-header bg-light">
+              <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="vendorSelect"><i class="fas fa-store me-1"></i> Select Vendor:</label>
+                  <select id="vendorSelect" class="form-select" required>
+                    <option value="">Loading vendors...</option>
+                  </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="amount"><i class="fas fa-rupee-sign me-1"></i> Amount:</label>
+                  <input type="number" id="amount" class="form-control" required step="0.01" />
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="date"><i class="fas fa-calendar-alt me-1"></i> Date:</label>
+                  <input type="date" id="date" class="form-control" required />
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="paymentNotes"><i class="fas fa-sticky-note me-1"></i> Notes:</label>
+                  <textarea id="paymentNotes" class="form-control" placeholder="Add any notes about this payment" rows="3"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-primary" style="background-color: #2E8B57; border-color: #2E8B57;"><i class="fas fa-plus me-2"></i>Add Payment</button>
+        </form>
+        
+        <!-- NEW: Total Payments Summary Card -->
+        <div class="card my-4">
+          <div class="card-body text-center bg-light">
+            <h5 class="card-title text-muted">Total Amount Paid to All Vendors</h5>
+            <h3 id="totalVendorPayments" class="display-6 fw-bold text-success">₹0.00</h3>
+          </div>
+        </div>
+
+        <!-- NEW: Date Range Filter for Payments -->
+        <div class="row mb-3 mt-4">
+          <div class="col-md-4">
+            <label for="paymentFromDate" class="form-label">From Date</label>
+            <input type="date" id="paymentFromDate" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label for="paymentToDate" class="form-label">To Date</label>
+            <input type="date" id="paymentToDate" class="form-control">
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button id="applyPaymentFilterBtn" class="btn btn-primary">Filter Payments</button>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+          <h4>Payment History</h4>
+          <input type="text" id="paymentSearchInput" class="form-control w-auto" placeholder="Search by vendor..." />
+        </div>
+        
+        <div class="table-responsive">
+          <table id="paymentTable" class="table table-striped table-bordered table-modern" style="width:100%">
+            <thead>
+              <tr>
+                <th>Vendor</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="paymentTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW: Vendor Detail View (replaces the old modal) -->
+  <div class="main-content hidden" id="vendorDetailView">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 id="vendorDetailTitle" class="mb-0">Vendor Details</h2>
+      <button class="btn btn-secondary" id="backToVendorListBtn"><i class="fas fa-arrow-left me-2"></i>Back to List</button>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6"><strong>Contact Person:</strong> <span id="vendorDetailContactPerson"></span></div>
+          <div class="col-md-6"><strong>Mobile:</strong> <span id="vendorDetailMobile"></span></div>
+        </div>
+        <hr>
+        <div class="row text-center">
+          <div class="col-md-4"><strong>Total Work Billed:</strong> <span id="vendorDetailTotalWork" class="fw-bold text-danger"></span></div>
+          <div class="col-md-4"><strong>Total Paid:</strong> <span id="vendorDetailTotalPaid" class="fw-bold text-success"></span></div>
+          <div class="col-md-4"><strong>Outstanding:</strong> <span id="vendorDetailOutstanding" class="fw-bold text-warning"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <ul class="nav nav-tabs mt-4" id="vendorDetailTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="work-history-tab" data-bs-toggle="tab" data-bs-target="#work-history-content" type="button" role="tab">Work History</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="payment-history-tab" data-bs-toggle="tab" data-bs-target="#payment-history-content" type="button" role="tab">Payment History</button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="vendorDetailTabsContent">
+      <div class="tab-pane fade show active p-3" id="work-history-content" role="tabpanel">
+        <div class="table-responsive">
+          <table id="vendorWorkHistoryTable" class="table table-striped table-bordered" style="width:100%">
+            <thead>
+              <tr>
+                <th>Date</th><th>LR No.</th><th>Vehicle</th><th>Work Notes</th><th class="text-end">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade p-3" id="payment-history-content" role="tabpanel">
+        <div class="table-responsive">
+          <table id="vendorPaymentHistoryTable" class="table table-striped table-bordered" style="width:100%">
+            <thead>
+              <tr>
+                <th>Date</th><th class="text-end">Amount (₹)</th><th>Notes</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="navbar-loader.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+  <script type="module">
+    // Firebase imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove, query, orderByChild, equalTo, get, set } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let vendorTable;
+    let currentUser = null;
+    let paymentTable;
+    let coreAccountId = null;
+    let currentEditingVendorId = null;
+    let vendorWorkHistoryTable;
+    let vendorPaymentHistoryTable;
+    let currentEditingPaymentId = null;
+
+    // Auth Check
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "index.html";
+      } else {
+        currentUser = user;
+        const userProfileRef = ref(db, `users/${user.uid}`);
+        get(userProfileRef).then(snapshot => {
+          coreAccountId = (snapshot.exists() && snapshot.val().coreAccountId) || user.uid;
+          loadVendors();
+          loadVendorsForPaymentDropdown();
+          loadVendorPayments();
+        });
+        
+        vendorTable = $('#vendorTable').DataTable({
+          "pageLength": 10,
+          "columnDefs": [{ "orderable": false, "targets": 6 }]
+        });
+        
+        paymentTable = $('#paymentTable').DataTable({
+          "pageLength": 10,
+          "order": [[ 2, "desc" ]],
+          "columnDefs": [{ "orderable": false, "targets": 4 }]
+        });
+
+        // **FIX**: Initialize the DataTables for the detail view here.
+        vendorWorkHistoryTable = $('#vendorWorkHistoryTable').DataTable({
+          "pageLength": 10,
+          "order": [[ 0, "desc" ]]
+        });
+        vendorPaymentHistoryTable = $('#vendorPaymentHistoryTable').DataTable({
+          "pageLength": 10,
+          "order": [[ 0, "desc" ]],
+          "columnDefs": [{ "orderable": false, "targets": 2 }] // Target the actions column if you add one
+        });
+      }
+    });
+
+    // Add Vendor
+    document.getElementById("vendorForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const vendorName = document.getElementById("vendorName").value.trim();
+      if (!vendorName) {
+        alert('Vendor name cannot be empty.');
+        return;
+      }
+
+      const vendorData = {
+        name: vendorName,
+        gstin: document.getElementById("gstin").value,
+        contactPerson: document.getElementById("contactPerson").value,
+        mobile: document.getElementById("mobile").value,
+        updatedAt: new Date().toISOString()
+      };
+
+      const vendorsRef = ref(db, `users/${coreAccountId}/workVendors`);
+
+      if (currentEditingVendorId) {
+        await update(ref(db, `users/${coreAccountId}/workVendors/${currentEditingVendorId}`), vendorData);
+        alert('Vendor updated successfully!');
+        cancelVendorEdit();
+      } else {
+        vendorData.createdAt = new Date().toISOString();
+        await push(vendorsRef, vendorData);
+        alert('Vendor added successfully!');
+        e.target.reset();
+      }
+    });
+
+    // Load Vendors
+    function loadVendors() {
+      const vendorsRef = ref(db, `users/${coreAccountId}/workVendors`);
+      const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
+      const workPaymentsRef = ref(db, `users/${coreAccountId}/workPayments`);
+
+      onValue(vendorsRef, async (vendorSnap) => {
+        if (!vendorSnap.exists()) {
+          vendorTable.clear().draw();
+          return;
+        }
+
+        const [lrSnap, paymentSnap] = await Promise.all([get(lrReportsRef), get(workPaymentsRef)]);
+        const workByVendor = {};
+        const workCountByVendor = {}; // **NEW**: To count work entries
+        const paymentsByVendor = {};
+
+        if (lrSnap.exists()) {
+          lrSnap.forEach(child => {
+            const lr = child.val();
+            if (lr.vehicleWorkVendorId && lr.vehicleWorkAmount > 0) {
+              workByVendor[lr.vehicleWorkVendorId] = (workByVendor[lr.vehicleWorkVendorId] || 0) + lr.vehicleWorkAmount;
+              workCountByVendor[lr.vehicleWorkVendorId] = (workCountByVendor[lr.vehicleWorkVendorId] || 0) + 1; // **NEW**: Increment count
+            }
+          });
+        }
+
+        if (paymentSnap.exists()) {
+          paymentSnap.forEach(child => {
+            const payment = child.val();
+            paymentsByVendor[payment.vendorId] = (paymentsByVendor[payment.vendorId] || 0) + payment.amount;
+          });
+        }
+
+        vendorTable.clear();
+        vendorSnap.forEach(child => {
+          const vendor = child.val();
+          const vendorId = child.key;
+          
+          const totalWork = workByVendor[vendorId] || 0;
+          const totalPaid = paymentsByVendor[vendorId] || 0;
+          const workCount = workCountByVendor[vendorId] || 0; // **NEW**: Get the count
+          const outstanding = totalWork - totalPaid;
+
+          vendorTable.row.add([
+            vendor.name,
+            vendor.gstin || '—',
+            vendor.mobile || '—',
+            `<span class="text-center d-block">${workCount}</span>`, // **NEW**: Add count to the row
+            `<span class="text-end d-block">₹${totalWork.toFixed(2)}</span>`,
+            `<span class="text-end d-block text-success">₹${totalPaid.toFixed(2)}</span>`,
+            `<span class="fw-bold text-end d-block ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
+            `<div class="action-btns text-center">
+              <button class="btn btn-sm btn-outline-primary me-1" onclick="viewVendorHistory('${vendorId}')" title="View History"><i class="fas fa-eye"></i></button>
+              <button class="btn btn-sm btn-outline-secondary me-1" onclick="editVendor('${vendorId}')" title="Edit"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteVendor('${vendorId}')" title="Delete"><i class="fas fa-trash"></i></button>
+            </div>`
+          ]);
+        });
+        vendorTable.draw();
+      });
+    }
+
+    // **REFACTORED**: View Vendor Details (replaces the old modal logic)
+    window.viewVendorHistory = async (vendorId) => {
+      // Hide list view and show detail view
+      document.getElementById('vendorListView').classList.add('hidden');
+      document.getElementById('vendorDetailView').classList.remove('hidden');
+
+      const vendorRef = ref(db, `users/${coreAccountId}/workVendors/${vendorId}`);
+      const vendorSnap = await get(vendorRef);
+      if (!vendorSnap.exists()) {
+        alert('Vendor not found.');
+        return;
+      }
+      const vendor = vendorSnap.val();
+
+      // Populate header and summary card
+      document.getElementById('vendorDetailTitle').textContent = `Details for ${vendor.name}`;
+      document.getElementById('vendorDetailContactPerson').textContent = vendor.contactPerson || '—';
+      document.getElementById('vendorDetailMobile').textContent = vendor.mobile || '—';
+
+      // Calculate and display financial totals
+      const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
+      const workPaymentsRef = ref(db, `users/${coreAccountId}/workPayments`);
+
+      const [lrSnap, paymentSnap] = await Promise.all([get(lrReportsRef), get(workPaymentsRef)]);
+      let totalWork = 0;
+      let totalPaid = 0;
+
+      vendorWorkHistoryTable.clear();
+      if (lrSnap.exists()) {
+        lrSnap.forEach(child => {
+          const lr = child.val();
+          if (lr.vehicleWorkVendorId === vendorId && lr.vehicleWorkAmount > 0) {
+            totalWork += lr.vehicleWorkAmount;
+            vendorWorkHistoryTable.row.add([
+              lr.date || 'N/A',
+              `<a href="lr-report.html?view=${child.key}" target="_blank">${lr.lrNumber || 'N/A'}</a>`,
+              lr.truckNumber || 'N/A',
+              lr.vehicleWorkNotes || '—',
+              `₹${(lr.vehicleWorkAmount || 0).toFixed(2)}`
+            ]);
+          }
+        });
+      }
+      vendorWorkHistoryTable.draw();
+
+      vendorPaymentHistoryTable.clear();
+      if (paymentSnap.exists()) {
+        paymentSnap.forEach(child => {
+          const payment = child.val();
+          if (payment.vendorId === vendorId) {
+            totalPaid += parseFloat(payment.amount) || 0;
+            vendorPaymentHistoryTable.row.add([payment.date, `₹${(payment.amount || 0).toFixed(2)}`, payment.notes || '—']);
+          }
+        });
+      }
+      vendorPaymentHistoryTable.draw();
+
+      document.getElementById('vendorDetailTotalWork').textContent = `₹${totalWork.toFixed(2)}`;
+      document.getElementById('vendorDetailTotalPaid').textContent = `₹${totalPaid.toFixed(2)}`;
+      document.getElementById('vendorDetailOutstanding').textContent = `₹${(totalWork - totalPaid).toFixed(2)}`;
+    };
+
+    // Edit Vendor
+    window.editVendor = (vendorId) => {
+      const vendorRef = ref(db, `users/${coreAccountId}/workVendors/${vendorId}`);
+      get(vendorRef).then(snapshot => {
+        if (snapshot.exists()) {
+          const vendor = snapshot.val();
+          document.getElementById('vendorName').value = vendor.name || '';
+          document.getElementById('gstin').value = vendor.gstin || '';
+          document.getElementById('contactPerson').value = vendor.contactPerson || '';
+          document.getElementById('mobile').value = vendor.mobile || '';
+          
+          currentEditingVendorId = vendorId;
+          
+          const submitBtn = document.querySelector('#vendorForm button[type="submit"]');
+          submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Vendor';
+          
+          document.getElementById('cancelVendorEditBtn').style.display = 'inline-block';
+        }
+      });
+    };
+
+    // Delete Vendor
+    window.deleteVendor = (vendorId) => {
+        if (confirm("Are you sure you want to delete this vendor?")) {
+            remove(ref(db, `users/${coreAccountId}/workVendors/${vendorId}`));
+        }
+    }
+
+    function cancelVendorEdit() {
+      currentEditingVendorId = null;
+      document.getElementById("vendorForm").reset();
+      document.querySelector('#vendorForm button[type="submit"]').innerHTML = '<i class="fas fa-plus me-2"></i>Add Vendor';
+      document.getElementById('cancelVendorEditBtn').style.display = 'none';
+    }
+    document.getElementById('cancelVendorEditBtn').addEventListener('click', cancelVendorEdit);
+
+    // --- VENDOR PAYMENT LOGIC ---
+
+    // **NEW**: Back button functionality
+    document.getElementById('backToVendorListBtn').addEventListener('click', () => {
+      document.getElementById('vendorListView').classList.remove('hidden');
+      document.getElementById('vendorDetailView').classList.add('hidden');
+    });
+
+    function loadVendorsForPaymentDropdown() {
+        const vendorsRef = ref(db, `users/${coreAccountId}/workVendors`);
+        onValue(vendorsRef, (snapshot) => {
+            const select = document.getElementById('vendorSelect');
+            select.innerHTML = '<option value="">Select a Vendor</option>';
+            if (snapshot.exists()) {
+                snapshot.forEach(child => {
+                    const vendor = child.val();
+                    const option = document.createElement('option');
+                    option.value = child.key;
+                    option.textContent = vendor.name;
+                    select.appendChild(option);
+                });
+            }
+        });
+    }
+
+    document.getElementById("paymentForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const vendorId = document.getElementById("vendorSelect").value;
+      const amount = parseFloat(document.getElementById("amount").value);
+      const date = document.getElementById("date").value;
+      const notes = document.getElementById("paymentNotes").value;
+    
+      if (!vendorId || !amount || !date) {
+          alert("Please fill all required fields.");
+          return;
+      }
+
+      const paymentData = { vendorId, amount, date, notes, userId: currentUser.uid, createdAt: new Date().toISOString() };
+      
+      if (currentEditingPaymentId) {
+          await update(ref(db, `users/${coreAccountId}/workPayments/${currentEditingPaymentId}`), paymentData);
+          alert('Payment updated successfully!');
+          currentEditingPaymentId = null;
+      } else {
+          await push(ref(db, `users/${coreAccountId}/workPayments`), paymentData);
+          alert('Payment added successfully!');
+      }
+      
+      e.target.reset();
+    });
+
+    function loadVendorPayments() {
+      const paymentsRef = ref(db, `users/${coreAccountId}/workPayments`);
+      onValue(paymentsRef, async (snapshot) => {
+        paymentTable.clear();
+        let totalPaidAmount = 0; // Initialize total paid counter
+
+        if (snapshot.exists()) {
+          const vendorsSnap = await get(ref(db, `users/${coreAccountId}/workVendors`));
+          const vendors = vendorsSnap.val() || {};
+
+          snapshot.forEach(child => {
+            const payment = child.val();
+            totalPaidAmount += parseFloat(payment.amount) || 0; // Add to total
+
+            const vendorName = vendors[payment.vendorId]?.name || 'Unknown Vendor';
+            paymentTable.row.add([
+              vendorName,
+              `₹${(payment.amount || 0).toFixed(2)}`,
+              payment.date,
+              payment.notes || '—',
+              `<div class="action-btns text-center">
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editVendorPayment('${child.key}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteVendorPayment('${child.key}')"><i class="fas fa-trash"></i></button>
+               </div>`
+            ]);
+          });
+        }
+        // Update the summary card with the total amount
+        document.getElementById('totalVendorPayments').textContent = `₹${totalPaidAmount.toFixed(2)}`;
+
+        paymentTable.draw();
+      });
+    }
+
+    window.editVendorPayment = async (paymentId) => {
+      const paymentRef = ref(db, `users/${coreAccountId}/workPayments/${paymentId}`);
+      const snapshot = await get(paymentRef);
+      if (snapshot.exists()) {
+        const payment = snapshot.val();
+        currentEditingPaymentId = paymentId;
+
+        document.getElementById('vendorSelect').value = payment.vendorId;
+        document.getElementById('amount').value = payment.amount;
+        document.getElementById('date').value = payment.date;
+        document.getElementById('paymentNotes').value = payment.notes || '';
+
+        document.querySelector('#paymentForm button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i>Update Payment';
+        document.getElementById('paymentForm').scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
+    window.deleteVendorPayment = (paymentId) => {
+      if (confirm("Are you sure you want to delete this payment?")) {
+        remove(ref(db, `users/${coreAccountId}/workPayments/${paymentId}`));
+      }
+    };
+
+    document.getElementById('paymentSearchInput').addEventListener('input', (e) => {
+      paymentTable.search(e.target.value).draw();
+    });
+
+      // **NEW**: Add event listener for the new payment date filter button
+      document.getElementById('applyPaymentFilterBtn').addEventListener('click', applyPaymentDateFilter);
+
+    document.getElementById('exportExcel').addEventListener('click', () => {
+      const data = [];
+      const headers = ['Name', 'GSTIN', 'Contact', 'Total Work', 'Total Paid', 'Outstanding'];
+      data.push(headers);
+      
+      const rows = document.querySelectorAll('#vendorTableBody tr');
+      rows.forEach(row => {
+        const rowData = [];
+        const cells = row.querySelectorAll('td');
+        cells.forEach((cell, index) => {
+          if (index < 6) { // Skip actions column
+            rowData.push(cell.textContent.trim());
+          }
+        });
+        data.push(rowData);
+      });
+      
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Vendors');
+      XLSX.writeFile(wb, 'vendors.xlsx');
+    });
+
+    // **NEW**: Function to apply date filter to the payments table
+    function applyPaymentDateFilter() {
+      const fromDate = document.getElementById('paymentFromDate').value;
+      const toDate = document.getElementById('paymentToDate').value;
+
+      // Use DataTables custom search function
+      $.fn.dataTable.ext.search.push(
+        function(settings, data, dataIndex) {
+          if (settings.nTable.id !== 'paymentTable') {
+            return true; // Don't filter other tables
+          }
+
+          const rowDateStr = data[2]; // Date is in the 3rd column (index 2)
+          if (!rowDateStr) return false;
+
+          const rowDate = new Date(rowDateStr);
+          const filterFrom = fromDate ? new Date(fromDate) : null;
+          const filterTo = toDate ? new Date(toDate) : null;
+          if (filterTo) filterTo.setHours(23, 59, 59, 999); // Include the whole end day
+
+          if ((filterFrom && rowDate < filterFrom) || (filterTo && rowDate > filterTo)) {
+            return false;
+          }
+          return true;
+        }
+      );
+      paymentTable.draw(); // Redraw the table with the new filter
+      $.fn.dataTable.ext.search.pop(); // Remove the filter function after drawing
+    }
+  </script>
+</body>
+</html>
