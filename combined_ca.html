@@ -613,6 +613,7 @@
             const combinedToll = (parseFloat(lr.tollExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.tollExpenses) || 0 : 0);
             const combinedOther = (parseFloat(lr.otherExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.otherExpenses) || 0 : 0);
             const combinedFood = (parseFloat(lr.foodExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.foodExpenses) || 0 : 0);
+            const monthlyInstallment = parseFloat(lr.monthlyInstallment) || 0;
 
             // Map to the structure expected by the rest of the page
             allExpensesData.push({
@@ -628,6 +629,7 @@
               vehicleWork: parseFloat(lr.vehicleWork) || 0,
               other: combinedOther,
               food: combinedFood,
+              monthlyInstallment: monthlyInstallment,
               shortage: parseFloat(lr.shortage) || 0, // Add shortage to the data object
               total: totalExpenses,
               profit: profit
@@ -754,6 +756,7 @@
         const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
         const otherExpenses = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
         const foodExpenses = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+        const monthlyInstallment = trips.length > 0 ? (Number(trips[0].monthlyInstallment) || 0) : 0; // EMI is per month, not per trip
         
         const card = document.createElement("div");
         card.className = "vehicle-card";
@@ -788,6 +791,10 @@
               <div class="stat-item">
                 <span class="stat-value">₹${tyreExpenses.toFixed(2)}</span>
                 <span class="stat-label">Tyre Cost</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">₹${monthlyInstallment.toFixed(2)}</span>
+                <span class="stat-label">Monthly EMI</span>
               </div>
             </div>
             <button class="download-btn" data-vehicle="${escapeHtml(vehicle)}">
@@ -1052,6 +1059,7 @@
       const dieselExpenses = filteredData.reduce((s, it) => s + (Number(it.diesel)||0), 0);
       const tyreExpenses = filteredData.reduce((s, it) => s + (Number(it.tyre)||0), 0);
       const otherExpenses = totalExpenses - dieselExpenses - tyreExpenses;
+      const totalInstallments = Object.values(filteredData.reduce((acc, trip) => { acc[trip.vehicle] = trip.monthlyInstallment || 0; return acc; }, {})).reduce((sum, emi) => sum + emi, 0);
 
       document.getElementById("totalTrips").textContent = totalTrips;
       document.getElementById("totalRevenue").textContent = `₹${totalRevenue.toFixed(2)}`;
@@ -1061,6 +1069,10 @@
       document.getElementById("dieselExpenses").textContent = `₹${dieselExpenses.toFixed(2)}`;
       document.getElementById("tyreExpenses").textContent = `₹${tyreExpenses.toFixed(2)}`;
       document.getElementById("otherTotalExpenses").textContent = `₹${otherExpenses.toFixed(2)}`;
+      
+      // Add a new summary card for installments if it doesn't exist
+      let installmentCard = document.getElementById("installmentExpenses");
+      if(installmentCard) installmentCard.textContent = `₹${totalInstallments.toFixed(2)}`;
     }
 
     // Generate PDF for a specific vehicle
@@ -1086,23 +1098,24 @@
       // Prepare table data
       const tableData = trips.map(trip => [
         formatDisplayDate(new Date(trip.date)),
-        `₹${(Number(trip.gain) || 0).toFixed(2)}`,
-        `₹${(Number(trip.diesel) || 0).toFixed(2)}`,
-        `₹${(Number(trip.tyre) || 0).toFixed(2)}`,
-        `₹${(Number(trip.advance) || 0).toFixed(2)}`,
-        `₹${(Number(trip.toll) || 0).toFixed(2)}`,
-        `₹${(Number(trip.vehicleWork) || 0).toFixed(2)}`,
-        `₹${(Number(trip.other) || 0).toFixed(2)}`,
-        `₹${(Number(trip.food) || 0).toFixed(2)}`,
-        `₹${(Number(trip.shortage) || 0).toFixed(2)}`,
-        `₹${(Number(trip.total) || 0).toFixed(2)}`,
-        `₹${(Number(trip.profit) || 0).toFixed(2)}`
+        `Rs. ${(Number(trip.gain) || 0).toFixed(2)}`, // Revenue
+        `Rs. ${(Number(trip.diesel) || 0).toFixed(2)}`,
+        `Rs. ${(Number(trip.tyre) || 0).toFixed(2)}`,
+        `Rs. ${(Number(trip.advance) || 0).toFixed(2)}`,
+        `Rs. ${(Number(trip.toll) || 0).toFixed(2)}`,
+        `Rs. ${(Number(trip.vehicleWork) || 0).toFixed(2)}`,
+        `Rs. ${(Number(trip.other) || 0).toFixed(2)}`,
+        `Rs. ${(Number(trip.food) || 0).toFixed(2)}`,
+        `Rs. ${(Number(trip.monthlyInstallment) || 0).toFixed(2)}`, // EMI
+        `Rs. ${(Number(trip.shortage) || 0).toFixed(2)}`,
+        `Rs. ${(Number(trip.total) || 0).toFixed(2)}`,
+        `Rs. ${(Number(trip.profit) || 0).toFixed(2)}`
       ]);
       
       // Add table
       doc.autoTable({
         startY: 35,
-        head: [['Date', 'Revenue', 'Diesel', 'Tyre', 'Advance', 'Toll', 'Vehicle Work', 'Other', 'Food', 'Shortage', 'Total Expenses', 'Profit']],
+        head: [['Date', 'Revenue', 'Diesel', 'Tyre', 'Advance', 'Toll', 'V. Work', 'Other', 'Food', 'EMI', 'Shortage', 'Total Exp', 'Profit']],
         body: tableData,
         theme: 'grid',
         headStyles: {
@@ -1114,9 +1127,24 @@
           fillColor: [240, 248, 244]
         },
         styles: {
-          fontSize: 7,
+          fontSize: 6.5, // Slightly smaller font to fit more content
           cellPadding: 2,
           overflow: 'linebreak'
+        },
+        columnStyles: {
+          0: { cellWidth: 15 },    // Date
+          1: { cellWidth: 'auto' },// Revenue
+          2: { cellWidth: 'auto' },// Diesel
+          3: { cellWidth: 12 },    // Tyre
+          4: { cellWidth: 'auto' },// Advance
+          5: { cellWidth: 12 },    // Toll
+          6: { cellWidth: 14 },    // V. Work
+          7: { cellWidth: 12 },    // Other
+          8: { cellWidth: 12 },    // Food
+          9: { cellWidth: 12 },    // EMI
+          10: { cellWidth: 15 },   // Shortage
+          11: { cellWidth: 20 },   // Total Exp - wider
+          12: { cellWidth: 20 }    // Profit - wider
         },
         margin: { top: 35 },
         tableWidth: 'wrap'
@@ -1136,6 +1164,7 @@
       const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
       const otherExpenses = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
       const foodExpenses = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+      const monthlyInstallment = trips.length > 0 ? (Number(trips[0].monthlyInstallment) || 0) : 0;
       const shortageExpenses = trips.reduce((sum, trip) => sum + (Number(trip.shortage) || 0), 0);
       
       // Add summary section
@@ -1162,19 +1191,20 @@
         startY: finalY + 5,
         body: [
           ['Total Trips', totalTrips],
-          ['Total Revenue', `₹${totalRevenue.toFixed(2)}`],
-          ['Total Expenses', `₹${totalExpenses.toFixed(2)}`],
-          ['Net Profit', `₹${netProfit.toFixed(2)}`],
+          ['Total Revenue', `Rs. ${totalRevenue.toFixed(2)}`],
+          ['Total Expenses', `Rs. ${totalExpenses.toFixed(2)}`],
+          ['Net Profit', `Rs. ${netProfit.toFixed(2)}`],
           ['Profit Margin', `${profitMargin}%`],
           ['', ''],
-          ['Diesel Expenses', `₹${dieselExpenses.toFixed(2)}`],
-          ['Tyre Expenses', `₹${tyreExpenses.toFixed(2)}`],
-          ['Advance Paid', `₹${advanceExpenses.toFixed(2)}`],
-          ['Toll Expenses', `₹${tollExpenses.toFixed(2)}`],
-          ['Vehicle Work', `₹${vehicleWorkExpenses.toFixed(2)}`],
-          ['Other Expenses', `₹${otherExpenses.toFixed(2)}`],
-          ['Food Expenses', `₹${foodExpenses.toFixed(2)}`],
-          ['Shortage', `₹${shortageExpenses.toFixed(2)}`]
+          ['Diesel Expenses', `Rs. ${dieselExpenses.toFixed(2)}`],
+          ['Tyre Expenses', `Rs. ${tyreExpenses.toFixed(2)}`],
+          ['Advance Paid', `Rs. ${advanceExpenses.toFixed(2)}`],
+          ['Toll Expenses', `Rs. ${tollExpenses.toFixed(2)}`],
+          ['Vehicle Work', `Rs. ${vehicleWorkExpenses.toFixed(2)}`],
+          ['Other Expenses', `Rs. ${otherExpenses.toFixed(2)}`],
+          ['Food Expenses', `Rs. ${foodExpenses.toFixed(2)}`],
+          ['Monthly EMI', `Rs. ${monthlyInstallment.toFixed(2)}`],
+          ['Shortage', `Rs. ${shortageExpenses.toFixed(2)}`]
         ],
         theme: 'grid',
         tableLineWidth: 0.1,
@@ -1201,7 +1231,7 @@
         doc.setFontSize(8);
         doc.setTextColor(100, 100, 100);
         doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-        doc.text(`Generated by Transport Dashboard`, doc.internal.pageSize.width - 14, doc.internal.pageSize.height - 10, { align: 'right' });
+        doc.text(`Generated by Transvortex`, doc.internal.pageSize.width - 14, doc.internal.pageSize.height - 10, { align: 'right' });
       }
       
       // Save the PDF
@@ -1308,18 +1338,18 @@
         startY: 45,
         body: [
           ['Total Trips', totalTrips],
-          ['Total Revenue', `₹${totalRevenue.toFixed(2)}`],
-          ['Total Expenses', `₹${totalExpenses.toFixed(2)}`],
-          ['Net Profit', `₹${netProfit.toFixed(2)}`],
+          ['Total Revenue', `Rs. ${totalRevenue.toFixed(2)}`],
+          ['Total Expenses', `Rs. ${totalExpenses.toFixed(2)}`],
+          ['Net Profit', `Rs. ${netProfit.toFixed(2)}`],
           ['Profit Margin', `${profitMargin}%`],
           ['', ''],
-          ['Diesel Expenses', `₹${dieselExpenses.toFixed(2)}`],
-          ['Tyre Expenses', `₹${tyreExpenses.toFixed(2)}`],
-          ['Advance Paid', `₹${advanceExpenses.toFixed(2)}`],
-          ['Toll Expenses', `₹${tollExpenses.toFixed(2)}`],
-          ['Vehicle Work', `₹${vehicleWorkExpenses.toFixed(2)}`],
-          ['Other Expenses', `₹${otherExpenses.toFixed(2)}`],
-          ['Food Expenses', `₹${foodExpenses.toFixed(2)}`]
+          ['Diesel Expenses', `Rs. ${dieselExpenses.toFixed(2)}`],
+          ['Tyre Expenses', `Rs. ${tyreExpenses.toFixed(2)}`],
+          ['Advance Paid', `Rs. ${advanceExpenses.toFixed(2)}`],
+          ['Toll Expenses', `Rs. ${tollExpenses.toFixed(2)}`],
+          ['Vehicle Work', `Rs. ${vehicleWorkExpenses.toFixed(2)}`],
+          ['Other Expenses', `Rs. ${otherExpenses.toFixed(2)}`],
+          ['Food Expenses', `Rs. ${foodExpenses.toFixed(2)}`]
         ],
         theme: 'grid',
         tableLineWidth: 0.1,
@@ -1377,9 +1407,9 @@
         vehicleSummaryData.push([
           vehicle,
           totalTrips,
-          `₹${totalRevenue.toFixed(2)}`,
-          `₹${totalExpenses.toFixed(2)}`,
-          `₹${netProfit.toFixed(2)}`,
+          `Rs. ${totalRevenue.toFixed(2)}`,
+          `Rs. ${totalExpenses.toFixed(2)}`,
+          `Rs. ${netProfit.toFixed(2)}`,
           `${profitMargin}%`
         ]);
       });
