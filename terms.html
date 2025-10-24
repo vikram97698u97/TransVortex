@@ -3,115 +3,111 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terms & Conditions - Transvortex</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6351214235477780"
-     crossorigin="anonymous"></script>
+  <title>Terms of Service - TransVortex</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-color: #2E8B57;
-      --secondary-color: #3CB371;
-      --text-color: #111111;
-      --light-bg: #F5F5F5;
+      --primary-color: #2E8B57; /* Sea Green */
+      --secondary-color: #43B97F; /* Mint Green */
+      --accent-color: #3CB371; /* Lighter Green */
+      --text-color: #1F1F1F; /* Charcoal */
+      --light-bg: #F4FFF8; /* Very light green-white */
       --white: #FFFFFF;
-      --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
+      --radius: 16px;
     }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: var(--text-color); background-color: transparent; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-    #vanta-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-    header { background-color: var(--white); box-shadow: var(--shadow); position: fixed; width: 100%; top: 0; z-index: 1000; }
-    nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; }
-    .logo-container { display: flex; align-items: center; }
-    .logo { height: 50px; width: 250px; max-width: 400px; transition: transform 0.3s ease; }
-    .logo:hover { transform: scale(1.05); }
-    .nav-links { display: flex; gap: 2rem; }
-    .nav-links a { color: var(--text-color); text-decoration: none; font-weight: 500; transition: color 0.3s ease; }
+    body { font-family: 'Inter', sans-serif; line-height: 1.7; color: var(--text-color); background-color: var(--light-bg); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    header { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0, 0, 0, 0.05); position: fixed; width: 100%; top: 0; z-index: 1000; transition: background 0.3s ease; }
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; }
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo {
+      height: 45px;
+      width: auto;
+      transition: transform 0.3s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.03);
+    }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--text-color); text-decoration: none; font-weight: 600; transition: color 0.3s ease; font-size: 0.95rem; }
     .nav-links a:hover, .nav-links a.active { color: var(--primary-color); }
-    .page-hero { padding: 8rem 0 5rem; text-align: center; background: rgba(255, 255, 255, 0.85); }
-    .page-hero h1 { font-size: 3rem; margin-bottom: 1.5rem; color: var(--primary-color); }
-    .content-section { padding: 5rem 0; background-color: rgba(255, 255, 255, 0.85); }
-    .content-section .container { max-width: 900px; }
-    .content-section h2 { color: var(--primary-color); margin-top: 2rem; margin-bottom: 1rem; }
-    .content-section p, .content-section ul { margin-bottom: 1rem; color: #555; }
-    .content-section ul { padding-left: 20px; }
-    .content-section a { color: var(--primary-color); text-decoration: none; }
-    .content-section a:hover { text-decoration: underline; }
-    footer { background-color: rgba(34, 34, 34, 0.92); color: #aaa; padding: 3rem 0; text-align: center; }
-    .footer-content { max-width: 800px; margin: 0 auto; }
-    .footer-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 1.5rem; margin: 1.5rem 0; }
-    .footer-links a { color: #aaa; text-decoration: none; transition: color 0.3s ease; }
-    .footer-links a:hover { color: var(--primary-color); }
-    .social-links { margin-top: 1.5rem; }
-    .social-links a { color: #aaa; font-size: 1.5rem; margin: 0 10px; transition: color 0.3s ease; }
-    .social-links a:hover { color: var(--primary-color); }
-    @media (max-width: 768px) { .nav-links { display: none; } .page-hero h1 { font-size: 2.2rem; } }
+    .cta-button { display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); color: white; border-radius: 50px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(46, 139, 87, 0.2); }
+    .cta-button:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(46, 139, 87, 0.25); background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%); }
+    .page-hero { padding: 10rem 0 6rem; text-align: center; background-color: var(--white); }
+    .page-hero h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); font-weight: 800; margin-bottom: 1.5rem; color: var(--primary-color); letter-spacing: -1px; }
+    .content-section { padding: 6rem 0; }
+    .content-container { max-width: 800px; margin: 0 auto; background: var(--white); padding: 3rem; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid #e2e8f0; }
+    .content-container h2 { color: var(--text-color); font-weight: 700; margin-bottom: 1.5rem; }
+    .content-container p { margin-bottom: 1.5rem; color: #4a5568; }
+    .content-container ul { padding-left: 20px; margin-bottom: 1.5rem; color: #4a5568; }
+    footer { background-color: var(--text-color); color: #aaa; padding: 3rem 0; text-align: center; }
+    .footer-content { max-width: 800px; margin: 0 auto; padding: 0 1rem; }
+    .footer-links { display: flex; justify-content: center; gap: 1.5rem; margin: 1.5rem 0; flex-wrap: wrap; }
+    .footer-links a { color: #aaa; text-decoration: none; transition: color 0.3s ease; font-size: 0.9rem; }
+    .footer-links a:hover { color: var(--secondary-color); }
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .page-hero h1 { font-size: 2.2rem; }
+    }
   </style>
 </head>
 <body>
-  <!-- 3D Animation Background Container -->
-  <div id="vanta-bg"></div>
-  <!-- Header -->
   <header>
     <div class="container">
       <nav>
         <div class="logo-container">
-          <img src="logo1.jpg" alt="TransVortex" class="logo">
+          <img src="logo1.jpg" alt="TransVortex Logo" class="logo">
         </div>
         <div class="nav-links">
           <a href="index.html">Home</a>
           <a href="about.html">About</a>
           <a href="services.html">Services</a>
           <a href="contact.html">Contact</a>
+          <a href="login.html" class="cta-button">Login</a>
         </div>
       </nav>
     </div>
   </header>
 
-  <!-- Hero Section -->
   <section class="page-hero">
     <div class="container">
-      <h1>Terms & Conditions</h1>
+      <h1>Terms of Service</h1>
     </div>
   </section>
 
-  <!-- Main Content -->
   <section class="content-section">
-    <div class="container">
-      <p>Last Updated: 14 October 2025</p>
-
+    <div class="content-container">
       <h2>1. Acceptance of Terms</h2>
-      <p>By accessing or using our website, you agree to comply with these Terms & Conditions and all applicable laws. If you do not agree, please do not use our services.</p>
-  
-      <h2>2. Use of Services</h2>
-      <p>You agree to use our website for lawful purposes only. You must not:</p>
-      <ul>
-        <li>Use the website for any illegal or harmful activity.</li>
-        <li>Attempt to access restricted areas or dashboard pages without authorization.</li>
-        <li>Copy, reproduce, or distribute content without permission.</li>
-      </ul>
-  
-      <h2>3. Account Responsibility</h2>
-      <p>If you create an account or use the dashboard, you are responsible for maintaining confidentiality of your login information and all activity under your account.</p>
-  
-      <h2>4. Limitation of Liability</h2>
-      <p>We provide our services “as is” and do not guarantee uninterrupted or error-free performance. We are not liable for any direct, indirect, or consequential damages arising from your use of the website.</p>
-  
-      <h2>5. Intellectual Property</h2>
-      <p>All content, logos, images, and materials on this website are the property of our company unless stated otherwise. You may not use them without permission.</p>
-  
-      <h2>6. Modifications</h2>
-      <p>We reserve the right to update or modify these Terms & Conditions at any time. Continued use of the website indicates acceptance of the updated terms.</p>
-  
-      <h2>7. Contact Us</h2>
-      <p>For questions regarding these Terms, contact us at <a href="mailto:transvortex700.com">support@transvortex.com</a>.</p>
+      <p>By accessing and using our services, you accept and agree to be bound by the terms and provision of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.</p>
+      
+      <h2>2. Description of Service</h2>
+      <p>Our service provides a platform for managing transport-related data, including vehicle information, trip reports, and financial records. The service is provided "as is" and we assume no responsibility for the timeliness, deletion, or failure to store any user data.</p>
+      
+      <h2>3. User Responsibilities</h2>
+      <p>You are responsible for maintaining the confidentiality of your password and account, and are fully responsible for all activities that occur under your password or account. You agree to immediately notify us of any unauthorized use of your password or account or any other breach of security.</p>
+      
+      <h2>4. Termination</h2>
+      <p>We may terminate or suspend your access to our service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms.</p>
+      
+      <h2>5. Governing Law</h2>
+      <p>These Terms shall be governed and construed in accordance with the laws of our country, without regard to its conflict of law provisions.</p>
     </div>
   </section>
 
-  <!-- Footer -->
   <footer>
     <div class="footer-content">
-      <h3>Transvortex</h3>
+      <h3>TransVortex</h3>
       <p>Empowering businesses with innovative solutions</p>
       <div class="footer-links">
         <a href="index.html">Home</a>
@@ -121,35 +117,8 @@
         <a href="privacy.html">Privacy Policy</a>
         <a href="terms.html">Terms & Conditions</a>
       </div>
-      <div class="social-links">
-        <a href="https://www.facebook.com/share/1JHnKAWbHd/" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook"></i></a>
-        <a href="https://x.com/Transvortex8831?t=oWQlJrWolaUj5bt6poviGw&s=08 " target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter"></i></a>
-        <a href="https://www.linkedin.com/in/vikram-singh-73319237b?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i></a>
-        <a href="https://www.instagram.com/transvortex?igsh=M3d6MWpieHYzajM5" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i></a>
-      </div>
-      <p>&copy; 2025 Transvortex. All rights reserved.</p>
+      <p>&copy; 2025 TransVortex. All rights reserved.</p>
     </div>
   </footer>
-
-  <!-- Vanta.js for 3D Background Animation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
-  <script>
-    VANTA.NET({
-      el: "#vanta-bg",
-      mouseControls: true,
-      touchControls: true,
-      gyroControls: false,
-      minHeight: 200.00,
-      minWidth: 200.00,
-      scale: 1.00,
-      scaleMobile: 1.50,
-      color: 0x2e8b57,
-      backgroundColor: 0xe4e8f0,
-      points: 14.00,
-      maxDistance: 20.00,
-      spacing: 16.00
-    });
-  </script>
 </body>
 </html>
