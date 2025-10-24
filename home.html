@@ -708,6 +708,13 @@
           <p>Create professional invoices</p>
         </div>
       </div>
+      <div class="action-card" onclick="location.href='work-management.html'">
+        <i class="fas fa-tools"></i>
+        <div>
+          <h3>Work Mgmt</h3>
+          <p>Track vehicle work & payments</p>
+        </div>
+      </div>
       <div class="action-card" onclick="location.href='lr-report.html'">
         <i class="fas fa-chart-bar"></i>
         <div>
@@ -1597,8 +1604,15 @@
         // 4. From lrReports for vehicleWork
         lrReportsSnap.forEach(s => {
             const lr = s.val();
-            if (lr.vehicleWork && parseFloat(lr.vehicleWork) > 0) {
-                allPayments.push({ id: s.key, date: lr.date, type: 'vehicle', description: `Work for LR ${lr.lrNumber}`, vehicleNumber: lr.truckNumber, amount: lr.vehicleWork, status: 'completed' });
+            // **FIX**: Check for vehicle work on both main trip and empty return trip.
+            // Use 'vehicleWorkAmount' for consistency with other pages.
+            if (lr.vehicleWorkAmount && parseFloat(lr.vehicleWorkAmount) > 0) {
+                allPayments.push({ id: s.key, date: lr.date, type: 'vehicle', description: `Work for LR ${lr.lrNumber}`, vehicleNumber: lr.truckNumber, amount: lr.vehicleWorkAmount, status: 'completed' });
+            }
+            // Also include work from empty return trips
+            if (lr.emptyTripData && lr.emptyTripData.vehicleWorkAmount && parseFloat(lr.emptyTripData.vehicleWorkAmount) > 0) {
+                const emptyWorkAmount = parseFloat(lr.emptyTripData.vehicleWorkAmount);
+                allPayments.push({ id: `${s.key}-empty`, date: lr.date, type: 'vehicle', description: `Empty Return Work for LR ${lr.lrNumber}`, vehicleNumber: lr.truckNumber, amount: emptyWorkAmount, status: 'completed' });
             }
         });
 
