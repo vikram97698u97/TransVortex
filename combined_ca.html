@@ -584,14 +584,17 @@
             lr.key = child.key;
 
             // Calculate total expenses and profit from the LR report data
+            // **FIX**: Use `vehicleWorkAmount` for consistency and include empty trip vehicle work.
+            const mainVehicleWork = parseFloat(lr.vehicleWorkAmount) || parseFloat(lr.vehicleWork) || 0;
+            const emptyVehicleWork = (lr.emptyTripData && (parseFloat(lr.emptyTripData.vehicleWorkAmount) || parseFloat(lr.emptyTripData.vehicleWork) || 0)) || 0;
+
             let totalExpenses = 
               (parseFloat(lr.tyreExpenses) || 0) +
               (parseFloat(lr.dieselExpenses) || 0) +
               (parseFloat(lr.tollExpenses) || 0) +
-              (parseFloat(lr.vehicleWork) || 0) +
+              mainVehicleWork + // Use corrected vehicle work amount
               (parseFloat(lr.otherExpenses) || 0) +
               (parseFloat(lr.foodExpenses) || 0) +
-              (parseFloat(lr.shortage) || 0) +
               (parseFloat(lr.advance) || 0);
             
             // Add empty trip expenses if they exist
@@ -599,6 +602,7 @@
               const emptyTripExpenses = 
                 (parseFloat(lr.emptyTripData.tyreExpenses) || 0) +
                 (parseFloat(lr.emptyTripData.dieselExpenses) || 0) +
+                emptyVehicleWork + // Add empty vehicle work to total expenses
                 (parseFloat(lr.emptyTripData.tollExpenses) || 0) +
                 (parseFloat(lr.emptyTripData.otherExpenses) || 0) +
                 (parseFloat(lr.emptyTripData.foodExpenses) || 0);
@@ -607,12 +611,16 @@
             
             const profit = (parseFloat(lr.billingAmount) || 0) - totalExpenses;
 
+            // **FIX**: Calculate combined vehicle work for display.
+            const combinedVehicleWork = mainVehicleWork + emptyVehicleWork;
+
             // Combine main and empty trip expenses for individual categories
             const combinedDiesel = (parseFloat(lr.dieselExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.dieselExpenses) || 0 : 0);
             const combinedTyre = (parseFloat(lr.tyreExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.tyreExpenses) || 0 : 0);
             const combinedToll = (parseFloat(lr.tollExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.tollExpenses) || 0 : 0);
             const combinedOther = (parseFloat(lr.otherExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.otherExpenses) || 0 : 0);
             const combinedFood = (parseFloat(lr.foodExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.foodExpenses) || 0 : 0);
+            const shortageDeduction = ((parseFloat(lr.shortage) || 0) / 1000) * (parseFloat(lr.billingRate) || 0);
             const monthlyInstallment = parseFloat(lr.monthlyInstallment) || 0;
 
             // Map to the structure expected by the rest of the page
@@ -626,11 +634,11 @@
               tyre: combinedTyre,
               advance: parseFloat(lr.advance) || 0,
               toll: combinedToll,
-              vehicleWork: parseFloat(lr.vehicleWork) || 0,
+              vehicleWork: combinedVehicleWork, // Use the combined amount
               other: combinedOther,
               food: combinedFood,
               monthlyInstallment: monthlyInstallment,
-              shortage: parseFloat(lr.shortage) || 0, // Add shortage to the data object
+              shortage: shortageDeduction, // Use the calculated deduction amount
               total: totalExpenses,
               profit: profit
             });
