@@ -379,6 +379,10 @@
       object-fit: cover;
       background: rgba(255, 255, 255, 0.2);
       padding: 5px;
+      /* **NEW**: Make the logo itself clickable if it exists */
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
     }
     
     .classic-white .logo-img {
@@ -864,80 +868,46 @@
     <!-- Business Card Generator Section -->
     <div class="container mt-4">
       <h2 class="section-title"><i class="fas fa-id-card me-2"></i>Business Card Generator</h2>
-      
-      <div class="row">
-        <!-- Form Section -->
-        <div class="col-md-6">
+
+      <!-- **REVISED**: Simplified Layout -->
+      <div class="row g-4">
+        <!-- Template Selection Section -->
+        <div class="col-lg-5">
           <div class="card p-4 h-100">
-            <form id="businessCardForm">
-              <div class="mb-3">
-                <label for="companyName" class="form-label">Company Name</label>
-                <input type="text" class="form-control" id="companyName" placeholder="Enter company name">
-              </div>
-              
-              <div class="mb-3">
-                <label for="companyLogo" class="form-label">Company Logo</label>
-                <input type="file" class="form-control" id="companyLogo" accept="image/*">
-                <div class="form-text">Upload your company logo (PNG, JPG, SVG)</div>
-              </div>
-              
-              <div class="mb-3">
-                <label for="phone" class="form-label">Phone Number</label>
-                <input type="tel" class="form-control" id="phone" placeholder="Enter phone number">
-              </div>
-              
-              <div class="mb-3">
-                <label for="email" class="form-label">Email Address</label>
-                <input type="email" class="form-control" id="email" placeholder="Enter email address">
-              </div>
-              
-              <div class="mb-3">
-                <label for="website" class="form-label">Website</label>
-                <input type="url" class="form-control" id="website" placeholder="Enter website URL">
-              </div>
-              
-              <div class="mb-3">
-                <label for="address" class="form-label">Address</label>
-                <textarea class="form-control" id="address" rows="2" placeholder="Enter company address"></textarea>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label">Card Template</label>
-                <!-- Rolling Gallery -->
-                <div class="rolling-gallery-container">
-                  <div class="rolling-gallery-gradient rolling-gallery-gradient-left"></div>
-                  <div class="rolling-gallery-content">
-                    <div id="rollingGalleryTrack" class="rolling-gallery-track">
-                      <!-- Gallery items will be injected here by JavaScript -->
-                    </div>
-                  </div>
-                <!-- Carousel controls -->
-                <button type="button" id="galleryPrev" aria-label="Previous" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">‹</button>
-                <button type="button" id="galleryNext" aria-label="Next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">›</button>
-                  <div class="rolling-gallery-gradient rolling-gallery-gradient-right"></div>
+            <h5 class="mb-3">1. Select a Template</h5>
+            <!-- Rolling Gallery -->
+            <div class="rolling-gallery-container">
+              <div class="rolling-gallery-gradient rolling-gallery-gradient-left"></div>
+              <div class="rolling-gallery-content">
+                <div id="rollingGalleryTrack" class="rolling-gallery-track">
+                  <!-- Gallery items will be injected here by JavaScript -->
                 </div>
               </div>
-              
-              <div class="d-grid gap-2 d-md-flex">
-                <button type="button" id="generateCardBtn" class="btn btn-primary flex-fill">
-                  <i class="fas fa-sync-alt me-2"></i>Generate Card
-                </button>
-                <button type="button" id="saveCardBtn" class="btn btn-outline-primary">
-                  <i class="fas fa-save me-2"></i>Save
-                </button>
-              </div>
-            </form>
+              <!-- Carousel controls -->
+              <button type="button" id="galleryPrev" aria-label="Previous" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">‹</button>
+              <button type="button" id="galleryNext" aria-label="Next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">›</button>
+              <div class="rolling-gallery-gradient rolling-gallery-gradient-right"></div>
+            </div>
+            <h5 class="mt-4 mb-3">2. Download Your Card</h5>
+            <button id="downloadCardBtn" class="btn btn-success w-100">
+              <i class="fas fa-download me-2"></i>Download as PNG
+            </button>
           </div>
         </div>
         
         <!-- Preview Section -->
-        <div class="col-md-6">
+        <div class="col-lg-7">
           <div class="card p-4 h-100">
             <h5 class="mb-3">Live Preview</h5>
             <div id="cardPreview" class="business-card-preview">
               <div id="businessCard" class="business-card green-modern">
                 <div class="card-content">
-                  <div class="logo-section">
+                  <!-- **NEW**: Clickable Logo Area -->
+                  <div class="logo-section" id="logoClickArea">
+                    <div id="logoPlaceholder" class="logo-placeholder">
+                      <i class="fas fa-camera"></i>
+                      <span>Click to add logo</span>
+                    </div>
                     <img id="previewLogo" src="" alt="Company Logo" class="logo-img" style="display: none;">
                   </div>
                   <div class="details-section">
@@ -945,25 +915,17 @@
                     <div class="contact-info">
                       <p id="previewPhone" class="contact-item"><i class="fas fa-phone"></i> Phone: +1234567890</p>
                       <p id="previewEmail" class="contact-item"><i class="fas fa-envelope"></i> Email: info@example.com</p>
-                      <p id="previewWebsite" class="contact-item"><i class="fas fa-globe"></i> Website: www.example.com</p>
                       <p id="previewAddress" class="contact-item"><i class="fas fa-map-marker-alt"></i> Address: Your Company Address</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <div class="mt-4 d-grid gap-2 d-md-flex justify-content-md-end">
-              <button id="downloadCardBtn" class="btn btn-success" disabled>
-                <i class="fas fa-download me-2"></i>Download as PNG
-              </button>
-              <button id="shareCardBtn" class="btn btn-outline-success" disabled>
-                <i class="fas fa-share-alt me-2"></i>Share
-              </button>
-            </div>
           </div>
         </div>
       </div>
+      <!-- **NEW**: Hidden file input for the logo -->
+      <input type="file" id="logoUploadInput" accept="image/*" style="display: none;">
     </div>
 
     <!-- Recent Activity -->
@@ -1125,10 +1087,13 @@
     // Load user's name
     function loadUserProfile(user) {
       const userRef = db.ref(`users/${user.uid}`);
-      userRef.once('value').then((snapshot) => {
+      // **FIX**: Use onValue for real-time updates if profile changes
+      userRef.on('value', (snapshot) => {
         if (snapshot.exists()) {
           const userData = snapshot.val() || {};
           const profileData = userData.profile || {};
+          // **FIX**: Update business card preview when profile data loads/changes
+          updateCardWithProfile(profileData);
           const name = profileData.ownerName || userData.name || user.displayName || 'User';
           document.getElementById('ownerName').textContent = name.split(' ')[0]; // Show first name
         }
@@ -1706,22 +1671,12 @@
     // Business Card Generator functionality
     function initBusinessCardGenerator() {
       // DOM Elements
-      const businessCardForm = document.getElementById('businessCardForm');
-      const companyNameInput = document.getElementById('companyName');
-      const companyLogoInput = document.getElementById('companyLogo');
-      const phoneInput = document.getElementById('phone');
-      const emailInput = document.getElementById('email');
-      const websiteInput = document.getElementById('website');
-      const addressInput = document.getElementById('address');
       const rollingTrack = document.getElementById('rollingGalleryTrack');
-      const generateCardBtn = document.getElementById('generateCardBtn');
-      const saveCardBtn = document.getElementById('saveCardBtn');
       const downloadCardBtn = document.getElementById('downloadCardBtn');
-      const shareCardBtn = document.getElementById('shareCardBtn');
       
       // Preview Elements
       const previewCompanyName = document.getElementById('previewCompanyName');
-      const previewLogo = document.getElementById('previewLogo');
+      const previewLogoImg = document.getElementById('previewLogo');
       const previewPhone = document.getElementById('previewPhone');
       const previewEmail = document.getElementById('previewEmail');
       const previewWebsite = document.getElementById('previewWebsite');
@@ -1729,7 +1684,6 @@
       const businessCard = document.getElementById('businessCard');
       
       // State
-      let cardData = {};
       let logoDataUrl = '';
       
       // Templates configuration for gallery (must be defined before building)
@@ -1794,19 +1748,12 @@
       }
       
       // Initialize
-      loadUserData();
       buildRollingGallery();
       setupEventListeners();
       
       // Set up event listeners
       function setupEventListeners() {
         // Form inputs - update preview in real-time
-        companyNameInput.addEventListener('input', updatePreview);
-        phoneInput.addEventListener('input', updatePreview);
-        emailInput.addEventListener('input', updatePreview);
-        websiteInput.addEventListener('input', updatePreview);
-        addressInput.addEventListener('input', updatePreview);
-        
         // Rolling gallery selection (event delegation)
         rollingTrack.addEventListener('click', function(e) {
           const item = e.target.closest('.rolling-gallery-item');
@@ -1836,13 +1783,19 @@
         if (nextBtn) nextBtn.addEventListener('click', () => stepActive(1));
         
         // Logo upload
-        companyLogoInput.addEventListener('change', handleLogoUpload);
+        const logoClickArea = document.getElementById('logoClickArea');
+        const logoUploadInput = document.getElementById('logoUploadInput');
+        if (logoClickArea) {
+          logoClickArea.addEventListener('click', () => {
+            logoUploadInput.click();
+          });
+        }
+        if (logoUploadInput) {
+          logoUploadInput.addEventListener('change', handleLogoUpload);
+        }
         
         // Buttons
-        generateCardBtn.addEventListener('click', generateCard);
-        saveCardBtn.addEventListener('click', saveCardData);
         downloadCardBtn.addEventListener('click', downloadCard);
-        shareCardBtn.addEventListener('click', shareCard);
       }
       
       function stepActive(step) {
@@ -1855,143 +1808,34 @@
         setActiveTemplate(next.dataset.template, true);
       }
 
-      // Load user data from Firebase
-      function loadUserData() {
-        if (!currentUser) return;
-        
-        const userRef = db.ref(`users/${currentUser.uid}`);
-        userRef.once('value').then((snapshot) => {
-          if (snapshot.exists()) {
-            const userData = snapshot.val();
-            
-            // Auto-fill company name if available
-            if (userData.companyName) {
-              companyNameInput.value = userData.companyName;
-            } else if (userData.profile && userData.profile.companyName) {
-              companyNameInput.value = userData.profile.companyName;
-            }
-            
-            // Load saved business card data if exists
-            if (userData.businessCard) {
-              cardData = userData.businessCard;
-              populateFormFromData();
-            }
-            
-            // Update preview with loaded data
-            updatePreview();
-          }
-        }).catch((error) => {
-          console.error("Error loading user data:", error);
-        });
-      }
-      
-      // Populate form from saved data
-      function populateFormFromData() {
-        if (cardData.companyName) companyNameInput.value = cardData.companyName;
-        if (cardData.phone) phoneInput.value = cardData.phone;
-        if (cardData.email) emailInput.value = cardData.email;
-        if (cardData.website) websiteInput.value = cardData.website;
-        if (cardData.address) addressInput.value = cardData.address;
-        
-        // Set template via rolling gallery
-        if (cardData.template) {
-          setActiveTemplate(cardData.template, false);
-        }
-        
-        // Handle logo if saved
-        if (cardData.logoDataUrl) {
-          logoDataUrl = cardData.logoDataUrl;
-          previewLogo.src = logoDataUrl;
-          previewLogo.style.display = 'block';
-        }
-      }
-      
       // Handle logo upload
       function handleLogoUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
         
+        const logoPlaceholder = document.getElementById('logoPlaceholder');
+
         const reader = new FileReader();
         reader.onload = function(e) {
           logoDataUrl = e.target.result;
-          previewLogo.src = logoDataUrl;
-          previewLogo.style.display = 'block';
-          updatePreview();
+          previewLogoImg.src = logoDataUrl;
+          previewLogoImg.style.display = 'block';
+          logoPlaceholder.style.display = 'none'; // Hide the placeholder
         };
         reader.readAsDataURL(file);
       }
       
-      // Update preview with current form data
-      function updatePreview() {
-        previewCompanyName.textContent = companyNameInput.value || 'Your Company Name';
-        previewPhone.innerHTML = `<i class="fas fa-phone"></i> ${phoneInput.value ? 'Phone: ' + phoneInput.value : 'Phone: +1234567890'}`;
-        previewEmail.innerHTML = `<i class="fas fa-envelope"></i> ${emailInput.value ? 'Email: ' + emailInput.value : 'Email: info@example.com'}`;
-        previewWebsite.innerHTML = `<i class="fas fa-globe"></i> ${websiteInput.value ? 'Website: ' + websiteInput.value : 'Website: www.example.com'}`;
-        previewAddress.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${addressInput.value ? 'Address: ' + addressInput.value : 'Address: Your Company Address'}`;
+      // **NEW**: Update preview with profile data
+      window.updateCardWithProfile = function(profile) {
+        previewCompanyName.textContent = profile.transportName || 'Your Company Name';
+        previewPhone.innerHTML = `<i class="fas fa-phone"></i> ${profile.phoneNumber || 'Your Phone'}`;
+        previewEmail.innerHTML = `<i class="fas fa-envelope"></i> ${profile.email || 'your@email.com'}`;
+        previewAddress.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${profile.address || 'Your Address'}`;
       }
       
       // Update card template
       function updateTemplate(template) {
         businessCard.className = `business-card ${template}`;
-      }
-      
-      // Generate card (enable download and share buttons)
-      function generateCard() {
-        // Validate form
-        if (!companyNameInput.value.trim()) {
-          alert('Please enter a company name');
-          return;
-        }
-        
-        // Update card data object
-        cardData = {
-          companyName: companyNameInput.value,
-          phone: phoneInput.value,
-          email: emailInput.value,
-          website: websiteInput.value,
-          address: addressInput.value,
-          template: getSelectedTemplateKey(),
-          logoDataUrl: logoDataUrl,
-          lastUpdated: Date.now()
-        };
-        
-        // Enable download and share buttons
-        downloadCardBtn.disabled = false;
-        shareCardBtn.disabled = false;
-        
-        // Show success message
-        alert('Business card generated successfully! You can now download or share it.');
-      }
-      
-      // Save card data to Firebase
-      function saveCardData() {
-        if (!currentUser) {
-          alert('You must be logged in to save your card');
-          return;
-        }
-        
-        // Update card data with current form values
-        cardData = {
-          companyName: companyNameInput.value,
-          phone: phoneInput.value,
-          email: emailInput.value,
-          website: websiteInput.value,
-          address: addressInput.value,
-          template: getSelectedTemplateKey(),
-          logoDataUrl: logoDataUrl,
-          lastUpdated: Date.now()
-        };
-        
-        // Save to Firebase
-        const userRef = db.ref(`users/${currentUser.uid}/businessCard`);
-        userRef.set(cardData)
-          .then(() => {
-            alert('Business card saved successfully!');
-          })
-          .catch((error) => {
-            console.error("Error saving business card:", error);
-            alert('Error saving business card. Please try again.');
-          });
       }
       
       // Download card as PNG
@@ -2010,42 +1854,10 @@
           const dataUrl = canvas.toDataURL('image/png');
           
           // Create download link
-          const link = document.createElement('a');
-          link.download = `${companyNameInput.value || 'business-card'}.png`;
+          const link = document.createElement('a'); 
+          link.download = `${previewCompanyName.textContent || 'business-card'}.png`;
           link.href = dataUrl;
           link.click();
-        });
-      }
-      
-      // Share card using Web Share API
-      function shareCard() {
-        if (typeof html2canvas === 'undefined') {
-          alert('Share feature is still loading. Please try again in a moment.');
-          return;
-        }
-        
-        html2canvas(businessCard, {
-          scale: 2,
-          useCORS: true,
-          logging: false
-        }).then(canvas => {
-          canvas.toBlob(blob => {
-            const file = new File([blob], `${companyNameInput.value || 'business-card'}.png`, { type: 'image/png' });
-            
-            if (navigator.share && navigator.canShare({ files: [file] })) {
-              navigator.share({
-                files: [file],
-                title: `${companyNameInput.value} Business Card`,
-                text: `Check out ${companyNameInput.value}'s business card`
-              })
-              .catch(error => {
-                console.log('Sharing failed', error);
-                alert('Sharing is not supported on this device/browser.');
-              });
-            } else {
-              alert('Sharing is not supported on this device/browser. Please use the download option instead.');
-            }
-          });
         });
       }
     }
