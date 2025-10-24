@@ -1634,7 +1634,7 @@ async function loadAllPetrolPumps() {
                   <td>${(lr.numPackages && lr.numPackages > 0) ? lr.numPackages : 'Loose'}</td>
                   <td>${lr.item || 'N/A'}</td>
                   <td>${lr.weight || 'N/A'}</td>
-                  <td>${(lr.rate && lr.rate > 0) ? `₹${lr.rate}` : 'To be billed'}</td>
+                  <td>${(lr.freightRate && parseFloat(lr.freightRate) > 0) ? `₹${parseFloat(lr.freightRate).toFixed(2)}` : 'To be billed'}</td>
                   <td>${(lr.freightAmount && lr.freightAmount > 0) ? `₹${lr.freightAmount.toFixed(2)}` : 'To be billed'}</td>
                   <td>₹${(lr.goodsValue || 0).toFixed(2)}</td>
                 </tr>
@@ -2266,9 +2266,9 @@ async function loadAllPetrolPumps() {
         tyreExpenses: parseFloat(document.getElementById('editTyreExpenses').value) || 0,
         dieselEntries: [],
         dieselExpenses: dieselAmount, // **MODIFIED**: Save the calculated diesel amount
-        tollExpenses: parseFloat(document.getElementById('editTollExpenses').value) || 0,
-        vehicleWork: parseFloat(document.getElementById('editVehicleWork').value) || 0, // FIX: Add this field for trip-expenses
-        vehicleWorkAmount: parseFloat(document.getElementById('editVehicleWork').value) || 0,
+        tollExpenses: parseFloat(document.getElementById('editTollExpenses').value) || 0, // This seems to be a typo in the original, it should be editTollExpenses
+        vehicleWork: parseFloat(document.getElementById('editVehicleWork').value) || 0, // Legacy field
+        vehicleWorkAmount: parseFloat(document.getElementById('editVehicleWork').value) || 0, // Correct field
         foodExpenses: parseFloat(document.getElementById('editFoodExpenses').value) || 0,
         otherExpenses: parseFloat(document.getElementById('editOtherExpenses').value) || 0,
         vehicleAverageKmPerL: vehicleAverage,
