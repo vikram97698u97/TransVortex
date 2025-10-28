@@ -678,8 +678,8 @@
             status: 'active',
             // Carry over the plan details from the trial/previous subscription
             planId: existingSubscription.planId || 'starter',
-            vehicleLimit: existingSubscription.vehicleLimit || 50, // Default to 50 if not found
-            monthlyRate: existingSubscription.monthlyRate || 699, // Default rate
+            vehicleLimit: existingSubscription.vehicleLimit || 25, // Default to 50 if not found
+            monthlyRate: existingSubscription.monthlyRate || 1999, // Default rate
             // Update dates and status
             startDate: now.toISOString(),
             endDate: subscriptionEnd.toISOString(),
