@@ -161,6 +161,22 @@
         <label for="phoneNumber">Phone Number</label>
         <input id="phoneNumber" class="form-control" placeholder="9876543210" pattern="[6-9]\\d{9}" required>
       </div>
+      <div class="form-group wide">
+        <label for="address">Company Address</label>
+        <input id="address" class="form-control" placeholder="Full billing address" required>
+      </div>
+      <div class="form-group">
+        <label for="city">City</label>
+        <input id="city" class="form-control" placeholder="City" required>
+      </div>
+      <div class="form-group">
+        <label for="pincode">Pincode</label>
+        <input id="pincode" class="form-control" placeholder="6-digit pincode" required>
+      </div>
+      <div class="form-group wide">
+        <label for="gstin">GSTIN</label>
+        <input id="gstin" class="form-control" placeholder="15-digit GSTIN" required>
+      </div>
     </div>
     <button id="createBtn" class="btn btn-primary" style="width:100%">Create Main Branch Account</button>
 
@@ -225,7 +241,12 @@
       const transportName = document.getElementById('transportName').value.trim();
       const ownerName = document.getElementById('ownerName').value.trim();
       const phoneNumber = document.getElementById('phoneNumber').value.trim();
-      if (!email || !password) { alert('Enter email and password'); return; }
+      const address = document.getElementById('address').value.trim();
+      const city = document.getElementById('city').value.trim();
+      const pincode = document.getElementById('pincode').value.trim();
+      const gstin = document.getElementById('gstin').value.trim();
+
+      if (!email || !password) { alert('Enter email and password'); return; } // Keep this for basic validation
       if (!transportName || !ownerName || !phoneNumber) { alert('Please fill all company details'); return; }
 
       createBtn.disabled = true;
@@ -272,6 +293,10 @@
             transportName,
             ownerName,
             phoneNumber,
+            address,
+            city,
+            pincode,
+            gstin,
             email,
             role: 'user',
             createdAt: new Date().toISOString()
