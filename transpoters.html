@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transporter Management - Transport System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <style>
+    body { padding: 0; margin: 0; background-color: #f8f9fa; }
+    .main-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .form-section {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dee2e6;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .fw-bold { font-weight: 700 !important; }
+    .text-danger { color: #dc3545 !important; }
+    .text-success { color: #198754 !important; }
+    .status-badge {
+      display: inline-block;
+      padding: .35em .65em;
+      font-size: .75em;
+      font-weight: 700;
+      line-height: 1;
+      color: #fff;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: .25rem;
+    }
+
+    .status-paid {
+      background-color: #28a745; /* Green */
+    }
+
+    .status-pending {
+      background-color: #ffc107; /* Yellow */
+      color: #212529;
+    }
+
+    .status-overdue {
+      background-color: #dc3545; /* Red */
+    }
+
+    .status-partial {
+      background-color: #17a2b8; /* Info Blue */
+    }
+
+    /* LR Detail Modal */
+    .lr-detail-modal .modal-content {
+      border-radius: 12px;
+      border: none;
+    }
+    .lr-detail-modal .modal-header {
+      background-color: #0d6efd;
+      color: white;
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+    }
+    .lr-detail-modal .detail-row {
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .lr-detail-modal .detail-row:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <div class="container mt-4" id="transporterListView">
+    <div class="main-content">
+      <h2 class="mb-4"><i class="fas fa-truck-loading me-2"></i>Transporter Management</h2>
+
+      <form id="transporterForm" class="form-section">
+        <h4 id="formTitle" class="mb-3">Add New Transporter</h4>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-building me-2"></i>Transporter Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="transporterName" class="form-label">Transporter Name <span class="text-danger">*</span></label>
+                <input type="text" id="transporterName" class="form-control" placeholder="e.g., ABC Logistics" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="contactPerson" class="form-label">Contact Person</label>
+                <input type="text" id="contactPerson" class="form-control" placeholder="Contact Person Name">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="mobile" class="form-label">Mobile Number</label>
+                <input type="tel" id="mobile" class="form-control" placeholder="Mobile Number">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="gstin" class="form-label">GSTIN</label>
+                <input type="text" id="gstin" class="form-control" placeholder="GST Identification Number">
+              </div>
+            </div>
+             <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea id="address" class="form-control" placeholder="Full Address"></textarea>
+            </div>
+          </div>
+        </div>
+        
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Save Transporter</button>
+          <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display: none;"><i class="fas fa-times me-2"></i>Cancel Edit</button>
+        </div>
+      </form>
+
+      <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4>Saved Transporters</h4>
+          <input type="text" id="transporterSearchInput" class="form-control" style="width: 300px;" placeholder="Search by name, contact, GSTIN...">
+        </div>
+        <div class="table-responsive">
+          <table id="transporterTable" class="table table-striped table-bordered" style="width:100%">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Contact Person</th>
+                <th>Mobile</th>
+                <th>GSTIN</th>
+                <th class="text-end">Outstanding (₹)</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transporterTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- **NEW**: Transporter Detail View -->
+  <div id="transporterDetail" class="main-content hidden">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 id="transporterTitle" class="mb-0">Transporter Details</h2>
+      <button class="btn btn-secondary" id="backToListBtn"><i class="fas fa-arrow-left me-2"></i>Back to List</button>
+    </div>
+
+    <div class="card mb-4 modern-card">
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-4"><strong>Outstanding:</strong> <span id="transporterOutstanding" class="fw-bold text-danger"></span></div>
+          <div class="col-md-4"><strong>Total Trips:</strong> <span id="transporterTrips" class="fw-bold"></span></div>
+          <div class="col-md-4"><strong>Total Billed:</strong> <span id="transporterTotalBilled" class="fw-bold"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- **MOVED**: Add Transporter Payment Form is now part of the detail view -->
+    <form id="transporterPaymentForm" class="form-section mt-4">
+      <h4 class="mb-3">Add/Edit Payment</h4>
+      <input type="hidden" id="paymentTransporterIdHidden">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label for="paymentAmount" class="form-label">Amount (₹) <span class="text-danger">*</span></label>
+          <input type="number" id="paymentAmount" class="form-control" required step="0.01">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="paymentDate" class="form-label">Date <span class="text-danger">*</span></label>
+          <input type="date" id="paymentDate" class="form-control" required>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="paymentNotes" class="form-label">Notes / Remarks</label>
+          <textarea id="paymentNotes" class="form-control" placeholder="Add any notes about this payment"></textarea>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-success"><i class="fas fa-save me-2"></i>Save Payment</button>
+        <button type="button" id="cancelPaymentEditBtn" class="btn btn-secondary" style="display: none;">
+          <i class="fas fa-times me-2"></i>Cancel Edit
+        </button>
+      </div>
+    </form>
+
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card modern-card h-100">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Invoices</h5>
+            <span class="badge bg-light text-dark" id="invoiceCount">0</span>
+          </div>
+          <div class="card-body p-0">
+            <ul id="invoiceList" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card modern-card h-100">
+          <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>LR Reports</h5>
+            <span class="badge bg-light text-dark" id="lrCount">0</span>
+          </div>
+          <div class="card-body p-0">
+            <ul id="lrList" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card modern-card h-100">
+          <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment History</h5>
+            <span class="badge bg-light text-dark" id="paymentCount">0</span>
+          </div>
+          <div class="card-body p-0">
+            <ul id="paymentList" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LR Detail Modal -->
+  <div class="modal fade lr-detail-modal" id="lrDetailModal" tabindex="-1" aria-labelledby="lrDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="lrDetailModalLabel">LR Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="lrDetailContent">
+          <!-- LR details will be loaded here -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.8.0/firebase-app-compat.js"></script>
+
+  <script src="navbar-loader.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+    let coreAccountId = null;
+    let currentEditingTransporterId = null;
+    let currentEditingPaymentId = null; // **NEW**: To track payment being edited
+    let currentDetailTransporterId = null; // **NEW**: To track which transporter detail view is open
+    let transporterTable;
+
+    let allLrsData = [];
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "index.html";
+      } else {
+        currentUser = user;
+        const userRef = ref(db, `users/${user.uid}`);
+        get(userRef).then(snapshot => {
+          const userData = snapshot.val() || {};
+          coreAccountId = userData.coreAccountId || user.uid;
+          
+          transporterTable = $('#transporterTable').DataTable({
+            "pageLength": 10,
+            "columnDefs": [{ "orderable": false, "targets": 5 }]
+          });
+
+          // Add search functionality to the new input field
+          document.getElementById('transporterSearchInput').addEventListener('keyup', function() {
+            transporterTable.search(this.value).draw();
+          });
+
+          // **NEW**: Back button for the new detail view
+          document.getElementById('backToListBtn').addEventListener('click', () => {
+            document.getElementById('transporterListView').classList.remove('hidden');
+            document.getElementById('transporterDetail').classList.add('hidden');
+            currentDetailTransporterId = null;
+          });
+
+          // **NEW**: Add event listener for the new payment form
+          document.getElementById('transporterPaymentForm').addEventListener('submit', saveTransporterPayment);
+          // Set default date for payment form
+          document.getElementById('paymentDate').valueAsDate = new Date();
+          // **NEW**: Cancel button for payment edit
+          document.getElementById('cancelPaymentEditBtn').addEventListener('click', resetPaymentForm);
+
+          loadTransporters();
+        });
+      }
+    });
+
+    const transporterForm = document.getElementById("transporterForm");
+    const nameInput = document.getElementById("transporterName");
+    const contactPersonInput = document.getElementById("contactPerson");
+    const mobileInput = document.getElementById("mobile");
+    const gstinInput = document.getElementById("gstin");
+    const addressInput = document.getElementById("address");
+    const formTitle = document.getElementById("formTitle");
+    const cancelBtn = document.getElementById("cancelEditBtn");
+
+    transporterForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!coreAccountId) return alert("Account not verified. Please reload.");
+
+      const transporterData = { 
+        name: nameInput.value.trim(), 
+        contactPerson: contactPersonInput.value.trim(),
+        mobile: mobileInput.value.trim(),
+        gstin: gstinInput.value.trim(),
+        address: addressInput.value.trim(),
+        updatedAt: new Date().toISOString() 
+      };
+
+      if (!transporterData.name) {
+        alert("Transporter Name is required.");
+        return;
+      }
+
+      try {
+        if (currentEditingTransporterId) {
+          await update(ref(db, `users/${coreAccountId}/transporters/${currentEditingTransporterId}`), transporterData);
+          alert("Transporter updated successfully!");
+        } else {
+          transporterData.createdAt = new Date().toISOString();
+          await push(ref(db, `users/${coreAccountId}/transporters`), transporterData);
+          alert("Transporter saved successfully!");
+        }
+        resetForm();
+      } catch (error) {
+        alert("Error saving transporter: " + error.message);
+      }
+    });
+
+    async function loadTransporters() {
+      if (!coreAccountId) return;
+      const transportersRef = ref(db, `users/${coreAccountId}/transporters`);
+      
+      // **MODIFIED**: No longer need to populate a separate payment dropdown
+      const [transporterSnap, lrSnap, paymentSnap] = await Promise.all([
+        get(transportersRef),
+        get(query(ref(db, `users/${coreAccountId}/lrReports`))), // Fetch all, then filter
+        get(ref(db, `users/${coreAccountId}/transporterPayments`))
+      ]);
+
+      allLrsData = lrSnap.exists() ? Object.values(lrSnap.val()) : [];
+      const lrsByTransporter = {};
+      if (lrSnap.exists()) {
+        lrSnap.forEach(child => {
+          const lr = child.val();
+          // **MODIFIED**: Only include LRs that have a transporterId
+          if (!lr.transporterId) return;
+          if (!lrsByTransporter[lr.transporterId]) lrsByTransporter[lr.transporterId] = [];
+          lrsByTransporter[lr.transporterId].push(lr);
+        });
+      }
+
+      const paymentsByTransporter = {};
+      if (paymentSnap.exists()) {
+        paymentSnap.forEach(child => {
+          const p = child.val();
+          if (!paymentsByTransporter[p.transporterId]) paymentsByTransporter[p.transporterId] = [];
+          paymentsByTransporter[p.transporterId].push(p);
+        });
+      }
+
+      onValue(transportersRef, (snapshot) => { // Keep onValue for real-time updates of the list itself
+        transporterTable.clear();
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const transporter = child.val();
+            const transporterId = child.key;
+
+            const associatedLRs = lrsByTransporter[transporterId] || [];
+            const associatedPayments = paymentsByTransporter[transporterId] || [];
+
+            const totalBilled = associatedLRs.reduce((sum, lr) => sum + (lr.tripDetails?.totalBillingAmount || 0), 0);
+            const totalPaid = associatedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+            const outstanding = totalBilled - totalPaid;
+
+            transporterTable.row.add([
+              transporter.name,
+              transporter.contactPerson || '—',
+              transporter.mobile || '—',
+              transporter.gstin || '—',
+              `<span class="fw-bold ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
+              `<div class="text-center">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="window.viewTransporterDetails('${transporterId}')"><i class="fas fa-eye"></i> View</button>
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="window.editTransporter('${transporterId}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="window.deleteTransporter('${transporterId}')"><i class="fas fa-trash"></i></button>
+              </div>`
+            ]);
+          });
+        }
+        transporterTable.draw();
+      });
+    }
+
+    // **NEW**: Function to apply a transporter payment to their outstanding LRs
+    async function updateTransporterLRStatus(transporterId, paymentAmount) {
+      if (!coreAccountId || !transporterId || paymentAmount === undefined || paymentAmount === null) return; // Safety check
+
+      // 1. Fetch all LRs for this transporter that are not fully paid
+      const lrsQuery = query(ref(db, `users/${coreAccountId}/lrReports`), orderByChild('transporterId'), equalTo(transporterId));
+      const lrsSnap = await get(lrsQuery);
+
+      if (!lrsSnap.exists()) {
+        console.log(`No LRs found for transporter ${transporterId}.`);
+        return;
+      }
+
+      const lrsToPay = [];
+      const invoicesToRecalculate = new Set(); // Collect unique invoice IDs to recalculate later
+
+      lrsSnap.forEach(child => {
+        const lr = child.val();
+        // Only consider LRs that are not fully paid
+        if (lr.paymentStatus !== 'paid') {
+          lrsToPay.push({ key: child.key, ...lr });
+          if (lr.invoiceId) {
+            invoicesToRecalculate.add(lr.invoiceId); // Add invoice ID to the set
+          }
+        }
+      });
+
+      // 2. Sort LRs by date (oldest first) to ensure FIFO payment application
+      lrsToPay.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      let remainingAmount = paymentAmount;
+      const updates = {}; // For LR updates
+
+      // 3. Iterate through the sorted LRs and apply the payment
+      for (const lr of lrsToPay) {
+        if (remainingAmount <= 0) break;
+
+        // Use totalBillingAmount as the amount owed for the service
+        const freight = lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0; // Fallback to billingAmount
+        const paid = lr.paidAmount || 0;
+        const outstanding = freight - paid;
+
+        if (outstanding > 0) {
+          const paymentToApply = Math.min(remainingAmount, outstanding);
+          const newPaidAmount = paid + paymentToApply;
+          // Use a small tolerance for floating point comparisons
+          const newStatus = newPaidAmount >= freight - 0.01 ? 'paid' : 'partial';
+
+          updates[`/users/${coreAccountId}/lrReports/${lr.key}/paidAmount`] = newPaidAmount;
+          updates[`/users/${coreAccountId}/lrReports/${lr.key}/paymentStatus`] = newStatus;
+          remainingAmount -= paymentToApply;
+        }
+      }
+
+      // 4. Atomically update all modified LRs
+      if (Object.keys(updates).length > 0) {
+        await update(ref(db), updates);
+        console.log("Applied payment to LRs:", Object.keys(updates));
+      }
+
+      // 5. Now, recalculate and update the status of all affected invoices
+      for (const invoiceId of invoicesToRecalculate) {
+        await recalculateInvoicePaymentStatus(invoiceId);
+      }
+    }
+
+    // **NEW**: Helper function to recalculate an invoice's payment status based on its LRs
+    async function recalculateInvoicePaymentStatus(invoiceId) {
+      if (!coreAccountId || !invoiceId) return;
+
+      const invoiceRef = ref(db, `users/${coreAccountId}/invoices/${invoiceId}`);
+      const invoiceSnap = await get(invoiceRef);
+
+      if (!invoiceSnap.exists()) {
+        console.warn(`Invoice ${invoiceId} not found for recalculation.`);
+        return;
+      }
+
+      const invoice = invoiceSnap.val();
+      const invoiceGrandTotal = invoice.grandTotal || 0;
+      let totalPaidForInvoice = 0;
+
+      if (invoice.items && invoice.items.length > 0) {
+        // invoice.items contains the LR objects as they were when the invoice was created.
+        // We need to fetch the *current* state of these LRs from lrReports to get their updated paidAmount.
+        const lrPromises = invoice.items.map(item => get(ref(db, `users/${coreAccountId}/lrReports/${item.lrId}`))); // Assuming item.lrId is the LR ID
+        const lrSnaps = await Promise.all(lrPromises);
+
+        lrSnaps.forEach(lrSnap => {
+          if (lrSnap.exists()) {
+            const lr = lrSnap.val();
+            totalPaidForInvoice += (lr.paidAmount || 0);
+          }
+        });
+      }
+
+      let newInvoiceStatus = 'pending';
+      if (totalPaidForInvoice >= invoiceGrandTotal - 0.01) { // Use tolerance for float comparison
+        newInvoiceStatus = 'paid';
+      } else if (totalPaidForInvoice > 0) {
+        newInvoiceStatus = 'partial';
+      }
+
+      // Only update if there's a change to avoid unnecessary writes
+      if (invoice.paidAmount !== totalPaidForInvoice || invoice.paymentStatus !== newInvoiceStatus) {
+        const invoiceUpdates = {
+          paidAmount: totalPaidForInvoice,
+          paymentStatus: newInvoiceStatus
+        };
+        await update(invoiceRef, invoiceUpdates);
+        console.log(`Recalculated invoice ${invoiceId}: paidAmount=${totalPaidForInvoice.toFixed(2)}, status=${newInvoiceStatus}`);
+      }
+    }
+
+    // **NEW**: Function to view an invoice in a new tab
+    window.viewInvoice = (invoiceId) => {
+      window.open(`invoice.html?view=${invoiceId}`, '_blank');
+    };
+
+    // **NEW**: Save Transporter Payment
+    async function saveTransporterPayment(e) {
+      e.preventDefault();
+      if (!coreAccountId) return alert("Account not verified. Please reload.");
+      if (!currentDetailTransporterId) return alert("No transporter selected. Please view a transporter's details first.");
+
+      const paymentData = {
+        transporterId: currentDetailTransporterId,
+        amount: parseFloat(document.getElementById('paymentAmount').value),
+        date: document.getElementById('paymentDate').value,
+        notes: document.getElementById('paymentNotes').value,
+        createdAt: new Date().toISOString(),
+        userId: currentUser.uid
+      };
+
+      if (!paymentData.amount || !paymentData.date) {
+        alert('Please select a transporter and enter an amount and date.');
+        return;
+      }
+
+      try {
+        if (currentEditingPaymentId) {
+          // Update existing payment
+          const paymentRef = ref(db, `users/${coreAccountId}/transporterPayments/${currentEditingPaymentId}`);
+          const oldPaymentSnap = await get(paymentRef);
+          const oldAmount = oldPaymentSnap.val().amount || 0;
+          const amountDifference = paymentData.amount - oldAmount;
+
+          await update(paymentRef, paymentData);
+          alert('Payment updated successfully!');
+
+          // Apply the difference to LRs
+          if (amountDifference !== 0) {
+            await updateTransporterLRStatus(paymentData.transporterId, amountDifference);
+          }
+          currentEditingPaymentId = null;
+          resetPaymentForm();
+        } else {
+          // Add new payment
+          await push(ref(db, `users/${coreAccountId}/transporterPayments`), paymentData);
+          alert('Payment saved successfully!');
+
+          // After saving the payment, apply it to the transporter's LRs
+          await updateTransporterLRStatus(paymentData.transporterId, paymentData.amount);
+        }
+
+        resetPaymentForm();
+        loadTransporters();
+        // If detail view is open, refresh it
+        if (currentDetailTransporterId) {
+          const transporterId = currentDetailTransporterId;
+          if (transporterId) viewTransporterDetails(transporterId);
+        }
+      } catch (error) {
+        console.error('Error saving payment:', error);
+        alert('Error saving payment: ' + error.message);
+      }
+    }
+
+    // **NEW**: View Transporter Details
+    window.viewTransporterDetails = async (transporterId) => {
+      currentDetailTransporterId = transporterId; // **NEW**: Set the current transporter
+      const transporterRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}`);
+      const transporterSnap = await get(transporterRef);
+      if (!transporterSnap.exists()) return;
+      const transporter = transporterSnap.val();
+
+      const [lrSnap, paymentSnap, invoiceSnap] = await Promise.all([
+        get(query(ref(db, `users/${coreAccountId}/lrReports`), orderByChild('transporterId'), equalTo(transporterId))), // LRs
+        get(query(ref(db, `users/${coreAccountId}/transporterPayments`), orderByChild('transporterId'), equalTo(transporterId))),
+        get(ref(db, `users/${coreAccountId}/invoices`)) // Fetch all invoices
+      ]);
+
+      let totalBilled = 0;
+      const transporterLrs = [];
+      if (lrSnap.exists()) {
+        lrSnap.forEach(child => {
+          const lr = child.val();
+          transporterLrs.push({ key: child.key, ...lr, invoiceId: lr.invoiceId });
+          const billingAmount = lr.tripDetails?.totalBillingAmount || 0;
+          totalBilled += billingAmount;
+        });
+      }
+
+      // **NEW**: Process invoices related to this transporter's LRs
+      const transporterInvoiceIds = new Set(transporterLrs.map(lr => lr.invoiceId).filter(Boolean));
+      const transporterInvoices = [];
+      if (invoiceSnap.exists()) {
+        invoiceSnap.forEach(child => {
+          if (transporterInvoiceIds.has(child.key)) {
+            transporterInvoices.push({ key: child.key, ...child.val() });
+          }
+        });
+      }
+
+      const invoiceList = document.getElementById('invoiceList');
+      invoiceList.innerHTML = '';
+      if (transporterInvoices.length > 0) {
+        transporterInvoices.forEach(invoice => {
+          const status = invoice.paymentStatus || 'pending';
+          const statusClass = status === 'paid' ? 'status-paid' :
+                              status === 'partial' ? 'status-pending' : 'status-overdue';
+          const listItem = document.createElement('li');
+          listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+          listItem.innerHTML = `
+            <div>
+              <div class="fw-bold">${invoice.invoiceNumber || 'N/A'}</div>
+              <small class="text-muted">₹${(invoice.grandTotal || 0).toFixed(2)}</small>
+            </div>
+            <div>
+              <span class="status-badge ${statusClass} me-2">${status}</span>
+              <button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('${invoice.key}')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          `;
+          invoiceList.appendChild(listItem);
+        });
+      } else {
+        invoiceList.innerHTML = '<li class="list-group-item text-center text-muted">No invoices found for this transporter.</li>';
+      }
+      document.getElementById('invoiceCount').textContent = transporterInvoices.length;
+
+      const lrList = document.getElementById('lrList'); // This was the duplicate declaration
+      lrList.innerHTML = '';
+      if (transporterLrs.length > 0) {
+        transporterLrs.forEach(lr => {
+          const status = lr.paymentStatus || 'pending';
+          const statusClass = status === 'paid' ? 'status-paid' :
+                              status === 'partial' ? 'status-pending' : 'status-overdue';
+          const displayAmount = (lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0);
+
+          const listItem = document.createElement('li');
+          listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+          listItem.innerHTML = `
+            <div>
+              <div class="fw-bold">${lr.lrNumber || 'N/A'}</div>
+              <small class="text-muted">₹${displayAmount.toFixed(2)}</small>
+            </div>
+            <div>
+              <span class="status-badge ${statusClass} me-2">${status}</span>
+              <button class="btn btn-sm btn-outline-primary" onclick="viewLRDetails('${lr.key}')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          `;
+          lrList.appendChild(listItem);
+        });
+      } else {
+        lrList.innerHTML = '<li class="list-group-item text-center text-muted">No LR Reports found for this transporter.</li>';
+      }
+      document.getElementById('lrCount').textContent = transporterLrs.length;
+
+      let totalPaid = 0;
+      const transporterPayments = [];
+      if (paymentSnap.exists()) {
+        paymentSnap.forEach(child => {
+          const payment = child.val();
+          transporterPayments.push({ key: child.key, ...payment });
+          totalPaid += payment.amount || 0;
+        });
+      }
+
+      const paymentList = document.getElementById('paymentList');
+      paymentList.innerHTML = '';
+      if (transporterPayments.length > 0) {
+        transporterPayments.forEach(payment => {
+          const listItem = document.createElement('li');
+          listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+          listItem.innerHTML = `
+            <div>
+              <div class="fw-bold">Payment on ${payment.date}</div>
+              <small class="text-muted">₹${(payment.amount || 0).toFixed(2)}</small>
+            </div>
+            <div class="btn-group" role="group">
+              <button class="btn btn-sm btn-outline-secondary" onclick="window.editTransporterPayment('${payment.key}')" title="Edit Payment"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-sm btn-outline-danger" onclick="window.deleteTransporterPayment('${payment.key}', '${payment.transporterId}', ${payment.amount})" title="Delete Payment"><i class="fas fa-trash"></i></button>
+            </div>
+          `;
+          paymentList.appendChild(listItem);
+        });
+      } else {
+        paymentList.innerHTML = '<li class="list-group-item text-center text-muted">No payment history found for this transporter.</li>';
+      }
+      document.getElementById('paymentCount').textContent = transporterPayments.length;
+
+      const outstanding = totalBilled - totalPaid;
+      document.getElementById('transporterOutstanding').textContent = `₹${outstanding.toFixed(2)}`;
+      document.getElementById('transporterOutstanding').className = `fw-bold ${outstanding > 0 ? 'text-danger' : 'text-success'}`;
+      document.getElementById('transporterTrips').textContent = transporterLrs.length;
+      document.getElementById('transporterTitle').textContent = `${transporter.name} - Details`;
+      document.getElementById('transporterTotalBilled').textContent = `₹${totalBilled.toFixed(2)}`;
+
+      document.getElementById('transporterListView').classList.add('hidden');
+      document.getElementById('transporterDetail').classList.remove('hidden');
+    };
+
+    window.viewLRDetails = async (lrId) => {
+      if (!coreAccountId) return;
+      const lrRef = ref(db, `users/${coreAccountId}/lrReports/${lrId}`);
+      const lrSnap = await get(lrRef);
+
+      const lrDetailContent = document.getElementById('lrDetailContent');
+      lrDetailContent.innerHTML = ''; // Clear previous content
+
+      if (lrSnap.exists()) {
+        const lr = lrSnap.val();
+        let transporterName = 'N/A';
+        if (lr.transporterId) {
+          const transporterSnap = await get(ref(db, `users/${coreAccountId}/transporters/${lr.transporterId}`));
+          if (transporterSnap.exists()) {
+            transporterName = transporterSnap.val().name;
+          }
+        }
+
+        lrDetailContent.innerHTML = `
+          <div class="row detail-row">
+            <div class="col-md-6"><strong>LR Number:</strong> ${lr.lrNumber || 'N/A'}</div>
+            <div class="col-md-6"><strong>Date:</strong> ${lr.date || 'N/A'}</div>
+          </div>
+          <div class="row detail-row">
+            <div class="col-md-6"><strong>From:</strong> ${lr.fromLocation || 'N/A'}</div>
+            <div class="col-md-6"><strong>To:</strong> ${lr.toLocation || 'N/A'}</div>
+          </div>
+          <div class="row detail-row">
+            <div class="col-md-6"><strong>Consignor:</strong> ${lr.consignorName || 'N/A'}</div>
+            <div class="col-md-6"><strong>Consignee:</strong> ${lr.consigneeName || 'N/A'}</div>
+          </div>
+          <div class="row detail-row">
+            <div class="col-md-6"><strong>Transporter:</strong> ${transporterName}</div>
+            <div class="col-md-6"><strong>Vehicle Number:</strong> ${lr.truckNumber || 'N/A'}</div>
+          </div>
+          <div class="row detail-row">
+            <div class="col-md-6"><strong>Driver Name:</strong> ${lr.driverName || 'N/A'}</div>
+            <div class="col-md-6"><strong>Driver Mobile:</strong> ${lr.driverMobile || 'N/A'}</div>
+          </div>
+          <div class="row detail-row">
+            <div class="col-md-6"><strong>Material:</strong> ${lr.materialType || 'N/A'}</div>
+            <div class="col-md-6"><strong>Weight:</strong> ${lr.weight || 'N/A'} ${lr.unit || ''}</div>
+          </div>
+          <div class="row detail-row">
+            <div class="col-md-6"><strong>Freight:</strong> ₹${(lr.freight || 0).toFixed(2)}</div>
+            <div class="col-md-6"><strong>Advance:</strong> ₹${(lr.advance || 0).toFixed(2)}</div>
+          </div>
+          <div class="row detail-row">
+            <div class="col-md-6"><strong>Balance:</strong> ₹${(lr.tripDetails?.balance || 0).toFixed(2)}</div>
+            <div class="col-md-6"><strong>Total Billing Amount:</strong> ₹${(lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0).toFixed(2)}</div>
+          </div>
+          <div class="row detail-row">
+            <div class="col-md-12"><strong>Notes:</strong> ${lr.notes || 'N/A'}</div>
+          </div>
+        `;
+      } else {
+        lrDetailContent.innerHTML = '<p>LR report not found.</p>';
+      }
+
+      const lrDetailModal = new bootstrap.Modal(document.getElementById('lrDetailModal'));
+      lrDetailModal.show();
+    };
+
+    window.editTransporter = (transporterId) => {
+      const transporterRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}`);
+      get(transporterRef).then(snapshot => {
+        if (snapshot.exists()) {
+          const transporter = snapshot.val();
+          nameInput.value = transporter.name;
+          contactPersonInput.value = transporter.contactPerson || '';
+          mobileInput.value = transporter.mobile || '';
+          gstinInput.value = transporter.gstin || '';
+          addressInput.value = transporter.address || '';
+          currentEditingTransporterId = transporterId;
+          formTitle.textContent = "Edit Transporter";
+          transporterForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i>Update Transporter';
+          cancelBtn.style.display = "inline-block";
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    };
+
+    // **NEW**: Edit Transporter Payment
+    window.editTransporterPayment = async (paymentId) => {
+      if (!coreAccountId) return;
+      const paymentRef = ref(db, `users/${coreAccountId}/transporterPayments/${paymentId}`);
+      const snapshot = await get(paymentRef);
+      if (!snapshot.exists()) {
+        alert('Payment record not found.');
+        return;
+      }
+      const payment = snapshot.val();
+      currentEditingPaymentId = paymentId;
+
+      // The transporter is already known since we are in the detail view
+      document.getElementById('paymentTransporterIdHidden').value = payment.transporterId;
+      document.getElementById('paymentAmount').value = payment.amount;
+      document.getElementById('paymentDate').value = payment.date;
+      document.getElementById('paymentNotes').value = payment.notes || '';
+
+      const submitBtn = document.querySelector('#transporterPaymentForm button[type="submit"]');
+      submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Payment';
+      document.getElementById('cancelPaymentEditBtn').style.display = 'inline-block';
+
+      document.getElementById('transporterPaymentForm').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // **NEW**: Delete Transporter Payment
+    window.deleteTransporterPayment = async (paymentId, transporterId, amount) => {
+      if (!confirm(`Are you sure you want to delete this payment of ₹${amount}? This action cannot be undone.`)) {
+        return;
+      }
+      if (!coreAccountId) return;
+
+      try {
+        // 1. Delete the payment record
+        await remove(ref(db, `users/${coreAccountId}/transporterPayments/${paymentId}`));
+
+        // 2. Reverse the payment amount from LRs and Invoices
+        // We pass a negative amount to the update function to reverse the payment.
+        await updateTransporterLRStatus(transporterId, -amount);
+
+        alert('Payment deleted successfully!');
+
+        // 3. Refresh the view
+        loadTransporters();
+        const detailView = document.getElementById('transporterDetail');
+        if (!detailView.classList.contains('hidden')) {
+          // Check if we are still viewing the same transporter
+          if (transporterId === window.currentDetailTransporterId) {
+            viewTransporterDetails(transporterId);
+          } else {
+            // If not, just hide the detail view
+            detailView.classList.add('hidden');
+            document.getElementById('transporterListView').classList.remove('hidden');
+          }
+        }
+      } catch (error) {
+        console.error('Error deleting payment:', error);
+        alert('Failed to delete payment: ' + error.message);
+      }
+    };
+
+    window.deleteTransporter = (transporterId) => {
+      if (confirm("Are you sure you want to delete this transporter?")) {
+        remove(ref(db, `users/${coreAccountId}/transporters/${transporterId}`))
+          .then(() => alert("Transporter deleted."))
+          .catch(err => alert("Error deleting transporter: " + err.message));
+      }
+    };
+
+    function resetForm() {
+      transporterForm.reset();
+      currentEditingTransporterId = null;
+      formTitle.textContent = "Add New Transporter";
+      transporterForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-plus me-2"></i>Save Transporter';
+      cancelBtn.style.display = "none";
+    }
+
+    // **NEW**: Reset the payment form
+    function resetPaymentForm() {
+      document.getElementById('transporterPaymentForm').reset();
+      document.getElementById('paymentDate').valueAsDate = new Date();
+      currentEditingPaymentId = null;
+      const submitBtn = document.querySelector('#transporterPaymentForm button[type="submit"]');
+      submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Payment';
+      document.getElementById('cancelPaymentEditBtn').style.display = 'none';
+    }
+
+    cancelBtn.addEventListener("click", resetForm);
+    window.viewTransporterDetails = viewTransporterDetails;
+
+  </script>
+</body>
+</html>
