@@ -30,7 +30,7 @@
     .card h3 { display: flex; justify-content: space-between; align-items: center; margin-top: 0; color: #333; font-size: 1.1rem; }
     
     /* KPI Cards */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
     .kpi-card { background: #f9f9f9; padding: 15px; border-radius: 10px; border-left: 4px solid #2E8B57; }
     .kpi-card .label { font-size: 0.9rem; color: #666; margin-bottom: 5px; }
     .kpi-card .value { font-size: 1.8rem; font-weight: 700; color: #2E8B57; }
@@ -115,6 +115,10 @@
             <div class="label">Profit Margin</div>
             <div class="value" id="kpiProfitMargin">0%</div>
           </div>
+          <div class="kpi-card">
+            <div class="label">Cost Per KM</div>
+            <div class="value" id="kpiCostPerKm">₹0</div>
+          </div>
         </div>
 
         <div class="card">
@@ -154,7 +158,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getDatabase, ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -173,7 +177,10 @@
     const db = getDatabase(app);
 
     // **NEW**: Global variables for chart instances and data
-    let chartInstances = {}; let allLrsData = {}; let clientMap = {};
+    let chartInstances = {}; 
+    let allLrsData = {}; 
+    let clientMap = {};
+    let registeredVehicleNumbers = []; // **NEW**: To store registered vehicles
 
     // === AI Insights Function (Using Gemini) ===
     async function getAIInsights(summary, language) {
@@ -252,7 +259,7 @@
     async function updateDashboard(startDate, endDate) {
       destroyCharts();
 
-      const filteredLrs = Object.values(allLrsData).filter(lr => {
+      const filteredLrs = Object.values(allLrsData || {}).filter(lr => {
         if (!lr.date) return false;
         const lrDate = new Date(lr.date);
         const start = startDate ? new Date(startDate) : null;
@@ -275,17 +282,49 @@
         return;
       }
 
-      let totalRevenue = 0, totalExpenses = 0;
+      let totalRevenue = 0, totalExpenses = 0, totalKm = 0;
       let clientData = {}, routeData = {}, monthlyData = Array(12).fill({revenue: 0, expenses: 0}), vehicleProfitData = {};
 
       filteredLrs.forEach(lr => {
-        const revenue = Number(lr.billingAmount || 0);
-        const expenses = (Number(lr.tyreExpenses) || 0) + (Number(lr.dieselExpenses) || 0) + (Number(lr.tollExpenses) || 0) +
-                         (Number(lr.vehicleWork) || 0) + (Number(lr.foodExpenses) || 0) + (Number(lr.otherExpenses) || 0) +
-                         (Number(lr.advance) || 0) + (Number(lr.shortage) || 0);
+        const details = lr.tripDetails || {};
+        const emptyTripData = lr.emptyTripData || {};
+
+        // --- Main Trip Calculations (from trip-expenses.html) ---
+        const dieselForCalc = (parseFloat(details.fuelUsedLiters) || 0) * (parseFloat(details.dieselRatePerLiter) || 0);
+        const otherGenericExpenses = 
+            (parseFloat(details.loadingUnloadingExpenses) || 0) +
+            (parseFloat(details.policeChallanExpenses) || 0) +
+            (parseFloat(details.tacExpenses) || 0) +
+            (parseFloat(details.permitExpenses) || 0) +
+            (parseFloat(details.brokerageExpenses) || 0) +
+            (parseFloat(details.otherExpenses) || 0);
+
+        const mainTripAggregatedExpenses = 
+            (parseFloat(details.tyreExpenses) || 0) +
+            (parseFloat(details.tollExpenses) || 0) +
+            (parseFloat(details.foodExpenses) || 0) +
+            (parseFloat(details.vehicleWorkAmount) || 0) +
+            (parseFloat(details.commissionExpenses) || 0) +
+            (parseFloat(details.tirpalRopeExpenses) || 0) +
+            otherGenericExpenses;
+
+        const totalMainExpenses = mainTripAggregatedExpenses + dieselForCalc + (parseFloat(details.advance) || 0);
+
+        // --- Empty Trip Calculations ---
+        const emptyDieselForCalc = (parseFloat(emptyTripData.fuelUsedLiters) || 0) * (parseFloat(emptyTripData.dieselRatePerLiter) || 0);
+        const totalEmptyExpenses = (parseFloat(emptyTripData.tyreExpenses) || 0) + (parseFloat(emptyTripData.tollExpenses) || 0) + (parseFloat(emptyTripData.foodExpenses) || 0) + (parseFloat(emptyTripData.vehicleWorkAmount) || 0) + (parseFloat(emptyTripData.commissionExpenses) || 0) + (parseFloat(emptyTripData.tirpalRopeExpenses) || 0) + (parseFloat(emptyTripData.loadingUnloadingExpenses) || 0) + (parseFloat(emptyTripData.policeChallanExpenses) || 0) + (parseFloat(emptyTripData.tacExpenses) || 0) + (parseFloat(emptyTripData.permitExpenses) || 0) + (parseFloat(emptyTripData.brokerageExpenses) || 0) + (parseFloat(emptyTripData.otherExpenses) || 0) + emptyDieselForCalc;
+
+        // --- Final Calculations for this LR ---
+        const revenue = parseFloat(details.billingAmount) || 0;
+        const billingRate = (lr.weight > 0) ? (revenue / lr.weight) : 0;
+        const shortageDeduction = ((parseFloat(details.shortage) || 0) / 1000) * billingRate;
+        const expenses = totalMainExpenses + totalEmptyExpenses + shortageDeduction;
         
         totalRevenue += revenue;
         totalExpenses += expenses;
+        // **NEW**: Sum up total kilometers from both main and empty trips
+        totalKm += (parseFloat(details.totalKm) || 0);
+        totalKm += (parseFloat(emptyTripData.totalKm) || 0);
         
         const clientName = clientMap[lr.clientId] || 'Unknown Client';
         clientData[clientName] = (clientData[clientName] || 0) + revenue;
@@ -305,6 +344,15 @@
         }
       });
 
+      // **FIX**: Filter vehicleProfitData to only include registered vehicles
+      const registeredVehicleProfitData = {};
+      for (const vehicleNo in vehicleProfitData) {
+        if (registeredVehicleNumbers.includes(vehicleNo)) {
+          registeredVehicleProfitData[vehicleNo] = vehicleProfitData[vehicleNo];
+        }
+      }
+
+
       // Populate KPI Cards
       const netProfit = totalRevenue - totalExpenses;
       document.getElementById('kpiRevenue').textContent = `₹${totalRevenue.toLocaleString('en-IN')}`;
@@ -315,6 +363,11 @@
       const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
       document.getElementById('kpiProfitMargin').textContent = `${profitMargin.toFixed(2)}%`;
       document.getElementById('kpiProfitMargin').classList.toggle('negative', profitMargin < 0);
+
+      // **NEW**: Populate Cost Per KM KPI Card
+      const costPerKm = totalKm > 0 ? totalExpenses / totalKm : 0;
+      document.getElementById('kpiCostPerKm').textContent = `₹${costPerKm.toFixed(2)}`;
+
 
       // Revenue vs Expenses Chart
       chartInstances.revenueChart = new Chart(document.getElementById("revenueChart"), {
@@ -344,12 +397,12 @@
       chartInstances.vehicleProfitChart = new Chart(document.getElementById("vehicleProfitChart"), {
         type: 'bar',
         data: {
-          labels: Object.keys(vehicleProfitData),
+          labels: Object.keys(registeredVehicleProfitData),
           datasets: [{
             label: 'Net Profit',
-            data: Object.values(vehicleProfitData),
-            backgroundColor: Object.values(vehicleProfitData).map(profit => profit >= 0 ? 'rgba(46, 139, 87, 0.7)' : 'rgba(231, 76, 60, 0.7)'),
-            borderColor: Object.values(vehicleProfitData).map(profit => profit >= 0 ? '#2E8B57' : '#e74c3c'),
+            data: Object.values(registeredVehicleProfitData),
+            backgroundColor: Object.values(registeredVehicleProfitData).map(profit => profit >= 0 ? 'rgba(46, 139, 87, 0.7)' : 'rgba(231, 76, 60, 0.7)'),
+            borderColor: Object.values(registeredVehicleProfitData).map(profit => profit >= 0 ? '#2E8B57' : '#e74c3c'),
             borderWidth: 1
           }]
         },
@@ -397,6 +450,18 @@
           document.getElementById('kpiExpenses').textContent = 'Error';
           document.getElementById('kpiProfit').textContent = 'Error';
           return;
+        }
+
+        // **NEW**: Fetch the list of registered vehicles first.
+        const vehiclesRef = ref(db, `users/${coreAccountId}/vehicles`);
+        const vehiclesSnapshot = await get(vehiclesRef);
+        if (vehiclesSnapshot.exists()) {
+            const vehiclesData = vehiclesSnapshot.val();
+            Object.values(vehiclesData).forEach(vehicle => {
+                if (vehicle.vehicleNumber) {
+                    registeredVehicleNumbers.push(vehicle.vehicleNumber);
+                }
+            });
         }
 
         // Fetch LR reports from the correct core account path.
