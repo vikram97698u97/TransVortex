@@ -178,7 +178,9 @@
             <th class="text-end">Diesel Exp</th>
             <th class="text-end">Advance</th>
             <th class="text-end">Toll</th>
+            <th class="text-end">Commission</th>
             <th class="text-end">Vehicle Work</th>
+            <th class="text-end">Tirpal/Rope</th>
             <th class="text-end">Other Exp</th>
             <th class="text-end">Food Exp</th>
             <th class="text-end">Shortage Amt</th>
@@ -203,108 +205,15 @@
             <th class="text-end"></th>
             <th class="text-end"></th>
             <th class="text-end"></th>
+            <th class="text-end"></th>
+            <th class="text-end"></th>
           </tr>
         </tfoot>
       </table>
     </div>
   </div>
 
-  <div class="modal fade" id="emptyTripModal" tabindex="-1" aria-labelledby="emptyTripModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="emptyTripModalLabel">Empty Return Trip Expenses</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="emptyTripForm">
-            <input type="hidden" id="emptyTripId">
-
-            <div class="card mb-3">
-              <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-route me-2"></i>Trip Fuel Consumption</h5>
-              </div>
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-12 mb-3">
-                    <label for="emptyRouteSelect" class="form-label">Route (From --> To)</label>
-                    <select id="emptyRouteSelect" class="form-select"></select>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-3 mb-3"><label class="form-label">Distance (KM)</label><input type="number" id="emptyRouteDistanceKm" class="form-control" readonly placeholder="Auto"></div>
-                  <div class="col-md-3 mb-3"><label class="form-label">Average (km/l)</label><input type="number" id="emptyVehicleAverage" class="form-control" placeholder="e.g., 4.0"></div>
-                  <div class="col-md-3 mb-3"><label class="form-label">Rate/Liter (₹)</label><input type="number" id="emptyDieselRatePerLiter" class="form-control" placeholder="e.g., 95.50"></div>
-                  <div class="col-md-3 mb-3"><label class="form-label">Fuel Used (L)</label><input type="number" id="emptyFuelUsedLiters" class="form-control bg-light" readonly></div>
-                </div>
-                <div class="row justify-content-end">
-                  <div class="col-md-4"><label class="form-label">Diesel Amount (₹)</label><input type="number" id="emptyDieselExpenses" class="form-control bg-light" readonly></div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="card mb-3">
-              <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Vehicle Work</h5>
-              </div>
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="emptyVehicleWorkVendor" class="form-label">Vehicle Work Vendor</label>
-                    <select id="emptyVehicleWorkVendor" class="form-select">
-                      <option value="">Select Vendor</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="emptyVehicleWork" class="form-label">Vehicle Work Amount (₹)</label>
-                    <input type="number" class="form-control" id="emptyVehicleWork" step="0.01" min="0">
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-12 mb-3">
-                    <label for="emptyVehicleWorkNotes" class="form-label">Vehicle Work Notes</label>
-                    <textarea id="emptyVehicleWorkNotes" class="form-control" rows="2" placeholder="e.g., Engine oil change for empty return"></textarea>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="card mb-3">
-              <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Other Expenses</h5>
-              </div>
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="emptyTyreExpenses" class="form-label">Tyre Expenses (₹)</label>
-                    <input type="number" class="form-control" id="emptyTyreExpenses" step="0.01" min="0">
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="emptyTollExpenses" class="form-label">Toll Expenses (₹)</label>
-                    <input type="number" class="form-control" id="emptyTollExpenses" step="0.01" min="0">
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="emptyFoodExpenses" class="form-label">Food Expenses (₹)</label>
-                    <input type="number" class="form-control" id="emptyFoodExpenses" step="0.01" min="0">
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="emptyOtherExpenses" class="form-label">Other Expenses (₹)</label>
-                    <input type="number" class="form-control" id="emptyOtherExpenses" step="0.01" min="0">
-                  </div>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="saveEmptyTripBtn">Save</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- The modal for adding/editing empty trip expenses has been removed to make this page view-only for that data. -->
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="navbar-loader.js"></script>
@@ -344,10 +253,10 @@
     let tripExpensesData = [];
     let lrData = [];
     let coreAccountId = null; // To store the correct data path
-    let emptyTripModal;
     let allPetrolPumps = []; // Store all petrol pumps
     let emptyDieselPumpOptions = ''; // Store pump options for the modal
     let allWorkVendors = {}; // Store all work vendors for display/dropdowns
+    let te_allVehicles = []; // Store vehicles for empty trip fuel deduction
 
     // Initialize the page
     $(document).ready(function() {
@@ -368,8 +277,6 @@
             loadAllVehiclesForTE();
           });
 
-          // Initialize Bootstrap modal
-          emptyTripModal = new bootstrap.Modal(document.getElementById('emptyTripModal'));
           initializeDataTable();
           setupEventListeners();
           
@@ -387,35 +294,7 @@
       if (!coreAccountId) {
         console.warn('Routes cannot be loaded yet. coreAccountId not ready.');
         return;
-      }
-
-      const routeSelect = document.getElementById('emptyRouteSelect');
-      if (!routeSelect) return;
-
-      const routesRef = db.ref(`users/${coreAccountId}/routes`);
-      routesRef.on('value', (snapshot) => {
-        routeSelect.innerHTML = '<option value="">Select a Route for Empty Trip</option>';
-        if (snapshot.exists()) {
-          snapshot.forEach((child) => {
-            const r = child.val() || {};
-            const opt = document.createElement('option');
-            opt.value = child.key;
-            opt.textContent = `${r.from || '-'} --> ${r.to || '-'}`;
-            if (r.distance !== undefined) {
-              opt.dataset.distance = r.distance;
-            }
-            // Store from/to for detail display later
-            opt.dataset.from = r.from || ''; 
-            opt.dataset.to = r.to || ''; 
-            routeSelect.appendChild(opt);
-          });
-        }
-      });
-
-      // Add event listeners to auto-calculate fuel usage
-      routeSelect.addEventListener('change', recalcEmptyTripFuel);
-      document.getElementById('emptyVehicleAverage').addEventListener('input', recalcEmptyTripFuel);
-      document.getElementById('emptyDieselRatePerLiter').addEventListener('input', recalcEmptyTripFuel);
+    }
     }
 
     // **FIX/NEW**: Load work vendors for the empty trip modal and store them globally.
@@ -425,25 +304,53 @@
             return;
         }
         const vendorsRef = db.ref(`users/${coreAccountId}/workVendors`);
-        const select = document.getElementById('emptyVehicleWorkVendor');
-        if (!select) return;
 
         vendorsRef.on('value', (snapshot) => {
             allWorkVendors = {}; // Reset global vendor list
-            select.innerHTML = '<option value="">Select Vendor</option>';
             if (snapshot.exists()) {
                 snapshot.forEach(child => {
                     const vendor = child.val();
                     allWorkVendors[child.key] = vendor; // Store vendor globally
-                    const option = document.createElement('option');
-                    option.value = child.key;
-                    option.textContent = vendor.name;
-                    select.appendChild(option);
                 });
             }
         });
     }
 
+    // **FIX**: Helper function to get the core account ID for any user.
+    // This ensures data is fetched from the correct shared path.
+    async function getCoreAccountId(userId) {
+        if (!userId) return null;
+        
+        try {
+          // 1. Check for coreAccountId field in the root of the user node
+          let userRef = db.ref(`users/${userId}`);
+          let userSnap = await userRef.once('value');
+          if (userSnap.exists()) {
+              const userData = userSnap.val();
+              if (userData.coreAccountId) {
+                console.log("Found coreAccountId in user root:", userData.coreAccountId);
+                return userData.coreAccountId;
+              }
+          }
+
+          // 2. Check for coreAccountId field in the user/profile node
+          const userProfileRef = db.ref(`users/${userId}/profile`);
+          const userProfileSnap = await userProfileRef.once('value');
+          if (userProfileSnap.exists()) {
+              const profileData = userProfileSnap.val();
+              if (profileData.coreAccountId) {
+                console.log("Found coreAccountId in user profile:", profileData.coreAccountId);
+                return profileData.coreAccountId;
+              }
+          }
+          
+          console.log("No coreAccountId found, using user's own UID:", userId);
+          return userId; // Fallback to user's own UID
+        } catch (error) {
+          console.error("Error getting core account ID:", error);
+          return userId; // Fallback
+        }
+    }
     // **FIX**: Load all petrol pumps from Firebase using coreAccountId
     // Function now accepts the ID directly.
     function loadAllPetrolPumps(accountId) {
@@ -553,7 +460,7 @@
           };
 
           // Calculate totals for all visible rows on the current page
-          for (let i = 6; i <= 16; i++) {
+          for (let i = 6; i <= 18; i++) { // **MODIFIED**: Increased column count for footer
             const pageTotal = api
               .column(i, { page: 'current' })
               .data()
@@ -576,11 +483,6 @@
       // Export PDF button click
       $('#exportPdfBtn').on('click', function() {
         exportToPDF();
-      });
-
-      // Save empty trip button click
-      $('#saveEmptyTripBtn').on('click', function() {
-        saveEmptyTrip();
       });
 
       // Add event listener for opening and closing details
@@ -607,6 +509,8 @@
         if (data) {
           Object.keys(data).forEach(key => {
             lrData.push({ id: key, ...data[key] });
+            // **NEW**: Exclude market vehicle LRs from this report
+            lrData = lrData.filter(lr => lr.lrType !== 'market');
           });
           
           // Process LR data for trip expenses
@@ -630,79 +534,112 @@
       });
     }
 
-    // Process LR data for trip expenses display
+    // **UPDATED** processLRDataForExpenses in trip-expenses.html
     function processLRDataForExpenses() {
-      tripExpensesData = lrData.map(lr => {
-        // **FIX**: Prioritize the new `fuelUsedAmountINR` from `fuelTracking` for diesel cost.
-        // This value is now calculated in lr-report.html.
-        const fuelUsedAmount = lr.fuelTracking && lr.fuelTracking.fuelUsedAmountINR
-          ? parseFloat(lr.fuelTracking.fuelUsedAmountINR) : 0;
-        // Fallback to older `dieselExpenses` field for backward compatibility.
-        const dieselLegacyAmount = (lr.dieselPurchaseAmount !== undefined)
-          ? (parseFloat(lr.dieselPurchaseAmount) || 0) : (parseFloat(lr.dieselExpenses) || 0);
-        // Use the new `fuelUsedAmount` if available, otherwise use the legacy amount.
-        const dieselForCalc = fuelUsedAmount > 0 ? fuelUsedAmount : dieselLegacyAmount;
+        tripExpensesData = lrData.map(lr => {
+            const details = lr.tripDetails || {};
+            const emptyTripData = lr.emptyTripData || {};
+            
+            // Calculate diesel expenses from fuel used and rate per liter.
+            const dieselForCalc = (parseFloat(details.fuelUsedLiters) || 0) * (parseFloat(details.dieselRatePerLiter) || 0);
 
-        // Compute liters used for display (prefer actual used liters, fallback to purchased liters)
-        let dieselUsedLiters = 0;
-        if (lr.fuelTracking && lr.fuelTracking.fuelUsedLiters !== undefined) {
-          dieselUsedLiters = parseFloat(lr.fuelTracking.fuelUsedLiters) || 0;
-        }
-        if (!dieselUsedLiters) {
-          let purchasedLiters = 0;
-          if (Array.isArray(lr.dieselEntries) && lr.dieselEntries.length > 0) {
-            purchasedLiters = lr.dieselEntries.reduce((s, e) => s + (parseFloat(e.liters) || 0), 0);
-          } else if (lr.dieselLiters !== undefined) {
-            purchasedLiters = parseFloat(lr.dieselLiters) || 0;
-          }
-          dieselUsedLiters = purchasedLiters;
-        }
+            // **NEW: Aggregate all non-Tyre, non-Toll, non-Food, non-VW expenses into 'Other' column for display**
+            const otherGenericExpenses = 
+                (parseFloat(details.loadingUnloadingExpenses) || 0) +
+                (parseFloat(details.policeChallanExpenses) || 0) +
+                (parseFloat(details.tacExpenses) || 0) +
+                (parseFloat(details.permitExpenses) || 0) +
+                (parseFloat(details.brokerageExpenses) || 0) +
+                // **NOTE**: Commission and Tirpal/Rope are now separate columns, so they are NOT in "Other"
+                (parseFloat(details.otherExpenses) || 0);
 
-        // Calculate total expenses (main trip only) EXCLUDING shortage amount (added at display time)
-        const totalExpenses = 
-          (parseFloat(lr.tyreExpenses) || 0) + // Correct
-          dieselForCalc +
-          (parseFloat(lr.tollExpenses) || 0) + // Correct
-          (parseFloat(lr.vehicleWorkAmount) || 0) + // FIX: Changed from lr.vehicleWork
-          (parseFloat(lr.otherExpenses) || 0) +
-          (parseFloat(lr.foodExpenses) || 0) +
-          (parseFloat(lr.advance) || 0);
-        
-        // **FIX**: Calculate shortage deduction based on the LR's specific billing rate.
-        // The shortage value is stored in KG, so convert it to tonnes before multiplying.
-        const shortageDeduction = ((parseFloat(lr.shortage) || 0) / 1000) * (parseFloat(lr.billingRate) || 0);
+            // Calculate total main trip expenses (all specific expense fields + advance) EXCLUDING shortage amount
+            const mainTripAggregatedExpenses = 
+                (parseFloat(details.tyreExpenses) || 0) +
+                (parseFloat(details.tollExpenses) || 0) +
+                (parseFloat(details.foodExpenses) || 0) +
+                (parseFloat(details.vehicleWorkAmount) || 0) +
+                (parseFloat(details.commissionExpenses) || 0) +
+                (parseFloat(details.tirpalRopeExpenses) || 0) +
+                otherGenericExpenses;
 
-        // Calculate profit (main trip only)
-        const profit = (parseFloat(lr.billingAmount) || 0) - totalExpenses;
-        
-        // Check if this trip has empty return trip data
-        const hasEmptyTrip = lr.emptyTrip || false;
-        const emptyTripData = lr.emptyTripData || {};
-        
-        return {
-          id: lr.id,
-          date: lr.date,
-          vehicleNumber: lr.truckNumber,
-          lrNumber: lr.lrNumber,
-          from: lr.fromLocation,
-          to: lr.toLocation,
-          tyreExpenses: parseFloat(lr.tyreExpenses) || 0,
-          dieselExpenses: dieselForCalc,
-          dieselUsedLiters: dieselUsedLiters,
-          dieselPumpName: lr.dieselPumpName || '', // **FIX**: Include main trip diesel pump name
-          advancePaid: parseFloat(lr.advance) || 0,
-          tollPaid: parseFloat(lr.tollExpenses) || 0,
-          vehicleWork: parseFloat(lr.vehicleWorkAmount) || 0, // FIX: Changed from lr.vehicleWork
-          otherExpenses: parseFloat(lr.otherExpenses) || 0,
-          foodExpenses: parseFloat(lr.foodExpenses) || 0,
-          shortageAmount: shortageDeduction,
-          freightAmount: parseFloat(lr.billingAmount) || 0, // Use billingAmount for display
-          totalExpenses: totalExpenses,
-          profit: profit,
-          hasEmptyTrip: hasEmptyTrip,
-          emptyTripData: emptyTripData
-        };
-      });
+            const totalExpenses = mainTripAggregatedExpenses + dieselForCalc + (parseFloat(details.advance) || 0);
+            
+            // Calculate shortage deduction based on the LR's specific billing rate.
+            // Billing rate is not explicitly saved, so we must calculate it or assume a zero rate if billing amount is zero
+            const billingAmount = parseFloat(details.billingAmount) || 0;
+            const billingRate = (lr.weight > 0) ? (billingAmount / lr.weight) : 0;
+            const shortageDeduction = ((parseFloat(details.shortage) || 0) / 1000) * billingRate;
+
+            // Calculate profit (main trip only)
+            // Profit is Freight - (Total Expenses + Shortage Deduction)
+            const profit = billingAmount - (totalExpenses + shortageDeduction);
+            
+            
+            // **Empty Trip Calculations**
+            const emptyOtherGenericExpenses = 
+                (parseFloat(emptyTripData.loadingUnloadingExpenses) || 0) +
+                (parseFloat(emptyTripData.policeChallanExpenses) || 0) +
+                (parseFloat(emptyTripData.tacExpenses) || 0) +
+                (parseFloat(emptyTripData.permitExpenses) || 0) +
+                (parseFloat(emptyTripData.brokerageExpenses) || 0) +
+                // **NOTE**: Commission and Tirpal/Rope are now separate columns, so they are NOT in "Other"
+                (parseFloat(emptyTripData.otherExpenses) || 0);
+
+            const emptyTripAggregatedExpenses = 
+                (parseFloat(emptyTripData.tyreExpenses) || 0) +
+                (parseFloat(emptyTripData.tollExpenses) || 0) +
+                (parseFloat(emptyTripData.foodExpenses) || 0) +
+                (parseFloat(emptyTripData.vehicleWorkAmount) || 0) +
+                (parseFloat(emptyTripData.commissionExpenses) || 0) +
+                (parseFloat(emptyTripData.tirpalRopeExpenses) || 0) +
+                emptyOtherGenericExpenses;
+
+            const emptyDieselForCalc = (parseFloat(emptyTripData.fuelUsedLiters) || 0) * (parseFloat(emptyTripData.dieselRatePerLiter) || 0);
+            const totalEmptyExpenses = emptyTripAggregatedExpenses + emptyDieselForCalc;
+
+
+            return {
+              id: lr.id,
+              date: lr.date,
+              vehicleNumber: lr.truckNumber,
+              lrNumber: lr.lrNumber,
+              from: lr.fromLocation,
+              to: lr.toLocation,
+              
+              // Main Trip Expense Fields (read directly)
+              tyreExpenses: parseFloat(details.tyreExpenses) || 0,
+              tollPaid: parseFloat(details.tollExpenses) || 0,
+              vehicleWork: parseFloat(details.vehicleWorkAmount) || 0,
+              commission: parseFloat(details.commissionExpenses) || 0,
+              tirpalRope: parseFloat(details.tirpalRopeExpenses) || 0,
+              foodExpenses: parseFloat(details.foodExpenses) || 0,
+              otherExpenses: otherGenericExpenses, // Combined generic expenses
+              
+              dieselExpenses: dieselForCalc,
+              advancePaid: parseFloat(details.advance) || 0,
+              shortageAmount: shortageDeduction,
+              freightAmount: billingAmount, // Use billingAmount for display
+              
+              // Totals for main trip (used for profit calculation)
+              totalExpenses: totalExpenses,
+              profit: profit,
+              
+              hasEmptyTrip: lr.emptyTrip || false, // Use root flag
+              emptyTripData: { // Detailed breakdown for display
+                  ...emptyTripData, // Keep all data
+                  totalEmptyExpenses: totalEmptyExpenses,
+                  emptyTyreExpenses: parseFloat(emptyTripData.tyreExpenses) || 0,
+                  emptyTollExpenses: parseFloat(emptyTripData.tollExpenses) || 0,
+                  emptyVehicleWorkAmount: parseFloat(emptyTripData.vehicleWorkAmount) || 0,
+                  emptyCommission: parseFloat(emptyTripData.commissionExpenses) || 0,
+                  emptyTirpalRope: parseFloat(emptyTripData.tirpalRopeExpenses) || 0,
+                  emptyFoodExpenses: parseFloat(emptyTripData.foodExpenses) || 0,
+                  emptyDieselExpenses: emptyDieselForCalc,
+                  emptyOtherExpenses: emptyOtherGenericExpenses // Combined generic expenses
+              }
+            };
+        });
     }
 
     // Populate the table with trip expenses data
@@ -710,67 +647,31 @@
       expensesTable.clear();
       
       tripExpensesData.forEach(expense => {
-        const profitClass = expense.profit >= 0 ? 'profit-positive' : 'profit-negative';
-        
-        // Check if this row should be marked as empty trip
-        const rowClass = expense.hasEmptyTrip ? 'empty-trip-row' : '';
-        
-        // Create the control for the first column
-        const firstColumnControl = expense.hasEmptyTrip
-          ? '' // The td will have the details-control class for the icon
-          : `<button class="btn btn-sm btn-outline-secondary" title="Add Empty Return Expenses" onclick="addEmptyTrip('${expense.id}')">
-               <i class="fas fa-plus"></i>
-             </button>`;
+        // Calculate combined values for display
+        const emptyData = expense.emptyTripData;
+        const hasEmpty = expense.hasEmptyTrip;
 
-        // Calculate values to display (include empty trip expenses if applicable)
-        const displayTyreExpenses = expense.hasEmptyTrip 
-          ? (expense.tyreExpenses + (parseFloat(expense.emptyTripData.tyreExpenses) || 0))
-          : expense.tyreExpenses;
-          
-        // Build diesel expenses display (currency) with pump names
-        const emptyDieselAmount = parseFloat(expense.emptyTripData.dieselExpenses) || 0;
-        const displayDieselExpenses = expense.hasEmptyTrip 
-          ? (expense.dieselExpenses + emptyDieselAmount)
-          : expense.dieselExpenses;
-        const combinedDieselDisplay = expense.hasEmptyTrip 
-          ? `${formatCurrency(displayDieselExpenses)} <small class="text-muted d-block">${expense.dieselPumpName || ''} + ${expense.emptyTripData.dieselPumpName || 'Empty Trip'}</small>`
-          : `${formatCurrency(displayDieselExpenses)} <small class="text-muted d-block">${expense.dieselPumpName || ''}</small>`;
-
-        const displayTollPaid = expense.hasEmptyTrip 
-          ? (expense.tollPaid + (parseFloat(expense.emptyTripData.tollExpenses) || 0))
-          : expense.tollPaid;
-          
-        const emptyVehicleWorkAmount = parseFloat(expense.emptyTripData.vehicleWorkAmount) || 0; // Use the correct field name
-        const displayVehicleWork = expense.hasEmptyTrip
-          ? (expense.vehicleWork + emptyVehicleWorkAmount)
-          : expense.vehicleWork;
-
-        const displayOtherExpenses = expense.hasEmptyTrip 
-          ? (expense.otherExpenses + (parseFloat(expense.emptyTripData.otherExpenses) || 0))
-          : expense.otherExpenses;
-          
-        const displayFoodExpenses = expense.hasEmptyTrip 
-          ? (expense.foodExpenses + (parseFloat(expense.emptyTripData.foodExpenses) || 0))
-          : expense.foodExpenses;
+        const displayTyreExpenses = expense.tyreExpenses + (hasEmpty ? emptyData.emptyTyreExpenses : 0);
+        const displayDieselExpenses = expense.dieselExpenses + (hasEmpty ? emptyData.emptyDieselExpenses : 0);
+        const displayTollPaid = expense.tollPaid + (hasEmpty ? emptyData.emptyTollExpenses : 0);
+        const displayCommission = expense.commission + (hasEmpty ? emptyData.emptyCommission : 0);
+        const displayVehicleWork = expense.vehicleWork + (hasEmpty ? emptyData.emptyVehicleWorkAmount : 0);
+        const displayTirpalRope = expense.tirpalRope + (hasEmpty ? emptyData.emptyTirpalRope : 0);
+        const displayFoodExpenses = expense.foodExpenses + (hasEmpty ? emptyData.emptyFoodExpenses : 0);
+        const displayOtherExpenses = expense.otherExpenses + (hasEmpty ? emptyData.emptyOtherExpenses : 0);
         
         // Recalculate total expenses and profit with empty trip data
-        const displayTotalExpenses = expense.hasEmptyTrip 
-          ? (expense.totalExpenses + 
-             (parseFloat(expense.emptyTripData.tyreExpenses) || 0) +
-             emptyDieselAmount +
-             (parseFloat(expense.emptyTripData.tollExpenses) || 0) +
-             emptyVehicleWorkAmount +
-             (parseFloat(expense.emptyTripData.otherExpenses) || 0) +
-             (parseFloat(expense.emptyTripData.foodExpenses) || 0))
-          : expense.totalExpenses;
-
-        // Add shortage amount to display total (it's not part of empty trip data)
-        const finalDisplayTotalExpenses = displayTotalExpenses + (parseFloat(expense.shortageAmount) || 0);
-          
+        const emptyTotal = hasEmpty ? emptyData.totalEmptyExpenses : 0;
+        const finalDisplayTotalExpenses = expense.totalExpenses + emptyTotal + expense.shortageAmount;
         const displayProfit = expense.freightAmount - finalDisplayTotalExpenses;
           
         const displayProfitClass = displayProfit >= 0 ? 'profit-positive' : 'profit-negative';
         
+        // Empty button/icon column
+        const firstColumnControl = hasEmpty ? '' // The td will have the details-control class for the icon
+          // The button to add empty trip expenses has been removed. This data is now added from the LR Report page.
+          : `<span class="text-muted" title="No empty trip data. Add via LR Report page."><i class="fas fa-minus"></i></span>`;
+
         const row = [
           firstColumnControl,
           formatDate(expense.date),
@@ -779,10 +680,12 @@
           expense.from,
           expense.to,
           formatCurrency(displayTyreExpenses),
-          combinedDieselDisplay, // Show currency and pump name(s)
+          formatCurrency(displayDieselExpenses), // Simplified for display
           formatCurrency(expense.advancePaid),
           formatCurrency(displayTollPaid),
+          formatCurrency(displayCommission),
           formatCurrency(displayVehicleWork),
+          formatCurrency(displayTirpalRope),
           formatCurrency(displayOtherExpenses),
           formatCurrency(displayFoodExpenses),
           formatCurrency(expense.shortageAmount),
@@ -792,10 +695,10 @@
         ];
         
         const addedRow = expensesTable.row.add(row).node();
-        addedRow.className = rowClass;
+        addedRow.className = hasEmpty ? 'empty-trip-row' : '';
         
         // If it has an empty trip, add the details-control class to the first cell
-        if (expense.hasEmptyTrip) {
+        if (hasEmpty) {
           $(addedRow).find('td:first').addClass('details-control');
           $(addedRow).data('expense-details', expense); // Store details on the row
         }
@@ -822,62 +725,62 @@
 
     // Update summary cards
     function updateSummaryCards() {
-      const totalBilling = tripExpensesData.reduce((sum, expense) => 
-        sum + (parseFloat(expense.freightAmount) || 0), 0);
-      
-      const totalExpenses = tripExpensesData.reduce((sum, expense) => {
-        let expenseTotal = expense.totalExpenses + (parseFloat(expense.shortageAmount) || 0);
-        // Include empty trip expenses in the sum
-        if (expense.hasEmptyTrip) {
-          const emptyData = expense.emptyTripData;
-          expenseTotal += 
-            (parseFloat(emptyData.tyreExpenses) || 0) +
-            (parseFloat(emptyData.dieselExpenses) || 0) +
-            (parseFloat(emptyData.tollExpenses) || 0) +
-            (parseFloat(emptyData.vehicleWorkAmount) || 0) + // Use correct field
-            (parseFloat(emptyData.otherExpenses) || 0) +
-            (parseFloat(emptyData.foodExpenses) || 0);
+      // Calculate totals from the main filtered dataset (tripExpensesData)
+      let totalBilling = 0;
+      let totalExpenses = 0;
+      let totalDiesel = 0;
+      let totalOtherExp = 0;
+
+      tripExpensesData.forEach(expense => {
+        const hasEmpty = expense.hasEmptyTrip;
+        const emptyData = expense.emptyTripData;
+
+        totalBilling += expense.freightAmount;
+        
+        // Total Expenses (Main + Empty + Shortage)
+        let expenseTotal = expense.totalExpenses + expense.shortageAmount; // Main trip expenses + advance + diesel + shortage
+        if (hasEmpty) {
+          expenseTotal += emptyData.totalEmptyExpenses;
         }
-        return sum + expenseTotal;
-      }, 0);
-      
-      const totalProfit = totalBilling - totalExpenses;
-      
-      // Calculate diesel expenses (currency)
-      const totalDiesel = tripExpensesData.reduce((sum, expense) => {
+        totalExpenses += expenseTotal;
+        
+        // Diesel Expenses
         let dieselTotal = expense.dieselExpenses || 0;
-        if (expense.hasEmptyTrip) {
-          dieselTotal += (parseFloat(expense.emptyTripData.dieselExpenses) || 0);
+        if (hasEmpty) {
+          dieselTotal += (emptyData.emptyDieselExpenses || 0);
         }
-        return sum + dieselTotal;
-      }, 0);
-      
-      // Calculate other expenses (tyre + toll + vehicle work + other + food)
-      const totalOtherExp = tripExpensesData.reduce((sum, expense) => {
+        totalDiesel += dieselTotal;
+        
+        // Other Expenses (Tyre + Toll + Vehicle Work + Other + Food)
         let otherTotal = 
           (expense.tyreExpenses || 0) +
           (expense.tollPaid || 0) +
           (expense.vehicleWork || 0) +
+          (expense.commission || 0) +
+          (expense.tirpalRope || 0) +
           (expense.otherExpenses || 0) +
           (expense.foodExpenses || 0);
           
-        if (expense.hasEmptyTrip) {
-          const emptyData = expense.emptyTripData;
+        if (hasEmpty) {
           otherTotal += 
-            (parseFloat(emptyData.tyreExpenses) || 0) +
-            (parseFloat(emptyData.tollExpenses) || 0) +
-            (parseFloat(emptyData.vehicleWorkAmount) || 0) + // Use correct field
-            (parseFloat(emptyData.otherExpenses) || 0) +
-            (parseFloat(emptyData.foodExpenses) || 0);
+            (emptyData.emptyTyreExpenses || 0) +
+            (emptyData.emptyTollExpenses || 0) +
+            (emptyData.emptyVehicleWorkAmount || 0) +
+            (emptyData.emptyCommission || 0) +
+            (emptyData.emptyTirpalRope || 0) +
+            (emptyData.emptyOtherExpenses || 0) +
+            (emptyData.emptyFoodExpenses || 0);
         }
-        return sum + otherTotal;
-      }, 0);
+        totalOtherExp += otherTotal;
+      });
+      
+      const totalProfit = totalBilling - totalExpenses;
       
       $('#totalBilling').text(formatCurrency(totalBilling));
       $('#totalExpenses').text(formatCurrency(totalExpenses));
       $('#totalProfit').text(formatCurrency(totalProfit));
       $('#tripsCount').text(tripExpensesData.length);
-      $('#totalDiesel').text(formatCurrency(totalDiesel));
+      $('#totalDiesel').text(formatCurrency(totalDiesel)); 
       $('#totalOtherExp').text(formatCurrency(totalOtherExp));
     }
 
@@ -940,32 +843,30 @@
 
     // Update summary cards with filtered data
     function updateFilteredSummaryCards() {
-      const filteredData = expensesTable.rows({ filter: 'applied' }).data().toArray();
+      const filteredRowNodes = expensesTable.rows({ filter: 'applied' }).nodes().toArray();
       
       let filteredBilling = 0;
       let filteredExpenses = 0;
       let filteredDiesel = 0;
       let filteredOtherExp = 0;
       
-      filteredData.forEach(row => {
-        // Extract numeric values from the formatted strings in the table
-        filteredBilling += parseCurrency(row[14]); // Billing Amount column
-        filteredExpenses += parseCurrency(row[15]); // Total Expenses column
+      filteredRowNodes.forEach(node => {
+        const rowData = expensesTable.row(node).data();
         
-        // For diesel (liters), parse only the first number from the cell text
-        // NOTE: This summary is inaccurate as it parses *liters* from an expense *amount* column.
-        // It's a legacy issue in the HTML structure. We'll leave it as is to maintain original behavior,
-        // but note that row[7] is a CURRENCY column now.
-        const dieselCurrency = parseCurrency(row[7]);
-        filteredDiesel += dieselCurrency; // Using currency amount for total diesel summary
+        // Billing Amt (Col 14)
+        filteredBilling += parseCurrency(rowData[14]); 
+        // Total Expenses (Col 15)
+        filteredExpenses += parseCurrency(rowData[15]); 
+        // Diesel Exp (Col 7)
+        filteredDiesel += parseCurrency(rowData[7]); 
         
-        // Other expenses: tyre + toll + vehicle work + other + food
+        // Other expenses: tyre (6) + toll (9) + vehicle work (10) + other (11) + food (12)
         filteredOtherExp += 
-          parseCurrency(row[6]) +  // Tyre
-          parseCurrency(row[9]) +  // Toll
-          parseCurrency(row[10]) + // Vehicle Work
-          parseCurrency(row[11]) + // Other
-          parseCurrency(row[12]);  // Food
+          parseCurrency(rowData[6]) +  // Tyre
+          parseCurrency(rowData[9]) +  // Toll
+          parseCurrency(rowData[10]) + // Vehicle Work
+          parseCurrency(rowData[11]) + // Other
+          parseCurrency(rowData[12]);  // Food
       });
       
       const filteredProfit = filteredBilling - filteredExpenses;
@@ -973,15 +874,15 @@
       $('#totalBilling').text(formatCurrency(filteredBilling));
       $('#totalExpenses').text(formatCurrency(filteredExpenses));
       $('#totalProfit').text(formatCurrency(filteredProfit));
-      $('#tripsCount').text(filteredData.length);
-      $('#totalDiesel').text(formatCurrency(filteredDiesel)); // Displaying currency, not liters, as the column is currency
+      $('#tripsCount').text(filteredRowNodes.length);
+      $('#totalDiesel').text(formatCurrency(filteredDiesel)); 
       $('#totalOtherExp').text(formatCurrency(filteredOtherExp));
     }
 
     // Export to PDF
     function exportToPDF() {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+      const doc = new jsPDF({ orientation: 'landscape' });
       
       // Add title
       doc.setFontSize(16);
@@ -1006,23 +907,25 @@
           row[4], // From
           row[5], // To
           parseCurrency(row[6]).toFixed(2), // Tyre
-          parseCurrency($('<div>').html(row[7]).text().split('\n')[0]).toFixed(2), // Diesel (get only the amount)
+          parseCurrency(row[7]).toFixed(2), // Diesel
           parseCurrency(row[8]).toFixed(2), // Advance
           parseCurrency(row[9]).toFixed(2), // Toll
-          parseCurrency(row[10]).toFixed(2), // Vehicle Work
-          parseCurrency(row[11]).toFixed(2), // Other
-          parseCurrency(row[12]).toFixed(2), // Food
-          parseCurrency(row[13]).toFixed(2), // Shortage
-          parseCurrency(row[14]).toFixed(2), // Billing
-          parseCurrency(row[15]).toFixed(2), // Total Exp
-          parseCurrency(row[16]).toFixed(2)  // Profit
+          parseCurrency(row[10]).toFixed(2), // Commission
+          parseCurrency(row[11]).toFixed(2), // Vehicle Work
+          parseCurrency(row[12]).toFixed(2), // Tirpal/Rope
+          parseCurrency(row[13]).toFixed(2), // Other
+          parseCurrency(row[14]).toFixed(2), // Food
+          parseCurrency(row[15]).toFixed(2), // Shortage
+          parseCurrency(row[16]).toFixed(2), // Billing
+          parseCurrency(row[17]).toFixed(2), // Total Exp
+          parseCurrency(row[18]).toFixed(2)  // Profit
         ];
       });
       
       // Add table
       doc.autoTable({
         startY: 30,
-        head: [['Date', 'Vehicle', 'LR No', 'From', 'To', 'Tyre', 'Diesel', 'Advance', 'Toll', 'V.Work', 'Other', 'Food', 'Shortage', 'Billing', 'Total Exp', 'Profit']],
+        head: [['Date', 'Vehicle', 'LR No', 'From', 'To', 'Tyre', 'Diesel', 'Advance', 'Toll', 'Commission', 'V.Work', 'Tirpal/Rope', 'Other', 'Food', 'Shortage', 'Billing', 'Total Exp', 'Profit']],
         body: tableData,
         styles: { fontSize: 8 },
         headStyles: { fillColor: [41, 128, 185] }
@@ -1031,179 +934,15 @@
       // Add summary
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(10);
+      const filteredSummaryData = updateFilteredSummaryCards(); // Recalculate summary data if needed (or fetch from updated cards)
+      
       doc.text(`Total Trips: ${filteredData.length}`, 14, finalY);
-      doc.text(`Total Billing: ₹${filteredData.reduce((sum, row) => sum + parseCurrency(row[14]), 0).toFixed(2)}`, 14, finalY + 5);
-      doc.text(`Total Expenses: ₹${filteredData.reduce((sum, row) => sum + parseCurrency(row[15]), 0).toFixed(2)}`, 14, finalY + 10);
-      doc.text(`Total Profit: ₹${(filteredData.reduce((sum, row) => sum + parseCurrency(row[14]), 0) - filteredData.reduce((sum, row) => sum + parseCurrency(row[15]), 0)).toFixed(2)}`, 14, finalY + 15);
+      doc.text(`Total Billing: ${$('#totalBilling').text()}`, 14, finalY + 5);
+      doc.text(`Total Expenses: ${$('#totalExpenses').text()}`, 14, finalY + 10);
+      doc.text(`Total Profit: ${$('#totalProfit').text()}`, 14, finalY + 15);
       
       // Save the PDF
       doc.save(`trip-expenses-${fromDate}-to-${toDate}.pdf`);
-    }
-
-    // Add empty trip expenses
-    let te_allVehicles = [];
-
-    function loadAllVehiclesForTE() {
-      if (!coreAccountId) return;
-      const vref = db.ref(`users/${coreAccountId}/vehicles`);
-      vref.on('value', (snap) => {
-        te_allVehicles = [];
-        if (snap.exists()) {
-          snap.forEach(child => {
-            const v = child.val() || {};
-            te_allVehicles.push({ id: child.key, ...v });
-          });
-        }
-      });
-    }
-
-    // **NEW**: Recalculate fuel usage and cost for the empty trip modal
-    function recalcEmptyTripFuel() {
-      const routeSelect = document.getElementById('emptyRouteSelect');
-      const selectedOption = routeSelect.options[routeSelect.selectedIndex];
-      const distance = parseFloat(selectedOption.dataset.distance) || 0;
-      const average = parseFloat(document.getElementById('emptyVehicleAverage').value) || 0;
-      const rate = parseFloat(document.getElementById('emptyDieselRatePerLiter').value) || 0;
-
-      document.getElementById('emptyRouteDistanceKm').value = distance.toFixed(2);
-      const fuelUsed = average > 0 ? (distance / average) : 0;
-      document.getElementById('emptyFuelUsedLiters').value = fuelUsed.toFixed(2);
-      document.getElementById('emptyDieselExpenses').value = (fuelUsed * rate).toFixed(2);
-    }
-
-    window.addEmptyTrip = function(lrId) {
-      const expense = tripExpensesData.find(e => e.id === lrId);
-      if (expense) {
-        $('#emptyTripId').val(lrId);
-        
-        // Clear previous values
-        // Note: No emptyDieselEntriesContainer exists, so no need to clear dynamic entries
-        $('#emptyTyreExpenses').val('');
-        $('#emptyTollExpenses').val('');
-        $('#emptyVehicleWork').val('');
-        $('#emptyOtherExpenses').val('');
-        $('#emptyFoodExpenses').val('');
-        // New Vehicle Work fields
-        $('#emptyVehicleWorkVendor').val('');
-        $('#emptyVehicleWorkNotes').val('');
-
-        // **NEW**: Clear fuel consumption fields
-        $('#emptyRouteSelect').val('');
-        $('#emptyRouteDistanceKm').val('');
-        $('#emptyVehicleAverage').val('');
-        $('#emptyDieselRatePerLiter').val('');
-        $('#emptyFuelUsedLiters').val('');
-
-        // Show the modal
-        emptyTripModal.show();
-
-        // Load vehicle and pre-fill average
-        const vehicleNo = expense.vehicleNumber || '';
-        const veh = te_allVehicles.find(v => getVehicleNumberField(v).toUpperCase() === vehicleNo.toUpperCase()) || null;
-        // **NEW**: Pre-fill average from vehicle data if available
-        document.getElementById('emptyVehicleAverage').value = veh?.average || '';
-        
-        // Initial calculation to clear auto-fields
-        recalcEmptyTripFuel();
-      }
-    }
-
-    // Save empty trip expenses
-    function saveEmptyTrip() {
-      const lrId = $('#emptyTripId').val();
-      const tyreExpenses = parseFloat($('#emptyTyreExpenses').val()) || 0;
-      const tollExpenses = parseFloat($('#emptyTollExpenses').val()) || 0;
-      const vehicleWorkAmount = parseFloat($('#emptyVehicleWork').val()) || 0;
-      const otherExpenses = parseFloat($('#emptyOtherExpenses').val()) || 0;
-      const foodExpenses = parseFloat($('#emptyFoodExpenses').val()) || 0;
-      const vehicleWorkVendorId = $('#emptyVehicleWorkVendor').val();
-      const vehicleWorkVendorName = $('#emptyVehicleWorkVendor option:selected').text();
-      const vehicleWorkNotes = $('#emptyVehicleWorkNotes').val();
-
-      // **NEW**: Get fuel consumption data
-      const routeSelect = document.getElementById('emptyRouteSelect');
-      const selectedRoute = routeSelect.options[routeSelect.selectedIndex];
-      const routeId = selectedRoute.value;
-      const routeDistanceKm = parseFloat(document.getElementById('emptyRouteDistanceKm').value) || 0;
-      const vehicleAverage = parseFloat(document.getElementById('emptyVehicleAverage').value) || 0;
-      const dieselRatePerLiter = parseFloat(document.getElementById('emptyDieselRatePerLiter').value) || 0;
-      const fuelUsedLiters = parseFloat(document.getElementById('emptyFuelUsedLiters').value) || 0;
-      const dieselExpenses = parseFloat(document.getElementById('emptyDieselExpenses').value) || 0;
-
-      // Prepare empty trip data (diesel handled centrally via Vehicle Fuel card)
-      const emptyTripData = {
-        tyreExpenses: tyreExpenses,
-        dieselExpenses: dieselExpenses, 
-        tollExpenses: tollExpenses,
-        vehicleWork: vehicleWorkAmount, // Legacy field
-        vehicleWorkAmount: vehicleWorkAmount, // Corrected field name
-        vehicleWorkVendorId: vehicleWorkVendorId,
-        vehicleWorkVendorName: vehicleWorkVendorName,
-        vehicleWorkNotes: vehicleWorkNotes,
-        otherExpenses: otherExpenses,
-        foodExpenses: foodExpenses,
-        // Fuel Consumption Data
-        routeId: routeId,
-        routeDistanceKm: routeDistanceKm,
-        vehicleAverage: vehicleAverage,
-        dieselRatePerLiter: dieselRatePerLiter,
-        fuelUsedLiters: fuelUsedLiters
-      };
-      
-      // **NEW**: Deduct used fuel from the vehicle's master record (Only if new data is saved)
-      if (fuelUsedLiters > 0) {
-        const expense = tripExpensesData.find(e => e.id === lrId);
-        if (expense) {
-          const vehicleNo = expense.vehicleNumber || '';
-          const veh = te_allVehicles.find(v => getVehicleNumberField(v).toUpperCase() === vehicleNo.toUpperCase()) || null;
-          if (veh) {
-            const vRef = db.ref(`users/${coreAccountId}/vehicles/${veh.id}`);
-            // Check if there was existing empty trip data to calculate the delta
-            const existingUsed = (expense.emptyTripData?.fuelUsedLiters || 0);
-            const delta = fuelUsedLiters - existingUsed;
-
-            if (delta !== 0) { // Only update if fuel consumption changed
-                vRef.child('currentFuel').once('value').then(curSnap => {
-                  const before = parseFloat(curSnap.val()) || 0;
-                  const after = Math.max(0, before - delta);
-                  vRef.child('currentFuel').set(after);
-                  // Log this usage
-                  vRef.child('fuelLogs').push({
-                    timestamp: new Date().toISOString(),
-                    source: 'trip-expenses-empty-usage-update',
-                    lrNumber: expense.lrNumber || '',
-                    usedLitersDelta: delta,
-                    newUsedLiters: fuelUsedLiters,
-                    oldUsedLiters: existingUsed,
-                    beforeLiters: before,
-                    afterLiters: after,
-                    details: 'Fuel used for empty return trip (update).'
-                  });
-                });
-            }
-          } else {
-            console.warn("Could not find vehicle to deduct fuel from.");
-          }
-        }
-      }
-
-      // Update Firebase
-      const user = auth.currentUser;
-      if (user && coreAccountId) { // **FIX**: Use coreAccountId
-        const lrRef = db.ref(`users/${coreAccountId}/lrReports/${lrId}`); // **FIX**: Use coreAccountId
-        lrRef.update({
-          emptyTrip: true,
-          emptyTripData: emptyTripData
-        }).then(() => {
-          // Close modal and refresh data
-          emptyTripModal.hide();
-          loadLRData(); // Reload data to reflect changes
-          showToast('Empty trip expenses saved successfully!', 'success');
-        }).catch(error => {
-          console.error('Error saving empty trip expenses:', error);
-          showToast('Error saving empty trip expenses!', 'error');
-        });
-      }
     }
 
     // Handle detail row click for empty trips
@@ -1218,17 +957,21 @@
         tr.removeClass('details');
       } else {
         // Open this row
-        const emptyTripData = expense.emptyTripData || {};
-        const totalEmptyExpenses = 
-            (emptyTripData.tyreExpenses || 0) +
-            (emptyTripData.dieselExpenses || 0) +
-            (emptyTripData.tollExpenses || 0) +
-            (emptyTripData.vehicleWorkAmount || 0) + // Use correct field
-            (emptyTripData.otherExpenses || 0) +
-            (emptyTripData.foodExpenses || 0);
+        const emptyData = expense.emptyTripData || {};
+        const totalEmptyExpenses = emptyData.totalEmptyExpenses || 0;
         
-        const vendorName = emptyTripData.vehicleWorkVendorName || (emptyTripData.vehicleWorkVendorId ? allWorkVendors[emptyTripData.vehicleWorkVendorId]?.name : 'N/A');
-        const workNotes = emptyTripData.vehicleWorkNotes || '—';
+        const vendorName = emptyData.vehicleWorkVendorName || (emptyData.vehicleWorkVendorId ? allWorkVendors[emptyData.vehicleWorkVendorId]?.name : 'N/A');
+        const workNotes = emptyData.vehicleWorkNotes || '—';
+        
+        // Sum up the Other Expenses that go into the 'Other Exp' column for display in the child row
+        const otherCombined = 
+            (emptyData.emptyOtherExpenses || 0) +
+            (emptyData.loadingUnloadingExpenses || 0) +
+            (emptyData.policeChallanExpenses || 0) +
+            (emptyData.tacExpenses || 0) +
+            (emptyData.permitExpenses || 0) +
+            // **NOTE**: Commission and Tirpal/Rope are now separate columns, so they are NOT in "Other"
+            (emptyData.brokerageExpenses || 0);
 
         const childHtml = `
           <div class="child-row-container">
@@ -1241,33 +984,43 @@
               </tr>
               <tr>
                 <td>Tyre Expenses</td>
-                <td>₹${formatCurrency(emptyTripData.tyreExpenses || 0)}</td>
+                <td>₹${formatCurrency(emptyData.emptyTyreExpenses || 0)}</td>
                 <td>-</td>
               </tr>
               <tr>
                 <td>Diesel Expenses</td>
-                <td>₹${formatCurrency(emptyTripData.dieselExpenses || 0)}</td>
-                <td>${(emptyTripData.fuelUsedLiters || 0).toFixed(2)} L @ ₹${(emptyTripData.dieselRatePerLiter || 0).toFixed(2)}/L (Route: ${emptyTripData.routeDistanceKm || 0} km, Avg: ${emptyTripData.vehicleAverage || 0} km/l)</td>
+                <td>₹${formatCurrency(emptyData.emptyDieselExpenses || 0)}</td>
+                <td>${(emptyData.fuelUsedLiters || 0).toFixed(2)} L @ ₹${(emptyData.dieselRatePerLiter || 0).toFixed(2)}/L (Route: ${emptyData.routeDistanceKm || 0} km, Avg: ${emptyData.vehicleAverage || 0} km/l)</td>
               </tr>
               <tr>
                 <td>Toll Expenses</td>
-                <td>₹${formatCurrency(emptyTripData.tollExpenses || 0)}</td>
+                <td>₹${formatCurrency(emptyData.emptyTollExpenses || 0)}</td>
                 <td>-</td>
               </tr>
               <tr>
                 <td>Vehicle Work</td>
-                <td>₹${formatCurrency(emptyTripData.vehicleWorkAmount || 0)}</td>
+                <td>₹${formatCurrency(emptyData.emptyVehicleWorkAmount || 0)}</td>
                 <td>Vendor: ${vendorName}, Notes: ${workNotes}</td>
               </tr>
               <tr>
-                <td>Other Expenses</td>
-                <td>₹${formatCurrency(emptyTripData.otherExpenses || 0)}</td>
+                <td>Commission</td>
+                <td>₹${formatCurrency(emptyData.emptyCommission || 0)}</td>
+                <td>-</td>
+              </tr>
+              <tr>
+                <td>Tirpal & Rope</td>
+                <td>₹${formatCurrency(emptyData.emptyTirpalRope || 0)}</td>
                 <td>-</td>
               </tr>
               <tr>
                 <td>Food Expenses</td>
-                <td>₹${formatCurrency(emptyTripData.foodExpenses || 0)}</td>
+                <td>₹${formatCurrency(emptyData.emptyFoodExpenses || 0)}</td>
                 <td>-</td>
+              </tr>
+              <tr>
+                <td>Other Expenses (Combined)</td>
+                <td>₹${formatCurrency(otherCombined)}</td>
+                <td>Includes: L/U, Challan, TAC, Permit, Brokerage, Other.</td>
               </tr>
               <tr>
                 <td><strong>Total Empty Trip Expenses</strong></td>
@@ -1275,11 +1028,6 @@
                 <td>-</td>
               </tr>
             </table>
-            <div class="mt-3">
-              <button class="btn btn-sm btn-warning" onclick="editEmptyTrip('${expense.id}')">
-                <i class="fas fa-edit me-1"></i>Edit Empty Trip
-              </button>
-            </div>
           </div>
         `;
         
@@ -1297,24 +1045,24 @@
         
         $('#emptyTripId').val(lrId);
         
-        // Populate Other Expenses
-        $('#emptyTyreExpenses').val(emptyData.tyreExpenses || '');
-        $('#emptyTollExpenses').val(emptyData.tollExpenses || '');
-        $('#emptyOtherExpenses').val(emptyData.otherExpenses || '');
-        $('#emptyFoodExpenses').val(emptyData.foodExpenses || '');
+        // Populate Other Expenses (from the fields in the simple modal)
+        $('#emptyTyreExpenses').val(emptyData.emptyTyreExpenses || emptyData.tyreExpenses || '');
+        $('#emptyTollExpenses').val(emptyData.emptyTollExpenses || emptyData.tollExpenses || '');
+        $('#emptyOtherExpenses').val(emptyData.emptyOtherExpenses || emptyData.otherExpenses || '');
+        $('#emptyFoodExpenses').val(emptyData.emptyFoodExpenses || emptyData.foodExpenses || '');
 
-        // Populate Vehicle Work Card
-        $('#emptyVehicleWork').val(emptyData.vehicleWorkAmount || emptyData.vehicleWork || '');
+        // Populate Vehicle Work Card (Legacy fields)
+        $('#emptyVehicleWork').val(emptyData.emptyVehicleWorkAmount || emptyData.vehicleWork || '');
         $('#emptyVehicleWorkVendor').val(emptyData.vehicleWorkVendorId || '');
         $('#emptyVehicleWorkNotes').val(emptyData.vehicleWorkNotes || '');
         
-        // Populate the Trip Fuel Consumption card (THE FIX)
+        // Populate the Trip Fuel Consumption card
         $('#emptyRouteSelect').val(emptyData.routeId || '');
         $('#emptyRouteDistanceKm').val(emptyData.routeDistanceKm || '');
         $('#emptyVehicleAverage').val(emptyData.vehicleAverage || '');
         $('#emptyDieselRatePerLiter').val(emptyData.dieselRatePerLiter || '');
         $('#emptyFuelUsedLiters').val(emptyData.fuelUsedLiters || '');
-        $('#emptyDieselExpenses').val(emptyData.dieselExpenses || '');
+        $('#emptyDieselExpenses').val(emptyData.emptyDieselExpenses || emptyData.dieselExpenses || '');
 
         // Recalculate to ensure consistency, especially the auto-calculated fields.
         recalcEmptyTripFuel();
@@ -1346,7 +1094,8 @@
 
     function parseCurrency(currencyString) {
       if (typeof currencyString === 'number') return currencyString;
-      const numericString = String(currencyString).replace(/[^0-9.-]+/g, '');
+      // Remove all non-numeric characters except for the decimal point and leading minus sign
+      const numericString = String(currencyString).replace(/<[^>]*>/g, '').replace(/[₹,]/g, '');
       return parseFloat(numericString) || 0;
     }
 
@@ -1365,4 +1114,4 @@
     }
   </script>
 </body>
-</html>         
+</html>
