@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Monthly Trip Reports</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     body { 
       font-family: 'Segoe UI', sans-serif; 
@@ -28,6 +30,8 @@
       margin-bottom: 30px;
     }
     
+    /* **NEW**: Bootstrap CSS for Modal */
+    
     /* Tab navigation */
     .tabs {
       display: flex;
@@ -42,6 +46,8 @@
       border-top-left-radius: 5px;
       border-top-right-radius: 5px;
       font-weight: 600;
+      color: #333;
+      transition: background 0.2s, color 0.2s;
     }
     .tab.active {
       background: #2E8B57;
@@ -72,6 +78,7 @@
     .date-filter label {
       margin-bottom: 5px;
       font-weight: bold;
+      color: #444;
     }
     
     /* Vehicle cards grid */
@@ -113,11 +120,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: #fafafa;
     }
     .vehicle-card-header h3 {
       margin-top: 0;
       margin-bottom: 0;
       color: #2E8B57;
+      font-size: 1.25rem;
     }
     .trip-count {
       background: #2E8B57;
@@ -142,37 +151,39 @@
     }
     .vehicle-card.expanded .vehicle-card-body {
       padding: 20px;
-      max-height: 500px; /* A sensible max height for content */
+      max-height: 600px; /* Increased max height */
     }
     .vehicle-stats {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 12px;
       margin: 15px 0;
     }
     .stat-item {
       display: flex;
       flex-direction: column;
-      padding: 8px;
+      padding: 10px;
       background: #f9f9f9;
       border-radius: 6px;
+      border: 1px solid #eee;
     }
     .stat-value {
       font-weight: bold;
-      font-size: 16px;
+      font-size: 18px;
     }
     .positive {
-      color: #2E8B57;
+      color: #198754;
     }
     .negative {
-      color: #e74c3c;
+      color: #dc3545;
     }
     .stat-label {
       font-size: 12px;
       color: #666;
+      text-transform: uppercase;
     }
     .download-btn {
-      background: #2E8B57;
+      background: #4361ee;
       color: white;
       border: none;
       padding: 10px 15px;
@@ -185,9 +196,10 @@
       justify-content: center;
       gap: 8px;
       transition: background 0.2s;
+      font-weight: 600;
     }
     .download-btn:hover {
-      background: #43B97F;
+      background: #3a0ca3;
     }
     
     /* Summary section */
@@ -196,10 +208,11 @@
       padding:20px; 
       background:#f0f8f4; 
       border-radius:8px; 
+      border-left: 5px solid #4361ee;
     }
     .summary-grid { 
       display:grid; 
-      grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); 
+      grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); 
       gap:15px; 
       margin-top:15px; 
     }
@@ -209,14 +222,17 @@
       border-radius:8px; 
       box-shadow:0 2px 4px rgba(0,0,0,0.1); 
       text-align: center;
+      border-top: 3px solid #3a0ca3;
     }
     .summary-card h3 { 
       margin-top:0; 
-      color:#2E8B57; 
-      font-size:16px; 
+      color:#444; 
+      font-size:14px; 
+      text-transform: uppercase;
+      font-weight: 600;
     }
     .summary-card p { 
-      font-size:20px; 
+      font-size:22px; 
       font-weight:bold; 
       margin:5px 0; 
     }
@@ -298,6 +314,58 @@
         margin-bottom: 5px;
         border-radius: 5px;
       }
+      .vehicle-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* New styles for the PDF Preview Modal */
+    .pdf-preview-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .report-section {
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #ddd;
+    }
+
+    .report-header {
+        color: #4361ee;
+        font-weight: 700;
+        border-bottom: 2px solid #2E8B57;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+    }
+
+    .report-stat {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        border-left: 3px solid #2E8B57;
+    }
+
+    .report-table-container {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        border-radius: 6px;
+    }
+
+    .report-table th {
+        background-color: #2E8B57;
+        color: white;
+        position: sticky;
+        top: 0;
+    }
+
+    /* Hidden Canvas for PDF Chart Generation */
+    #chartContainer {
+        display: none;
     }
   </style>
 </head>
@@ -307,18 +375,15 @@
   <div class="container">
     <h1><i class="fas fa-file-invoice-dollar"></i> Trip Reports & Analytics</h1>
     
-    <!-- Tab Navigation -->
     <div class="tabs">
       <div class="tab active" data-tab="vehicle-reports">Vehicle Reports</div>
       <div class="tab" data-tab="monthly-reports">Monthly Reports</div>
       <div class="tab" data-tab="full-range-reports">Full Range Reports</div>
     </div>
 
-    <!-- Vehicle Reports Tab -->
     <div class="tab-content active" id="vehicle-reports">
       <h2><i class="fas fa-truck"></i> Vehicle Trip Reports</h2>
       
-      <!-- Date Filter -->
       <div class="date-filter">
         <div>
           <label for="startDate"><i class="fas fa-calendar-alt"></i> Start Date:</label>
@@ -329,15 +394,14 @@
           <input type="date" id="endDate">
         </div>
         <div style="margin-left:auto; display: flex; align-items: flex-end; gap: 10px;">
-          <button id="applyFilter" style="padding: 10px 20px;"><i class="fas fa-filter"></i> Apply Filter</button>
-          <button id="resetFilter" style="padding: 10px 20px; background: #666;"><i class="fas fa-sync-alt"></i> Reset</button>
+          <button id="applyFilter" class="btn btn-primary" style="padding: 10px 20px;"><i class="fas fa-filter"></i> Apply Filter</button>
+          <button id="resetFilter" class="btn btn-secondary" style="padding: 10px 20px;"><i class="fas fa-sync-alt"></i> Reset</button>
         </div>
       </div>
 
-      <!-- Pagination Controls -->
       <div style="display: flex; align-items: center; gap: 10px; margin-top: 20px; padding: 10px; background: #f9f9f9; border-radius: 8px;">
         <label for="entriesPerPage" style="font-weight: 600;">Show:</label>
-        <select id="entriesPerPage" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+        <select id="entriesPerPage" class="form-select" style="width: auto;">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="20">20</option>
@@ -347,12 +411,10 @@
         <span style="font-weight: 600;">entries</span>
       </div>
 
-      <!-- Vehicle Cards -->
       <div id="vehiclesContainer" class="vehicles-grid">
         <div class="no-data">Select a date range to view vehicle reports</div>
       </div>
 
-      <!-- Accounting summary -->
       <div id="accountingSummary" class="accounting-summary" style="display:none;">
         <h2><i class="fas fa-chart-pie"></i> Overall Accounting Summary</h2>
         <div class="summary-grid">
@@ -363,19 +425,19 @@
           <div class="summary-card"><h3>Profit Margin</h3><p id="profitMargin">0%</p></div>
           <div class="summary-card"><h3>Diesel Expenses</h3><p id="dieselExpenses">₹0</p></div>
           <div class="summary-card"><h3>Tyre Expenses</h3><p id="tyreExpenses">₹0</p></div>
-          <div class="summary-card"><h3>Other Expenses</h3><p id="otherTotalExpenses">₹0</p></div>
+          <div class="summary-card"><h3>Total Tonnes</h3><p id="totalTonnes">0.00 MT</p></div>
         </div>
       </div>
     </div>
 
-    <!-- Monthly Reports Tab -->
     <div class="tab-content" id="monthly-reports">
+      <!-- Content for monthly reports (retained) -->
       <h2><i class="fas fa-calendar"></i> Monthly Reports</h2>
       
       <div class="date-filter">
         <div>
           <label for="monthSelect"><i class="fas fa-calendar"></i> Select Month:</label>
-          <select id="monthSelect" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+          <select id="monthSelect" class="form-select" style="width: auto;">
             <option value="0">January</option>
             <option value="1">February</option>
             <option value="2">March</option>
@@ -392,13 +454,12 @@
         </div>
         <div>
           <label for="yearSelect"><i class="fas fa-calendar"></i> Select Year:</label>
-          <select id="yearSelect" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
-            <!-- Years will be populated by JavaScript -->
-          </select>
+          <select id="yearSelect" class="form-select" style="width: auto;">
+            </select>
         </div>
         <div style="margin-left:auto; display: flex; align-items: flex-end; gap: 10px;">
-          <button id="applyMonthFilter" style="padding: 10px 20px;"><i class="fas fa-filter"></i> Generate Report</button>
-          <button id="downloadMonthlyReport" style="padding: 10px 20px; background: #4361ee;"><i class="fas fa-download"></i> Download PDF</button>
+          <button id="applyMonthFilter" class="btn btn-primary" style="padding: 10px 20px;"><i class="fas fa-filter"></i> Generate Report</button>
+          <button id="downloadMonthlyReport" class="btn btn-success" style="padding: 10px 20px;"><i class="fas fa-download"></i> Download PDF</button>
         </div>
       </div>
       
@@ -407,22 +468,22 @@
       </div>
     </div>
 
-    <!-- Full Range Reports Tab -->
     <div class="tab-content" id="full-range-reports">
+      <!-- Content for full range reports (retained) -->
       <h2><i class="fas fa-chart-line"></i> Full Range Reports</h2>
       
       <div class="date-filter">
         <div>
           <label for="fullRangeStartDate"><i class="fas fa-calendar-alt"></i> Start Date:</label>
-          <input type="date" id="fullRangeStartDate">
+          <input type="date" id="fullRangeStartDate" class="form-control">
         </div>
         <div>
           <label for="fullRangeEndDate"><i class="fas fa-calendar-alt"></i> End Date:</label>
-          <input type="date" id="fullRangeEndDate">
+          <input type="date" id="fullRangeEndDate" class="form-control">
         </div>
         <div style="margin-left:auto; display: flex; align-items: flex-end; gap: 10px;">
-          <button id="applyFullRangeFilter" style="padding: 10px 20px;"><i class="fas fa-filter"></i> Generate Report</button>
-          <button id="downloadFullRangeReport" style="padding: 10px 20px; background: #4361ee;"><i class="fas fa-download"></i> Download PDF</button>
+          <button id="applyFullRangeFilter" class="btn btn-primary" style="padding: 10px 20px;"><i class="fas fa-filter"></i> Generate Report</button>
+          <button id="downloadFullRangeReport" class="btn btn-success" style="padding: 10px 20px;"><i class="fas fa-download"></i> Download PDF</button>
         </div>
       </div>
       
@@ -432,11 +493,94 @@
     </div>
   </div>
 
-  <!-- Firebase and main script -->
+  <!-- Hidden Chart Container (for PDF generation) -->
+  <div id="chartContainer">
+    <canvas id="financialChart" width="800" height="300"></canvas>
+    <canvas id="expenseChart" width="800" height="300"></canvas>
+  </div>
+  
+  <!-- Report View Modal (for previewing the detailed report) -->
+  <div class="modal fade" id="reportViewModal" tabindex="-1" aria-labelledby="reportViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="reportViewModalLabel">Vehicle Report Preview</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="pdf-preview-content">
+            <h2 class="text-center text-secondary mb-4">Detailed Report for <span id="previewVehicleNumber" class="text-primary"></span></h2>
+            
+            <div class="row">
+                <div class="col-md-6 report-stat"><i class="fas fa-calendar-alt me-2"></i> **Report Period:** <span id="previewDateRange"></span></div>
+                <div class="col-md-6 report-stat"><i class="fas fa-file-invoice-dollar me-2"></i> **Total Revenue:** <span id="previewTotalRevenue" class="fw-bold text-success"></span></div>
+                <div class="col-md-6 report-stat"><i class="fas fa-road me-2"></i> **Total Distance:** <span id="previewTotalKM" class="fw-bold"></span></div>
+                <div class="col-md-6 report-stat"><i class="fas fa-money-bill-wave me-2"></i> **Net Profit:** <span id="previewNetProfit" class="fw-bold text-primary"></span></div>
+            </div>
+
+            <div class="report-section">
+                <h4 class="report-header"><i class="fas fa-chart-area me-2"></i>Financial & Operational Summary</h4>
+                <div class="row">
+                    <div class="col-md-6"><canvas id="previewFinancialChart"></canvas></div>
+                    <div class="col-md-6"><canvas id="previewExpenseChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4 class="report-header"><i class="fas fa-calculator me-2"></i>Cost of Ownership (TCO)</h4>
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr><th>Component</th><th class="text-end">Value (₹)</th><th class="text-end">Cost per Trip (₹)</th></tr>
+                    </thead>
+                    <tbody id="previewTcoBody">
+                        <!-- TCO details injected here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="report-section">
+                <h4 class="report-header"><i class="fas fa-list me-2"></i>Trip-by-Trip Log</h4>
+                <div class="report-table-container">
+                    <table class="table table-striped table-hover table-sm report-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Route</th>
+                                <th class="text-end">Start KM</th>
+                                <th class="text-end">End KM</th>
+                                <th class="text-end">Trip KM</th>
+                                <th class="text-end">Tonne</th>
+                                <th class="text-end">Revenue</th>
+                                <th class="text-end">Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewTripLogBody">
+                            <!-- Trip log injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success" id="downloadReportFromModalBtn"><i class="fas fa-file-pdf me-2"></i> Download Professional PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getDatabase, ref, onValue, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // Global Chart instance references
+    let financialChartInstance = null;
+    let expenseChartInstance = null;
+    let previewFinancialChartInstance = null;
+    let previewExpenseChartInstance = null;
+
 
     const firebaseConfig = {
       apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
@@ -457,6 +601,8 @@
     let allExpensesData = [];
     let filteredData = [];
     let coreAccountId = null;
+    let vehiclesData = {}; // To store vehicle data, including EMI and driver keys
+    let driversData = {}; // NEW: To store driver data, including salary
 
     // UI elements
     const vehiclesContainer = document.getElementById("vehiclesContainer");
@@ -477,6 +623,7 @@
     const applyFullRangeFilter = document.getElementById('applyFullRangeFilter');
     const downloadFullRangeReport = document.getElementById('downloadFullRangeReport');
     const fullRangeReportContainer = document.getElementById('fullRangeReportContainer');
+    const downloadReportFromModalBtn = document.getElementById('downloadReportFromModalBtn');
 
     // Set default date range to current month
     const today = new Date();
@@ -547,14 +694,16 @@
         console.warn('Could not load active tab from localStorage:', e);
       }
         showLoading();
+        loadVehiclesData(); 
+        loadDriversData();
         listenExpenses();
     });
     });
 
     // Add event listener for entries per page change
     entriesPerPageSelect.addEventListener('change', function() {
-      // You can implement pagination logic here if needed
-      // For now, this just provides the UI control
+      // Re-render the cards to apply the new limit
+      renderVehicleCards();
     });
 
     // Event delegation for vehicle card toggling
@@ -567,6 +716,28 @@
         }
       }
     });
+
+    // **NEW**: Function to load vehicle data (including EMI)
+    function loadVehiclesData() {
+      if (!coreAccountId) return;
+      const vehiclesRef = ref(db, `users/${coreAccountId}/vehicles`);
+      onValue(vehiclesRef, (snapshot) => {
+        if (snapshot.exists()) {
+          vehiclesData = snapshot.val();
+        }
+      });
+    }
+
+    // **NEW**: Function to load driver data (including salary)
+    function loadDriversData() {
+        if (!coreAccountId) return;
+        const driversRef = ref(db, `users/${coreAccountId}/drivers`);
+        onValue(driversRef, (snapshot) => {
+            if (snapshot.exists()) {
+                driversData = snapshot.val();
+            }
+        });
+    }
 
     // Listen expenses
     function listenExpenses() {
@@ -581,66 +752,110 @@
         if (snapshot.exists()) {
           snapshot.forEach(child => {
             const lr = child.val();
-            lr.key = child.key;
-
-            // Calculate total expenses and profit from the LR report data
-            // **FIX**: Use `vehicleWorkAmount` for consistency and include empty trip vehicle work.
-            const mainVehicleWork = parseFloat(lr.vehicleWorkAmount) || parseFloat(lr.vehicleWork) || 0;
-            const emptyVehicleWork = (lr.emptyTripData && (parseFloat(lr.emptyTripData.vehicleWorkAmount) || parseFloat(lr.emptyTripData.vehicleWork) || 0)) || 0;
-
-            let totalExpenses = 
-              (parseFloat(lr.tyreExpenses) || 0) +
-              (parseFloat(lr.dieselExpenses) || 0) +
-              (parseFloat(lr.tollExpenses) || 0) +
-              mainVehicleWork + // Use corrected vehicle work amount
-              (parseFloat(lr.otherExpenses) || 0) +
-              (parseFloat(lr.foodExpenses) || 0) +
-              (parseFloat(lr.advance) || 0);
             
-            // Add empty trip expenses if they exist
-            if (lr.emptyTrip && lr.emptyTripData) {
-              const emptyTripExpenses = 
-                (parseFloat(lr.emptyTripData.tyreExpenses) || 0) +
-                (parseFloat(lr.emptyTripData.dieselExpenses) || 0) +
-                emptyVehicleWork + // Add empty vehicle work to total expenses
-                (parseFloat(lr.emptyTripData.tollExpenses) || 0) +
-                (parseFloat(lr.emptyTripData.otherExpenses) || 0) +
-                (parseFloat(lr.emptyTripData.foodExpenses) || 0);
-              totalExpenses += emptyTripExpenses;
+            const isVehicleRegistered = Object.values(vehiclesData).some(vehicle => vehicle.vehicleNumber === lr.truckNumber);
+            if (!isVehicleRegistered) {
+              return; // Skip this LR if the vehicle is not registered.
             }
+            if (lr.lrType === 'market') return; // Only process own vehicle LRs
+
+            const details = lr.tripDetails || {};
+            const emptyTripData = lr.emptyTripData || {};
+
+            // --- Fuel & Distance Calculations ---
+            const dieselRate = parseFloat(details.dieselRatePerLiter) || 0;
+            const mainTripLiters = parseFloat(details.fuelUsedLiters) || 0;
+            const emptyTripLiters = parseFloat(emptyTripData.fuelUsedLiters) || 0;
+
+            const dieselForCalc = (mainTripLiters * dieselRate) + (emptyTripLiters * dieselRate);
             
-            const profit = (parseFloat(lr.billingAmount) || 0) - totalExpenses;
+            const mainTripKm = parseFloat(details.totalKm) || 0;
+            const emptyTripKm = (parseFloat(emptyTripData.endingKm) || 0) - (parseFloat(emptyTripData.startingKm) || 0);
+            const totalTripKm = mainTripKm + emptyTripKm;
 
-            // **FIX**: Calculate combined vehicle work for display.
-            const combinedVehicleWork = mainVehicleWork + emptyVehicleWork;
+            // --- Main Trip Expenses ---
+            const mainOtherGenericExpenses = 
+                (parseFloat(details.loadingUnloadingExpenses) || 0) +
+                (parseFloat(details.policeChallanExpenses) || 0) +
+                (parseFloat(details.tacExpenses) || 0) +
+                (parseFloat(details.permitExpenses) || 0) +
+                (parseFloat(details.brokerageExpenses) || 0) +
+                (parseFloat(details.otherExpenses) || 0);
 
-            // Combine main and empty trip expenses for individual categories
-            const combinedDiesel = (parseFloat(lr.dieselExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.dieselExpenses) || 0 : 0);
-            const combinedTyre = (parseFloat(lr.tyreExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.tyreExpenses) || 0 : 0);
-            const combinedToll = (parseFloat(lr.tollExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.tollExpenses) || 0 : 0);
-            const combinedOther = (parseFloat(lr.otherExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.otherExpenses) || 0 : 0);
-            const combinedFood = (parseFloat(lr.foodExpenses) || 0) + (lr.emptyTripData ? parseFloat(lr.emptyTripData.foodExpenses) || 0 : 0);
-            const shortageDeduction = ((parseFloat(lr.shortage) || 0) / 1000) * (parseFloat(lr.billingRate) || 0);
-            const monthlyInstallment = parseFloat(lr.monthlyInstallment) || 0;
+            const mainTripAggregatedExpenses = 
+                (parseFloat(details.tyreExpenses) || 0) +
+                (parseFloat(details.tollExpenses) || 0) +
+                (parseFloat(details.foodExpenses) || 0) +
+                (parseFloat(details.vehicleWorkAmount) || 0) +
+                (parseFloat(details.commissionExpenses) || 0) +
+                (parseFloat(details.tirpalRopeExpenses) || 0) +
+                mainOtherGenericExpenses;
 
-            // Map to the structure expected by the rest of the page
+            const totalMainExpenses = mainTripAggregatedExpenses + (parseFloat(details.advance) || 0);
+
+            // --- Empty Trip Expenses ---
+            const emptyOtherGenericExpenses = 
+                (parseFloat(emptyTripData.loadingUnloadingExpenses) || 0) +
+                (parseFloat(emptyTripData.policeChallanExpenses) || 0) +
+                (parseFloat(emptyTripData.tacExpenses) || 0) +
+                (parseFloat(emptyTripData.permitExpenses) || 0) +
+                (parseFloat(emptyTripData.brokerageExpenses) || 0) +
+                (parseFloat(emptyTripData.otherExpenses) || 0);
+
+            const emptyTripAggregatedExpenses = 
+                (parseFloat(emptyTripData.tyreExpenses) || 0) +
+                (parseFloat(emptyTripData.tollExpenses) || 0) +
+                (parseFloat(emptyTripData.foodExpenses) || 0) +
+                (parseFloat(emptyTripData.vehicleWorkAmount) || 0) +
+                (parseFloat(emptyTripData.commissionExpenses) || 0) +
+                (parseFloat(emptyTripData.tirpalRopeExpenses) || 0) +
+                emptyOtherGenericExpenses;
+
+            const totalEmptyExpenses = emptyTripAggregatedExpenses;
+
+            // --- Final Calculations ---
+            const billingAmount = parseFloat(details.billingAmount) || 0;
+            const billingRate = (lr.weight > 0) ? (billingAmount / lr.weight) : 0;
+            const shortageDeduction = ((parseFloat(details.shortage) || 0) / 1000) * billingRate;
+
+            const totalExpensesBeforeFuel = totalMainExpenses + totalEmptyExpenses + shortageDeduction;
+            const totalExpenses = totalExpensesBeforeFuel + dieselForCalc;
+            const profit = billingAmount - totalExpenses;
+
+            // Find Vehicle's fixed costs
+            const vehicleDetail = Object.values(vehiclesData).find(v => v.vehicleNumber === lr.truckNumber) || {};
+            const driverDetail = vehicleDetail.assignedDriverKey ? driversData[vehicleDetail.assignedDriverKey] : {};
+
             allExpensesData.push({
-              key: lr.key,
+              key: child.key,
               date: lr.date,
               vehicle: lr.truckNumber,
-              // driver: lr.driverName || 'N/A', // Removed as per request
-              gain: parseFloat(lr.billingAmount) || 0,
-              diesel: combinedDiesel,
-              tyre: combinedTyre,
-              advance: parseFloat(lr.advance) || 0,
-              toll: combinedToll,
-              vehicleWork: combinedVehicleWork, // Use the combined amount
-              other: combinedOther,
-              food: combinedFood,
-              monthlyInstallment: monthlyInstallment,
-              shortage: shortageDeduction, // Use the calculated deduction amount
+              gain: billingAmount,
+              weight: parseFloat(lr.weight) || 0, // Tonne Carried
+              diesel: dieselForCalc,
+              tyre: (parseFloat(details.tyreExpenses) || 0) + (parseFloat(emptyTripData.tyreExpenses) || 0),
+              advance: parseFloat(details.advance) || 0,
+              toll: (parseFloat(details.tollExpenses) || 0) + (parseFloat(emptyTripData.tollExpenses) || 0),
+              vehicleWork: (parseFloat(details.vehicleWorkAmount) || 0) + (parseFloat(emptyTripData.vehicleWorkAmount) || 0),
+              commission: (parseFloat(details.commissionExpenses) || 0) + (parseFloat(emptyTripData.commissionExpenses) || 0),
+              tirpalRope: (parseFloat(details.tirpalRopeExpenses) || 0) + (parseFloat(emptyTripData.tirpalRopeExpenses) || 0),
+              food: (parseFloat(details.foodExpenses) || 0) + (parseFloat(emptyTripData.foodExpenses) || 0),
+              other: mainOtherGenericExpenses + emptyOtherGenericExpenses,
+              
+              monthlyInstallment: parseFloat(vehicleDetail.monthlyInstallment) || 0, // Fetched EMI
+              driverSalary: parseFloat(driverDetail.monthlySalary) || 0, // Fetched Salary
+              
+              shortage: shortageDeduction,
               total: totalExpenses,
-              profit: profit
+              profit: profit,
+              totalTripKm: totalTripKm,
+              
+              // New data for detailed log table (Trip-by-Trip)
+              startKm: parseFloat(details.startingKm) || 0,
+              endKm: parseFloat(details.endingKm) || 0,
+              fromLocation: lr.fromLocation,
+              toLocation: lr.toLocation,
+              ...details, ...emptyTripData
             });
           });
         }
@@ -658,11 +873,42 @@
 
     // Apply month filter
     applyMonthFilter.addEventListener("click", generateMonthlyReport);
-    downloadMonthlyReport.addEventListener("click", downloadMonthlyPDF);
+    downloadMonthlyReport.addEventListener("click", () => {
+        const month = parseInt(monthSelect.value);
+        const year = parseInt(yearSelect.value);
+        const startDate = new Date(year, month, 1);
+        const endDate = new Date(year, month + 1, 0);
+        endDate.setHours(23, 59, 59);
+        const monthlyData = allExpensesData.filter(item => {
+            const itemDate = new Date(item.date);
+            return itemDate >= startDate && itemDate <= endDate;
+        });
+        generateFullRangePDF(monthlyData, startDate, endDate, `${startDate.toLocaleString('default', { month: 'long' })}-${year}-Report`);
+    });
     
     // Apply full range filter
     applyFullRangeFilter.addEventListener("click", generateFullRangeReport);
-    downloadFullRangeReport.addEventListener("click", downloadFullRangePDF);
+    downloadFullRangeReport.addEventListener("click", () => {
+        const startDate = new Date(fullRangeStartDate.value);
+        const endDate = new Date(fullRangeEndDate.value);
+        endDate.setHours(23, 59, 59);
+        const rangeData = allExpensesData.filter(item => {
+            const itemDate = new Date(item.date);
+            return itemDate >= startDate && itemDate <= endDate;
+        });
+        generateFullRangePDF(rangeData, startDate, endDate, `Report_${formatDateForFile(startDate)}_to_${formatDateForFile(endDate)}`);
+    });
+
+    // NEW: Modal Download Button Handler
+    downloadReportFromModalBtn.addEventListener('click', function() {
+        if (downloadReportFromModalBtn.dataset.vehicle && downloadReportFromModalBtn.dataset.trips) {
+            const vehicleNumber = downloadReportFromModalBtn.dataset.vehicle;
+            const trips = JSON.parse(decodeURIComponent(downloadReportFromModalBtn.dataset.trips));
+            generateVehiclePDF(vehicleNumber, trips);
+        } else {
+            alert('Error: Report data is missing. Please close and try again.');
+        }
+    });
 
     function applyDateFilter() {
       const startDate = startDateInput.value;
@@ -746,8 +992,15 @@
         vehicles[trip.vehicle].push(trip);
       });
       
+      // Determine the number of entries to display
+      const entriesPerPage = parseInt(entriesPerPageSelect.value) || 10;
+      let count = 0;
+
       // Create a card for each vehicle
       Object.keys(vehicles).forEach(vehicle => {
+        if (count >= entriesPerPage) return;
+        count++;
+
         const trips = vehicles[vehicle];
         const totalTrips = trips.length;
         
@@ -759,12 +1012,12 @@
         
         const dieselExpenses = trips.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
         const tyreExpenses = trips.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
-        const advanceExpenses = trips.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
-        const tollExpenses = trips.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0); 
-        const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
-        const otherExpenses = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
-        const foodExpenses = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
-        const monthlyInstallment = trips.length > 0 ? (Number(trips[0].monthlyInstallment) || 0) : 0; // EMI is per month, not per trip
+        const totalTonnes = trips.reduce((sum, trip) => sum + (Number(trip.weight) || 0), 0);
+        const totalKM = trips.reduce((sum, trip) => sum + (Number(trip.totalTripKm) || 0), 0);
+
+        // Get EMI and Salary from the first trip (assuming they are consistent)
+        const monthlyInstallment = trips.length > 0 ? (Number(trips[0].monthlyInstallment) || 0) : 0;
+        const driverSalary = trips.length > 0 ? (Number(trips[0].driverSalary) || 0) : 0;
         
         const card = document.createElement("div");
         card.className = "vehicle-card";
@@ -790,23 +1043,30 @@
               </div>
               <div class="stat-item">
                 <span class="stat-value ${profitMargin >= 0 ? 'positive' : 'negative'}">${profitMargin}%</span>
-                <span class="stat-label">Profit Margin</span>
+                <span class="stat-label">Margin</span>
               </div>
               <div class="stat-item">
-                <span class="stat-value">₹${dieselExpenses.toFixed(2)}</span>
-                <span class="stat-label">Diesel Cost</span>
+                <span class="stat-value">${totalKM.toFixed(0)}</span>
+                <span class="stat-label">Total KM</span>
               </div>
               <div class="stat-item">
-                <span class="stat-value">₹${tyreExpenses.toFixed(2)}</span>
-                <span class="stat-label">Tyre Cost</span>
+                <span class="stat-value">${totalTonnes.toFixed(2)}</span>
+                <span class="stat-label">Total Tonne</span>
               </div>
               <div class="stat-item">
                 <span class="stat-value">₹${monthlyInstallment.toFixed(2)}</span>
                 <span class="stat-label">Monthly EMI</span>
               </div>
+              <div class="stat-item">
+                <span class="stat-value">₹${driverSalary.toFixed(2)}</span>
+                <span class="stat-label">Driver Salary</span>
+              </div>
             </div>
-            <button class="download-btn" data-vehicle="${escapeHtml(vehicle)}">
-              <i class="fas fa-download"></i> Download PDF Report
+            <button class="btn btn-primary download-btn" 
+                data-vehicle="${escapeHtml(vehicle)}"
+                data-trips="${encodeURIComponent(JSON.stringify(trips))}"
+                onclick="showReportPreview(this.getAttribute('data-vehicle'), this.getAttribute('data-trips'))">
+                <i class="fas fa-eye me-2"></i> View & Download Report
             </button>
           </div>
         `;
@@ -814,18 +1074,458 @@
         vehiclesContainer.appendChild(card);
       });
       
-      // Add event listeners to download buttons
-      document.querySelectorAll('.download-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const vehicle = this.getAttribute('data-vehicle');
-          generateVehiclePDF(vehicle, vehicles[vehicle]);
-        });
-      });
-      
       document.getElementById("accountingSummary").style.display = "block";
     }
     
-    // Render monthly report
+    // Function to calculate and render the Report Preview Modal (NEW)
+    window.showReportPreview = function(vehicleNumber, encodedTrips) {
+        const trips = JSON.parse(decodeURIComponent(encodedTrips));
+        if (trips.length === 0) return;
+
+        // 1. Calculations
+        const totalTrips = trips.length;
+        const totalRevenue = trips.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
+        const totalExpenses = trips.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
+        const netProfit = totalRevenue - totalExpenses;
+        
+        const totalTonnes = trips.reduce((sum, trip) => sum + (Number(trip.weight) || 0), 0);
+        const totalKM = trips.reduce((sum, trip) => sum + (Number(trip.totalTripKm) || 0), 0);
+        
+        // Fixed costs for the period (assuming EMI/Salary are monthly)
+        const totalDays = Math.ceil((new Date(endDateInput.value) - new Date(startDateInput.value)) / (1000 * 60 * 60 * 24)) + 1;
+        const totalMonths = totalDays / 30; // Approximation for EMI/Salary period
+
+        
+        // Use the first trip's fixed costs for calculation
+        const monthlyInstallment = Number(trips[0].monthlyInstallment) || 0;
+        const driverSalary = Number(trips[0].driverSalary) || 0;
+        
+        const totalEmiPaid = monthlyInstallment * totalMonths;
+        const totalSalaryPaid = driverSalary * totalMonths;
+        const totalVehicleWork = trips.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
+        
+        const totalTco = totalEmiPaid + totalSalaryPaid + totalVehicleWork;
+        
+        const totalDiesel = trips.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
+        const totalTyre = trips.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
+        const totalToll = trips.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
+        const totalFood = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+        const totalOther = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
+        const totalAdvance = trips.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
+
+
+        // 2. Populate Summary Data
+        document.getElementById('previewVehicleNumber').textContent = vehicleNumber;
+        document.getElementById('previewDateRange').textContent = `${formatDisplayDate(new Date(startDateInput.value))} - ${formatDisplayDate(new Date(endDateInput.value))}`;
+        document.getElementById('previewTotalRevenue').textContent = `₹${totalRevenue.toFixed(2)}`;
+        document.getElementById('previewNetProfit').textContent = `₹${netProfit.toFixed(2)}`;
+        document.getElementById('previewTotalKM').textContent = `${totalKM.toFixed(0)} KM (${totalTonnes.toFixed(2)} MT)`;
+        
+        // 3. Populate TCO Table
+        const tcoBody = document.getElementById('previewTcoBody');
+        tcoBody.innerHTML = `
+            <tr><td>**Total Revenue** (For Period)</td><td class="text-end fw-bold text-success">₹${totalRevenue.toFixed(2)}</td><td class="text-end">-</td></tr>
+            <tr><td>**Total Expenses** (Per Trip)</td><td class="text-end fw-bold text-danger">₹${(totalExpenses).toFixed(2)}</td><td class="text-end">₹${(totalExpenses / totalTrips).toFixed(2)}</td></tr>
+            <tr><td>Total EMI Installment</td><td class="text-end">₹${totalEmiPaid.toFixed(2)}</td><td class="text-end">-</td></tr>
+            <tr><td>Driver Salary Cost</td><td class="text-end">₹${totalSalaryPaid.toFixed(2)}</td><td class="text-end">₹${(totalSalaryPaid / totalTrips).toFixed(2)}</td></tr>
+            <tr><td>Vehicle Work/Repairs</td><td class="text-end">₹${totalVehicleWork.toFixed(2)}</td><td class="text-end">₹${(totalVehicleWork / totalTrips).toFixed(2)}</td></tr>
+            <tr class="bg-light"><td>**Overall Fixed + Repair Cost**</td><td class="text-end fw-bold">₹${totalTco.toFixed(2)}</td><td class="text-end">-</td></tr>
+        `;
+
+        // 4. Populate Trip Log Table
+        const tripLogBody = document.getElementById('previewTripLogBody');
+        tripLogBody.innerHTML = trips.map(trip => `
+            <tr>
+                <td>${formatDisplayDate(new Date(trip.date))}</td>
+                <td>${trip.fromLocation} $\\to$ ${trip.toLocation}</td>
+                <td class="text-end">${(trip.startKm || 0).toFixed(0)}</td>
+                <td class="text-end">${(trip.endKm || 0).toFixed(0)}</td>
+                <td class="text-end">${(trip.totalTripKm || 0).toFixed(0)}</td>
+                <td class="text-end">${(trip.weight || 0).toFixed(2)}</td>
+                <td class="text-end">₹${(trip.gain || 0).toFixed(2)}</td>
+                <td class="text-end"><span class="${trip.profit >= 0 ? 'text-success' : 'text-danger'}">₹${(trip.profit || 0).toFixed(2)}</span></td>
+            </tr>
+        `).join('');
+
+        // 5. Render Charts in Modal
+        renderChart('previewFinancialChart', 'bar', [
+            'Total Revenue', 'Total Expenses', 'Net Profit'
+        ], [
+            totalRevenue, totalExpenses, netProfit
+        ], [
+            'rgba(46, 139, 87, 0.8)', 'rgba(220, 53, 69, 0.8)', 'rgba(0, 123, 255, 0.8)'
+        ], previewFinancialChartInstance, 'Financial Summary');
+
+        renderChart('previewExpenseChart', 'bar', [
+            'Diesel', 'Tyre', 'Toll', 'Advance', 'Food', 'Work', 'Other'
+        ], [
+            totalDiesel, totalTyre, totalToll, totalAdvance, totalFood, totalVehicleWork, totalOther
+        ], [
+            '#007bff', '#28a745', '#ffc107', '#17a2b8', '#dc3545', '#6f42c1', '#6c757d'
+        ], previewExpenseChartInstance, 'Expense Categories');
+
+        // 6. Set up PDF Download button data
+        downloadReportFromModalBtn.dataset.vehicle = vehicleNumber;
+        downloadReportFromModalBtn.dataset.trips = encodedTrips;
+
+
+        // 7. Show Modal
+        const reportModal = new bootstrap.Modal(document.getElementById('reportViewModal'));
+        reportModal.show();
+    }
+
+    // Chart.js Rendering Function
+    function renderChart(canvasId, type, labels, data, colors, chartInstance, title) {
+        // Destroy old chart instance if it exists
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        
+        // Create new chart instance and store it globally
+        if (canvasId.includes('Financial')) {
+            previewFinancialChartInstance = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: title,
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.8', '1')), // Darker border
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            // Ensure Y-axis is formatted cleanly
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: title, font: { size: 14 } }
+                    }
+                }
+            });
+            return previewFinancialChartInstance;
+
+        } else if (canvasId.includes('Expense')) {
+            previewExpenseChartInstance = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: title,
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'right' },
+                        title: { display: true, text: title, font: { size: 14 } }
+                    }
+                }
+            });
+            return previewExpenseChartInstance;
+        }
+
+        // Return null for other cases or if not needed
+        return null;
+    }
+
+    // **NEW UTILITY FUNCTION FOR FIXING PDF ENCODING ISSUE**
+    function cleanNumber(value) {
+        if (typeof value === 'number') return value.toFixed(2);
+        if (typeof value === 'string') {
+            // Remove currency symbols, commas, and non-numeric characters (except dot and minus sign)
+            const cleaned = value.replace(/₹|,/g, '').trim();
+            const number = parseFloat(cleaned) || 0;
+            return number.toFixed(2);
+        }
+        return '0.00';
+    }
+
+
+    // **FULL PDF GENERATION LOGIC (UPDATED WITH FIX)**
+    window.generateVehiclePDF = async function(vehicleNumber, trips) {
+        if (trips.length === 0) return;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const docWidth = doc.internal.pageSize.getWidth();
+        const docMargin = 10;
+        let y = docMargin;
+
+        // 1. Calculations
+        const totalTrips = trips.length;
+        const totalRevenue = trips.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
+        const totalExpenses = trips.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
+        const netProfit = totalRevenue - totalExpenses;
+        const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) : 0;
+        const totalTonnes = trips.reduce((sum, trip) => sum + (Number(trip.weight) || 0), 0);
+        const totalKM = trips.reduce((sum, trip) => sum + (Number(trip.totalTripKm) || 0), 0);
+        
+        const totalDiesel = trips.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
+        const totalTyre = trips.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
+        const totalToll = trips.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
+        const totalFood = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+        const totalOther = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
+        const totalAdvance = trips.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
+        const totalWork = trips.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
+
+        const totalDays = Math.ceil((new Date(endDateInput.value) - new Date(startDateInput.value)) / (1000 * 60 * 60 * 24)) + 1;
+        const totalMonths = totalDays / 30;
+        
+        const monthlyInstallment = Number(trips[0].monthlyInstallment) || 0;
+        const driverSalary = Number(trips[0].driverSalary) || 0;
+        const totalEmiPaid = monthlyInstallment * totalMonths;
+        const totalSalaryPaid = driverSalary * totalMonths;
+
+        // 2. Generate Hidden Charts (using the global hidden canvas)
+        const financialCanvas = document.getElementById('financialChart');
+        const expenseCanvas = document.getElementById('expenseChart');
+
+        // Destroy previous instances for the hidden canvas
+        if (financialChartInstance) financialChartInstance.destroy();
+        if (expenseChartInstance) expenseChartInstance.destroy();
+
+        // Financial Summary Chart
+        financialChartInstance = new Chart(financialCanvas, {
+            type: 'bar',
+            data: {
+                labels: ['Revenue', 'Expenses', 'Profit'],
+                datasets: [{
+                    label: 'Amount (₹)',
+                    data: [totalRevenue, totalExpenses, netProfit],
+                    backgroundColor: ['#2E8B57', '#DC3545', '#007BFF'],
+                }]
+            },
+            options: { responsive: false, maintainAspectRatio: true, plugins: { legend: { display: false }, title: { display: true, text: 'Financial Performance Summary', font: { size: 14 } } } }
+        });
+
+        // Expense Breakdown Chart
+        expenseChartInstance = new Chart(expenseCanvas, {
+            type: 'pie',
+            data: {
+                labels: ['Diesel', 'Tyre', 'Toll', 'Advance', 'Food', 'Work', 'Other'],
+                datasets: [{
+                    label: 'Expense Share',
+                    data: [totalDiesel, totalTyre, totalToll, totalAdvance, totalFood, totalWork, totalOther],
+                    backgroundColor: ['#007bff', '#28a745', '#ffc107', '#17a2b8', '#dc3545', '#6f42c1', '#6c757d'],
+                }]
+            },
+            options: { responsive: false, maintainAspectRatio: true, plugins: { legend: { position: 'right' }, title: { display: true, text: 'Major Expense Categories', font: { size: 14 } } } }
+        });
+        
+        // Wait for charts to finish rendering (crucial for accurate image capture)
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const financialImg = financialCanvas.toDataURL('image/jpeg', 1.0);
+        const expenseImg = expenseCanvas.toDataURL('image/jpeg', 1.0);
+        
+        // 3. Document Setup (Page 1)
+
+        // Title and Header
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(46, 139, 87);
+        doc.text('PROFESSIONAL TRIP REPORT', docWidth / 2, y + 5, { align: 'center' });
+        
+        doc.setFontSize(14);
+        doc.setTextColor(68, 68, 68);
+        y += 15;
+        doc.text(`Vehicle: ${vehicleNumber}`, docWidth / 2, y, { align: 'center' });
+        y += 7;
+        doc.text(`Period: ${formatDisplayDate(new Date(startDateInput.value))} - ${formatDisplayDate(new Date(endDateInput.value))}`, docWidth / 2, y, { align: 'center' });
+        y += 5;
+        doc.setDrawColor(46, 139, 87);
+        doc.setLineWidth(0.5);
+        doc.line(docMargin, y, docWidth - docMargin, y);
+        y += 5;
+
+
+        // Executive Summary Table (KPls)
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(46, 139, 87);
+        doc.text('I. Executive Summary', docMargin, y + 2);
+        y += 5;
+        
+        doc.autoTable({
+            startY: y + 5,
+            head: [['Metric', 'Value', 'Details']],
+            body: [
+                ['Total Revenue', `₹${cleanNumber(totalRevenue)}`, 'Billing Amount from all LR\'s'],
+                ['Total Expenses', `₹${cleanNumber(totalExpenses)}`, 'Trip Costs + Fuel + Shortage'],
+                ['Net Profit', `₹${cleanNumber(netProfit)}`, `Margin: ${profitMargin}%`],
+                ['Total Trips', `${totalTrips}`, 'Trips Completed in Period'],
+                ['Total Distance', `${totalKM.toFixed(0)} KM`, `Total Tonne Carried: ${totalTonnes.toFixed(2)} MT`],
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: [46, 139, 87], textColor: 255, fontStyle: 'bold' },
+            bodyStyles: { fontSize: 9 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 }, 1: { cellWidth: 35 }, 2: { cellWidth: 'auto' } },
+            margin: { left: docMargin, right: docMargin }
+        });
+        y = doc.lastAutoTable.finalY + 5;
+
+
+        // Embed Charts (Financial)
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(46, 139, 87);
+        doc.text('II. Financial & Expense Visualization', docMargin, y + 5);
+        y += 10;
+        
+        const chartHeight = 60;
+        const chartWidth = 90;
+
+        doc.addImage(financialImg, 'JPEG', docMargin, y, chartWidth, chartHeight);
+        doc.addImage(expenseImg, 'JPEG', docMargin + chartWidth + 5, y, chartWidth, chartHeight);
+        y += chartHeight + 10;
+        
+        // 4. Cost of Ownership (TCO) Section (Page 2)
+        
+        doc.addPage();
+        y = docMargin;
+
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(46, 139, 87);
+        doc.text('III. Fixed & Operational Costs (TCO)', docMargin, y + 5);
+        y += 10;
+
+        doc.autoTable({
+            startY: y,
+            head: [['Cost Component', 'Total for Period (₹)', 'Per Trip Cost (₹)', 'Details']],
+            body: [
+                ['Monthly EMI Installment', `₹${cleanNumber(totalEmiPaid)}`, '-', `Monthly: ₹${cleanNumber(monthlyInstallment)}`],
+                ['Driver Salary Cost', `₹${cleanNumber(totalSalaryPaid)}`, `₹${cleanNumber(totalSalaryPaid / totalTrips)}`, `Monthly: ₹${cleanNumber(driverSalary)}`],
+                ['Vehicle Work/Repairs', `₹${cleanNumber(totalWork)}`, `₹${cleanNumber(totalWork / totalTrips)}`, 'Maintenance expenses from LRs'],
+                ['Fuel (Diesel) Expenses', `₹${cleanNumber(totalDiesel)}`, `₹${cleanNumber(totalDiesel / totalTrips)}`, `Total KM: ${totalKM.toFixed(0)} KM`],
+                ['**Overall Total TCO**', `₹${cleanNumber(totalEmiPaid + totalSalaryPaid + totalWork + totalDiesel)}`, '-', 'Fixed + Variable Cost Drivers'],
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [67, 97, 238], textColor: 255, fontStyle: 'bold' },
+            bodyStyles: { fontSize: 8.5 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 }, 1: { cellWidth: 35, halign: 'right' }, 2: { cellWidth: 35, halign: 'right' } },
+            margin: { left: docMargin, right: docMargin }
+        });
+        y = doc.lastAutoTable.finalY + 10;
+
+
+        // 5. Trip-by-Trip Detailed Log (Page 3+)
+        
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(46, 139, 87);
+        doc.text('IV. Trip-by-Trip Detailed Log', docMargin, y);
+        y += 5;
+        
+        const tripLogData = trips.map(trip => {
+            const tripKm = (trip.endKm || 0) - (trip.startKm || 0);
+            const profitClass = trip.profit >= 0 ? { textColor: [40, 167, 69] } : { textColor: [220, 53, 69] };
+            
+            return [
+                formatDateForFile(new Date(trip.date)),
+                trip.lrNumber,
+                `${trip.fromLocation || '-'} -> ${trip.toLocation || '-'}`,
+                (trip.startKm || 0).toFixed(0),
+                (trip.endKm || 0).toFixed(0),
+                tripKm.toFixed(0),
+                (trip.weight || 0).toFixed(2),
+                `₹${cleanNumber(trip.gain)}`,
+                `₹${cleanNumber(trip.total)}`,
+                { content: `₹${cleanNumber(trip.profit)}`, styles: profitClass }
+            ];
+        });
+        
+        doc.autoTable({
+            startY: y + 5,
+            head: [['Date', 'LR No', 'Route', 'Start KM', 'End KM', 'Trip KM', 'Tonne', 'Revenue', 'Total Exp', 'Net Profit']],
+            body: tripLogData,
+            theme: 'striped',
+            headStyles: { fillColor: [46, 139, 87], textColor: 255, fontStyle: 'bold', fontSize: 7, halign: 'center' },
+            bodyStyles: { fontSize: 6.5 },
+            columnStyles: {
+                0: { cellWidth: 15 },
+                1: { cellWidth: 15 },
+                2: { cellWidth: 35 },
+                3: { cellWidth: 15, halign: 'right' },
+                4: { cellWidth: 15, halign: 'right' },
+                5: { cellWidth: 15, halign: 'right' },
+                6: { cellWidth: 15, halign: 'right' },
+                7: { cellWidth: 18, halign: 'right' },
+                8: { cellWidth: 18, halign: 'right' },
+                9: { cellWidth: 18, halign: 'right', fontStyle: 'bold' },
+            },
+            margin: { left: docMargin, right: docMargin }
+        });
+
+        // 6. Footer and Save
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 5, { align: 'center' });
+            doc.text(`Generated by Transport Analytics Dashboard`, doc.internal.pageSize.width - 10, doc.internal.pageSize.height - 5, { align: 'right' });
+        }
+        
+        doc.save(`Trip_Report_Professional_${vehicleNumber}_${formatDateForFile(new Date())}.pdf`);
+        
+        // Destroy the chart instances after saving the PDF
+        financialChartInstance.destroy();
+        expenseChartInstance.destroy();
+        financialChartInstance = null;
+        expenseChartInstance = null;
+    }
+
+
+    // Calculate overall accounting summary
+    function calculateAccountingSummary() {
+      const totalTrips = filteredData.length;
+      const totalRevenue = filteredData.reduce((s, it) => s + (Number(it.gain)||0), 0);
+      const totalExpenses = filteredData.reduce((s, it) => s + (Number(it.total)||0), 0);
+      const netProfit = totalRevenue - totalExpenses;
+      const profitMargin = totalRevenue > 0 ? ((netProfit/totalRevenue)*100).toFixed(2) : "0";
+
+      const dieselExpenses = filteredData.reduce((s, it) => s + (Number(it.diesel)||0), 0);
+      const tyreExpenses = filteredData.reduce((s, it) => s + (Number(it.tyre)||0), 0);
+      const otherExpenses = filteredData.reduce((s, it) => s + (Number(it.other)||0), 0);
+      const totalTonnes = filteredData.reduce((s, it) => s + (Number(it.weight)||0), 0);
+
+      document.getElementById("totalTrips").textContent = totalTrips;
+      document.getElementById("totalRevenue").textContent = `₹${totalRevenue.toFixed(2)}`;
+      document.getElementById("totalExpenses").textContent = `₹${totalExpenses.toFixed(2)}`;
+      document.getElementById("netProfit").textContent = `₹${netProfit.toFixed(2)}`;
+      document.getElementById("profitMargin").textContent = `${profitMargin}%`;
+      document.getElementById("dieselExpenses").textContent = `₹${dieselExpenses.toFixed(2)}`;
+      document.getElementById("tyreExpenses").textContent = `₹${tyreExpenses.toFixed(2)}`;
+      document.getElementById("totalTonnes").textContent = `${totalTonnes.toFixed(2)} MT`; // NEW TONNE
+    }
+    
+    // Render monthly report (retained)
     function renderMonthlyReport(data, startDate, endDate) {
       if (data.length === 0) {
         monthlyReportContainer.innerHTML = '<div class="no-data">No trips found for the selected month</div>';
@@ -841,12 +1541,9 @@
       
       const dieselExpenses = data.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
       const tyreExpenses = data.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
-      const advanceExpenses = data.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
-      const tollExpenses = data.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
-      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
       const otherExpenses = data.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
-      const foodExpenses = data.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
-      
+      const totalTonnes = data.reduce((sum, trip) => sum + (Number(trip.weight) || 0), 0);
+
       // Group by vehicle
       const vehicles = {};
       data.forEach(trip => {
@@ -884,8 +1581,8 @@
               <span class="stat-label">Vehicles</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value">₹${dieselExpenses.toFixed(2)}</span>
-              <span class="stat-label">Diesel Cost</span>
+              <span class="stat-value">${totalTonnes.toFixed(2)} MT</span>
+              <span class="stat-label">Total Tonnes</span>
             </div>
           </div>
         </div>
@@ -942,7 +1639,7 @@
       `;
     }
     
-    // Render full range report
+    // Render full range report (retained)
     function renderFullRangeReport(data, startDate, endDate) {
       if (data.length === 0) {
         fullRangeReportContainer.innerHTML = '<div class="no-data">No trips found for the selected date range</div>';
@@ -958,12 +1655,9 @@
       
       const dieselExpenses = data.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
       const tyreExpenses = data.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
-      const advanceExpenses = data.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
-      const tollExpenses = data.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
-      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
       const otherExpenses = data.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
-      const foodExpenses = data.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
-      
+      const totalTonnes = data.reduce((sum, trip) => sum + (Number(trip.weight) || 0), 0);
+
       // Group by vehicle
       const vehicles = {};
       data.forEach(trip => {
@@ -998,8 +1692,8 @@
               <span class="stat-label">Vehicles</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value">₹${dieselExpenses.toFixed(2)}</span>
-              <span class="stat-label">Diesel Cost</span>
+              <span class="stat-value">${totalTonnes.toFixed(2)} MT</span>
+              <span class="stat-label">Total Tonnes</span>
             </div>
           </div>
         </div>
@@ -1055,249 +1749,11 @@
         </div>
       `;
     }
-
-    // Calculate overall accounting summary
-    function calculateAccountingSummary() {
-      const totalTrips = filteredData.length;
-      const totalRevenue = filteredData.reduce((s, it) => s + (Number(it.gain)||0), 0);
-      const totalExpenses = filteredData.reduce((s, it) => s + (Number(it.total)||0), 0);
-      const netProfit = totalRevenue - totalExpenses;
-      const profitMargin = totalRevenue > 0 ? ((netProfit/totalRevenue)*100).toFixed(2) : "0";
-
-      const dieselExpenses = filteredData.reduce((s, it) => s + (Number(it.diesel)||0), 0);
-      const tyreExpenses = filteredData.reduce((s, it) => s + (Number(it.tyre)||0), 0);
-      const otherExpenses = totalExpenses - dieselExpenses - tyreExpenses;
-      const totalInstallments = Object.values(filteredData.reduce((acc, trip) => { acc[trip.vehicle] = trip.monthlyInstallment || 0; return acc; }, {})).reduce((sum, emi) => sum + emi, 0);
-
-      document.getElementById("totalTrips").textContent = totalTrips;
-      document.getElementById("totalRevenue").textContent = `₹${totalRevenue.toFixed(2)}`;
-      document.getElementById("totalExpenses").textContent = `₹${totalExpenses.toFixed(2)}`;
-      document.getElementById("netProfit").textContent = `₹${netProfit.toFixed(2)}`;
-      document.getElementById("profitMargin").textContent = `${profitMargin}%`;
-      document.getElementById("dieselExpenses").textContent = `₹${dieselExpenses.toFixed(2)}`;
-      document.getElementById("tyreExpenses").textContent = `₹${tyreExpenses.toFixed(2)}`;
-      document.getElementById("otherTotalExpenses").textContent = `₹${otherExpenses.toFixed(2)}`;
-      
-      // Add a new summary card for installments if it doesn't exist
-      let installmentCard = document.getElementById("installmentExpenses");
-      if(installmentCard) installmentCard.textContent = `₹${totalInstallments.toFixed(2)}`;
-    }
-
-    // Generate PDF for a specific vehicle
-    function generateVehiclePDF(vehicleNumber, trips) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      
-      // Add title and header
-      doc.setFontSize(20);
-      doc.setTextColor(46, 139, 87);
-      doc.text(`TRIP REPORT: ${vehicleNumber}`, 14, 15);
-      
-      // Add date range
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text(`Date Range: ${formatDisplayDate(new Date(startDateInput.value))} to ${formatDisplayDate(new Date(endDateInput.value))}`, 14, 22);
-      doc.text(`Report Generated: ${formatDisplayDate(new Date())}`, 14, 27);
-      
-      // Draw a line under header
-      doc.setDrawColor(46, 139, 87);
-      doc.line(14, 30, 196, 30);
-      
-      // Prepare table data
-      const tableData = trips.map(trip => [
-        formatDisplayDate(new Date(trip.date)),
-        `Rs. ${(Number(trip.gain) || 0).toFixed(2)}`, // Revenue
-        `Rs. ${(Number(trip.diesel) || 0).toFixed(2)}`,
-        `Rs. ${(Number(trip.tyre) || 0).toFixed(2)}`,
-        `Rs. ${(Number(trip.advance) || 0).toFixed(2)}`,
-        `Rs. ${(Number(trip.toll) || 0).toFixed(2)}`,
-        `Rs. ${(Number(trip.vehicleWork) || 0).toFixed(2)}`,
-        `Rs. ${(Number(trip.other) || 0).toFixed(2)}`,
-        `Rs. ${(Number(trip.food) || 0).toFixed(2)}`,
-        `Rs. ${(Number(trip.monthlyInstallment) || 0).toFixed(2)}`, // EMI
-        `Rs. ${(Number(trip.shortage) || 0).toFixed(2)}`,
-        `Rs. ${(Number(trip.total) || 0).toFixed(2)}`,
-        `Rs. ${(Number(trip.profit) || 0).toFixed(2)}`
-      ]);
-      
-      // Add table
-      doc.autoTable({
-        startY: 35,
-        head: [['Date', 'Revenue', 'Diesel', 'Tyre', 'Advance', 'Toll', 'V. Work', 'Other', 'Food', 'EMI', 'Shortage', 'Total Exp', 'Profit']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: {
-          fillColor: [46, 139, 87],
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        alternateRowStyles: {
-          fillColor: [240, 248, 244]
-        },
-        styles: {
-          fontSize: 6.5, // Slightly smaller font to fit more content
-          cellPadding: 2,
-          overflow: 'linebreak'
-        },
-        columnStyles: {
-          0: { cellWidth: 15 },    // Date
-          1: { cellWidth: 'auto' },// Revenue
-          2: { cellWidth: 'auto' },// Diesel
-          3: { cellWidth: 12 },    // Tyre
-          4: { cellWidth: 'auto' },// Advance
-          5: { cellWidth: 12 },    // Toll
-          6: { cellWidth: 14 },    // V. Work
-          7: { cellWidth: 12 },    // Other
-          8: { cellWidth: 12 },    // Food
-          9: { cellWidth: 12 },    // EMI
-          10: { cellWidth: 15 },   // Shortage
-          11: { cellWidth: 20 },   // Total Exp - wider
-          12: { cellWidth: 20 }    // Profit - wider
-        },
-        margin: { top: 35 },
-        tableWidth: 'wrap'
-      });
-      
-      // Calculate summary
-      const totalTrips = trips.length;
-      const totalRevenue = trips.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
-      const totalExpenses = trips.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
-      const netProfit = totalRevenue - totalExpenses;
-      const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(2) : 0;
-      
-      const dieselExpenses = trips.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
-      const tyreExpenses = trips.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
-      const advanceExpenses = trips.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
-      const tollExpenses = trips.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
-      const vehicleWorkExpenses = trips.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
-      const otherExpenses = trips.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
-      const foodExpenses = trips.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
-      const monthlyInstallment = trips.length > 0 ? (Number(trips[0].monthlyInstallment) || 0) : 0;
-      const shortageExpenses = trips.reduce((sum, trip) => sum + (Number(trip.shortage) || 0), 0);
-      
-      // Add summary section
-      const finalY = doc.lastAutoTable.finalY + 10;
-      
-      // Add a new page if summary doesn't fit
-      if (finalY > 240) {
-        doc.addPage();
-      }
-      
-      doc.setFontSize(16);
-      doc.setTextColor(46, 139, 87);
-      doc.text('FINANCIAL SUMMARY', 14, finalY);
-      
-      // Draw a line under summary title
-      doc.setDrawColor(46, 139, 87);
-      doc.line(14, finalY + 2, 60, finalY + 2);
-      
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      
-      // Create summary table
-      doc.autoTable({
-        startY: finalY + 5,
-        body: [
-          ['Total Trips', totalTrips],
-          ['Total Revenue', `Rs. ${totalRevenue.toFixed(2)}`],
-          ['Total Expenses', `Rs. ${totalExpenses.toFixed(2)}`],
-          ['Net Profit', `Rs. ${netProfit.toFixed(2)}`],
-          ['Profit Margin', `${profitMargin}%`],
-          ['', ''],
-          ['Diesel Expenses', `Rs. ${dieselExpenses.toFixed(2)}`],
-          ['Tyre Expenses', `Rs. ${tyreExpenses.toFixed(2)}`],
-          ['Advance Paid', `Rs. ${advanceExpenses.toFixed(2)}`],
-          ['Toll Expenses', `Rs. ${tollExpenses.toFixed(2)}`],
-          ['Vehicle Work', `Rs. ${vehicleWorkExpenses.toFixed(2)}`],
-          ['Other Expenses', `Rs. ${otherExpenses.toFixed(2)}`],
-          ['Food Expenses', `Rs. ${foodExpenses.toFixed(2)}`],
-          ['Monthly EMI', `Rs. ${monthlyInstallment.toFixed(2)}`],
-          ['Shortage', `Rs. ${shortageExpenses.toFixed(2)}`]
-        ],
-        theme: 'grid',
-        tableLineWidth: 0.1,
-        tableLineColor: [200, 200, 200],
-        styles: {
-          fontSize: 10,
-          cellPadding: 3
-        },
-        headStyles: {
-          fillColor: [240, 248, 244],
-          textColor: [0, 0, 0],
-          fontStyle: 'bold'
-        },
-        columnStyles: {
-          0: { fontStyle: 'bold', cellWidth: 70 },
-          1: { cellWidth: 40, halign: 'right' }
-        }
-      });
-      
-      // Add footer
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(100, 100, 100);
-        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-        doc.text(`Generated by Transvortex`, doc.internal.pageSize.width - 14, doc.internal.pageSize.height - 10, { align: 'right' });
-      }
-      
-      // Save the PDF
-      const fileName = `Trip_Report_${vehicleNumber}_${formatDateForFile(new Date())}.pdf`;
-      doc.save(fileName);
-    }
     
-    // Download monthly PDF
-    function downloadMonthlyPDF() {
-      const month = parseInt(monthSelect.value);
-      const year = parseInt(yearSelect.value);
-      
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-      endDate.setHours(23, 59, 59);
-      
-      const monthlyData = allExpensesData.filter(item => {
-        const itemDate = new Date(item.date);
-        return itemDate >= startDate && itemDate <= endDate;
-      });
-      
-      if (monthlyData.length === 0) {
-        alert("No data available for the selected month");
-        return;
-      }
-      
-      const monthName = startDate.toLocaleString('default', { month: 'long' });
-      generateFullRangePDF(monthlyData, startDate, endDate, `${monthName}_${year}_Report`);
-    }
-    
-    // Download full range PDF
-    function downloadFullRangePDF() {
-      const startDate = new Date(fullRangeStartDate.value);
-      const endDate = new Date(fullRangeEndDate.value);
-      endDate.setHours(23, 59, 59);
-      
-      if (!fullRangeStartDate.value || !fullRangeEndDate.value) {
-        alert("Please select both start and end dates");
-        return;
-      }
-      
-      const rangeData = allExpensesData.filter(item => {
-        const itemDate = new Date(item.date);
-        return itemDate >= startDate && itemDate <= endDate;
-      });
-      
-      if (rangeData.length === 0) {
-        alert("No data available for the selected date range");
-        return;
-      }
-      
-      generateFullRangePDF(rangeData, startDate, endDate, `Report_${formatDateForFile(startDate)}_to_${formatDateForFile(endDate)}`);
-    }
-    
-    // Generate full range PDF
+    // Generate full range PDF (retained)
     function generateFullRangePDF(data, startDate, endDate, fileName) {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+      const doc = new jsPDF({ orientation: 'portrait' });
       
       // Add title and header
       doc.setFontSize(20);
@@ -1323,20 +1779,22 @@
       
       const dieselExpenses = data.reduce((sum, trip) => sum + (Number(trip.diesel) || 0), 0);
       const tyreExpenses = data.reduce((sum, trip) => sum + (Number(trip.tyre) || 0), 0);
-      const advanceExpenses = data.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
-      const tollExpenses = data.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
-      const vehicleWorkExpenses = data.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
-      const otherExpenses = data.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
-      const foodExpenses = data.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+      const totalTonnes = data.reduce((sum, trip) => sum + (Number(trip.weight) || 0), 0);
+      const totalKM = data.reduce((sum, trip) => sum + (Number(trip.totalTripKm) || 0), 0);
+      const totalToll = data.reduce((sum, trip) => sum + (Number(trip.toll) || 0), 0);
+      const totalWork = data.reduce((sum, trip) => sum + (Number(trip.vehicleWork) || 0), 0);
+      const totalAdvance = data.reduce((sum, trip) => sum + (Number(trip.advance) || 0), 0);
+      const totalFood = data.reduce((sum, trip) => sum + (Number(trip.food) || 0), 0);
+      const totalOther = data.reduce((sum, trip) => sum + (Number(trip.other) || 0), 0);
       
       // Add summary section
       doc.setFontSize(16);
       doc.setTextColor(46, 139, 87);
-      doc.text('FINANCIAL SUMMARY', 14, 40);
+      doc.text('FINANCIAL & OPERATIONAL SUMMARY', 14, 40);
       
       // Draw a line under summary title
       doc.setDrawColor(46, 139, 87);
-      doc.line(14, 42, 60, 42);
+      doc.line(14, 42, 100, 42);
       
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
@@ -1346,18 +1804,19 @@
         startY: 45,
         body: [
           ['Total Trips', totalTrips],
-          ['Total Revenue', `Rs. ${totalRevenue.toFixed(2)}`],
-          ['Total Expenses', `Rs. ${totalExpenses.toFixed(2)}`],
-          ['Net Profit', `Rs. ${netProfit.toFixed(2)}`],
+          ['Total Tonnes Carried', `${totalTonnes.toFixed(2)} MT`],
+          ['Total Distance', `${totalKM.toFixed(0)} KM`],
+          ['Total Revenue', `₹${cleanNumber(totalRevenue)}`],
+          ['Total Expenses', `₹${cleanNumber(totalExpenses)}`],
+          ['Net Profit', `₹${cleanNumber(netProfit)}`],
           ['Profit Margin', `${profitMargin}%`],
           ['', ''],
-          ['Diesel Expenses', `Rs. ${dieselExpenses.toFixed(2)}`],
-          ['Tyre Expenses', `Rs. ${tyreExpenses.toFixed(2)}`],
-          ['Advance Paid', `Rs. ${advanceExpenses.toFixed(2)}`],
-          ['Toll Expenses', `Rs. ${tollExpenses.toFixed(2)}`],
-          ['Vehicle Work', `Rs. ${vehicleWorkExpenses.toFixed(2)}`],
-          ['Other Expenses', `Rs. ${otherExpenses.toFixed(2)}`],
-          ['Food Expenses', `Rs. ${foodExpenses.toFixed(2)}`]
+          ['Diesel Expenses', `₹${cleanNumber(dieselExpenses)}`],
+          ['Tyre Expenses', `₹${cleanNumber(tyreExpenses)}`],
+          ['Toll Expenses', `₹${cleanNumber(totalToll)}`],
+          ['Vehicle Work', `₹${cleanNumber(totalWork)}`],
+          ['Advance Paid', `₹${cleanNumber(totalAdvance)}`],
+          ['Food & Other Expenses', `₹${cleanNumber(totalFood + totalOther)}`]
         ],
         theme: 'grid',
         tableLineWidth: 0.1,
@@ -1387,26 +1846,26 @@
       });
       
       // Add vehicle summary
-      const finalY = doc.lastAutoTable.finalY + 10;
+      let finalY = doc.lastAutoTable.finalY + 10;
       
       // Add a new page if needed
-      if (finalY > 200) {
+      if (finalY > doc.internal.pageSize.height - 40) { // Check against a reasonable margin
         doc.addPage();
+        finalY = 15; // Reset Y position for new page
       }
       
       doc.setFontSize(16);
       doc.setTextColor(46, 139, 87);
-      doc.text('VEHICLE SUMMARY', 14, finalY);
+      doc.text('VEHICLE PERFORMANCE SUMMARY', 14, finalY);
       
       // Draw a line under vehicle summary title
       doc.setDrawColor(46, 139, 87);
-      doc.line(14, finalY + 2, 60, finalY + 2);
+      doc.line(14, finalY + 2, 100, finalY + 2);
       
       // Prepare vehicle summary data
       const vehicleSummaryData = [];
       Object.keys(vehicles).forEach(vehicle => {
         const trips = vehicles[vehicle];
-        const totalTrips = trips.length;
         const totalRevenue = trips.reduce((sum, trip) => sum + (Number(trip.gain) || 0), 0);
         const totalExpenses = trips.reduce((sum, trip) => sum + (Number(trip.total) || 0), 0);
         const netProfit = totalRevenue - totalExpenses;
@@ -1414,10 +1873,10 @@
         
         vehicleSummaryData.push([
           vehicle,
-          totalTrips,
-          `Rs. ${totalRevenue.toFixed(2)}`,
-          `Rs. ${totalExpenses.toFixed(2)}`,
-          `Rs. ${netProfit.toFixed(2)}`,
+          trips.length,
+          `₹${cleanNumber(totalRevenue)}`,
+          `₹${cleanNumber(totalExpenses)}`,
+          `₹${cleanNumber(netProfit)}`,
           `${profitMargin}%`
         ]);
       });
@@ -1517,5 +1976,8 @@
       if(el) el.classList.toggle("show"); 
     };
   </script>
+
+  <!-- **NEW**: Bootstrap JS for Modal -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
