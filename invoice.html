@@ -33,29 +33,116 @@
         display: none !important;
       }
     }
+    /* **NEW**: Style for the "PAID" watermark stamp */
+    .paid-stamp {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-25deg);
+      font-size: 6rem;
+      font-weight: 700;
+      color: red;
+      border: 8px solid red;
+      padding: 10px 25px;
+      border-radius: 15px;
+      opacity: 0.2;
+      text-transform: uppercase;
+      z-index: 1000; /* Ensure it's on top */
+      pointer-events: none; /* So it doesn't block clicks */
+    }
+    /* **NEW**: Style for the "Partially Paid" watermark stamp */
+    .partial-stamp {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-25deg);
+      font-size: 4rem; /* Slightly smaller to fit text */
+      font-weight: 700;
+      color: #ff8c00; /* Dark Orange */
+      border: 8px solid #ff8c00;
+      padding: 10px 25px;
+      border-radius: 15px;
+      opacity: 0.25;
+      text-transform: uppercase;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    /* **NEW**: Style for the "Pending" (Not Paid) watermark stamp */
+    .pending-stamp {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-25deg);
+      font-size: 6rem;
+      font-weight: 700;
+      color: #6c757d; /* Gray */
+      border: 8px solid #6c757d;
+      padding: 10px 25px;
+      border-radius: 15px;
+      opacity: 0.2;
+      text-transform: uppercase;
+      z-index: 1000;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
   <script src="navbar-loader.js"></script>
 
-  <div class="container">
+  <div class="container mt-4">
     <h2 class="mb-4"><i class="fas fa-file-invoice-dollar me-2"></i>Generated Invoices</h2>
-    <div class="table-responsive">
-      <table id="invoicesTable" class="table table-striped">
-        <thead>
-          <tr>
-            <th>Invoice #</th>
-            <th>Date</th>
-            <th>Company Name</th>
-            <th class="text-end">Total Amount</th>
-            <th class="text-center">LRs</th>
-            <th class="text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="invoicesTableBody">
-          <!-- Data will be populated here -->
-        </tbody>
-      </table>
+
+    <!-- **NEW**: Tabs for Client vs Market Invoices -->
+    <ul class="nav nav-pills mb-3" id="invoiceViewTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="client-invoices-tab" data-bs-toggle="tab" data-bs-target="#client-invoices-content" type="button" role="tab">Client Invoices</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="market-invoices-tab" data-bs-toggle="tab" data-bs-target="#market-invoices-content" type="button" role="tab">Market Invoices</button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="invoiceViewTabsContent">
+      <!-- Client Invoices Content -->
+      <div class="tab-pane fade show active" id="client-invoices-content" role="tabpanel">
+        <div class="table-responsive">
+          <table id="invoicesTable" class="table table-striped">
+            <!-- Existing table structure -->
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Date</th>
+                <th>Company Name</th>
+                <th class="text-end">Total Amount</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">LRs</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="invoicesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Market Invoices Content -->
+      <div class="tab-pane fade" id="market-invoices-content" role="tabpanel">
+        <div class="table-responsive">
+          <table id="marketInvoicesTable" class="table table-striped">
+            <!-- Structure is identical, but will be populated with different data -->
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Date</th>
+                <th>Company Name</th>
+                <th class="text-end">Total Amount</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">LRs</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="marketInvoicesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -113,6 +200,7 @@
     const auth = getAuth(app);
 
     let invoicesTable;
+    let marketInvoicesTable; // **NEW**
     let coreAccountId = null; // To store the correct data path
     let currentInvoiceData = null; // To store data for PDF download
 
@@ -139,6 +227,10 @@
       invoicesTable = $('#invoicesTable').DataTable({
         order: [[1, 'desc']]
       });
+      // **NEW**: Initialize Market Invoices DataTable
+      marketInvoicesTable = $('#marketInvoicesTable').DataTable({
+        order: [[1, 'desc']]
+      });
       loadInvoices(coreAccountId); // **FIX**: Use coreAccountId
 
       // Check for URL param to auto-show an invoice
@@ -154,31 +246,49 @@
       const invoicesRef = ref(db, `users/${coreAccountId}/invoices`);
       const snapshot = await get(invoicesRef);
 
-      invoicesTable.clear();
+      if (invoicesTable) invoicesTable.clear();
+      if (marketInvoicesTable) marketInvoicesTable.clear(); // **NEW**
+
       if (snapshot.exists()) {
         const invoices = [];
         snapshot.forEach(child => {
           invoices.push({ id: child.key, ...child.val() });
         });
         invoices.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+        
         invoices.forEach(inv => {
-          invoicesTable.row.add([
+          const status = inv.paymentStatus || 'pending';
+          let statusClass = '';
+          if (status === 'paid') statusClass = 'bg-success';
+          else if (status === 'partial') statusClass = 'bg-warning text-dark';
+          else statusClass = 'bg-danger';
+
+          // **NEW**: For market invoices, the company name is stored differently
+          const companyName = inv.invoiceType === 'market' 
+            ? (inv.items && inv.items.length > 0 ? inv.items[0].marketCompanyName || 'Market LR' : 'Market LR')
+            : (inv.companyDetails?.name || inv.clientName || 'N/A');
+
+          const rowData = [
             inv.invoiceNumber,
             new Date(inv.createdAt).toLocaleDateString('en-IN'),
-            inv.companyDetails.name,
+            companyName,
             `<span class="text-end d-block">₹${(inv.grandTotal || 0).toFixed(2)}</span>`,
+            `<span class="badge ${statusClass}">${status}</span>`,
             `<span class="badge bg-secondary">${inv.lrEntries.length}</span>`,
-            `<button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('${inv.id}')">
-              <i class="fas fa-eye"></i> View
-            </button>
-            <button class="btn btn-sm btn-outline-warning ms-1" onclick="undoInvoice('${inv.id}')" title="Undo Invoice">
-              <i class="fas fa-undo"></i> Undo
-            </button>`
-          ]);
+            `<button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('${inv.id}')"><i class="fas fa-eye"></i> View</button>
+             <button class="btn btn-sm btn-outline-warning ms-1" onclick="undoInvoice('${inv.id}')" title="Undo Invoice"><i class="fas fa-undo"></i> Undo</button>`
+          ];
+
+          // **NEW**: Add row to the correct table based on invoiceType
+          if (inv.invoiceType === 'market') {
+            if (marketInvoicesTable) marketInvoicesTable.row.add(rowData);
+          } else {
+            if (invoicesTable) invoicesTable.row.add(rowData);
+          }
         });
       }
-      invoicesTable.draw();
+      if (invoicesTable) invoicesTable.draw();
+      if (marketInvoicesTable) marketInvoicesTable.draw(); // **NEW**
     }
 
     // Function to convert number to words (Indian Rupees)
@@ -218,28 +328,27 @@
         const invoice = invoiceSnap.val();
         currentInvoiceData = invoice; // Store for PDF download
 
-        // **FIX**: Fetch client details using the clientId from the invoice.
-        // The clientDetails object was not being saved, causing 'undefined' errors.
-        let clientName = invoice.companyDetails.name || 'Client Not Found'; // FIX: Provide a safe fallback
-        let clientAddress = 'N/A';
-        if (invoice.clientId) {
-            const clientSnap = await get(ref(db, `users/${coreAccountId}/clients/${invoice.clientId}`));
-            if (clientSnap.exists()) {
-                clientName = clientSnap.val().clientName;
-                clientAddress = clientSnap.val().billingAddress || 'No address provided';
-            }
-        }
-
-        // **FIX**: Use the `invoice.items` array directly.
-        // The invoice object already contains a simplified list of LR entries (`items`)
-        // for display purposes. Re-fetching the full LR reports was unnecessary and
-        // was causing the 'undefined' error because the data structure was different.
         const lrs = invoice.items || [];
 
 
-        // Build the invoice HTML
+        // **MODIFIED**: Build the invoice HTML with conditional stamps
+        const status = invoice.paymentStatus || 'pending';
+        let stampHtml = '';
+        switch (status) {
+          case 'paid':
+            stampHtml = '<div class="paid-stamp">Paid</div>';
+            break;
+          case 'partial':
+            stampHtml = '<div class="partial-stamp">Partially Paid</div>';
+            break;
+          case 'pending':
+            stampHtml = '<div class="pending-stamp">Pending</div>';
+            break;
+        }
+
         const invoiceHtml = `
-          <div class="p-4">
+          <div class="p-4" style="position: relative;">
+            ${stampHtml}
             <div class="row mb-4">
               <div class="col-12 text-center">
                 <h2 class="mb-1 fw-bold text-success">${invoice.companyDetails.name || 'Transport Company'}</h2>
@@ -250,8 +359,10 @@
             <hr>
             <div class="row mb-4">
               <div class="col-sm-6">
-                <h6 class="fw-bold">Consignor:</h6>
-                <p class="mb-0">${lrs[0]?.consignor || 'No consignor provided'}</p>
+                <h6 class="fw-bold">Billed To:</h6>
+                <p class="mb-0">${invoice.invoiceType === 'market'
+                  ? (invoice.items[0]?.marketCompanyName || 'Market Company')
+                  : (lrs[0]?.consignor || 'N/A')}</p>
               </div>
               <div class="col-sm-6 text-sm-end mt-3 mt-sm-0">
                 <h6 class="fw-bold">Invoice Details:</h6>
