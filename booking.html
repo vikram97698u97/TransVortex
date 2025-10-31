@@ -137,15 +137,12 @@
   </style>
 </head>
 <body>
-  <!-- Navbar will be loaded here by navbar-loader.js -->
   <div id="navbar-placeholder"></div>
 
-  <!-- Main Content -->
   <div class="container mt-4">
     <div class="main-content" id="clientListView">
       <h2 class="mb-4"><i class="fas fa-users me-2"></i>Client Management</h2>
 
-    <!-- Tabs -->
     <ul class="nav nav-tabs mb-3" id="clientTabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients-content" type="button" role="tab">Clients</button>
@@ -158,7 +155,6 @@
     <div class="tab-content" id="clientTabsContent">
       <div class="tab-pane fade show active" id="clients-content" role="tabpanel">
 
-    <!-- Add Client Form -->
     <form id="clientForm" class="form-section">
       <h4 class="mb-3">Add New Client</h4>
       <div class="row">
@@ -207,13 +203,11 @@
       </div>
     </form>
 
-    <!-- Search + Export -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h4>Client List</h4>
       <button id="exportExcel" class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Export Excel</button>
     </div>
 
-    <!-- Client List -->
     <div class="table-responsive">
       <table id="clientTable" class="table table-striped table-bordered table-modern" style="width:100%">
         <thead>
@@ -289,7 +283,6 @@
     </div>
   </div>
 
-    <!-- Client Detail View -->
     <div id="clientDetail" class="main-content hidden">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 id="clientTitle" class="mb-0">Client Details</h2>
@@ -360,7 +353,6 @@
     </div>
   </div>
 
-  <!-- LR Detail Modal -->
   <div class="modal fade lr-detail-modal" id="lrDetailModal" tabindex="-1" aria-labelledby="lrDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -369,8 +361,7 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="lrDetailContent">
-          <!-- LR details will be loaded here -->
-        </div>
+          </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
@@ -378,7 +369,6 @@
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="navbar-loader.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -430,24 +420,27 @@
           } else {
             coreAccountId = user.uid; // Fallback
           }
-          // Load clients after coreAccountId is determined
+
+          // Initialize DataTables only after coreAccountId is known
+          if (!clientTable) {
+            clientTable = $('#clientTable').DataTable({
+              "pageLength": 10,
+              "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+              "columnDefs": [{ "orderable": false, "targets": 5 }]
+            });
+          }
+          if (!paymentTable) {
+            paymentTable = $('#paymentTable').DataTable({
+              "pageLength": 10,
+              "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+              "order": [[ 2, "desc" ]], // Sort by date descending
+              "columnDefs": [{ "orderable": false, "targets": 5 }]
+            });
+          }
+
           loadClients(user.uid);
           loadClientsForPaymentDropdown(user.uid);
           loadClientPayments(user.uid);
-        });
-        
-        // Initialize DataTables
-        clientTable = $('#clientTable').DataTable({
-          "pageLength": 10,
-          "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-          "columnDefs": [{ "orderable": false, "targets": 5 }]
-        });
-        
-        paymentTable = $('#paymentTable').DataTable({
-          "pageLength": 10,
-          "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-          "order": [[ 2, "desc" ]], // Sort by date descending
-          "columnDefs": [{ "orderable": false, "targets": 5 }]
         });
       }
     });
@@ -470,13 +463,15 @@
     // Add Client
     document.getElementById("clientForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (!currentUser) return;
+      if (!currentUser || !coreAccountId) return; // Ensure coreAccountId is set
 
       const newClientName = document.getElementById("clientName").value.trim();
       if (!newClientName) {
         alert('Client name cannot be empty.');
         return;
       }
+      
+      const dataRoot = coreAccountId || currentUser.uid; // Use coreAccountId for the definitive client list
 
       const clientData = {
         clientName: newClientName,
@@ -492,7 +487,7 @@
 
       if (currentEditingClientId) {
         // Update existing client
-        const clientRef = ref(db, `users/${currentUser.uid}/clients/${currentEditingClientId}`);
+        const clientRef = ref(db, `users/${dataRoot}/clients/${currentEditingClientId}`); // FIXED PATH
         update(clientRef, clientData)
           .then(() => {
             alert('Client updated successfully!');
@@ -504,7 +499,7 @@
       } else {
         // Add new client
         // Check for duplicates before saving
-        const clientRef = ref(db, `users/${currentUser.uid}/clients`);
+        const clientRef = ref(db, `users/${dataRoot}/clients`); // FIXED PATH
         const snapshot = await get(clientRef);
         let isDuplicate = false;
         if (snapshot.exists()) {
@@ -525,7 +520,7 @@
         clientData.totalTrips = 0;
         clientData.createdAt = new Date().toISOString();
 
-        push(clientRef, clientData)
+        push(clientRef, clientData) // FIXED PATH
           .then(() => {
             e.target.reset();
             alert('Client added successfully!');
@@ -540,7 +535,9 @@
 
     // Load clients into the payment dropdown
     function loadClientsForPaymentDropdown(uid) {
-        const clientRef = ref(db, `users/${uid}/clients`);
+        // Use coreAccountId for the definitive client list
+        const dataRoot = coreAccountId || uid; 
+        const clientRef = ref(db, `users/${dataRoot}/clients`);
         onValue(clientRef, (snapshot) => {
             const select = document.getElementById('clientSelect');
             select.innerHTML = '<option value="">Select a Client</option>';
@@ -632,6 +629,8 @@
       saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
       if (file) fileURL = await uploadToCloudinary(file);
+      
+      const dataRoot = coreAccountId || currentUser.uid;
 
       if (currentEditingPaymentId) {
         // Update logic
@@ -649,10 +648,10 @@
         if (file) updates[`/payments/${currentEditingPaymentId}/proof`] = fileURL;
 
         // Adjust outstanding balance
-        const clientRef = ref(db, `users/${currentUser.uid}/clients/${selectedClientId}/outstanding`);
+        const clientRef = ref(db, `users/${dataRoot}/clients/${selectedClientId}/outstanding`); // FIXED PATH
         const snapshot = await get(clientRef);
         const currentOutstanding = snapshot.val() || 0;
-        updates[`/users/${currentUser.uid}/clients/${selectedClientId}/outstanding`] = currentOutstanding - amountDifference;
+        updates[`/users/${dataRoot}/clients/${selectedClientId}/outstanding`] = currentOutstanding - amountDifference; // FIXED PATH
 
         await update(ref(db), updates);
         alert('Payment updated successfully!');
@@ -681,7 +680,7 @@
         await set(paymentRef, paymentData);
         
         // Update client outstanding balance
-        const clientRef = ref(db, `users/${currentUser.uid}/clients/${selectedClientId}/outstanding`);
+        const clientRef = ref(db, `users/${dataRoot}/clients/${selectedClientId}/outstanding`); // FIXED PATH
         const snapshot = await get(clientRef);
         const currentOutstanding = snapshot.val() || 0;
         await set(clientRef, currentOutstanding - amount);
@@ -750,7 +749,7 @@
                           const lrSnap = await get(lrRef);
                           if (!lrSnap.exists()) continue;
                           
-                          const lrData = lrSnap.val();
+const lrData = lrSnap.val();
                           const lrTotal = lrData.tripDetails?.totalBillingAmount || 0;
                           const lrPaid = lrData.paidAmount || 0;
                           const lrOutstanding = lrTotal - lrPaid;
@@ -772,11 +771,6 @@
               }
           }
       }
-      
-      // **MODIFIED**: This block is now redundant because LRs are handled within their invoices.
-      // The logic to pay off individual LRs not part of an invoice can be added here if needed,
-      // but based on the request, the focus is on invoice-based payments.
-      // For now, we will commit the updates for the invoices.
       
       // **NEW**: Execute all updates atomically.
       if (Object.keys(updates).length > 0) {
@@ -855,7 +849,8 @@
         await remove(paymentRef);
         
         // Update client's outstanding balance by adding back the payment amount
-        const clientRef = ref(db, `users/${currentUser.uid}/clients/${clientId}/outstanding`);
+        const dataRoot = coreAccountId || currentUser.uid;
+        const clientRef = ref(db, `users/${dataRoot}/clients/${clientId}/outstanding`); // FIXED PATH
         const clientSnap = await get(clientRef);
         const currentOutstanding = clientSnap.val() || 0;
         await set(clientRef, currentOutstanding + amount);
@@ -952,17 +947,21 @@
     }
 
     // Load Clients
-    function loadClients(uid) {
-      const clientsRef = ref(db, `users/${uid}/clients`);
+    async function loadClients(uid) {
+      if (!coreAccountId) {
+        console.error("Cannot load clients, coreAccountId is not set.");
+        return;
+      }
       
+      const clientsRef = ref(db, `users/${coreAccountId}/clients`);
       // Use coreAccountId to fetch shared data like LRs and invoices
       const dataRoot = coreAccountId || uid;
       const invoicesRef = ref(db, `users/${dataRoot}/invoices`);
       const lrsRef = ref(db, `users/${dataRoot}/lrReports`);
       const paymentsQuery = query(ref(db, 'payments'), orderByChild('userId'), equalTo(uid));
 
-      // Use onValue to listen for real-time updates
-      onValue(clientsRef, async (clientSnap) => {
+      try {
+        const clientSnap = await get(clientsRef); // Use get() for initial load
         if (!clientSnap.exists()) {
           clientTable.clear().draw();
           return;
@@ -1030,7 +1029,7 @@
           
           // Update client's outstanding in database if different
           if (client.outstanding !== outstanding) {
-            update(ref(db, `users/${uid}/clients/${clientId}`), { outstanding });
+            update(ref(db, `users/${dataRoot}/clients/${clientId}`), { outstanding }); // FIXED PATH
           }
 
           clientTable.row.add([
@@ -1039,19 +1038,24 @@
             client.mobile || '—',
             `<span class="fw-bold ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
             `<span class="text-center d-block">${lrs.length}</span>`, // Trip count = total LRs
-            `<div class="action-btns text-center">
-              <button class="btn btn-sm btn-outline-primary me-1" onclick="viewClientDetails('${clientId}')"><i class="fas fa-eye me-1"></i>View</button>
-              <button class="btn btn-sm btn-outline-secondary me-1" onclick="editClient('${clientId}')"><i class="fas fa-edit"></i></button>
+            `<div class=\"action-btns text-center\">\
+              <button class=\"btn btn-sm btn-outline-primary me-1\" onclick=\"viewClientDetails('${clientId}')\"><i class=\"fas fa-eye me-1\"></i>View</button>\
+              <button class=\"btn btn-sm btn-outline-secondary me-1\" onclick=\"editClient('${clientId}')\"><i class=\"fas fa-edit\"></i></button>\
             </div>`
           ]);
         });
         clientTable.draw();
-      });
+      } catch (error) {
+        console.error("Error loading clients:", error);
+        clientTable.clear().draw(); // Clear table on error
+      }
     }
+    
 
     // Edit Client
     window.editClient = (clientId) => {
-      const clientRef = ref(db, `users/${currentUser.uid}/clients/${clientId}`);
+      const dataRoot = coreAccountId || currentUser.uid;
+      const clientRef = ref(db, `users/${dataRoot}/clients/${clientId}`); // FIXED PATH
       get(clientRef).then(snapshot => {
         if (snapshot.exists()) {
           const client = snapshot.val();
@@ -1084,7 +1088,8 @@
     window.viewClientDetails = async (clientId) => {
       currentClientId = clientId;
       
-      const clientRef = ref(db, `users/${currentUser.uid}/clients/${clientId}`);
+      const dataRoot = coreAccountId || currentUser.uid;
+      const clientRef = ref(db, `users/${dataRoot}/clients/${clientId}`); // FIXED PATH
       const clientSnap = await get(clientRef);
       
       if (!clientSnap.exists()) {
@@ -1100,7 +1105,7 @@
       document.getElementById('clientOutstanding').textContent = `₹${(client.outstanding || 0).toFixed(2)}`;
       
       // Use coreAccountId to fetch shared data
-      const dataRoot = coreAccountId || currentUser.uid;
+      // const dataRoot = coreAccountId || currentUser.uid; // Already defined at the top
       // **MODIFIED**: Filter queries to exclude market/transporter related items.
       const invoicesQuery = query(ref(db, `users/${dataRoot}/invoices`), orderByChild('clientId'), equalTo(clientId)); // Will filter client-side
       const lrsQuery = query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('clientId'), equalTo(clientId)); // Will filter client-side
