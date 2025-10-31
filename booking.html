@@ -338,7 +338,10 @@
               <span class="badge bg-light text-dark" id="lrCount">0</span>
             </div>
             <div class="card-body p-0">
-              <ul id="lrList" class="list-group list-group-flush"></ul>
+              <h6 class="card-subtitle mt-2 mb-2 px-3 text-muted">Own Vehicle LRs</h6>
+              <ul id="ownLrList" class="list-group list-group-flush"></ul>
+              <h6 class="card-subtitle mt-3 mb-2 px-3 text-muted">Market Vehicle LRs</h6>
+              <ul id="marketLrList" class="list-group list-group-flush"></ul>
             </div>
           </div>
         </div>
@@ -707,78 +710,77 @@
       const invoicesQuery = query(ref(db, `users/${dataRoot}/invoices`), orderByChild('clientId'), equalTo(clientId));
       const invoicesSnap = await get(invoicesQuery);
       
+      const updates = {}; // **NEW**: Create a single updates object for atomic operations.
       let remainingAmount = paymentAmount;
       
       if (invoicesSnap.exists()) {
-        // Sort invoices by date (oldest first)
-        const invoices = [];
-        invoicesSnap.forEach(child => {
-          invoices.push({ key: child.key, ...child.val() });
-        });
-        
-        invoices.sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date));
-        
-        // Apply payment to invoices
-        for (const invoice of invoices) {
-          if (remainingAmount <= 0) break;
-          
-          const invoiceAmount = invoice.grandTotal || 0;
-          const paidAmount = invoice.paidAmount || 0;
-          const outstanding = invoiceAmount - paidAmount;
-          
-          if (outstanding > 0) {
-            const paymentToApply = Math.min(remainingAmount, outstanding);
-            const newPaidAmount = paidAmount + paymentToApply;
-            const newStatus = newPaidAmount >= invoiceAmount ? 'paid' : 'partial';
-            
-            // Update invoice
-            await update(ref(db, `users/${dataRoot}/invoices/${invoice.key}`), {
-              paidAmount: newPaidAmount,
-              paymentStatus: newStatus,
-              lastPaymentDate: new Date().toISOString()
-            });
-            
-            remainingAmount -= paymentToApply;
-          }
-        }
-      }
-      
-      // If there's still remaining amount after paying invoices, apply to LRs
-      if (remainingAmount > 0) {
-        const lrsQuery = query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('clientId'), equalTo(clientId));
-        const lrsSnap = await get(lrsQuery);
-        
-        if (lrsSnap.exists()) {
-          const lrs = [];
-          lrsSnap.forEach(child => {
-            lrs.push({ key: child.key, ...child.val() });
+          const invoices = [];
+          invoicesSnap.forEach(child => {
+              invoices.push({ key: child.key, ...child.val() });
           });
           
-          lrs.sort((a, b) => new Date(a.date) - new Date(b.date));
+          invoices.sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date));
           
-          for (const lr of lrs) {
-            if (remainingAmount <= 0) break;
-            
-            const lrAmount = lr.totalAmount || 0;
-            const paidAmount = lr.paidAmount || 0;
-            const outstanding = lrAmount - paidAmount;
-            
-            if (outstanding > 0) {
-              const paymentToApply = Math.min(remainingAmount, outstanding);
-              const newPaidAmount = paidAmount + paymentToApply;
-              const newStatus = newPaidAmount >= lrAmount ? 'paid' : 'partial';
+          for (const invoice of invoices) {
+              if (remainingAmount <= 0) break;
               
-              // Update LR
-              await update(ref(db, `users/${dataRoot}/lrReports/${lr.key}`), {
-                paidAmount: newPaidAmount,
-                paymentStatus: newStatus,
-                lastPaymentDate: new Date().toISOString()
-              });
+              const invoiceAmount = invoice.grandTotal || 0;
+              const paidAmount = invoice.paidAmount || 0;
+              const outstanding = invoiceAmount - paidAmount;
               
-              remainingAmount -= paymentToApply;
-            }
+              if (outstanding > 0) {
+                  const paymentToApply = Math.min(remainingAmount, outstanding);
+                  const newPaidAmount = paidAmount + paymentToApply;
+                  const newStatus = newPaidAmount >= invoiceAmount ? 'paid' : 'partial';
+                  
+                  updates[`/users/${dataRoot}/invoices/${invoice.key}/paidAmount`] = newPaidAmount;
+                  updates[`/users/${dataRoot}/invoices/${invoice.key}/paymentStatus`] = newStatus;
+                  updates[`/users/${dataRoot}/invoices/${invoice.key}/lastPaymentDate`] = new Date().toISOString();
+                  
+                  // **NEW LOGIC**: Sequentially pay off LRs within the invoice
+                  if (invoice.items && invoice.items.length > 0) {
+                      let paymentForLrs = paymentToApply;
+                      // Sort LRs within the invoice by date to ensure FIFO
+                      const sortedLrs = invoice.items.sort((a, b) => new Date(a.date) - new Date(b.date));
+                      
+                      for (const lrItem of sortedLrs) {
+                          if (paymentForLrs <= 0) break;
+                          
+                          const lrRef = ref(db, `users/${dataRoot}/lrReports/${lrItem.lrId}`);
+                          const lrSnap = await get(lrRef);
+                          if (!lrSnap.exists()) continue;
+                          
+                          const lrData = lrSnap.val();
+                          const lrTotal = lrData.tripDetails?.totalBillingAmount || 0;
+                          const lrPaid = lrData.paidAmount || 0;
+                          const lrOutstanding = lrTotal - lrPaid;
+                          
+                          if (lrOutstanding > 0) {
+                              const lrPaymentToApply = Math.min(paymentForLrs, lrOutstanding);
+                              const newLrPaidAmount = lrPaid + lrPaymentToApply;
+                              const newLrStatus = newLrPaidAmount >= lrTotal ? 'paid' : 'partial';
+                              
+                              updates[`/users/${dataRoot}/lrReports/${lrItem.lrId}/paidAmount`] = newLrPaidAmount;
+                              updates[`/users/${dataRoot}/lrReports/${lrItem.lrId}/paymentStatus`] = newLrStatus;
+                              
+                              paymentForLrs -= lrPaymentToApply;
+                          }
+                      }
+                  }
+                  
+                  remainingAmount -= paymentToApply;
+              }
           }
-        }
+      }
+      
+      // **MODIFIED**: This block is now redundant because LRs are handled within their invoices.
+      // The logic to pay off individual LRs not part of an invoice can be added here if needed,
+      // but based on the request, the focus is on invoice-based payments.
+      // For now, we will commit the updates for the invoices.
+      
+      // **NEW**: Execute all updates atomically.
+      if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
       }
     }
 
@@ -974,16 +976,22 @@
         if (invoiceSnap.exists()) {
           invoiceSnap.forEach(child => {
             const inv = child.val();
-            if (!invoicesByClient[inv.clientId]) invoicesByClient[inv.clientId] = [];
-            invoicesByClient[inv.clientId].push(inv);
+            // **MODIFIED**: Only include 'client' invoices, not 'market' ones.
+            if (inv.invoiceType !== 'market' && inv.clientId) {
+              if (!invoicesByClient[inv.clientId]) invoicesByClient[inv.clientId] = [];
+              invoicesByClient[inv.clientId].push(inv);
+            }
           });
         }
 
         if (lrSnap.exists()) {
           lrSnap.forEach(child => {
             const lr = child.val();
-            if (!lrsByClient[lr.clientId]) lrsByClient[lr.clientId] = [];
-            lrsByClient[lr.clientId].push(lr);
+            // **FIX**: Include both 'own' and 'market' LRs, but exclude 'market_company' LRs.
+            if ((lr.lrType === 'own' || lr.lrType === 'market') && lr.clientId) {
+              if (!lrsByClient[lr.clientId]) lrsByClient[lr.clientId] = [];
+              lrsByClient[lr.clientId].push(lr);
+            }
           });
         }
 
@@ -1009,7 +1017,8 @@
           let totalAmount = 0;
           let paidAmount = 0;
           
-          // Sum total billed from all invoices for the client.
+          // **FIXED**: Outstanding amount should be based on the grandTotal of all invoices for the client.
+          // The commission for market vehicles is an internal profit metric, not what the client owes.
           invoices.forEach(inv => { totalAmount += inv.grandTotal || 0; });
           // **FIX**: Sum total paid from all payments made by the client.
           payments.forEach(p => {
@@ -1092,8 +1101,10 @@
       
       // Use coreAccountId to fetch shared data
       const dataRoot = coreAccountId || currentUser.uid;
-      const invoicesQuery = query(ref(db, `users/${dataRoot}/invoices`), orderByChild('clientId'), equalTo(clientId));
-      const lrsQuery = query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('clientId'), equalTo(clientId));
+      // **MODIFIED**: Filter queries to exclude market/transporter related items.
+      const invoicesQuery = query(ref(db, `users/${dataRoot}/invoices`), orderByChild('clientId'), equalTo(clientId)); // Will filter client-side
+      const lrsQuery = query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('clientId'), equalTo(clientId)); // Will filter client-side
+
       const paymentsQuery = query(ref(db, 'payments'), orderByChild('clientId'), equalTo(clientId));
       
       const [invoicesSnap, lrsSnap, paymentsSnap] = await Promise.all([
@@ -1102,73 +1113,93 @@
         get(paymentsQuery)
       ]);
       
-      // Update trip count (total LRs)
-      document.getElementById('clientTrips').textContent = lrsSnap.exists() ? lrsSnap.size : 0;
+      // **MODIFIED**: Process and filter LRs and Invoices
+      const clientLrs = [];
+      if (lrsSnap.exists()) lrsSnap.forEach(s => { if (s.val().lrType !== 'market_company') clientLrs.push({ key: s.key, ...s.val() }); });
+      
+      const clientInvoices = [];
+      if (invoicesSnap.exists()) invoicesSnap.forEach(s => { if (s.val().invoiceType !== 'market') clientInvoices.push({ key: s.key, ...s.val() }); });
+
+      // Update trip count (total LRs for this client)
+      document.getElementById('clientTrips').textContent = clientLrs.length;
       
       // Calculate payment statistics
-      await updatePaymentStatus(clientId, invoicesSnap, lrsSnap, paymentsSnap);
+      await updatePaymentStatus(clientId, invoicesSnap, lrsSnap, paymentsSnap); // Pass lrsSnap here
       
       // Process invoices
       const invoiceList = document.getElementById('invoiceList');
       invoiceList.innerHTML = '';
-      if (invoicesSnap.exists()) {
-        invoicesSnap.forEach(child => {
-          const invoice = child.val();
-          const status = invoice.paymentStatus || 'pending';
-          const statusClass = status === 'paid' ? 'status-paid' : 
-                            status === 'partial' ? 'status-pending' : 'status-overdue';
-          
-          const listItem = document.createElement('li');
-          listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-          listItem.innerHTML = `
-            <div>
-              <div class="fw-bold">${invoice.invoiceNumber || 'N/A'}</div>
-              <small class="text-muted">₹${(invoice.grandTotal || 0).toFixed(2)}</small>
-            </div>
-            <div>
-              <span class="status-badge ${statusClass} me-2">${status}</span>
-              <button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('${child.key}')">
-                <i class="fas fa-eye"></i>
-              </button>
-            </div>
-          `;
-          invoiceList.appendChild(listItem);
+      if (clientInvoices.length > 0) {
+        clientInvoices.forEach(invoice => {
+            const status = invoice.paymentStatus || 'pending';
+            const statusClass = status === 'paid' ? 'status-paid' : 
+                                status === 'partial' ? 'status-pending' : 'status-overdue';
+            
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            listItem.innerHTML = `
+                <div>
+                    <div class="fw-bold">${invoice.invoiceNumber || 'N/A'}</div>
+                    <small class="text-muted">₹${(invoice.grandTotal || 0).toFixed(2)}</small>
+                </div>
+                <div>
+                    <span class="status-badge ${statusClass} me-2">${status}</span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('${invoice.key}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            `;
+            invoiceList.appendChild(listItem);
         });
       } else {
         invoiceList.innerHTML = '<li class="list-group-item text-center text-muted">No invoices found</li>';
       }
-      document.getElementById('invoiceCount').textContent = invoicesSnap.exists() ? invoicesSnap.size : 0;
+      document.getElementById('invoiceCount').textContent = clientInvoices.length;
       
-      // Process LR reports
-      const lrList = document.getElementById('lrList');
-      lrList.innerHTML = '';
-      if (lrsSnap.exists()) {
-        lrsSnap.forEach(child => {
-          const lr = child.val();
+      // **MODIFIED**: Process LR reports into separate lists
+      const ownLrList = document.getElementById('ownLrList');
+      const marketLrList = document.getElementById('marketLrList');
+      ownLrList.innerHTML = '';
+      marketLrList.innerHTML = '';
+
+      if (clientLrs.length > 0) {
+        clientLrs.forEach(lr => {
           const status = lr.paymentStatus || 'pending';
           const statusClass = status === 'paid' ? 'status-paid' : 
                             status === 'partial' ? 'status-pending' : 'status-overdue';
+          
+          // **FIXED**: Show the total billing amount including GST. Fallback to billingAmount if not present.
+          const displayAmount = (lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0);
+          const lrTypeBadge = lr.lrType === 'market'
+            ? '<span class="badge bg-warning ms-2">Market Vehicle</span>'
+            : '<span class="badge bg-info ms-2">Own Vehicle</span>';
           
           const listItem = document.createElement('li');
           listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
           listItem.innerHTML = `
             <div>
-              <div class="fw-bold">${lr.lrNumber || 'N/A'}</div>
-              <small class="text-muted">₹${(lr.totalAmount || 0).toFixed(2)}</small>
+              <div class="fw-bold">${lr.lrNumber || 'N/A'} ${lrTypeBadge}</div>
+              <small class="text-muted">₹${displayAmount.toFixed(2)}</small>
             </div>
             <div>
               <span class="status-badge ${statusClass} me-2">${status}</span>
-              <button class="btn btn-sm btn-outline-primary" onclick="viewLRDetails('${child.key}')">
+              <button class="btn btn-sm btn-outline-primary" onclick="viewLRDetails('${lr.key}')">
                 <i class="fas fa-eye"></i>
               </button>
             </div>
           `;
-          lrList.appendChild(listItem);
+          
+          if (lr.lrType === 'market') {
+            marketLrList.appendChild(listItem);
+          } else {
+            ownLrList.appendChild(listItem);
+          }
         });
       } else {
-        lrList.innerHTML = '<li class="list-group-item text-center text-muted">No LR reports found</li>';
+        ownLrList.innerHTML = '<li class="list-group-item text-center text-muted">No Own Vehicle LRs found</li>';
+        marketLrList.innerHTML = '<li class="list-group-item text-center text-muted">No Market Vehicle LRs found</li>';
       }
-      document.getElementById('lrCount').textContent = lrsSnap.exists() ? lrsSnap.size : 0;
+      document.getElementById('lrCount').textContent = clientLrs.length;
       
       // Process payments
       const paymentList = document.getElementById('paymentList');
@@ -1220,13 +1251,8 @@
       let totalAmount = 0;
       let paidAmount = 0;
       
-      // Sum total billed from all invoices for the client.
-      if (invoicesSnap.exists()) {
-        invoicesSnap.forEach(child => {
-          const invoice = child.val();
-          totalAmount += invoice.grandTotal || 0;
-        });
-      }
+      // **FIXED**: Calculate total amount based on all invoices for the client.
+      if (invoicesSnap.exists()) invoicesSnap.forEach(child => { totalAmount += child.val().grandTotal || 0; });
 
       // **FIX**: Sum total paid from all payments made by the client.
       if (paymentsSnap.exists()) {
@@ -1272,52 +1298,51 @@
       
       const lr = lrSnap.val();
       const modalContent = document.getElementById('lrDetailContent');
-      
-      // Calculate total expenses from the LR data
-      const totalExpenses = (
-        (parseFloat(lr.tyreExpenses) || 0) +
-        (parseFloat(lr.dieselExpenses) || 0) +
-        (parseFloat(lr.tollExpenses) || 0) +
-        (parseFloat(lr.vehicleWork) || 0) +
-        (parseFloat(lr.foodExpenses) || 0) +
-        (parseFloat(lr.otherExpenses) || 0) +
-        (parseFloat(lr.advance) || 0)
-      );
-      const profit = (lr.billingAmount || 0) - totalExpenses;
+      const details = lr.tripDetails || {};
+      const isMarketVehicle = lr.lrType === 'market';
 
-      modalContent.innerHTML = `
-        <div class="row">
-          <div class="col-md-6">
-            <div class="detail-row"><strong>LR Number:</strong> ${lr.lrNumber || 'N/A'}</div>
-            <div class="detail-row"><strong>Date:</strong> ${lr.date || 'N/A'}</div>
-            <div class="detail-row"><strong>Vehicle:</strong> ${lr.truckNumber || 'N/A'}</div>
-            <div class="detail-row"><strong>Route:</strong> ${lr.fromLocation || 'N/A'} to ${lr.toLocation || 'N/A'}</div>
-            <div class="detail-row"><strong>Item:</strong> ${lr.item || 'N/A'}</div>
-            <div class="detail-row"><strong>Weight:</strong> ${lr.weight || 0} tonnes</div>
-          </div>
-          <div class="col-md-6">
-            <div class="detail-row"><strong>Billing Amount:</strong> ₹${(lr.billingAmount || 0).toFixed(2)}</div>
-            <div class="detail-row"><strong>Freight Amount:</strong> ₹${(lr.freightAmount || 0).toFixed(2)}</div>
-            <div class="detail-row"><strong>Advance Paid:</strong> ₹${(lr.advance || 0).toFixed(2)}</div>
-            <div class="detail-row"><strong>Balance:</strong> ₹${(lr.balance || 0).toFixed(2)}</div>
-            <div class="detail-row"><strong>Total Amount (inc. GST):</strong> ₹${(lr.totalAmount || 0).toFixed(2)}</div>
-            <div class="detail-row">
-              <strong>Payment Status:</strong> 
-              <span class="status-badge ${lr.paymentStatus === 'paid' ? 'status-paid' : lr.paymentStatus === 'partial' ? 'status-pending' : 'status-overdue'}">
-                ${lr.paymentStatus || 'pending'}
-              </span>
-            </div>
-          </div>
+      // **MODIFIED**: More detailed expense calculation from trip-expenses.html
+      const dieselForCalc = (parseFloat(details.fuelUsedLiters) || 0) * (parseFloat(details.dieselRatePerLiter) || 0);
+      const otherGenericExpenses = 
+          (parseFloat(details.loadingUnloadingExpenses) || 0) +
+          (parseFloat(details.policeChallanExpenses) || 0) +
+          (parseFloat(details.tacExpenses) || 0) +
+          (parseFloat(details.permitExpenses) || 0) +
+          (parseFloat(details.brokerageExpenses) || 0) +
+          (parseFloat(details.otherExpenses) || 0);
+
+      const mainTripAggregatedExpenses = 
+          (parseFloat(details.tyreExpenses) || 0) +
+          (parseFloat(details.tollExpenses) || 0) +
+          (parseFloat(details.foodExpenses) || 0) +
+          (parseFloat(details.vehicleWorkAmount) || 0) +
+          (parseFloat(details.commissionExpenses) || 0) +
+          (parseFloat(details.tirpalRopeExpenses) || 0) +
+          otherGenericExpenses;
+
+      const totalExpenses = mainTripAggregatedExpenses + dieselForCalc + (parseFloat(details.advance) || 0);
+      const profit = (details.billingAmount || 0) - totalExpenses;
+
+      // **NEW**: Conditional rendering for market vs. own vehicles
+      const expenseAndProfitHtml = isMarketVehicle ? `
+        <hr>
+        <div class="row fw-bold fs-5 mt-3 text-success">
+            <div class="col-6 text-end">Your Commission:</div>
+            <div class="col-6 text-start">₹${(details.commission || 0).toFixed(2)}</div>
         </div>
+      ` : `
         <hr>
         <h5 class="mt-3">Expense Breakdown</h5>
-        <div class="row">
-            <div class="col-md-4"><div class="detail-row"><strong>Tyre:</strong> ₹${(lr.tyreExpenses || 0).toFixed(2)}</div></div>
-            <div class="col-md-4"><div class="detail-row"><strong>Diesel:</strong> ₹${(lr.dieselExpenses || 0).toFixed(2)}</div></div>
-            <div class="col-md-4"><div class="detail-row"><strong>Toll:</strong> ₹${(lr.tollExpenses || 0).toFixed(2)}</div></div>
-            <div class="col-md-4"><div class="detail-row"><strong>Vehicle Work:</strong> ₹${(lr.vehicleWork || 0).toFixed(2)}</div></div>
-            <div class="col-md-4"><div class="detail-row"><strong>Food:</strong> ₹${(lr.foodExpenses || 0).toFixed(2)}</div></div>
-            <div class="col-md-4"><div class="detail-row"><strong>Other:</strong> ₹${(lr.otherExpenses || 0).toFixed(2)}</div></div>
+        <div class="row g-2">
+            <div class="col-md-4"><div class="detail-row"><strong>Tyre:</strong> ₹${(details.tyreExpenses || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Diesel:</strong> ₹${dieselForCalc.toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Toll:</strong> ₹${(details.tollExpenses || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Vehicle Work:</strong> ₹${(details.vehicleWorkAmount || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Food:</strong> ₹${(details.foodExpenses || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Commission:</strong> ₹${(details.commissionExpenses || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Tirpal/Rope:</strong> ₹${(details.tirpalRopeExpenses || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Advance:</strong> ₹${(details.advance || 0).toFixed(2)}</div></div>
+            <div class="col-md-4"><div class="detail-row"><strong>Other (Combined):</strong> ₹${otherGenericExpenses.toFixed(2)}</div></div>
         </div>
         <hr>
         <div class="row fw-bold fs-5 mt-3">
@@ -1328,6 +1353,32 @@
             <div class="col-6 text-end">Net Profit:</div>
             <div class="col-6 text-start">₹${profit.toFixed(2)}</div>
         </div>
+      `;
+
+      modalContent.innerHTML = `
+        <div class="row">
+          <div class="col-md-6">
+            <div class="detail-row"><strong>LR Number:</strong> ${lr.lrNumber || 'N/A'}</div>
+            <div class="detail-row"><strong>Date:</strong> ${lr.date || 'N/A'}</div>
+            <div class="detail-row"><strong>Vehicle:</strong> ${lr.truckNumber || 'N/A'} ${isMarketVehicle ? '<span class="badge bg-warning ms-2">Market</span>' : ''}</div>
+            <div class="detail-row"><strong>Route:</strong> ${lr.fromLocation || 'N/A'} to ${lr.toLocation || 'N/A'}</div>
+            <div class="detail-row"><strong>Item:</strong> ${lr.item || 'N/A'}</div>
+            <div class="detail-row"><strong>Weight:</strong> ${lr.weight || 0} tonnes</div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-row"><strong>Billing Amount (Pre-GST):</strong> ₹${(details.billingAmount || 0).toFixed(2)}</div>
+            <div class="detail-row"><strong>Freight Amount:</strong> ₹${(details.freightAmount || 0).toFixed(2)}</div>
+            <div class="detail-row"><strong>Advance Paid:</strong> ₹${(details.advance || 0).toFixed(2)}</div>
+            <div class="detail-row"><strong>Total Amount (inc. GST):</strong> ₹${(details.totalBillingAmount || 0).toFixed(2)}</div>
+            <div class="detail-row">
+              <strong>Payment Status:</strong> 
+              <span class="status-badge ${lr.paymentStatus === 'paid' ? 'status-paid' : lr.paymentStatus === 'partial' ? 'status-pending' : 'status-overdue'}">
+                ${lr.paymentStatus || 'pending'}
+              </span>
+            </div>
+          </div>
+        </div>
+        ${expenseAndProfitHtml}
       `;
       
       // Show the modal
