@@ -1,4 +1,3 @@
-
 // Navbar Loader: injects the new vertical sidebar from navbar.html into any page
 // - Extracts styles, toggle button, and sidebar markup
 // - Wraps existing page content in .main-content if missing
@@ -53,20 +52,77 @@
       }
 
       // Ensure logo image source and provide a fallback
-      (function ensureLogo() {
+      async function ensureLogo() {
         const logo = document.querySelector('#sidebar .logo');
         if (!logo) return;
-        if (!logo.getAttribute('src') || logo.getAttribute('src') === '') {
-          logo.setAttribute('src', 'logo.jpg');
-        }
-        const onErr = function onErr() {
-          if (!logo.src.includes('logo1.jpg')) {
-            logo.src = 'logo1.jpg';
+
+        // **NEW**: Attempt to load company logo from Firebase profile
+        try {
+          const user = window.auth?.currentUser;
+          if (user) {
+            const profileSnap = await window.db.ref(`users/${user.uid}/profile`).once('value');
+            const profile = profileSnap.val() || {};
+            if (profile.companyLogoUrl) {
+              logo.src = profile.companyLogoUrl;
+              return; // Exit if company logo is set
+            }
           }
-          logo.removeEventListener('error', onErr);
-        };
-        logo.addEventListener('error', onErr);
-      })();
+        } catch (e) {
+          console.warn("Could not fetch company logo for navbar:", e);
+        }
+
+        // Fallback to default logos
+        logo.src = 'logo.jpg';
+        logo.onerror = () => { logo.src = 'logo1.jpg'; logo.onerror = null; };
+      }
+      ensureLogo();
+
+      // **FIX**: Load user profile into navbar, ensuring auth is ready.
+      async function loadNavbarProfile() {
+        // Wait for auth to be available on the window object
+        if (!window.auth) {
+          setTimeout(loadNavbarProfile, 100); // Retry after 100ms
+          return;
+        }
+        
+        window.auth.onAuthStateChanged(async (user) => {
+          if (!user) return;
+
+          try {
+            const profileNameEl = document.getElementById('profileName');
+            const profileRoleEl = document.getElementById('profileRole');
+            const profileAvatarEl = document.getElementById('profileAvatar');
+
+            if (!profileNameEl || !profileRoleEl || !profileAvatarEl) return;
+
+            // Fetch user data from Realtime Database
+            const userRef = window.db.ref(`users/${user.uid}`);
+            const snapshot = await userRef.once('value');
+            const userData = snapshot.val() || {};
+            const profile = userData.profile || {};
+
+            // Set Name
+            const ownerName = profile.ownerName || user.displayName || 'User';
+            profileNameEl.textContent = ownerName;
+
+            // Set Role
+            const selectedBranch = localStorage.getItem('selectedBranch') || 'Main';
+            const transportName = profile.transportName || selectedBranch;
+            profileRoleEl.textContent = transportName;
+
+            // Set Avatar
+            if (profile.photoURL) {
+              profileAvatarEl.innerHTML = `<img src="${profile.photoURL}" alt="${ownerName}" />`;
+            } else {
+              const initial = ownerName.charAt(0).toUpperCase();
+              profileAvatarEl.innerHTML = `<span>${initial}</span>`;
+            }
+          } catch (e) {
+            console.warn("Could not load user profile for navbar:", e);
+          }
+        });
+      }
+      loadNavbarProfile();
 
       // Ensure main-content wrapper exists: wrap existing non-sidebar children
       if (!document.querySelector('.main-content')) {
@@ -202,3 +258,28 @@
   }
 })();
 
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuButton = document.getElementById('mobileMenuButton');
+    const sidebar = document.querySelector('.sidebar');
+    const profileDropdownToggle = document.getElementById('profileDropdownToggle');
+    const profileDropdownMenu = document.getElementById('profileDropdownMenu');
+
+    if (mobileMenuButton && sidebar) {
+        mobileMenuButton.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+        });
+    }
+
+    if (profileDropdownToggle && profileDropdownMenu) {
+        profileDropdownToggle.addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent document click from closing immediately
+            profileDropdownMenu.classList.toggle('show');
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!profileDropdownMenu.contains(event.target) && !profileDropdownToggle.contains(event.target)) {
+                profileDropdownMenu.classList.remove('show');
+            }
+        });
+    }
+});
