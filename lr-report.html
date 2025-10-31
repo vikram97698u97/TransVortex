@@ -2511,6 +2511,14 @@
         saveQuickAddDriverBtn.addEventListener('click', saveQuickAddDriver);
       }
 
+      // **FIX**: Attach listener for the "Add New Route" button on the main form.
+      const newQuickAddRouteBtn = document.getElementById('quickAddRouteBtn');
+      if (newQuickAddRouteBtn) {
+        newQuickAddRouteBtn.addEventListener('click', () => {
+          new bootstrap.Modal(document.getElementById('quickAddRouteModal')).show();
+        });
+      }
+
       // **FIX**: Attach listeners for the new buttons added to the form.
       const newQuickAddVehicleBtn = document.getElementById('quickAddVehicleBtn');
       if (newQuickAddVehicleBtn) {
@@ -2586,7 +2594,7 @@
         from: from,
         to: to,
         distance: parseFloat(document.getElementById('q_distance').value) || 0,
-        createdAt: new Date().toISOString()
+        updatedAt: new Date().toISOString() // **FIX**: Changed 'createdAt' to 'updatedAt' to match security rules.
       };
       if (!currentCoreAccountId) { alert('Account not loaded.'); return; } // Added check
       const newRef = db.ref(`users/${currentCoreAccountId}/routes`).push();
