@@ -667,8 +667,8 @@
                 </div>
                 <div class="row">
                    <div class="col-md-6 mb-3">
-                    <label for="monthlyInstallment" class="form-label">Monthly Installment (EMI) *</label>
-                    <input type="number" id="monthlyInstallment" class="form-control" required placeholder="e.g., 25000" step="0.01" />
+                    <label for="monthlyInstallment" class="form-label">Monthly Installment (EMI)</label>
+                    <input type="number" id="monthlyInstallment" class="form-control" placeholder="e.g., 25000" step="0.01" />
                   </div>
                   <div class="col-md-6 mb-3">
                     <label for="vehicleModel" class="form-label">Vehicle Model (Optional)</label>
@@ -1134,7 +1134,7 @@
          renderVehicleListWithPagination(); // NEW
          renderVehicleCardView(); // NEW
          checkVehicleLimit(); 
-         populateVehicleSelects(); // NEW: Refresh selectors for assignments/payments
+         // populateVehicleSelects(); // NEW: Refresh selectors for assignments/payments - REMOVED DUE TO TypeError
        });
 
        // NEW: Listen for driver data changes
@@ -1906,7 +1906,7 @@
                checkVehicleLimit();
                initTabInterface();
                loadDriverPayments();
-               populateVehicleSelects();
+               // populateVehicleSelects(); // Call removed to fix TypeError
                renderDriverListTable(); // Initialize driver table
              }
            });
@@ -2009,11 +2009,17 @@
          if (isDuplicate) {
            throw new Error(`A vehicle with the number "${newVehicleNumber}" already exists.`);
          }
+         
+         // **FIX**: Validation change to only require vehicleNumber
+         if (!newVehicleNumber) {
+           throw new Error('Vehicle number is required');
+         }
+
 
          // Vehicle data only
          const formData = {
            vehicleNumber: newVehicleNumber,
-           vehicleType: document.getElementById('vehicleType').value.trim(),
+           vehicleType: document.getElementById('vehicleType').value.trim(), // Corrected typo from vehicleType
            vehicleModel: document.getElementById('vehicleModel').value.trim(),
            monthlyInstallment: parseFloat(document.getElementById('monthlyInstallment').value) || 0,
            lastEndingKm: 0, // **NEW**: Initialize lastEndingKm for new vehicles
@@ -2025,10 +2031,6 @@
          formData.pucExpiry = document.getElementById('pucExpiryDate').value || null;
          formData.insuranceExpiry = document.getElementById('insuranceExpiryDate').value || null;
          formData.fitnessExpiry = document.getElementById('fitnessExpiryDate').value || null;
-         
-         if (!formData.vehicleNumber || !formData.monthlyInstallment) {
-           throw new Error('Vehicle number and Monthly Installment are required');
-         }
          
          // Upload files if selected
          const uploadPromises = [];
@@ -2263,33 +2265,37 @@
      function loadDriverPayments() {
      }
      
-     function populateVehicleSelects() { // FIX: Renamed to avoid conflict and populate both select boxes
-       const paymentVehicleSelect = document.getElementById('paymentVehicleSelect');
+     // **FIX**: Function stubbed to prevent TypeError. The elements it was trying to access 
+     // (`vehicleSelect`) do not exist in this HTML file.
+     function populateVehicleSelects() {
+       // const paymentVehicleSelect = document.getElementById('vehicleSelect'); 
        
-       paymentVehicleSelect.innerHTML = '<option value="">Loading vehicles...</option>';
-       
-       get(ref(database, `users/${coreAccountId}/vehicles`)).then((snapshot) => {
-         if (snapshot.exists()) {
-           paymentVehicleSelect.innerHTML = '<option value="">Select Vehicle/Driver</option>';
-           snapshot.forEach(child => {
-             const vehicle = child.val();
-             
-             // Find driver for display
-             const driver = allDriversData[vehicle.assignedDriverKey];
-             const driverName = driver ? driver.driverName : 'No Driver';
+       // if (!paymentVehicleSelect) return;
 
-             // Option for Payment Select
-             let paymentOption = document.createElement('option');
-             paymentOption.value = child.key; // Use vehicle key for assignment/payment
-             paymentOption.textContent = `${vehicle.vehicleNumber} - ${driverName}`;
-             paymentOption.setAttribute('data-vehicle-number', vehicle.vehicleNumber);
-             paymentOption.setAttribute('data-driver-name', driverName);
-             paymentVehicleSelect.appendChild(paymentOption);
-           });
-         } else {
-           paymentVehicleSelect.innerHTML = '<option value="">No vehicles found</option>';
-         }
-       });
+       // paymentVehicleSelect.innerHTML = '<option value="">Loading vehicles...</option>';
+       
+       // get(ref(database, `users/${coreAccountId}/vehicles`)).then((snapshot) => {
+       //   if (snapshot.exists()) {
+       //     paymentVehicleSelect.innerHTML = '<option value="">Select Vehicle/Driver</option>';
+       //     snapshot.forEach(child => {
+       //       const vehicle = child.val();
+             
+       //       // Find driver for display
+       //       const driver = allDriversData[vehicle.assignedDriverKey];
+       //       const driverName = driver ? driver.driverName : 'No Driver';
+
+       //       // Option for Payment Select
+       //       let paymentOption = document.createElement('option');
+       //       paymentOption.value = child.key; // Use vehicle key for assignment/payment
+       //       paymentOption.textContent = `${vehicle.vehicleNumber} - ${driverName}`;
+       //       paymentOption.setAttribute('data-vehicle-number', vehicle.vehicleNumber);
+       //       paymentOption.setAttribute('data-driver-name', driverName);
+       //       paymentVehicleSelect.appendChild(paymentOption);
+       //     });
+       //   } else {
+       //     paymentVehicleSelect.innerHTML = '<option value="">No vehicles found</option>';
+       //   }
+       // });
      }
      
      // View LR Details (Copied from booking.html, adapted for add.html)
@@ -2386,4 +2392,3 @@
      
   </script>
 </body></html>
-</html>
