@@ -22,6 +22,12 @@
       margin: 20px auto;
       padding: 0 20px;
     }
+    body { font-family: 'Segoe UI', sans-serif; background:#F5F5F5; margin:0; padding:0; }
+    .main-content {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
     h1 { color:#2E8B57; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; font-size: 1.8rem; }
     .analytics-container { display: flex; gap: 20px; flex-wrap: wrap; }
     .primary-content { flex: 3; min-width: 300px; }
@@ -156,6 +162,9 @@
     </div>
   </div>
 
+  <!-- **NEW**: Load API Key from config file -->
+  <script src="config.js"></script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -184,27 +193,34 @@
 
     // === AI Insights Function (Using Gemini) ===
     async function getAIInsights(summary, language) {
-      const API_KEY = "AIzaSyBKewjvZPpkBqhVoKx8uGYYGatNI_neTnk";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${API_KEY}`;
+      // **MODIFIED**: Switched to OpenRouter API endpoint
+      const url = `https://openrouter.ai/api/v1/chat/completions`;
       const langName = language === 'hi-IN' ? 'Hindi' : 'English';
       
+      // **MODIFIED**: Request body format updated for OpenRouter (OpenAI compatible)
       const body = {
-        contents: [{
-          parts: [{ text: `Analyze this logistics data and give 5 smart, actionable insights in ${langName}:\n\n${summary}` }]
-        }]
+        // **FIXED**: Removed duplicate 'model' key.
+        model: "openai/gpt-4o",
+        messages: [
+          // **FIXED**: Made the language instruction more explicit for better translation.
+          { role: "user", content: `Analyze this logistics data. Provide exactly 5 smart, actionable insights. Your entire response must be in ${langName} only. Do not use any English words if the language is Hindi.\n\n${summary}` }
+
+        ]
       };
 
       try {
         const res = await fetch(url, {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json"
+          headers: {
+            "Content-Type": "application/json",
+            // **MODIFIED**: API key is now sent in the Authorization header
+            "Authorization": `Bearer ${GEMINI_API_KEY}`
           },
           body: JSON.stringify(body)
         });
         const data = await res.json();
-        // Parse the response from the Google Gemini format
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || "No insights generated.";
+        // **MODIFIED**: Parse the response from the OpenRouter/OpenAI format
+        return data.choices?.[0]?.message?.content || "No insights generated.";
       } catch (error) {
         console.error("AI Error:", error);
         return "Error fetching AI insights.";
