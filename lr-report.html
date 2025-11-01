@@ -2405,6 +2405,42 @@
         alert('Trip details saved and all related entries logged successfully!');
         const tripModal = bootstrap.Modal.getInstance(document.getElementById('tripDetailsModal'));
         tripModal.hide();
+
+        // **NEW**: Update Tyre Running KMs
+        if (!isMarketVehicle && tripDetails.totalKm > 0) {
+          try {
+            const vehicleQuery = db.ref(`users/${currentCoreAccountId}/vehicles`).orderByChild('vehicleNumber').equalTo(vehicleNumber);
+            const vehicleSnap = await vehicleQuery.once('value');
+            
+            if (vehicleSnap.exists()) {
+              const vehicleId = Object.keys(vehicleSnap.val())[0];
+              const vehicleData = vehicleSnap.val()[vehicleId];
+              const vehicleUpdateRef = db.ref(`users/${currentCoreAccountId}/vehicles/${vehicleId}`);
+
+              const updates = {
+                lastEndingKm: tripDetails.endingKm
+              };
+
+              // Update KMs for each tyre on the vehicle
+              if (vehicleData.tyres && Array.isArray(vehicleData.tyres)) {
+                updates.tyres = vehicleData.tyres.map(tyre => {
+                  const currentKm = tyre.totalRunningKm || 0;
+                  return {
+                    ...tyre,
+                    totalRunningKm: currentKm + tripDetails.totalKm
+                  };
+                });
+              }
+
+              await vehicleUpdateRef.update(updates);
+              console.log(`Updated running KMs for vehicle ${vehicleNumber}.`);
+            }
+          } catch (kmError) {
+            console.error("Error updating tyre running KMs:", kmError);
+            // Non-critical error, so we don't show an alert to the user.
+          }
+        }
+
         loadLRData(); // Refresh the main table
         
       } catch (error) {
