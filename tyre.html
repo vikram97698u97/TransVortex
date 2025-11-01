@@ -31,6 +31,13 @@
       border-radius: 8px;
     }
 
+    /* Styles for the new Change Tyre Modal */
+    .modal-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+
     /* Scanner Styles */
     .scan-btn {
       display: flex;
@@ -717,6 +724,43 @@
     </div>
   </div>
 
+  <!-- **NEW**: Change/Swap Tyre Modal -->
+  <div id="changeTyreModal" style="display:none; position:fixed; z-index:1050; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center; flex-direction:column;">
+    <div style="background-color:#fff; padding:25px; border-radius:10px; width:90%; max-width:600px; position:relative;">
+      <span onclick="closeChangeTyreModal()" style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer;">&times;</span>
+      <h3 id="changeTyreModalTitle">Change Tyre</h3>
+      <p>Changing Tyre: <strong id="sourceTyreInfo"></strong> from Vehicle: <strong id="sourceVehicleInfo"></strong></p>
+
+      <!-- Move Tyre Section -->
+      <div class="modal-section">
+        <h4>Move Tyre to another Vehicle</h4>
+        <div class="form-group">
+          <label for="moveTargetVehicle">Select Target Vehicle:</label>
+          <select id="moveTargetVehicle" class="form-group"></select>
+        </div>
+        <div class="form-group">
+          <label for="moveTargetPosition">New Position:</label>
+          <input type="text" id="moveTargetPosition" class="form-group" placeholder="e.g., Rear-Left-Inner">
+        </div>
+        <button class="btn btn-primary" onclick="moveTyre()">Move Tyre</button>
+      </div>
+
+      <!-- Swap Tyre Section -->
+      <div class="modal-section">
+        <h4>Swap Tyre with another Tyre</h4>
+        <div class="form-group">
+          <label for="swapTargetVehicle">Select Target Vehicle:</label>
+          <select id="swapTargetVehicle" class="form-group" onchange="populateSwapTargetTyres(this.value)"></select>
+        </div>
+        <div class="form-group">
+          <label for="swapTargetTyre">Select Tyre to Swap with:</label>
+          <select id="swapTargetTyre" class="form-group"></select>
+        </div>
+        <button class="btn btn-info" onclick="swapTyre()">Swap Tyres</button>
+      </div>
+    </div>
+  </div>
+
   <!-- PDF Generation Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -1046,7 +1090,8 @@
           brand: tyreBrand,
           position: tyrePosition,
           addedAt: new Date(tyreAddedDate).getTime(),
-          cost: parseFloat(tyreCost) || 0
+          cost: parseFloat(tyreCost) || 0,
+          totalRunningKm: 0 // **NEW**: Initialize running KMs for new tyres
         });
       }
       
@@ -1080,7 +1125,11 @@
                 // Fallback if the readonly field isn't found, though it should be.
                 updatedTyres = [...existingTyres, ...newTyres];
               }
-            } else {
+            }else if (document.getElementById('saveVehicleBtn').textContent === 'Update Vehicle') {
+              // In vehicle edit mode, we replace all tyres with the ones from the form.
+              updatedTyres = newTyres;
+              
+            }else {
               // In add tyre mode, add new tyres to existing ones
               updatedTyres = [...existingTyres, ...newTyres];
             }
@@ -1249,11 +1298,14 @@
                       <div class="tyre-details">
                         <div><strong>#${highlightText(tyre.number || 'N/A', searchTerm)}</strong> - ${highlightText(tyre.brand || '', searchTerm)}</div>
                         <div>Status: <span class="status-badge ${tyre.status ? tyre.status.toLowerCase() : 'active'}">${tyre.status || 'Active'}</span></div>
-                        <div>Position: <strong>${tyre.position || 'N/A'}</strong> | Added: <strong>${tyre.addedAt ? new Date(tyre.addedAt).toLocaleDateString() : 'N/A'}</strong> | Cost: <strong>₹${(tyre.cost || 0).toFixed(2)}</strong></div>
+                        <div>Position: <strong>${tyre.position || 'N/A'}</strong> | Added: <strong>${tyre.addedAt ? new Date(tyre.addedAt).toLocaleDateString() : 'N/A'}</strong> | Cost: <strong>₹${(tyre.cost || 0).toFixed(2)}</strong> | Running: <strong>${(tyre.totalRunningKm || 0).toLocaleString('en-IN')} KM</strong></div>
                       </div>
                       <div class="tyre-actions">
                         <button onclick="event.stopPropagation(); editTyre('${id}', '${tyre.number}')" class="btn btn-primary" title="Edit Tyre">
                           <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); openChangeTyreModal('${id}', '${tyre.number}')" class="btn btn-info" title="Change/Replace Tyre">
+                          <i class="fas fa-exchange-alt"></i>
                         </button>
                         <button onclick="event.stopPropagation(); if(confirm('Are you sure you want to dispose this tyre? This action cannot be undone.')) { disposeTyre('${id}', '${tyre.number}') }" class="btn btn-danger" title="Dispose Tyre">
                           <i class="fas fa-trash"></i>
@@ -1390,7 +1442,7 @@
             tyreDiv.innerHTML = `
               <div class="tyre-header">
                 <span class="tyre-title">Tyre ${tyreCount}</span>
-                ${tyreCount > 1 ? '<button class="remove-tyre" onclick="removeTyre(this)">Remove</button>' : ''}
+                <!-- **FIX**: Do not show remove button for existing tyres in edit mode -->
               </div>
               <div class="tyre-row">
                 <div class="form-group">
@@ -1578,6 +1630,146 @@
         }
       });
     };
+
+    // **NEW**: Functions for Change/Swap Tyre Modal
+    window.openChangeTyreModal = function(vehicleId, tyreNumber) {
+      const modal = document.getElementById('changeTyreModal');
+      const sourceVehicle = allVehiclesData[vehicleId];
+      const sourceTyre = (sourceVehicle.tyres || []).find(t => t.number === tyreNumber);
+
+      if (!sourceVehicle || !sourceTyre) {
+        showAlert('Could not find the selected tyre or vehicle.', 'danger');
+        return;
+      }
+
+      // Store data on the modal for later use
+      modal.dataset.sourceVehicleId = vehicleId;
+      modal.dataset.sourceTyreNumber = tyreNumber;
+
+      // Update modal title and info
+      document.getElementById('sourceTyreInfo').textContent = `${sourceTyre.number} (${sourceTyre.brand})`;
+      document.getElementById('sourceVehicleInfo').textContent = sourceVehicle.vehicleNumber;
+
+      // Populate vehicle dropdowns (excluding the source vehicle)
+      const moveTargetSelect = document.getElementById('moveTargetVehicle');
+      const swapTargetSelect = document.getElementById('swapTargetVehicle');
+      moveTargetSelect.innerHTML = '<option value="">Select a vehicle</option>';
+      swapTargetSelect.innerHTML = '<option value="">Select a vehicle</option>';
+
+      Object.entries(allVehiclesData).forEach(([id, vehicle]) => {
+        if (id !== vehicleId) {
+          const option = document.createElement('option');
+          option.value = id;
+          option.textContent = vehicle.vehicleNumber;
+          moveTargetSelect.appendChild(option.cloneNode(true));
+          swapTargetSelect.appendChild(option.cloneNode(true));
+        }
+      });
+
+      // Reset the target tyre dropdown
+      document.getElementById('swapTargetTyre').innerHTML = '<option value="">Select a vehicle first</option>';
+
+      modal.style.display = 'flex';
+    }
+
+    window.closeChangeTyreModal = function() {
+      document.getElementById('changeTyreModal').style.display = 'none';
+    }
+
+    window.populateSwapTargetTyres = function(targetVehicleId) {
+      const targetTyreSelect = document.getElementById('swapTargetTyre');
+      targetTyreSelect.innerHTML = '<option value="">Select a tyre</option>';
+
+      if (!targetVehicleId) {
+        targetTyreSelect.innerHTML = '<option value="">Select a vehicle first</option>';
+        return;
+      }
+
+      const targetVehicle = allVehiclesData[targetVehicleId];
+      if (targetVehicle && targetVehicle.tyres) {
+        targetVehicle.tyres.forEach(tyre => {
+          const option = document.createElement('option');
+          option.value = tyre.number;
+          option.textContent = `${tyre.number} (${tyre.brand}) at ${tyre.position}`;
+          targetTyreSelect.appendChild(option);
+        });
+      }
+    }
+
+    window.moveTyre = async function() {
+      const modal = document.getElementById('changeTyreModal');
+      const sourceVehicleId = modal.dataset.sourceVehicleId;
+      const sourceTyreNumber = modal.dataset.sourceTyreNumber;
+      const targetVehicleId = document.getElementById('moveTargetVehicle').value;
+      const newPosition = document.getElementById('moveTargetPosition').value.trim();
+
+      if (!targetVehicleId || !newPosition) {
+        showAlert('Please select a target vehicle and specify a new position.', 'warning');
+        return;
+      }
+
+      const sourceVehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${sourceVehicleId}`);
+      const targetVehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${targetVehicleId}`);
+
+      try {
+        const [sourceSnap, targetSnap] = await Promise.all([get(sourceVehicleRef), get(targetVehicleRef)]);
+        const sourceVehicle = sourceSnap.val();
+        const targetVehicle = targetSnap.val();
+
+        const tyreToMove = (sourceVehicle.tyres || []).find(t => t.number === sourceTyreNumber);
+        tyreToMove.position = newPosition; // Update position
+
+        const newSourceTyres = (sourceVehicle.tyres || []).filter(t => t.number !== sourceTyreNumber);
+        const newTargetTyres = [...(targetVehicle.tyres || []), tyreToMove];
+
+        await update(sourceVehicleRef, { tyres: newSourceTyres });
+        await update(targetVehicleRef, { tyres: newTargetTyres });
+
+        showAlert('Tyre moved successfully!', 'success');
+        closeChangeTyreModal();
+      } catch (error) {
+        showAlert(`Error moving tyre: ${error.message}`, 'danger');
+      }
+    }
+
+    window.swapTyre = async function() {
+      const modal = document.getElementById('changeTyreModal');
+      const sourceVehicleId = modal.dataset.sourceVehicleId;
+      const sourceTyreNumber = modal.dataset.sourceTyreNumber;
+      const targetVehicleId = document.getElementById('swapTargetVehicle').value;
+      const targetTyreNumber = document.getElementById('swapTargetTyre').value;
+
+      if (!targetVehicleId || !targetTyreNumber) {
+        showAlert('Please select a target vehicle and a target tyre to swap.', 'warning');
+        return;
+      }
+
+      const sourceVehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${sourceVehicleId}`);
+      const targetVehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${targetVehicleId}`);
+
+      try {
+        const [sourceSnap, targetSnap] = await Promise.all([get(sourceVehicleRef), get(targetVehicleRef)]);
+        const sourceVehicle = sourceSnap.val();
+        const targetVehicle = targetSnap.val();
+
+        const sourceTyre = (sourceVehicle.tyres || []).find(t => t.number === sourceTyreNumber);
+        const targetTyre = (targetVehicle.tyres || []).find(t => t.number === targetTyreNumber);
+
+        // Swap positions
+        [sourceTyre.position, targetTyre.position] = [targetTyre.position, sourceTyre.position];
+
+        const newSourceTyres = (sourceVehicle.tyres || []).filter(t => t.number !== sourceTyreNumber).concat(targetTyre);
+        const newTargetTyres = (targetVehicle.tyres || []).filter(t => t.number !== targetTyreNumber).concat(sourceTyre);
+
+        await update(sourceVehicleRef, { tyres: newSourceTyres });
+        await update(targetVehicleRef, { tyres: newTargetTyres });
+
+        showAlert('Tyres swapped successfully!', 'success');
+        closeChangeTyreModal();
+      } catch (error) {
+        showAlert(`Error swapping tyres: ${error.message}`, 'danger');
+      }
+    }
 
     // Show disposal modal
     window.disposeTyre = function(vehicleId, tyreNumber) {
