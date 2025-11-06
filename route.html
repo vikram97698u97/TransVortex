@@ -73,7 +73,8 @@
               <tr>
                 <th>From Location</th>
                 <th>To Location</th>
-                 <th>Distance (KM)</th>
+                <th>Distance (KM)</th>
+                <th>Vehicles on Route</th>
                 <th class="text-center">Actions</th>
               </tr>
             </thead>
@@ -123,7 +124,7 @@
         get(userRef).then(snapshot => {
           const userData = snapshot.val() || {};
           coreAccountId = userData.coreAccountId || user.uid;
-          loadRoutes();
+          loadRoutesAndVehicleStatus();
         });
       }
     });
@@ -174,21 +175,55 @@
       }
     });
 
-    function loadRoutes() {
+    async function loadRoutesAndVehicleStatus() {
       if (!coreAccountId) return;
+
       const routesRef = ref(db, `users/${coreAccountId}/routes`);
-      onValue(routesRef, (snapshot) => {
+      const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
+
+      try {
+        // Fetch both routes and LR reports
+        const [routesSnapshot, lrSnapshot] = await Promise.all([
+          get(routesRef),
+          get(lrReportsRef)
+        ]);
+
+        const activeLrsByRoute = {};
+        if (lrSnapshot.exists()) {
+          lrSnapshot.forEach(child => {
+            const lr = child.val();
+            // An LR is "active" on a route if its status is not 'invoiced'
+            if (lr.routeId && lr.status !== 'invoiced') {
+              if (!activeLrsByRoute[lr.routeId]) { // Use a Map to avoid duplicate vehicle entries
+                activeLrsByRoute[lr.routeId] = new Map();
+              }
+              // Store truckId if available, for creating a link
+              activeLrsByRoute[lr.routeId].set(lr.truckNumber, lr.truckId || null);
+            }
+          });
+        }
+
         const tableBody = document.getElementById("routeTableBody");
         tableBody.innerHTML = "";
-        if (snapshot.exists()) {
-          snapshot.forEach(child => {
+
+        if (routesSnapshot.exists()) {
+          routesSnapshot.forEach(child => {
             const route = child.val();
             const routeId = child.key;
+            const vehicleMap = activeLrsByRoute[routeId];
+            let vehiclesOnRouteHtml = '<span class="text-muted">None</span>';
+            if (vehicleMap && vehicleMap.size > 0) {
+              vehiclesOnRouteHtml = Array.from(vehicleMap.entries()).map(([truckNumber, truckId]) => {
+                // If truckId exists, make it a link to the vehicle detail page. Otherwise, just display the number.
+                return truckId ? `<a href="add.html?viewVehicle=${truckId}" title="View details for ${truckNumber}">${truckNumber}</a>` : truckNumber;
+              }).join(', ');
+            }
             const row = document.createElement("tr");
             row.innerHTML = `
               <td>${route.from}</td>
               <td>${route.to}</td>
               <td>${route.distance}</td>
+              <td>${vehiclesOnRouteHtml}</td>
               <td class="text-center">
                 <button class="btn btn-sm btn-outline-secondary me-1" onclick="window.editRoute('${routeId}')"><i class="fas fa-edit"></i></button>
                 <button class="btn btn-sm btn-outline-danger" onclick="window.deleteRoute('${routeId}')"><i class="fas fa-trash"></i></button>
@@ -197,9 +232,12 @@
             tableBody.appendChild(row);
           });
         } else {
-          tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No routes saved yet.</td></tr>';
+          tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No routes saved yet.</td></tr>';
         }
-      });
+      } catch (error) {
+        console.error("Error loading routes and vehicle status:", error);
+        alert("Could not load route data. Please check the console for errors.");
+      }
     }
 
     window.editRoute = (routeId) => {
