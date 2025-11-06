@@ -280,8 +280,8 @@
       font-weight: 500;
     }
 
-    /* ============================================= */
-    /* CARD VIEW STYLES - NEW IMPLEMENTATION */
+    /* =============================================
+    /* CARD VIEW STYLES - NEW IMPLEMENTATION
     /* ============================================= */
     
     .card-view-container {
@@ -571,17 +571,7 @@
             <div class="detail-item"><strong>Type:</strong> <span id="detailVehicleType"></span></div>
           </div>
           <div class="detail-group">
-            <h5>Driver Information</h5>
-            <div class="detail-item"><strong>Name:</strong> <span id="detailDriverName"></span></div>
-            <div class="detail-item"><strong>License No:</strong> <span id="detailDriverLicense"></span></div>
-            <div class="detail-item"><strong>Contact:</strong> <span id="detailContactNumber"></span></div>
-          </div>
-          <div class="detail-group">
             <h5>Documents</h5>
-            <div class="detail-item">
-              <span><i class="fas fa-id-card text-primary me-2"></i>License</span>
-              <span id="detailLicenseLink"></span>
-            </div>
             <div class="detail-item">
               <span><i class="fas fa-file-certificate text-success me-2"></i>PUC</span>
               <span id="detailPucLink"></span>
@@ -633,7 +623,7 @@
           <button class="nav-link active" id="vehicle-entry-tab" data-bs-toggle="tab" data-bs-target="#vehicle-entry-content" type="button" role="tab">Vehicle Entry & Documents</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="driver-entry-tab" data-bs-toggle="tab" data-bs-target="#driver-entry-content" type="button" role="tab">Driver Entry & Assignment</button>
+          <button class="nav-link" id="driver-entry-tab" data-bs-toggle="tab" data-bs-target="#driver-entry-content" type="button" role="tab"><i class="fas fa-user-tie me-2"></i>Driver & Payroll Management</button>
         </li>
       </ul>
 
@@ -813,7 +803,7 @@
         
         <div class="tab-pane fade" id="driver-entry-content" role="tabpanel">
           <form id="driverForm" class="form-section">
-            <h4 class="mb-3">Add Driver Details and Assign Vehicle</h4>
+            <h4 class="mb-3">Add Driver Details and Assignment</h4>
             
             <div class="card mb-4">
               <div class="card-header bg-light">
@@ -867,7 +857,46 @@
           </form>
 
           <hr class="my-4">
+          
+          <form id="payrollForm" class="form-section">
+            <h4 class="mb-3"><i class="fas fa-hand-holding-usd me-2"></i>Record Driver Salary Payment</h4>
+            
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">Payment Details</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4 mb-3">
+                    <label for="paymentDriverSelect" class="form-label">Driver *</label>
+                    <select id="paymentDriverSelect" class="form-select" required>
+                      <option value="">Select a Driver</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label for="paymentDate" class="form-label">Payment Date *</label>
+                    <input type="date" id="paymentDate" class="form-control" required />
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label for="paymentAmount" class="form-label">Amount Paid (₹) *</label>
+                    <input type="number" id="paymentAmount" class="form-control" required placeholder="e.g., 15000" step="0.01" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12 mb-3">
+                    <label for="paymentRemarks" class="form-label">Remarks (Optional)</label>
+                    <input type="text" id="paymentRemarks" class="form-control" placeholder="e.g., Full salary for Oct 2025" />
+                  </div>
+                </div>
+              </div>
+            </div>
 
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+              <button type="submit" id="savePayrollBtn" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i> Save Payment</button>
+            </div>
+          </form>
+          <hr class="my-4">
+          
           <h4 class="mb-3">Driver List</h4>
 
           <div class="table-responsive">
@@ -892,8 +921,9 @@
                 </tbody>
             </table>
           </div>
+          
         </div>
-      </div>
+        </div>
     </div>
   </div>
 
@@ -908,6 +938,47 @@
         </div>
         <div class="modal-body" id="lrDetailContent">
           </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal fade" id="driverDetailModal" tabindex="-1" aria-labelledby="driverDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title" id="driverDetailModalLabel"><i class="fas fa-user-circle me-2"></i>Driver Details and Payment History</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <h4 class="mb-3 border-bottom pb-2">Driver: <span id="modalDriverName" class="text-primary"></span></h4>
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <strong>Monthly Salary:</strong> <span id="modalDriverSalary" class="fw-bold"></span>
+                </div>
+                <div class="col-md-8">
+                    <strong>License No:</strong> <span id="modalDriverLicense"></span>
+                </div>
+            </div>
+            
+            <h5 class="mb-3"><i class="fas fa-history me-2"></i>Payment History</h5>
+            <div class="table-responsive">
+                <table id="modalPaymentHistoryTable" class="table table-sm table-striped table-bordered" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th class="text-end">Amount (₹)</th>
+                            <th>Remarks</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
@@ -970,7 +1041,7 @@
      document.addEventListener('DOMContentLoaded', () => {
        // Call basic UI initializers so toggles and pagination work immediately
        try {
-         setupViewToggle();
+         setupViewToggle(); 
        } catch (e) {
          console.warn('setupViewToggle() not ready yet:', e);
        }
@@ -1083,12 +1154,14 @@
      let detailDriverPaymentsTable; 
      let vehicleWorkTable;
      let currentEditingDriverPaymentId = null;
+     let modalDriverPaymentTable; // NEW: Datatable for driver details modal
      
      // **NEW**: Subscription variables
      let allClients = {}; 
      let vehicleLimit = 50; 
      let currentVehicleCount = 0;
-     let allDriverPayments = []; // FIX: Define the missing array for salary status checks
+     let allDriverPayments = {}; 
+     let allPayrollPayments = {}; // Payment records (used for payroll form and driver view)
 
      // DOM elements
      const vehicleTableBody = document.getElementById("vehicleTableBody"); // NEW
@@ -1134,7 +1207,6 @@
          renderVehicleListWithPagination(); // NEW
          renderVehicleCardView(); // NEW
          checkVehicleLimit(); 
-         // populateVehicleSelects(); // NEW: Refresh selectors for assignments/payments - REMOVED DUE TO TypeError
        });
 
        // NEW: Listen for driver data changes
@@ -1145,6 +1217,14 @@
          // Re-render vehicle list to update assigned driver status
          renderVehicleListWithPagination();
          renderVehicleCardView();
+         populateDriverSelects(); // NEW: Populate driver select in payroll form
+       });
+       
+       // NEW: Listen for payroll payment data changes
+       const payrollRef = ref(database, `users/${coreAccountId}/driverPayments`);
+       onValue(payrollRef, (snapshot) => {
+         allPayrollPayments = snapshot.val() || {};
+         // NOTE: Removed renderPayrollListTable() as per request.
        });
 
        // Listen for client data changes (needed for LR detail modal)
@@ -1270,7 +1350,7 @@
      function getDriverSalaryStatus(driverName) {
        // This function requires a full implementation to check driver payments against monthly salary
        // For now, it will return a default status to prevent errors.
-       if (!driverName || allDriverPayments.length === 0) {
+       if (!driverName || Object.keys(allDriverPayments).length === 0) {
          return 'Pending';
        }
        return 'Pending'; // Placeholder logic
@@ -1381,7 +1461,7 @@
      }
 
      // =============================================
-     // DRIVER LIST FUNCTIONS - NEW IMPLEMENTATION
+     // DRIVER LIST & PAYROLL FUNCTIONS 
      // =============================================
      
      // Initialize Driver List DataTable (NEW)
@@ -1409,6 +1489,7 @@
          Object.entries(allDriversData).forEach(([key, driver]) => {
             const licenseStatus = getExpiryStatus(driver.licenseExpiry);
             
+            // **CHANGE**: Added View button to driver table
             driverTable.row.add([
                 driver.driverName || 'N/A',
                 driver.driverFatherName || '-',
@@ -1418,7 +1499,10 @@
                     `<a href="${driver.licenseImageUrl}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View</a>` : 
                     '<span class="text-muted">No image</span>',
                 `₹${(driver.monthlySalary || 0).toFixed(2)}`, 
-                `<button class="btn btn-sm btn-outline-warning" onclick="editDriverEntry('${key}')" title="Edit">
+                `<button class="btn btn-sm btn-outline-info me-1" onclick="viewDriverDetails('${key}')" title="View Payroll & Details">
+                   <i class="fas fa-eye"></i> View
+                 </button>
+                 <button class="btn btn-sm btn-outline-warning me-1" onclick="editDriverEntry('${key}')" title="Edit">
                    <i class="fas fa-edit"></i>
                  </button>
                  <button class="btn btn-sm btn-outline-danger" onclick="deleteDriverEntry('${key}')" title="Delete">
@@ -1428,7 +1512,7 @@
          });
          driverTable.draw();
      }
-
+     
      // Edit Driver Entry (NEW)
      function editDriverEntry(key) {
         const driver = allDriversData[key];
@@ -1469,10 +1553,9 @@
     // Delete Driver Entry (NEW)
     function deleteDriverEntry(key) {
         if (confirm('Are you sure you want to delete this driver entry? This will also unassign them from any vehicle.')) {
-            // Since there's no assignment, we can just delete the driver.
+            // Delete the driver
             Promise.resolve()
                 .then(() => { 
-                    // Then delete the driver
                     return remove(ref(database, `users/${coreAccountId}/drivers/${key}`));
                 })
                 .then(() => {
@@ -1483,6 +1566,52 @@
                 });
         }
     }
+     
+     // **NEW**: View Driver Details (including payment history)
+     function viewDriverDetails(driverKey) {
+        const driver = allDriversData[driverKey];
+        if (!driver) return;
+        
+        // Populate static details
+        document.getElementById('modalDriverName').textContent = driver.driverName || 'N/A';
+        document.getElementById('modalDriverSalary').textContent = `₹${(driver.monthlySalary || 0).toFixed(2)}`;
+        document.getElementById('modalDriverLicense').textContent = driver.driverLicense || 'N/A';
+
+        // Initialize DataTable inside modal if not already
+        if (!modalDriverPaymentTable) {
+            modalDriverPaymentTable = $('#modalPaymentHistoryTable').DataTable({
+                searching: false,
+                paging: true,
+                info: true,
+                autoWidth: false,
+                order: [[0, 'desc']],
+                columnDefs: [
+                   { targets: [3], orderable: false }
+                 ]
+            });
+        }
+
+        modalDriverPaymentTable.clear();
+        
+        // Filter and add payment history rows
+        Object.entries(allPayrollPayments).forEach(([key, payment]) => {
+            if (payment.driverKey === driverKey) {
+                 modalDriverPaymentTable.row.add([
+                    payment.date || '-',
+                    `₹${(payment.amount || 0).toFixed(2)}`,
+                    payment.remarks || '-',
+                    `<button class="btn btn-sm btn-outline-danger" onclick="deletePayrollEntry('${key}')" title="Delete Payment">
+                       <i class="fas fa-trash"></i>
+                     </button>`
+                ]);
+            }
+        });
+        modalDriverPaymentTable.draw();
+
+        // Show the modal
+        const driverDetailModal = new bootstrap.Modal(document.getElementById('driverDetailModal'));
+        driverDetailModal.show();
+     }
      
      // =============================================
      // CARD VIEW FUNCTIONS - NEW IMPLEMENTATION (Vehicle List)
@@ -1662,6 +1791,9 @@
      async function viewDetails(key) {
        const vehicle = allVehiclesData[key];
        if (!vehicle) return;
+
+       // FIX: Define driver here to resolve the ReferenceError
+       const driver = allDriversData[vehicle.assignedDriverKey];
        
        currentVehicleData = vehicle;
        
@@ -1669,11 +1801,6 @@
        document.getElementById('detailVehicleNumber').textContent = vehicle.vehicleNumber || 'Vehicle Details';
        document.getElementById('detailVehicleModel').textContent = vehicle.vehicleModel || '-';
        document.getElementById('detailVehicleType').textContent = vehicle.vehicleType || '-';
-
-       // Document links (License comes from driver data now)
-       document.getElementById('detailLicenseLink').innerHTML = driver && driver.licenseImageUrl ? 
-         `<a href="${driver.licenseImageUrl}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>` : 
-         '<span class="text-muted">No file</span>';
          
        document.getElementById('detailPucLink').innerHTML = vehicle.pucFileUrl ? 
          `<a href="${vehicle.pucFileUrl}" target="_blank" class="btn btn-sm btn-outline-success">View</a>` : 
@@ -1697,7 +1824,7 @@
        if (!detailDriverPaymentsTable) {
            detailDriverPaymentsTable = $('#detailDriverPaymentsTable').DataTable({ "pageLength": 5, "searching": false, "info": false, "lengthChange": false, "order": [[0, "desc"]] });
        }
-       if (!vehicleWorkTable) { 
+       if (!vehicleWorkTable) { // This is the table for the detail view
            vehicleWorkTable = $('#detailVehicleWorkTable').DataTable({ "pageLength": 5, "searching": false, "info": false, "lengthChange": false, "order": [[0, "desc"]] });
        }
 
@@ -1789,14 +1916,14 @@
        document.getElementById('vehicleModel').value = vehicle.vehicleModel || '';
        document.getElementById('monthlyInstallment').value = vehicle.monthlyInstallment || '';
        
-       document.getElementById('pucExpiryDate').value = vehicle.pucExpiry || '';
-       document.getElementById('insuranceExpiryDate').value = vehicle.insuranceExpiry || '';
-       document.getElementById('fitnessExpiryDate').value = vehicle.fitnessExpiry || '';
+       document.getElementById('pucExpiryDate').value = vehicle.pucExpiry || null;
+       document.getElementById('insuranceExpiryDate').value = vehicle.insuranceExpiry || null;
+       document.getElementById('fitnessExpiryDate').value = vehicle.fitnessExpiry || null;
        
        const pucPreview = document.getElementById('pucPreview');
        if (vehicle.pucFileUrl && vehicle.pucFileUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) { pucPreview.src = vehicle.pucFileUrl; pucPreview.style.display = 'block'; }
        if (vehicle.pucFileUrl) { document.getElementById('pucFileInfo').textContent = 'A file is already uploaded. Choose a new file to replace it.'; }
-
+       
        // ... (Similar logic for insurance and fitness previews/info) ...
 
        // Show cancel button
@@ -1905,8 +2032,6 @@
                setupRealtimeListeners();
                checkVehicleLimit();
                initTabInterface();
-               loadDriverPayments();
-               // populateVehicleSelects(); // Call removed to fix TypeError
                renderDriverListTable(); // Initialize driver table
              }
            });
@@ -1923,6 +2048,7 @@
        // NEW: Separate form submissions
        document.getElementById('vehicleForm').addEventListener('submit', handleVehicleFormSubmit);
        document.getElementById('driverForm').addEventListener('submit', handleDriverFormSubmit);
+       document.getElementById('payrollForm').addEventListener('submit', handlePayrollFormSubmit); // NEW Payroll Form Handler
        document.getElementById('cancelVehicleEdit').addEventListener('click', cancelVehicleEdit);
        // NEW: Driver cancel edit (need to define)
        document.getElementById('cancelDriverEdit').addEventListener('click', cancelDriverEdit);
@@ -2149,6 +2275,10 @@
             }
 
             await savePromise; 
+            
+            cancelDriverEdit(); // Clear form after successful submission
+            document.getElementById('driverForm').reset();
+            showSuccess(isEditingDriver ? 'Driver entry updated successfully' : 'Driver entry saved successfully');
 
         } catch (error) {
             console.error('Error saving driver entry:', error);
@@ -2158,6 +2288,85 @@
             saveBtn.innerHTML = originalText;
         }
     }
+    
+    // NEW: Handle Payroll form submission
+    async function handlePayrollFormSubmit(e) {
+        e.preventDefault();
+
+        const saveBtn = document.getElementById('savePayrollBtn');
+        const originalText = saveBtn.innerHTML;
+
+        try {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="loading"></span> Processing...';
+
+            const driverKey = document.getElementById('paymentDriverSelect').value;
+            const date = document.getElementById('paymentDate').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const remarks = document.getElementById('paymentRemarks').value.trim();
+            const driver = allDriversData[driverKey];
+
+            if (!driverKey || !date || isNaN(amount) || amount <= 0) {
+                throw new Error('Please fill out all required fields with valid data.');
+            }
+            if (!driver) {
+                throw new Error('Selected driver not found in the database.');
+            }
+
+            const paymentData = {
+                driverKey: driverKey,
+                driverName: driver.driverName, // Denormalize for easier querying/display
+                date: date,
+                amount: amount,
+                remarks: remarks,
+                recordedAt: new Date().toISOString(),
+                recordedBy: currentUser.uid,
+                recordedByName: currentUser.displayName || currentUser.email
+            };
+
+            await push(ref(database, `users/${coreAccountId}/driverPayments`), paymentData);
+            
+            document.getElementById('payrollForm').reset();
+            showSuccess('Driver payment recorded successfully!');
+
+        } catch (error) {
+            console.error('Error saving payroll entry:', error);
+            showError('Error saving payroll entry: ' + error.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
+    }
+    
+    // NEW: Delete Payroll Entry
+    function deletePayrollEntry(key) {
+        if (confirm('Are you sure you want to delete this payment record? This action cannot be undone.')) {
+            remove(ref(database, `users/${coreAccountId}/driverPayments/${key}`))
+                .then(() => {
+                    showSuccess('Payment record deleted successfully.');
+                    // Re-render the driver details modal if it's open (or close it)
+                    const modalEl = document.getElementById('driverDetailModal');
+                    if (modalEl.classList.contains('show')) {
+                        // Find the driver key associated with this deleted payment (if possible) 
+                        // For simplicity, we just reload the table if modal is open, or rely on realtime listener
+                        // Since allPayrollPayments updates via onValue, the modal's table can be repopulated.
+                        const currentDriverName = document.getElementById('modalDriverName').textContent;
+                        // Find the key of the driver currently in the modal
+                        const driverKey = Object.keys(allDriversData).find(key => allDriversData[key].driverName === currentDriverName);
+                        if(driverKey) {
+                           viewDriverDetails(driverKey); // Re-render the table content
+                        } else {
+                           // If we can't find the key, close the modal to prevent errors
+                           bootstrap.Modal.getInstance(modalEl).hide();
+                        }
+                    }
+                })
+                .catch((error) => {
+                    showError('Error deleting payment record: ' + error.message);
+                });
+        }
+    }
+
 
      // Cancel Driver edit (NEW)
      function cancelDriverEdit() {
@@ -2260,44 +2469,21 @@
             }
         });
      }
-
-     // Driver Payment Functions
-     function loadDriverPayments() {
-     }
      
-     // **FIX**: Function stubbed to prevent TypeError. The elements it was trying to access 
-     // (`vehicleSelect`) do not exist in this HTML file.
-     function populateVehicleSelects() {
-       // const paymentVehicleSelect = document.getElementById('vehicleSelect'); 
-       
-       // if (!paymentVehicleSelect) return;
+     // NEW: Populate the Driver Select dropdown in the Payroll form
+     function populateDriverSelects() {
+        const select = document.getElementById('paymentDriverSelect');
+        if (!select) return;
 
-       // paymentVehicleSelect.innerHTML = '<option value="">Loading vehicles...</option>';
-       
-       // get(ref(database, `users/${coreAccountId}/vehicles`)).then((snapshot) => {
-       //   if (snapshot.exists()) {
-       //     paymentVehicleSelect.innerHTML = '<option value="">Select Vehicle/Driver</option>';
-       //     snapshot.forEach(child => {
-       //       const vehicle = child.val();
-             
-       //       // Find driver for display
-       //       const driver = allDriversData[vehicle.assignedDriverKey];
-       //       const driverName = driver ? driver.driverName : 'No Driver';
-
-       //       // Option for Payment Select
-       //       let paymentOption = document.createElement('option');
-       //       paymentOption.value = child.key; // Use vehicle key for assignment/payment
-       //       paymentOption.textContent = `${vehicle.vehicleNumber} - ${driverName}`;
-       //       paymentOption.setAttribute('data-vehicle-number', vehicle.vehicleNumber);
-       //       paymentOption.setAttribute('data-driver-name', driverName);
-       //       paymentVehicleSelect.appendChild(paymentOption);
-       //     });
-       //   } else {
-       //     paymentVehicleSelect.innerHTML = '<option value="">No vehicles found</option>';
-       //   }
-       // });
+        select.innerHTML = '<option value="">Select a Driver</option>';
+        Object.entries(allDriversData).forEach(([key, driver]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = `${driver.driverName} (Lic: ${driver.driverLicense}) - Sal: ₹${(driver.monthlySalary || 0).toFixed(2)}`;
+            select.appendChild(option);
+        });
      }
-     
+
      // View LR Details (Copied from booking.html, adapted for add.html)
      async function viewLRDetails(lrId) {
        const dataRoot = coreAccountId || currentUser.uid;
@@ -2381,8 +2567,10 @@
      window.viewLRDetails = viewLRDetails;
      window.editVehicleEntry = editVehicleEntry; // NEW
      window.deleteVehicleEntry = deleteVehicleEntry; // NEW
+     window.viewDriverDetails = viewDriverDetails; // NEW
      window.editDriverEntry = editDriverEntry; // NEW
      window.deleteDriverEntry = deleteDriverEntry; // NEW
+     window.deletePayrollEntry = deletePayrollEntry; // NEW
      window.viewDetails = viewDetails;
      window.hideDetailView = hideDetailView;
      window.downloadVehicleExcel = downloadVehicleExcel; // NEW
