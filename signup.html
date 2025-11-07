@@ -39,7 +39,7 @@
       height: 100vh;
     }
 
-    /* Left Pane - Animation/Visuals (Same as Login) */
+    /* Left Pane - Animation/Visuals (Kept simple for this version) */
     .left-pane {
       width: 50%;
       background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
@@ -71,7 +71,7 @@
       opacity: 0.9;
     }
 
-    /* Road Animation Styles (Same as Login) */
+    /* Road Animation Styles (Kept for visual design consistency) */
     .road-animation {
       position: absolute;
       bottom: 0;
@@ -172,7 +172,7 @@
         to { opacity: 1; transform: translateX(0); }
     }
 
-    /* Right Pane - Form Container (Same as Login) */
+    /* Right Pane - Form Container */
     .right-pane {
       width: 50%;
       display: flex;
@@ -196,7 +196,7 @@
       box-shadow: var(--shadow);
     }
 
-    /* Logo and Header (Same as Login) */
+    /* Logo and Header */
     .logo-placeholder {
       text-align: center;
       margin-bottom: 2rem;
@@ -222,7 +222,7 @@
       font-size: 1rem;
     }
 
-    /* Form Elements (Same as Login) */
+    /* Form Elements */
     .form-group { margin-bottom: 1.25rem; }
     .form-control {
       width: 100%;
@@ -243,7 +243,7 @@
       box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
     }
     
-    /* Primary Button (Same as Login) */
+    /* Primary Button */
     .btn {
       width: 100%;
       padding: 0.9rem 1rem;
@@ -266,39 +266,11 @@
     }
     .btn-primary:active { transform: translateY(0); }
 
-    /* Separator (Same as Login) */
-    .separator {
-      text-align: center;
-      margin: 1.5rem 0;
-      color: #adb5bd;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      font-size: 0.9rem;
-    }
-    .separator::before, .separator::after {
-      content: '';
-      flex: 1;
-      border-bottom: 1px solid #dee2e6;
-    }
-    .separator:not(:empty)::before { margin-right: .75em; }
-    .separator:not(:empty)::after { margin-left: .75em; }
+    /* Separator (Removed the separator styles entirely as the Google button is gone) */
 
-    /* Google Button (Same as Login) */
-    .btn-google {
-      background-color: #fff;
-      color: var(--text-color);
-      border: 1px solid var(--input-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-    }
-    .btn-google:hover { background-color: #f8f9fa; }
-    .btn-google img { width: 20px; height: 20px; }
-
-    /* Footer (Same as Login) */
+    /* Google Button (Styles are kept but no longer used in HTML) */
+    
+    /* Footer */
     .auth-footer {
       text-align: center;
       margin-top: 2rem;
@@ -312,7 +284,7 @@
     .error-message { 
         color: var(--error-color); 
         font-size: 0.85rem; 
-        margin-top: -0.75rem; /* Pull up closer to input */
+        margin-top: -0.75rem; 
         margin-bottom: 1.25rem;
         min-height: 1.1rem; 
         display: block; 
@@ -328,7 +300,7 @@
         font-size: 0.95rem;
     }
     
-    /* Responsive Design (Same as Login) */
+    /* Responsive Design */
     @media (max-width: 992px) {
       .left-pane { display: none; }
       .right-pane { width: 100%; animation: none; }
@@ -373,11 +345,7 @@
           
           <button type="submit" class="btn btn-primary" id="signup-button">Sign Up</button>
         </form>
-        <div class="separator">or</div>
-        <button class="btn btn-google" id="google-signup-button">
-          <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google logo">
-          Sign up with Google
-        </button>
+
         <div class="auth-footer">
           Already have an account? <a href="login.html">Sign in</a>
         </div>
@@ -392,10 +360,7 @@
       createUserWithEmailAndPassword, 
       sendEmailVerification,
       updateProfile,
-      GoogleAuthProvider, // Already present
-      signInWithPopup,    // Will be replaced
-      signInWithRedirect, // **NEW**: Add redirect method
-      getRedirectResult   // **NEW**: Add function to handle redirect result
+      // Removed: GoogleAuthProvider, signInWithPopup
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { 
       getDatabase, 
@@ -513,22 +478,22 @@
           photoURL: ''
         });
 
-        // **FIX**: Create the 14-day free trial immediately on signup.
+        // Create the 14-day free trial immediately on signup.
         const trialStart = new Date();
         const trialEnd = new Date();
         trialEnd.setDate(trialStart.getDate() + 14);
 
         const subscriptionData = {
           status: 'trial',
-          // **FIX**: Add all required fields to satisfy the database validation rules.
+          // Add all required fields to satisfy the database validation rules.
           planId: 'starter',
-          planName: 'starter', // Required by rules
-          vehicleLimit: 50,    // Default for starter plan
-          price: 699,          // Default for starter plan
+          planName: 'starter', 
+          vehicleLimit: 50,    
+          price: 699,          
           trialStart: trialStart.toISOString(),
           trialEnd: trialEnd.toISOString(),
           createdAt: trialStart.toISOString(),
-          subscribedAt: new Date().getTime() // Required by rules
+          subscribedAt: new Date().getTime() 
         };
 
         // Save user data to database
@@ -538,7 +503,7 @@
           createdAt: new Date().toISOString(),
           status: 'active',
           emailVerified: false,
-          subscription: subscriptionData // Add subscription data here
+          subscription: subscriptionData 
         };
         
         // Save to Realtime Database
@@ -551,8 +516,8 @@
         sessionStorage.setItem('coreEmail', email);
         sessionStorage.setItem('corePassword', password);
         
-        // **FIX**: Redirect to create branch account, which will then lead to plan selection.
-        window.location.href = 'create-branch-account.html'; // This page will handle the next redirect
+        // Redirect to create branch account, which will then lead to plan selection.
+        window.location.href = 'create-branch-account.html'; 
         
       } catch (error) {
         console.error('Signup error:', error);
@@ -600,33 +565,7 @@
       }
     };
     
-    // Google Sign-Up
-    document.getElementById('google-signup-button').addEventListener('click', async () => {
-      const provider = new GoogleAuthProvider();
-      // **FIX**: Use signInWithRedirect to avoid COOP issues.
-      await signInWithRedirect(auth, provider);
-    });
-
-    // **NEW**: Handle the result from a Google Sign-Up redirect.
-    async function handleRedirectResult() {
-        try {
-            const result = await getRedirectResult(auth);
-            if (result && result.user) {
-                // A new user has successfully signed up via redirect.
-                // You would now run the logic to create their database profile,
-                // similar to the `signUp` function.
-                // For now, we'll redirect to the next step in the onboarding flow.
-                window.location.href = 'create-branch-account.html';
-            }
-        } catch (error) {
-            console.error("Google Sign-Up redirect error:", error);
-            const errorContainer = document.getElementById('form-error');
-            if (errorContainer) {
-                errorContainer.textContent = error.message;
-                errorContainer.style.display = 'block';
-            }
-        }
-    }
+    // Removed: Google Sign-Up function
 
     // Add input event listeners for real-time validation
     document.addEventListener('DOMContentLoaded', function() {
@@ -652,8 +591,6 @@
           clearError(this.id);
         });
       });
-
-      handleRedirectResult(); // **NEW**: Check for a redirect result on page load.
     });
   </script>
 </body>
