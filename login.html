@@ -6,209 +6,385 @@
   <title>Login - Transport Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
+    /* Color Variables */
     :root {
-      --pink: #ff3366;
-      --white: #ffffff;
-      --trans-white: rgba(255,255,255,0.85);
+      --primary-color: #2E8B57; /* Sea Green */
+      --secondary-color: #43B97F; /* Lighter Green */
+      --accent-color: #3CB371; /* Medium Green */
+      --text-color: #1F1F1F;
+      --light-bg: #f8f9fa;
+      --white: #FFFFFF;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.08); /* Stronger shadow for professionalism */
+      --radius: 12px;
+      --input-border: #ced4da;
     }
 
     * { box-sizing: border-box; }
 
+    /* Base Body Styling */
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-      color: var(--white);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      /* Faint gradient background */
+      background: linear-gradient(135deg, var(--white) 0%, #f0f8f4 100%);
+      overflow: hidden;
+      display: flex;
+    }
+
+    .split-screen {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    /* Left Pane - Animation/Visuals */
+    .left-pane {
+      width: 50%;
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
       position: relative;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 3rem;
+      color: var(--white);
+      /* Add entry animation */
+      animation: fadeInFromLeft 0.8s ease-out forwards;
     }
 
-    /* Scenic blurred background */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;
-      filter: blur(10px) saturate(1.1);
-      transform: scale(1.05);
-      z-index: -2;
+    /* Custom Title for Left Pane (Inspired by Fleetx screenshot) */
+    .left-content {
+      position: relative;
+      z-index: 10;
+      max-width: 80%;
+    }
+    .left-content h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .left-content p {
+      font-size: 1.2rem;
+      font-weight: 300;
+      opacity: 0.9;
     }
 
-    /* Subtle dark overlay to enhance contrast */
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(10,10,30,0.35), rgba(10,10,30,0.55));
-      z-index: -1;
+    /* Road Animation Styles */
+    .road-animation {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 300px;
+      /* Road color (dark grey) */
+      background: #3c3c3c;
+      border-top: 10px solid #5c5c5c;
+      z-index: 5;
+    }
+
+    /* Dashed Road Line */
+    .road-line {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: transparent;
+      overflow: hidden;
+      transform: translateY(-50%);
+    }
+    .road-line::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200%;
+      height: 100%;
+      /* Creates the animated dashed line effect */
+      background: repeating-linear-gradient(to right, #fff 0, #fff 50px, transparent 50px, transparent 100px);
+      animation: move-line 2s linear infinite;
+    }
+
+    /* Vehicle Styles */
+    .vehicle {
+      position: absolute;
+      bottom: 10px;
+      animation: drive 10s linear infinite;
+      z-index: 6;
+      border-radius: 4px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .truck {
+      width: 120px;
+      height: 60px;
+      background: var(--secondary-color);
+      border-radius: 10px 10px 0 0;
+      left: -150px;
+      animation-duration: 12s;
+    }
+    /* Truck Cab */
+    .truck::before {
+      content: '';
+      position: absolute;
+      right: -30px;
+      top: 10px;
+      width: 40px;
+      height: 40px;
+      background: var(--accent-color);
+      border-radius: 5px;
+    }
+    /* Truck Wheels (simplified) */
+    .truck::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 5px;
+      right: 5px;
+      height: 10px;
+      background: #111;
+      border-radius: 5px;
+    }
+
+    .car {
+      width: 80px;
+      height: 40px;
+      background: var(--accent-color);
+      border-radius: 20px 20px 0 0;
+      left: -100px;
+      animation-duration: 8s;
+      animation-delay: -4s;
+    }
+    /* Car Wheels (simplified) */
+    .car::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 5px;
+      right: 5px;
+      height: 10px;
+      background: #111;
+      border-radius: 5px;
+    }
+
+    /* Keyframe Animations */
+    @keyframes move-line {
+      from { background-position: 0 0; }
+      to { background-position: -100px 0; }
+    }
+
+    @keyframes drive {
+      from { transform: translateX(-150px); }
+      to { transform: translateX(110vw); }
+    }
+    
+    @keyframes fadeInFromLeft {
+        from { opacity: 0; transform: translateX(-50px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Right Pane - Form Container */
+    .right-pane {
+      width: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      /* Entry animation for the form */
+      animation: fadeInFromRight 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeInFromRight {
+      from { opacity: 0; transform: translateX(50px); }
+      to { opacity: 1; transform: translateX(0); }
     }
 
     .auth-container {
-      width: min(92vw, 380px);
-      border-radius: 20px;
-      padding: 28px 24px;
-      backdrop-filter: blur(6px);
-      background: linear-gradient(180deg, rgba(92, 45, 145, 0.65), rgba(150, 105, 200, 0.35));
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255,255,255,0.18);
+      width: 100%;
+      max-width: 420px;
+      background: var(--white);
+      padding: 2.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
 
-    .top-icon {
-      display: grid;
-      place-items: center;
-      margin-bottom: 14px;
+    /* Logo and Header */
+    .logo-placeholder {
+      text-align: center;
+      margin-bottom: 2rem;
     }
-    .top-icon i {
-      font-size: 48px;
-      color: var(--white);
-      text-shadow: 0 6px 24px rgba(0,0,0,0.35);
+    .logo-placeholder img {
+      max-width: 180px;
+      height: auto;
     }
 
     .auth-header {
       text-align: center;
-      margin-bottom: 18px;
+      margin-bottom: 2rem;
     }
     .auth-header h1 {
-      margin: 0 0 6px 0;
-      font-size: 22px;
-      letter-spacing: 0.2px;
-      color: var(--white);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 0.5rem;
     }
     .auth-header p {
       margin: 0;
-      font-size: 13px;
-      color: rgba(255,255,255,0.8);
+      color: #6c757d;
+      font-size: 1rem;
     }
 
-    .input-group {
-      position: relative;
-      margin: 14px 0;
-    }
-    .input-group i {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: rgba(255,255,255,0.85);
-      font-size: 16px;
-      pointer-events: none;
-    }
+    /* Form Elements */
+    .form-group { margin-bottom: 1.25rem; }
     .form-control {
       width: 100%;
-      border: 1px solid rgba(255,255,255,0.35);
-      background: rgba(255,255,255,0.08);
-      color: var(--white);
-      padding: 12px 14px 12px 44px;
-      border-radius: 14px;
-      font-size: 15px;
-      outline: none;
-      transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      font-size: 1rem;
+      /* Subtle inset shadow */
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .form-control::placeholder { color: rgba(255,255,255,0.75); }
     .form-control:focus {
-      border-color: var(--trans-white);
-      background: rgba(255,255,255,0.12);
-      box-shadow: 0 8px 26px rgba(0,0,0,0.25);
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.2);
     }
 
-    .btn {
-      width: 100%;
-      padding: 13px 16px;
-      border: none;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform .06s ease, box-shadow .2s ease, opacity .2s ease;
-    }
-    .btn-primary {
-      background: var(--pink);
-      color: var(--white);
-      box-shadow: 0 12px 28px rgba(255, 51, 102, 0.45);
-    }
-    .btn-primary:hover { transform: translateY(-1px); }
-    .btn-primary:active { transform: translateY(0); box-shadow: 0 6px 18px rgba(255,51,102,0.35); }
-
-    .auth-footer {
-      text-align: center;
-      margin-top: 14px;
-      color: rgba(255,255,255,0.9);
-      font-size: 13px;
-    }
-    .auth-footer a { color: #fff; font-weight: 700; text-decoration: none; }
-    .auth-footer a:hover { text-decoration: underline; }
-
-    .error-message, .success-message {
-      font-size: 13px;
-      margin-top: 8px;
-      min-height: 1.25rem;
-      text-align: center;
-    }
-    .error-message { color: #ffb3c2; }
-    .success-message { color: #b7ffcc; }
-
-    #user-status { margin-top: 8px; text-align: center; font-size: 13px; }
-
-    .logo { display: none; }
-
+    /* Forgot Password Link */
     .forgot-password {
       display: block;
-      margin: 6px 0 4px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.95);
+      margin-top: -0.75rem;
+      margin-bottom: 1.5rem; /* Increased spacing */
+      font-size: 0.9rem;
+      color: #6c757d;
       text-decoration: none;
       text-align: right;
+      font-weight: 500;
     }
-    .forgot-password:hover { text-decoration: underline; }
+    .forgot-password:hover { color: var(--primary-color); text-decoration: underline; }
 
-    /* Subscription Expired Card */
-    .expired-card {
+    /* Primary Button */
+    .btn {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 6px 15px rgba(46, 139, 87, 0.2);
+    }
+    .btn-primary {
+      background: var(--primary-color);
+      color: var(--white);
+    }
+    .btn-primary:hover { 
+      background-color: var(--accent-color); 
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(46, 139, 87, 0.3);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* Separator */
+    .separator {
       text-align: center;
-      padding: 20px;
+      margin: 1.5rem 0;
+      color: #adb5bd;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
     }
-    .expired-card h2 {
-      color: var(--pink);
-      margin-bottom: 15px;
+    .separator::before, .separator::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #dee2e6;
     }
-    .expired-card p {
-      color: var(--trans-white);
-      margin-bottom: 25px;
-      line-height: 1.5;
+    .separator:not(:empty)::before { margin-right: .75em; }
+    .separator:not(:empty)::after { margin-left: .75em; }
+
+    /* Google Button */
+    .btn-google {
+      background-color: #fff;
+      color: var(--text-color);
+      border: 1px solid var(--input-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
     }
-    .expired-card .btn {
-      background: var(--white);
-      color: var(--pink);
-      box-shadow: none;
-      font-weight: 700;
+    .btn-google:hover { background-color: #f8f9fa; }
+    .btn-google img { width: 20px; height: 20px; }
+
+    /* Footer */
+    .auth-footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.95rem;
+      color: #6c757d;
     }
+    .auth-footer a { color: var(--primary-color); font-weight: 600; text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+
+    /* Status Messages */
+    #user-status { margin-top: 1rem; text-align: center; font-size: 0.9rem; min-height: 1.2rem; }
+    .error-message { color: #dc3545; }
+    .success-message { color: #198754; }
+    
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .left-pane { display: none; }
+      .right-pane { width: 100%; animation: none; }
+      .auth-container { max-width: 380px; }
+      body { background: var(--white); }
+    }
+
   </style>
 </head>
 <body>
-  <div class="auth-container">
-    <div class="top-icon">
-      <i class="fas fa-check-circle" aria-hidden="true"></i>
-    </div>
-    <div class="auth-header">
-      <h1>Welcome back</h1>
-      <p>Sign in to continue</p>
-    </div>
-    <form id="login-form">
-      <div class="input-group">
-        <i class="fas fa-user" aria-hidden="true"></i>
-        <input type="email" id="login-email" class="form-control" placeholder="Email address" autocomplete="email" required>
+  <div class="split-screen">
+    <div class="left-pane">
+      <div class="left-content">
+        <h1>An integrated platform</h1>
+        <p>to improve sustainability, effectiveness, and safety.</p>
       </div>
-      <div class="input-group">
-        <i class="fas fa-lock" aria-hidden="true"></i>
-        <input type="password" id="login-password" class="form-control" placeholder="Password" autocomplete="current-password" required>
+      <div class="road-animation">
+        <div class="road-line"></div>
+        <div class="vehicle truck"></div>
+        <div class="vehicle car"></div>
       </div>
-      <a href="#" class="forgot-password" onclick="resetPassword(); return false;">Forgot password?</a>
-      <button type="submit" class="btn btn-primary" id="login-button">Sign In</button>
-      <div id="user-status"></div>
-    </form>
-    <div class="auth-footer">
-      Don't have an account? <a href="signup.html">Sign up</a>
+    </div>
+    <div class="right-pane">
+      <div class="auth-container">
+        <div class="logo-placeholder">
+          <img src="logo1.jpg" alt="TransVortex Logo">
+        </div>
+        <div class="auth-header">
+          <h1>Sign in</h1>
+          <p>to access your transport dashboard</p>
+        </div>
+        <form id="login-form">
+          <div class="form-group">
+            <input type="email" id="login-email" class="form-control" placeholder="Email address" autocomplete="email" required>
+          </div>
+          <div class="form-group">
+            <input type="password" id="login-password" class="form-control" placeholder="Password" autocomplete="current-password" required>
+          </div>
+          <a href="#" class="forgot-password" onclick="resetPassword(); return false;">Forgot password?</a>
+          <button type="submit" class="btn btn-primary" id="login-button">Login</button>
+          <div id="user-status"></div>
+        </form>
+        <div class="auth-footer">
+          Don't have an account? <a href="signup.html">Sign up</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -218,7 +394,7 @@
       getAuth,
       signInWithEmailAndPassword,
       onAuthStateChanged,
-      sendPasswordResetEmail
+      sendPasswordResetEmail,
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
       getDatabase,
@@ -238,7 +414,7 @@
       storageBucket: "transport-dashboard-ad69a.appspot.com",
       messagingSenderId: "526889676196",
       appId: "1:526889676196:web:66032c80a4aede690ae531",
-      measurementId: "G-7F9R7HJYDH"
+      measurementId: "G-7F9R7HJYDH" // Keep this for analytics
     };
 
     const app = initializeApp(firebaseConfig);
@@ -251,7 +427,7 @@
       const successMessage = document.createElement('div');
       successMessage.className = 'success-message';
       successMessage.textContent = 'Account created successfully! Please log in to continue.';
-      successMessage.style.textAlign = 'center';
+      successMessage.style.textAlign = 'center'; // Keep this style
       successMessage.style.marginBottom = '20px';
       document.querySelector('.auth-container').insertBefore(successMessage, document.querySelector('.auth-header'));
       
@@ -263,13 +439,12 @@
     function showSubscriptionExpiredCard() {
       const authContainer = document.querySelector('.auth-container');
       authContainer.innerHTML = `
-        <div class="expired-card">
-          <div class="top-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="auth-header">
+          <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: #ffc107; margin-bottom: 1rem;"></i>
           <h2>Subscription Expired</h2>
           <p>Your subscription is over. To get access to your dashboard, please contact your transport owner to subscribe right now.</p>
-          <button class="btn" onclick="window.location.href='index.html'">OK</button>
-        </div>
       `;
+      // Removed the OK button to make it a static notification. User can navigate away manually.
     }
 
     // Function to check if a date is valid
@@ -287,7 +462,7 @@
     window.login = async function() {
       console.log('Login function called');
       const email = document.getElementById("login-email").value.trim();
-      const password = document.getElementById("login-password").value;
+      const password = document.getElementById("login-password").value.trim();
       const loginButton = document.getElementById("login-button");
       
       // Store original button HTML at the beginning
@@ -327,7 +502,7 @@
       try {
         // Show loading state
         loginButton.disabled = true;
-        loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+        loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
         
         // Sign in with email and password
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
