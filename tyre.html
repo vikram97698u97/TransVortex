@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tyre Management System</title>
+  <title>Tyre Management & Analytics System</title>
   <style>
+    /* ... (original CSS remains the same) ... */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -587,6 +588,56 @@
       margin-bottom: 10px;
     }
 
+    /* ADDED STYLES FOR TABS */
+    .tab-header {
+      display: flex;
+      border-bottom: 2px solid #ddd;
+      margin-bottom: 20px;
+    }
+    .tab-button {
+      padding: 10px 15px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 18px;
+      font-weight: 600;
+      color: #666;
+      transition: color 0.3s, border-bottom 0.3s;
+      margin-right: 10px;
+    }
+    .tab-button.active {
+      color: #2E8B57;
+      border-bottom: 3px solid #2E8B57;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* STYLES FROM TYRE_ANALYTICS.HTML */
+    .analytics-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px; margin-top: 16px; margin-bottom: 16px;}
+    .analytics-kpi{background:#fff;border:1px solid #e8efe9;border-radius:16px;padding:18px;box-shadow:0 10px 28px rgba(0,0,0,.08)}
+    .analytics-label{color:#5b6676;font-size:.9rem}
+    .analytics-value{font-size:1.6rem;font-weight:900;margin-top:6px}
+    .analytics-sub{font-size:.85rem;color:#5b6676}
+    .analytics-grid-2{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+    .analytics-grid-2-even{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .analytics-card{background:#fff;border:1px solid #e8efe9;border-radius:16px;padding:16px;box-shadow:0 10px 28px rgba(0,0,0,.08)}
+    .analytics-card h3{margin:0 0 10px;font-size:1.05rem; color: #2E8B57;}
+    .analytics-chart-wrap{position:relative;height:320px}
+    .ai-list{margin:0;padding-left:18px;color:#3a4656}
+    .analytics-table-wrap{overflow:auto; margin-top:8px}
+    .analytics-table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .analytics-table thead th{font-size:.9rem;text-align:left;color:#425066;padding:10px 10px}
+    .analytics-table tbody td{background:#fff;border:1px solid #e8efe9;border-left:none;border-right:none;padding:12px 10px; box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+    
+    @media (max-width: 1080px) {
+        .analytics-kpis{grid-template-columns:1fr 1fr}
+        .analytics-grid-2{grid-template-columns:1fr}
+        .analytics-grid-2-even{grid-template-columns:1fr}
+    }
     @media (max-width: 768px) {
       .container {
         padding: 15px;
@@ -608,6 +659,8 @@
       .vehicle-actions {
         margin-top: 10px;
       }
+      .analytics-kpis{grid-template-columns:1fr}
+      .analytics-chart-wrap{height:280px}
     }
   </style>
 </head>
@@ -616,122 +669,170 @@
   <script src="table-pager.js"></script>
 
   <div class="container">
-    <h1>Tyre Management System</h1>
-    
-    <!-- Summary Dashboard -->
-    <div class="summary-dashboard">
-      <div class="summary-card">
-        <h3><i class="fas fa-truck"></i> Total Vehicles</h3>
-        <p id="totalVehiclesStat">0</p>
-      </div>
-      <div class="summary-card">
-        <h3><i class="fas fa-coins"></i> Total Tyre Investment</h3>
-        <p id="totalInvestmentStat">₹0</p>
-      </div>
+    <h1>Tyre Management & Analytics System</h1>
+
+    <div class="tab-header">
+        <button class="tab-button active" onclick="openTab(event, 'Management')"><i class="fas fa-list-check"></i> Management</button>
+        <button class="tab-button" onclick="openTab(event, 'Analytics')"><i class="fas fa-chart-pie"></i> Analytics</button>
     </div>
 
-    <div id="alertContainer"></div>
-    
-    <!-- Add Vehicle Form -->
-    <div class="form-section">
-      <h3 id="formTitle">Add New Vehicle</h3>
-      
-      <div class="form-group">
-        <label for="vehicleNumber">Vehicle Number: <span class="text-danger">*</span></label> 
-        <div class="vehicle-input-container" style="position: relative;">
-          <input type="text" id="vehicleNumber" class="form-control" placeholder="e.g., RJ38GA2433" required oninput="validateVehicleInput(this.value)"> 
-          <div id="vehicleSuggestions" class="vehicle-suggestions" style="display: none;"></div> 
-          <div id="vehicleNotFound" class="vehicle-not-found" style="display: none;"> 
-            <i class="fas fa-exclamation-triangle"></i> This vehicle is not registered.
-          </div> 
-          <div id="vehicleValid" class="vehicle-valid" style="display: none;"> 
-            <i class="fas fa-check-circle"></i> Vehicle is registered and valid.
+    <div id="Management" class="tab-content active">
+        
+        <div class="summary-dashboard">
+          <div class="summary-card">
+            <h3><i class="fas fa-truck"></i> Total Vehicles</h3>
+            <p id="totalVehiclesStat">0</p>
+          </div>
+          <div class="summary-card">
+            <h3><i class="fas fa-coins"></i> Total Tyre Investment</h3>
+            <p id="totalInvestmentStat">₹0</p>
           </div>
         </div>
-      </div>
-      
-      <div class="form-group">
-        <label for="vehicleModel">Vehicle Model:</label>
-        <input type="text" id="vehicleModel" placeholder="e.g., Tata Bulker Z" required>
-      </div>
-      
-      <div id="tyresContainer">
-        <div class="tyre-container">
-          <div class="tyre-header">
-            <span class="tyre-title">Tyre 1</span>
-          </div>
-          <div class="tyre-row">
-            <div class="form-group">
-              <label>Tyre Number:</label>
-              <input type="text" class="tyre-number" placeholder="e.g., T001" required>
-            </div>
-            <div class="form-group">
-              <label>Brand:</label>
-              <input type="text" class="tyre-brand" placeholder="e.g., Apollo" required>
-            </div>
-            <div class="form-group">
-              <label>Position:</label>
-              <input type="text" class="tyre-position" placeholder="e.g., Front-Left" required>
-            </div>
-            <div class="form-group">
-              <label>Added Date:</label>
-              <input type="date" class="tyre-added-date" required>
-            </div>
-            <div class="form-group">
-              <label>Cost (₹):</label>
-              <input type="number" class="tyre-cost" placeholder="e.g., 5000" required>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <button class="btn btn-primary" onclick="addTyre()">Add Another Tyre</button>
-      <button class="btn btn-primary" id="saveVehicleBtn" onclick="saveVehicle()">Save Vehicle</button>
-      <button class="btn btn-danger" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">Cancel</button>
-    </div>
-    
-    <!-- Vehicle List Section -->
-    <div class="form-section">
-      <h3>Vehicle List</h3>
-      <!-- Search Section -->
-      <div class="search-section">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search by vehicle number, model, or tyre details..." oninput="searchVehicles()">
-      </div>
 
-      <div id="vehicleList"></div>
-      <!-- Pagination Controls (Tab System) for Vehicle Cards -->
-      <div style="margin-top: 16px;">
-        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-          <label for="entriesPerPageVehicles" style="font-weight:600;">Entries per page:</label>
-          <select id="entriesPerPageVehicles" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
-            <option value="5">5</option>
-            <option value="10" selected>10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-          </select>
-          <div id="entriesInfoVehicles" style="color:#666; font-size:14px;"></div>
+        <div id="alertContainer"></div>
+        
+        <div class="form-section">
+          <h3 id="formTitle">Add New Vehicle</h3>
+          
+          <div class="form-group">
+            <label for="vehicleNumber">Vehicle Number: <span class="text-danger">*</span></label> 
+            <div class="vehicle-input-container" style="position: relative;">
+              <input type="text" id="vehicleNumber" class="form-control" placeholder="e.g., RJ38GA2433" required oninput="validateVehicleInput(this.value)"> 
+              <div id="vehicleSuggestions" class="vehicle-suggestions" style="display: none;"></div> 
+              <div id="vehicleNotFound" class="vehicle-not-found" style="display: none;"> 
+                <i class="fas fa-exclamation-triangle"></i> This vehicle is not registered.
+              </div> 
+              <div id="vehicleValid" class="vehicle-valid" style="display: none;"> 
+                <i class="fas fa-check-circle"></i> Vehicle is registered and valid.
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="vehicleModel">Vehicle Model:</label>
+            <input type="text" id="vehicleModel" placeholder="e.g., Tata Bulker Z" required>
+          </div>
+          
+          <div id="tyresContainer">
+            <div class="tyre-container">
+              <div class="tyre-header">
+                <span class="tyre-title">Tyre 1</span>
+              </div>
+              <div class="tyre-row">
+                <div class="form-group">
+                  <label>Tyre Number:</label>
+                  <input type="text" class="tyre-number" placeholder="e.g., T001" required>
+                </div>
+                <div class="form-group">
+                  <label>Brand:</label>
+                  <input type="text" class="tyre-brand" placeholder="e.g., Apollo" required>
+                </div>
+                <div class="form-group">
+                  <label>Position:</label>
+                  <input type="text" class="tyre-position" placeholder="e.g., Front-Left" required>
+                </div>
+                <div class="form-group">
+                  <label>Added Date:</label>
+                  <input type="date" class="tyre-added-date" required>
+                </div>
+                <div class="form-group">
+                  <label>Cost (₹):</label>
+                  <input type="number" class="tyre-cost" placeholder="e.g., 5000" required>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <button class="btn btn-primary" onclick="addTyre()">Add Another Tyre</button>
+          <button class="btn btn-primary" id="saveVehicleBtn" onclick="saveVehicle()">Save Vehicle</button>
+          <button class="btn btn-danger" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">Cancel</button>
         </div>
-        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
-          <button class="tab-nav-control" id="prevVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <div class="tab-navigation" id="tabNavigationVehicles" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
-          <button class="tab-nav-control" id="nextVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
-            <i class="fas fa-chevron-right"></i>
-          </button>
+        
+        <div class="form-section">
+          <h3>Vehicle List</h3>
+          <div class="search-section">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search by vehicle number, model, or tyre details..." oninput="searchVehicles()">
+          </div>
+
+          <div id="vehicleList"></div>
+          <div style="margin-top: 16px;">
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+              <label for="entriesPerPageVehicles" style="font-weight:600;">Entries per page:</label>
+              <select id="entriesPerPageVehicles" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+              <div id="entriesInfoVehicles" style="color:#666; font-size:14px;"></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+              <button class="tab-nav-control" id="prevVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <div class="tab-navigation" id="tabNavigationVehicles" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+              <button class="tab-nav-control" id="nextVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
     </div>
+
+    <div id="Analytics" class="tab-content">
+        <section class="analytics-kpis">
+            <div class="analytics-kpi"><div class="analytics-label">Avg Tyre Health</div><div class="analytics-value" id="kpiHealth">0%</div><div class="analytics-sub">Across fleet</div></div>
+            <div class="analytics-kpi"><div class="analytics-label">Active Tyres</div><div class="analytics-value" id="kpiActive">0</div><div class="analytics-sub">Mounted & in‑use</div></div>
+            <div class="analytics-kpi"><div class="analytics-label">Attention Needed</div><div class="analytics-value" id="kpiAlerts">0</div><div class="analytics-sub">Health < 60% or age > 2y</div></div>
+            <div class="analytics-kpi"><div class="analytics-label">Total Tyre Cost</div><div class="analytics-value" id="kpiCost">₹0</div><div class="analytics-sub">Purchase + maintenance</div></div>
+        </section>
+    
+        <section class="analytics-grid-2" style="margin-top:16px">
+            <div class="analytics-card">
+              <h3>Tyre Health by Vehicle</h3>
+              <div class="analytics-chart-wrap"><canvas id="healthByVehicle"></canvas></div>
+            </div>
+            <div class="analytics-card">
+              <h3>Brand Distribution</h3>
+              <div class="analytics-chart-wrap"><canvas id="brandShare"></canvas></div>
+            </div>
+        </section>
+    
+        <section class="analytics-grid-2-even" style="margin-top:16px">
+            <div class="analytics-card">
+              <h3>Cost per Km (Trend)</h3>
+              <div class="analytics-chart-wrap"><canvas id="cpkTrend"></canvas></div>
+            </div>
+            <div class="analytics-card">
+              <h3>AI Insights</h3>
+              <ul id="aiInsights" class="ai-list">
+                <li>Loading insights…</li>
+              </ul>
+            </div>
+        </section>
+    
+        <section class="analytics-card" style="margin-top:16px">
+          <h3 style="margin:0 0 8px">Tyre Inventory</h3>
+          <div class="analytics-table-wrap">
+            <table class="analytics-table">
+              <thead>
+                <tr>
+                  <th>Tyre ID</th><th>Vehicle</th><th>Position</th><th>Brand</th><th>Size</th><th>Installed</th><th>Km</th><th>Health</th><th>Status</th><th>Cost</th>
+                </tr>
+              </thead>
+              <tbody id="tyreTbodyAnalytics"></tbody> </table>
+          </div>
+        </section>
+    </div>
+
   </div>
 
-  <!-- **NEW**: Change/Swap Tyre Modal -->
   <div id="changeTyreModal" style="display:none; position:fixed; z-index:1050; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center; flex-direction:column;">
     <div style="background-color:#fff; padding:25px; border-radius:10px; width:90%; max-width:600px; position:relative;">
       <span onclick="closeChangeTyreModal()" style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer;">&times;</span>
       <h3 id="changeTyreModalTitle">Change Tyre</h3>
       <p>Changing Tyre: <strong id="sourceTyreInfo"></strong> from Vehicle: <strong id="sourceVehicleInfo"></strong></p>
 
-      <!-- Move Tyre Section -->
       <div class="modal-section">
         <h4>Move Tyre to another Vehicle</h4>
         <div class="form-group">
@@ -745,7 +846,6 @@
         <button class="btn btn-primary" onclick="moveTyre()">Move Tyre</button>
       </div>
 
-      <!-- Swap Tyre Section -->
       <div class="modal-section">
         <h4>Swap Tyre with another Tyre</h4>
         <div class="form-group">
@@ -761,15 +861,14 @@
     </div>
   </div>
 
-  <!-- PDF Generation Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
-  <script type="module">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script> <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged ,signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getDatabase, ref, set, push, onValue, update, remove, get, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+    // ... (Original Firebase Config and init remains) ...
     const firebaseConfig = {
       apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
       authDomain: "transport-dashboard-ad69a.firebaseapp.com",
@@ -801,6 +900,170 @@
     let itemsPerPageVehicles = 10;
     let totalPagesVehicles = 1;
     let searchTermVehicles = '';
+
+    // ANALYTICS STATE AND FUNCTIONS (Copied from tyre_analytics.html)
+    // Chart theme
+    const gridColor = '#e8efe9';
+    Chart.defaults.color = '#3b4758';
+    Chart.defaults.borderColor = gridColor;
+    Chart.defaults.font.family = 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+    const analyticsBaseOpts = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'top', labels:{ boxWidth:12 }}, tooltip:{ mode:'index', intersect:false }}, scales:{ x:{ grid:{ color:gridColor }}, y:{ grid:{ color:gridColor }, beginAtZero:true }}};
+    let analyticsCharts = {};
+    let analyticsRows = [];
+
+    const INR = n => '₹'+(Number(n)||0).toLocaleString('en-IN');
+    function healthColor(p){ return p>=75? '#22c55e' : p>=50? '#f59e0b' : '#ef4444'; }
+    function computeHealth(t){
+      const km = Number(t.totalRunningKm||0); // Adjusted to use totalRunningKm from tyre.html structure
+      const installed = t.addedAt ? new Date(t.addedAt) : null;
+      // Convert addedAt (timestamp) to Date
+      const installDate = t.addedAt ? new Date(t.addedAt) : null;
+      const ageYears = installDate? (Date.now()-installDate.getTime())/31557600000 : 0;
+      let score = 100 - (km/50000)*100 - ageYears*10; // Simple heuristic
+      if (t.status==='damaged') score -= 30;
+      return Math.max(0, Math.min(100, score));
+    }
+    function setUpdated(){ 
+        // We'll update a general last sync time if needed, but not critical for this integration
+    }
+
+    function destroyAnalyticsCharts(){ Object.values(analyticsCharts).forEach(c=>c.destroy()); analyticsCharts = {}; }
+
+    function flattenTyreData(){
+      analyticsRows = [];
+      for (const [vehKey, v] of Object.entries(allVehiclesData)){
+        const vno = v.vehicleNumber || vehKey;
+        const tyres = v.tyres || []; // tyres is an array in tyre.html
+        for (const t of tyres){
+          const installDate = t.addedAt ? new Date(t.addedAt) : null;
+          const ageYears = installDate? ((Date.now()-installDate.getTime())/31557600000) : 0;
+          const health = computeHealth(t);
+          const r = {
+            id: t.number, // Using tyre number as ID
+            vehicle: vno,
+            position: t.position || 'N/A',
+            brand: t.brand || '',
+            size: t.size || 'N/A', // Size is not in data, defaulting
+            installDate: installDate? installDate.toLocaleDateString() : 'N/A',
+            km: Number(t.totalRunningKm||0),
+            cost: Number(t.cost||0),
+            status: t.status || 'active',
+            health: health,
+            installAgeYears: ageYears,
+            installMonth: installDate? installDate.getMonth() : 0
+          };
+          analyticsRows.push(r);
+        }
+      }
+      renderAnalytics();
+    }
+
+    function renderAnalytics(){
+        renderAnalyticsKPIs();
+        renderAnalyticsCharts();
+        renderAnalyticsTable();
+        renderAnalyticsInsights();
+    }
+
+    function renderAnalyticsKPIs(){
+      const avgHealth = analyticsRows.length? analyticsRows.reduce((a,b)=>a+b.health,0)/analyticsRows.length : 0;
+      const active = analyticsRows.filter(r=> r.status==='active').length;
+      const alerts = analyticsRows.filter(r=> r.health<60 || (r.installAgeYears||0)>2).length;
+      const totalCost = analyticsRows.reduce((a,b)=> a + (Number(b.cost)||0), 0);
+      document.getElementById('kpiHealth').textContent = `${avgHealth.toFixed(1)}%`;
+      document.getElementById('kpiActive').textContent = active;
+      document.getElementById('kpiAlerts').textContent = alerts;
+      document.getElementById('kpiCost').textContent = INR(totalCost);
+    }
+
+    function renderAnalyticsCharts(){
+      destroyAnalyticsCharts();
+      // Health by vehicle (avg)
+      const byVeh = {};
+      analyticsRows.forEach(r=>{ if(!byVeh[r.vehicle]) byVeh[r.vehicle]=[]; byVeh[r.vehicle].push(r.health); });
+      const vLabels = Object.keys(byVeh);
+      const vData = vLabels.map(v=> byVeh[v].reduce((a,b)=>a+b,0)/byVeh[v].length);
+      analyticsCharts.hbv = new Chart(document.getElementById('healthByVehicle'), {
+        type:'bar', data:{ labels:vLabels, datasets:[{ label:'Avg Health %', data:vData, backgroundColor:'#2E8B57' }]}, options: analyticsBaseOpts
+      });
+
+      // Brand share
+      const byBrand = {};
+      analyticsRows.forEach(r=>{ const b=r.brand||'—'; byBrand[b]=(byBrand[b]||0)+1; });
+      const bLabels = Object.keys(byBrand); const bVals = Object.values(byBrand);
+      analyticsCharts.brand = new Chart(document.getElementById('brandShare'), {
+        type:'doughnut', data:{ labels:bLabels, datasets:[{ data:bVals, backgroundColor:['#2E8B57','#3CB371','#20B2AA','#66CDAA','#8FBC8F','#A1E3B5','#7BD389','#43B97F']}]}, options:{ plugins:{ legend:{ position:'right' }}}
+      });
+
+      // Cost per km trend (monthly buckets from install dates as a proxy)
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const buckets = Array.from({length:12},()=>({cost:0, km:0}));
+      analyticsRows.forEach(r=>{ const i = (r.installMonth||0)%12; buckets[i].cost += Number(r.cost||0); buckets[i].km += Number(r.km||0); });
+      const cpk = buckets.map(b=> b.km? b.cost/b.km : 0);
+      analyticsCharts.cpk = new Chart(document.getElementById('cpkTrend'), { type:'line', data:{ labels:months, datasets:[{ label:'₹/km', data:cpk, tension:.25, borderColor:'#2E8B57', backgroundColor:'rgba(46,139,87,.12)', fill:true }]}, options: analyticsBaseOpts });
+    }
+
+    function renderAnalyticsTable(){
+      const tbody = document.getElementById('tyreTbodyAnalytics');
+      tbody.innerHTML = '';
+      analyticsRows.forEach(r=>{
+        const tr = document.createElement('tr');
+        const hc = healthColor(r.health);
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td>${r.vehicle}</td>
+          <td>${r.position}</td>
+          <td>${r.brand||'-'}</td>
+          <td>${r.size||'-'}</td>
+          <td>${r.installDate||'-'}</td>
+          <td>${(r.km||0).toLocaleString('en-IN')}</td>
+          <td><span style="display:inline-block;background:${hc}1f;color:${hc};padding:6px 10px;border-radius:999px;font-weight:700;font-size:.8rem">${r.health.toFixed(1)}%</span></td>
+          <td>${r.status}</td>
+          <td>${INR(r.cost||0)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderAnalyticsInsights(){
+      const list = document.getElementById('aiInsights');
+      if (!analyticsRows.length){ list.innerHTML = '<li>No tyres found.</li>'; return; }
+      const avg = analyticsRows.reduce((a,b)=>a+b.health,0)/analyticsRows.length;
+      const low = analyticsRows.filter(r=>r.health<60);
+      const oldest = [...analyticsRows].sort((a,b)=> (a.installAgeYears||0)-(b.installAgeYears||0)).pop();
+      list.innerHTML = `
+        <li>Average tyre health across fleet is <strong>${avg.toFixed(1)}%</strong>.</li>
+        <li><strong>${low.length}</strong> tyres likely need attention (health < 60%).</li>
+        <li>Oldest install on <strong>${oldest?.vehicle||'-'}</strong> (${(oldest?.installAgeYears||0).toFixed(1)} years).</li>
+        <li>Tip: Rotate front ↔ rear every 8–10k km to improve wear balance by ~12%.</li>`;
+    }
+
+    // TAB SWITCHING FUNCTION (NEW)
+    window.openTab = function(evt, tabName) {
+        // Declare all variables
+        let i, tabcontent, tablinks;
+
+        // Get all elements with class="tab-content" and hide them
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+
+        // Get all elements with class="tab-button" and remove the class "active"
+        tablinks = document.getElementsByClassName("tab-button");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+
+        // Show the current tab, and add an "active" class to the button that opened the tab
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+        
+        // If switching to the Analytics tab, ensure charts re-render
+        if(tabName === 'Analytics' && analyticsRows.length > 0) {
+            renderAnalyticsCharts();
+        }
+    }
+
 
     // Make Firebase functions available globally
     window.db = db;
@@ -1127,7 +1390,17 @@
               }
             }else if (document.getElementById('saveVehicleBtn').textContent === 'Update Vehicle') {
               // In vehicle edit mode, we replace all tyres with the ones from the form.
-              updatedTyres = newTyres;
+              // NOTE: This part needs careful logic to preserve non-form fields like totalRunningKm if not present in newTyres[i]
+              
+              // We'll iterate through existingTyres and update with newTyres where the number matches
+              updatedTyres = existingTyres.map(existingT => {
+                  const matchingNewT = newTyres.find(newT => newT.number === existingT.number);
+                  return matchingNewT ? { ...existingT, ...matchingNewT } : existingT;
+              }).filter(existingT => newTyres.some(newT => newT.number === existingT.number)); // Remove tyres not in the form
+              
+              // Add any entirely new tyres from the form
+              const existingTyreNumbers = existingTyres.map(t => t.number);
+              newTyres.filter(newT => !existingTyreNumbers.includes(newT.number)).forEach(newT => updatedTyres.push(newT));
               
             }else {
               // In add tyre mode, add new tyres to existing ones
@@ -1228,6 +1501,7 @@
         allVehiclesData = vehicles;
         updateSummaryDashboard();
         renderVehiclesWithPagination();
+        flattenTyreData(); // **ADDED**: Update analytics data on management data change
       });
     };
 
@@ -1442,8 +1716,7 @@
             tyreDiv.innerHTML = `
               <div class="tyre-header">
                 <span class="tyre-title">Tyre ${tyreCount}</span>
-                <!-- **FIX**: Do not show remove button for existing tyres in edit mode -->
-              </div>
+                </div>
               <div class="tyre-row">
                 <div class="form-group">
                   <label>Tyre Number:</label>
@@ -2137,6 +2410,11 @@
         currentPageVehicles++;
         renderVehiclesWithPagination();
       }
+    });
+
+    // Initial load for tab
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('Management').style.display = 'block';
     });
   </script>
 </body>
