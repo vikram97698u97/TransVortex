@@ -249,7 +249,7 @@
     async function fetchAllData(coreId, uid){
       const [lrSnap, clientSnap, vehSnap, drvSnap] = await Promise.all([
         get(ref(db, `users/${coreId}/lrReports`)),
-        get(ref(db, `users/${uid}/clients`)),
+        get(ref(db, `users/${coreId}/clients`)),
         get(ref(db, `users/${coreId}/vehicles`)),
         get(ref(db, `users/${coreId}/drivers`)),
       ]);
