@@ -1,123 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Choose Your Plan - Transport Dashboard</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
   <style>
     :root {
       --primary: #2E8B57;
-      --primary-dark: #24704a;
-      --accent: #ffc107;
-      --background: #f8f9fa;
-      --text: #212529;
-      --card-bg: #ffffff;
-      --border: #dee2e6;
-      --shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      --primary-dark: #1f6b43;
+      --accent: #f4c430;
+      --text-dark: #1a1a1a;
+      --text-light: #6b6b6b;
+      --bg-light: #f7f9f8;
+      --card-bg: #fff;
+      --shadow: 0 10px 35px rgba(0, 0, 0, 0.07);
+      --radius: 16px;
     }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: var(--background);
-      color: var(--text);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
       margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #f5faf7 0%, #ffffff 100%);
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 15px;
     }
 
     .plan-container {
-      max-width: 1100px;
+      max-width: 1250px;
       width: 100%;
       text-align: center;
     }
 
+    /* Header */
     .header {
-      margin-bottom: 40px;
+      margin-bottom: 70px;
     }
 
     .header h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 10px;
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
     }
 
     .header p {
+      color: var(--text-light);
       font-size: 1.1rem;
-      color: #6c757d;
-      max-width: 600px;
+      max-width: 650px;
       margin: 0 auto;
     }
 
+    /* Plan Grid */
     .plan-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
       gap: 30px;
+      justify-items: center;
     }
 
     .plan-card {
       background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 30px;
+      border-radius: var(--radius);
       box-shadow: var(--shadow);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      padding: 40px 25px;
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+      border: 1px solid #e6e9e8;
+      position: relative;
     }
 
     .plan-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+      transform: translateY(-8px);
+      box-shadow: 0 15px 45px rgba(46, 139, 87, 0.15);
     }
 
     .plan-card.recommended {
-      border-color: var(--accent);
-      border-width: 2px;
-      position: relative;
+      background: linear-gradient(160deg, #2E8B57, #43b97f);
+      color: #fff;
+      transform: scale(1.05);
+      border: none;
     }
 
     .recommended-badge {
       position: absolute;
-      top: -15px;
+      top: -12px;
       left: 50%;
       transform: translateX(-50%);
       background: var(--accent);
-      color: var(--text);
-      padding: 5px 15px;
-      border-radius: 20px;
+      color: #000;
+      padding: 6px 20px;
+      border-radius: 30px;
       font-size: 0.8rem;
       font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
     }
 
     .plan-name {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-bottom: 10px;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 12px;
     }
 
     .plan-price {
       font-size: 3rem;
-      font-weight: 700;
-      color: var(--primary);
+      font-weight: 800;
       margin: 15px 0;
+      color: var(--primary);
+    }
+
+    .plan-card.recommended .plan-price {
+      color: #fff;
     }
 
     .plan-price span {
       font-size: 1rem;
       font-weight: 500;
-      color: #6c757d;
+      color: #888;
+    }
+
+    .plan-card.recommended .plan-price span {
+      color: rgba(255, 255, 255, 0.85);
     }
 
     .plan-features {
       list-style: none;
       padding: 0;
-      margin: 20px 0;
+      margin: 25px 0 35px;
       text-align: left;
       flex-grow: 1;
     }
@@ -126,187 +148,183 @@
       margin-bottom: 12px;
       display: flex;
       align-items: center;
+      font-size: 0.95rem;
+      color: var(--text-light);
     }
 
     .plan-features i {
       color: var(--primary);
       margin-right: 10px;
-      width: 20px;
+    }
+
+    .plan-card.recommended .plan-features li {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .plan-card.recommended .plan-features i {
+      color: #fff;
     }
 
     .btn-select-plan {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
       background: var(--primary);
       color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.2s ease;
+      transition: all 0.3s ease;
       margin-top: auto;
     }
 
     .btn-select-plan:hover {
       background: var(--primary-dark);
-      transform: translateY(-2px);
-    }
-
-    .btn-select-plan:disabled {
-      background-color: #a5d6a7;
-      cursor: not-allowed;
+      transform: translateY(-3px);
     }
 
     .plan-card.recommended .btn-select-plan {
-      background: var(--accent);
-      color: var(--text);
+      background: #fff;
+      color: var(--primary-dark);
     }
 
     .plan-card.recommended .btn-select-plan:hover {
-      background: #ffb300;
+      background: var(--accent);
+      color: #000;
+    }
+
+    /* Extra Trust Section */
+    .extra-info {
+      margin-top: 70px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 40px 25px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .extra-info h2 {
+      font-size: 1.8rem;
+      color: var(--primary-dark);
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .extra-info p {
+      color: #555;
+      line-height: 1.7;
+      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+
+    .extra-info i {
+      color: var(--primary);
+      margin-right: 8px;
+    }
+
+    /* Animation */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .plan-card {
+      opacity: 0;
+      animation: fadeInUp 0.8s forwards;
+    }
+
+    .plan-card:nth-child(1) { animation-delay: 0.2s; }
+    .plan-card:nth-child(2) { animation-delay: 0.4s; }
+    .plan-card:nth-child(3) { animation-delay: 0.6s; }
+    .plan-card:nth-child(4) { animation-delay: 0.8s; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2.2rem;
+      }
+      .plan-price {
+        font-size: 2.4rem;
+      }
+      .plan-card {
+        padding: 30px 20px;
+      }
     }
   </style>
 </head>
 <body>
-
   <div class="plan-container">
     <div class="header">
-      <h1>Choose Your Plan</h1>
-      <p>Select a plan to start your 14-day free trial. No credit card required.</p>
+      <h1>Choose Your Perfect Plan</h1>
+      <p>Start your free 14-day trial — no credit card required. Upgrade or downgrade anytime as your business grows.</p>
     </div>
 
     <div class="plan-grid">
-      <!-- Starter Plan -->
       <div class="plan-card">
         <h3 class="plan-name">Starter</h3>
-        <div class="plan-price">₹1999<span>/month</span></div>
+        <div class="plan-price">₹1,999<span>/month</span></div>
         <ul class="plan-features">
-          <li><i class="fas fa-check-circle"></i>Up to <strong>25 Vehicles</strong></li>
+          <li><i class="fas fa-check-circle"></i>Up to 25 Vehicles</li>
           <li><i class="fas fa-check-circle"></i>Full LR & Invoice Management</li>
           <li><i class="fas fa-check-circle"></i>Tyre & Expense Tracking</li>
-          <li><i class="fas fa-check-circle"></i>Basic Analytics</li>
+          <li><i class="fas fa-check-circle"></i>Basic Analytics Dashboard</li>
         </ul>
-        <button class="btn-select-plan" data-plan="starter" data-limit="25" data-rate="1999">Start 14-Day Trial</button>
+        <button class="btn-select-plan">Start 14-Day Trial</button>
       </div>
 
-      <!-- Business Plan -->
       <div class="plan-card recommended">
         <div class="recommended-badge">Most Popular</div>
         <h3 class="plan-name">Business</h3>
-        <div class="plan-price">₹3999<span>/month</span></div>
+        <div class="plan-price">₹3,999<span>/month</span></div>
         <ul class="plan-features">
-          <li><i class="fas fa-check-circle"></i>Up to <strong>50 Vehicles</strong></li>
+          <li><i class="fas fa-check-circle"></i>Up to 50 Vehicles</li>
           <li><i class="fas fa-check-circle"></i>All Starter Features</li>
           <li><i class="fas fa-check-circle"></i>Branch Account Management</li>
-          <li><i class="fas fa-check-circle"></i>Advanced Analytics</li>
+          <li><i class="fas fa-check-circle"></i>Advanced Analytics + Reports</li>
         </ul>
-        <button class="btn-select-plan" data-plan="business" data-limit="50" data-rate="3999">Start 14-Day Trial</button>
+        <button class="btn-select-plan">Start 14-Day Trial</button>
       </div>
 
-      <!-- Enterprise Plan -->
       <div class="plan-card">
         <h3 class="plan-name">Enterprise</h3>
-        <div class="plan-price">₹6999<span>/month</span></div>
+        <div class="plan-price">₹6,999<span>/month</span></div>
         <ul class="plan-features">
-          <li><i class="fas fa-check-circle"></i>Up to <strong>100 Vehicles</strong></li>
+          <li><i class="fas fa-check-circle"></i>Up to 100 Vehicles</li>
           <li><i class="fas fa-check-circle"></i>All Business Features</li>
-          <li><i class="fas fa-check-circle"></i>Priority Support</li>
+          <li><i class="fas fa-check-circle"></i>Priority 24/7 Support</li>
           <li><i class="fas fa-check-circle"></i>Custom Integrations</li>
         </ul>
-        <button class="btn-select-plan" data-plan="enterprise" data-limit="100" data-rate="6999">Start 14-Day Trial</button>
+        <button class="btn-select-plan">Start 14-Day Trial</button>
       </div>
 
-      <!-- Ultimate Plan -->
       <div class="plan-card">
         <h3 class="plan-name">Ultimate</h3>
-        <div class="plan-price">₹14999<span>/month</span></div>
+        <div class="plan-price">₹14,999<span>/month</span></div>
         <ul class="plan-features">
-          <li><i class="fas fa-check-circle"></i>Up to <strong>200 Vehicles</strong></li>
+          <li><i class="fas fa-check-circle"></i>Up to 200 Vehicles</li>
           <li><i class="fas fa-check-circle"></i>All Enterprise Features</li>
           <li><i class="fas fa-check-circle"></i>Dedicated Account Manager</li>
-          <li><i class="fas fa-check-circle"></i>API Access</li>
+          <li><i class="fas fa-check-circle"></i>Full API & Automation Access</li>
         </ul>
-        <button class="btn-select-plan" data-plan="ultimate" data-limit="200" data-rate="14999">Start 14-Day Trial</button>
+        <button class="btn-select-plan">Start 14-Day Trial</button>
       </div>
     </div>
+
+    <div class="extra-info">
+      <h2>Why Choose TransVortex Dashboard?</h2>
+      <p><i class="fas fa-truck-moving"></i> Add more vehicles anytime — if you exceed your current plan limit, you can easily upgrade within the dashboard.</p>
+      <p><i class="fas fa-sync-alt"></i> Switch or cancel plans anytime without losing your data or setup.</p>
+      <p><i class="fas fa-chart-line"></i> Monitor all operations, expenses, and analytics from one secure, trusted dashboard.</p>
+      <p><i class="fas fa-lock"></i> Your data is encrypted and safe — trusted by transport companies nationwide.</p>
+    </div>
   </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "transport-dashboard-ad69a",
-      storageBucket: "transport-dashboard-ad69a.appspot.com",
-      messagingSenderId: "526889676196",
-      appId: "1:526889676196:web:66032c80a4aede690ae531",
-      measurementId: "G-7F9R7HJYDH"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = 'login.html';
-        return;
-      }
-
-      document.querySelectorAll('.btn-select-plan').forEach(button => {
-        button.addEventListener('click', async (e) => {
-          const planId = e.target.dataset.plan;
-          const vehicleLimit = parseInt(e.target.dataset.limit, 10);
-          const monthlyRate = parseInt(e.target.dataset.rate, 10);
-
-          // Disable all buttons
-          document.querySelectorAll('.btn-select-plan').forEach(btn => {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting up...';
-          });
-
-          try {
-            const trialStart = new Date();
-            const trialEnd = new Date();
-            trialEnd.setDate(trialStart.getDate() + 14);
-
-            const subscriptionData = {
-              status: 'trial',
-              planId: planId,
-              vehicleLimit: vehicleLimit,
-              monthlyRate: monthlyRate,
-              trialStart: trialStart.toISOString(),
-              trialEnd: trialEnd.toISOString(),
-              createdAt: trialStart.toISOString()
-            };
-
-            // Update the user's subscription data
-            const userRef = ref(db, `users/${user.uid}`);
-            await update(userRef, { subscription: subscriptionData });
-
-            // **FIX**: Redirect to the branch selection page, which is the correct
-            // dashboard for a core account owner after setting up their plan.
-            window.location.href = 'branch-selection.html';
-
-          } catch (error) {
-            console.error("Error setting up trial:", error);
-            alert("Could not start your trial. Please try again.");
-            // Re-enable buttons on error
-            document.querySelectorAll('.btn-select-plan').forEach(btn => {
-              btn.disabled = false;
-              btn.textContent = 'Start 14-Day Trial';
-            });
-          }
-        });
-      });
-    });
-  </script>
-
 </body>
 </html>
