@@ -1,9 +1,3 @@
-// Navbar Loader: injects the new vertical sidebar from navbar.html into any page
-// - Extracts styles, toggle button, and sidebar markup
-// - Wraps existing page content in .main-content if missing
-// - Sets active nav link based on current page
-// - Applies branch restriction click-guards (no Firebase dependency)
-
 (function() {
   async function loadNavbar() {
     try {
@@ -141,9 +135,35 @@
 
       // Implement toggleSidebar if missing
       if (typeof window.toggleSidebar !== 'function') {
-        window.toggleSidebar = function() {
-          const sb = document.getElementById('sidebar');
-          if (sb) sb.classList.toggle('expanded');
+        window.toggleSidebar = function(forceClose = false) {
+            // Query live DOM elements (in case originals were cloned into document)
+            const sidebarEl = document.getElementById('sidebar') || document.querySelector('#sidebar');
+            const overlayEl = document.querySelector('.sidebar-overlay');
+            const toggleBtnIcon = document.querySelector('.sidebar-toggle i') || document.querySelector('.sidebar-toggle');
+
+            if (!sidebarEl || !overlayEl || !toggleBtnIcon) return;
+
+            const isOpening = !sidebarEl.classList.contains('expanded') && !forceClose;
+
+            if (isOpening) {
+                sidebarEl.classList.add('expanded');
+                overlayEl.classList.add('active');
+                if (toggleBtnIcon.tagName === 'I') {
+                    toggleBtnIcon.className = 'fas fa-times';
+                } else {
+                    const i = toggleBtnIcon.querySelector && toggleBtnIcon.querySelector('i');
+                    if (i) i.className = 'fas fa-times';
+                }
+            } else {
+                sidebarEl.classList.remove('expanded');
+                overlayEl.classList.remove('active');
+                if (toggleBtnIcon.tagName === 'I') {
+                    toggleBtnIcon.className = 'fas fa-bars';
+                } else {
+                    const i = toggleBtnIcon.querySelector && toggleBtnIcon.querySelector('i');
+                    if (i) i.className = 'fas fa-bars';
+                }
+            }
         };
       }
 
@@ -153,14 +173,65 @@
         liveToggleBtn.onclick = () => window.toggleSidebar();
       }
 
+      // **NEW**: Add overlay and attach click handler to close sidebar
+      if (!document.querySelector('.sidebar-overlay')) {
+          const overlay = document.createElement('div');
+          overlay.className = 'sidebar-overlay';
+          document.body.appendChild(overlay);
+          overlay.onclick = () => window.toggleSidebar(true); // Force close
+      }
+
+
       // Set active nav item
+      // **FIX**: This logic is now more complex to handle dropdowns and active sub-items.
       const currentPage = window.location.pathname.split('/').pop() || 'home.html';
-      document.querySelectorAll('#sidebar .nav-item').forEach(item => {
-        const href = item.getAttribute('href');
-        if (href === currentPage) item.classList.add('active');
-        else item.classList.remove('active');
+      const navLinks = document.querySelectorAll('#sidebar a');
+
+      navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === currentPage) {
+          link.classList.add('active'); // Active class on the link itself
+          // If it's a sub-item, open its parent dropdown
+          const parentSubNav = link.closest('.sub-nav');
+          if (parentSubNav) {
+            const dropdownToggle = parentSubNav.previousElementSibling;
+            if (dropdownToggle && dropdownToggle.classList.contains('dropdown-toggle')) {
+              dropdownToggle.classList.add('active');
+              parentSubNav.style.maxHeight = parentSubNav.scrollHeight + "px";
+            }
+          }
+        } else {
+          link.classList.remove('active');
+        }
       });
 
+      // **FIX**: Dropdown toggle functionality moved here from navbar.html
+      const dropdownToggles = document.querySelectorAll('#sidebar .dropdown-toggle');
+      dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', function () {
+          const isMobile = window.innerWidth <= 768;
+          const subNav = this.nextElementSibling;
+
+          // On mobile, close other dropdowns first
+          if (isMobile && !this.classList.contains('active')) {
+            dropdownToggles.forEach(otherToggle => {
+              if (otherToggle !== this) {
+                otherToggle.classList.remove('active');
+                const otherSubNav = otherToggle.nextElementSibling;
+                if (otherSubNav && otherSubNav.classList.contains('sub-nav')) {
+                  otherSubNav.style.maxHeight = null; // Also reset for desktop if resized
+                }
+              }
+            });
+          }
+
+          this.classList.toggle('active');
+          
+          if (subNav && subNav.classList.contains('sub-nav')) {
+            subNav.style.maxHeight = subNav.style.maxHeight ? null : subNav.scrollHeight + "px"; // This works for both desktop and mobile overlay
+          }
+        });
+      });
       // Simple toast for branch notices if not present
       if (!document.getElementById('branchToast')) {
         const toast = document.createElement('div');
