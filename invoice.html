@@ -10,16 +10,11 @@
   <link rel="stylesheet" href="print-invoice.css" media="print">
   <style>
     body { padding: 0; margin: 0; background-color: #f8f9fa; }
+    
+    /* --- Print Styles --- */
     @media print {
-      /* Hide everything except the printable area */
-      body * {
-        visibility: hidden;
-      }
-      /* Make the printable area and its children visible */
-      #printableInvoiceDetail, #printableInvoiceDetail * {
-        visibility: visible;
-      }
-      /* Position the printable area to fill the page */
+      body * { visibility: hidden; }
+      #printableInvoiceDetail, #printableInvoiceDetail * { visibility: visible; }
       #printableInvoiceDetail {
         position: absolute;
         left: 0;
@@ -28,61 +23,55 @@
         margin: 0;
         padding: 0;
       }
-      /* Hide the modal's footer when printing */
-      .modal-footer {
-        display: none !important;
-      }
+      .modal-footer { display: none !important; }
+      /* Print control classes */
+      .printable-area .logo-on-print.hidden-print { display: none !important; }
+      .printable-area .stamp-on-print.hidden-print { display: none !important; }
+      .printable-area .signature-on-print.hidden-print { display: none !important; }
     }
-    /* **NEW**: Style for the "PAID" watermark stamp */
-    .paid-stamp {
+    
+    /* --- General Modal/Printable Area Styles --- */
+    .hidden-print { display: none !important; }
+
+    /* Watermark Stamps */
+    .paid-stamp, .partial-stamp, .pending-stamp {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%) rotate(-25deg);
-      font-size: 6rem;
       font-weight: 700;
-      color: red;
-      border: 8px solid red;
-      padding: 10px 25px;
-      border-radius: 15px;
-      opacity: 0.2;
-      text-transform: uppercase;
-      z-index: 1000; /* Ensure it's on top */
-      pointer-events: none; /* So it doesn't block clicks */
-    }
-    /* **NEW**: Style for the "Partially Paid" watermark stamp */
-    .partial-stamp {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-25deg);
-      font-size: 4rem; /* Slightly smaller to fit text */
-      font-weight: 700;
-      color: #ff8c00; /* Dark Orange */
-      border: 8px solid #ff8c00;
-      padding: 10px 25px;
-      border-radius: 15px;
-      opacity: 0.25;
-      text-transform: uppercase;
-      z-index: 1000;
-      pointer-events: none;
-    }
-    /* **NEW**: Style for the "Pending" (Not Paid) watermark stamp */
-    .pending-stamp {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-25deg);
-      font-size: 6rem;
-      font-weight: 700;
-      color: #6c757d; /* Gray */
-      border: 8px solid #6c757d;
+      border: 8px solid;
       padding: 10px 25px;
       border-radius: 15px;
       opacity: 0.2;
       text-transform: uppercase;
       z-index: 1000;
       pointer-events: none;
+    }
+    .paid-stamp { font-size: 6rem; color: red; border-color: red; }
+    .partial-stamp { font-size: 4rem; color: #ff8c00; border-color: #ff8c00; opacity: 0.35; } /* Dark Orange */
+    .pending-stamp { font-size: 6rem; color: #6c757d; border-color: #6c757d; } /* Gray */
+
+    /* Invoice Layout Enhancements */
+    .invoice-header-content {
+      display: flex; 
+      align-items: flex-start; 
+      justify-content: center; 
+      gap: 20px;
+      padding-bottom: 10px;
+    }
+    .invoice-header-details {
+      text-align: left;
+      flex-grow: 1;
+    }
+    .invoice-header-details h2 { margin-top: 0; }
+
+    /* Company Seal/Stamp Styling */
+    .company-seal {
+        width: 180px; 
+        height: 180px; 
+        margin: 0 auto; 
+        display: block; 
     }
   </style>
 </head>
@@ -92,7 +81,6 @@
   <div class="container mt-4">
     <h2 class="mb-4"><i class="fas fa-file-invoice-dollar me-2"></i>Generated Invoices</h2>
 
-    <!-- **NEW**: Tabs for Client vs Market Invoices -->
     <ul class="nav nav-pills mb-3" id="invoiceViewTabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="client-invoices-tab" data-bs-toggle="tab" data-bs-target="#client-invoices-content" type="button" role="tab">Client Invoices</button>
@@ -103,11 +91,9 @@
     </ul>
 
     <div class="tab-content" id="invoiceViewTabsContent">
-      <!-- Client Invoices Content -->
       <div class="tab-pane fade show active" id="client-invoices-content" role="tabpanel">
         <div class="table-responsive">
           <table id="invoicesTable" class="table table-striped">
-            <!-- Existing table structure -->
             <thead>
               <tr>
                 <th>Invoice #</th>
@@ -123,11 +109,9 @@
           </table>
         </div>
       </div>
-      <!-- Market Invoices Content -->
       <div class="tab-pane fade" id="market-invoices-content" role="tabpanel">
         <div class="table-responsive">
           <table id="marketInvoicesTable" class="table table-striped">
-            <!-- Structure is identical, but will be populated with different data -->
             <thead>
               <tr>
                 <th>Invoice #</th>
@@ -146,7 +130,6 @@
     </div>
   </div>
 
-  <!-- Invoice Detail Modal -->
   <div class="modal fade" id="invoiceDetailModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
@@ -154,17 +137,28 @@
           <h5 class="modal-title">Invoice Details</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body" id="printableInvoiceDetail">
-          <!-- Content will be populated dynamically -->
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" onclick="printInvoiceDetail()">
-            <i class="fas fa-print me-2"></i>Print
-          </button>
-          <button type="button" class="btn btn-success" onclick="downloadInvoicePDF()">
-            <i class="fas fa-file-pdf me-2"></i>Download PDF
-          </button>
+        <div class="modal-body p-4" id="printableInvoiceDetail">
+          </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-cog me-2"></i>Print Settings
+            </button>
+            <ul class="dropdown-menu p-2" style="min-width: 200px;">
+              <li class="form-check form-switch"><input class="form-check-input" type="checkbox" id="printLogoToggle" checked><label class="form-check-label" for="printLogoToggle">Show Logo</label></li>
+              <li class="form-check form-switch"><input class="form-check-input" type="checkbox" id="printStampToggle" checked><label class="form-check-label" for="printStampToggle">Show Seal</label></li>
+              <li class="form-check form-switch"><input class="form-check-input" type="checkbox" id="printSignToggle" checked><label class="form-check-label" for="printSignToggle">Show Sign</label></li>
+            </ul>
+          </div>
+          <div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="printInvoiceDetail()">
+              <i class="fas fa-print me-2"></i>Print
+            </button>
+            <button type="button" class="btn btn-success" onclick="downloadInvoicePDF()">
+              <i class="fas fa-file-pdf me-2"></i>Download PDF
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -175,13 +169,12 @@
   <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
-  <!-- PDF Generation Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, get, query, orderByChild, equalTo, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, get, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -200,54 +193,59 @@
     const auth = getAuth(app);
 
     let invoicesTable;
-    let marketInvoicesTable; // **NEW**
-    let coreAccountId = null; // To store the correct data path
-    let currentInvoiceData = null; // To store data for PDF download
+    let marketInvoicesTable;
+    let coreAccountId = null;
+    let currentInvoiceData = null;
+    let currentUserProfile = null;
 
     onAuthStateChanged(auth, user => {
       if (!user) {
         window.location.href = "index.html";
       } else {
-        // **FIX**: Determine the core account ID before initializing the page.
-        // This ensures that invoices are loaded from the correct shared path.
         const userRef = ref(db, `users/${user.uid}`);
         get(userRef).then(snapshot => {
           if (snapshot.exists()) {
             const userData = snapshot.val();
             coreAccountId = userData.coreAccountId || user.uid;
+            
+            get(ref(db, `users/${user.uid}/profile`)).then(profileSnap => {
+                currentUserProfile = profileSnap.val() || {};
+                initializePage(user);
+            });
           } else {
-            coreAccountId = user.uid; // Fallback for safety
+            coreAccountId = user.uid;
+            initializePage(user);
           }
-          initializePage(user);
         });
       }
     });
 
     function initializePage(user) {
-      invoicesTable = $('#invoicesTable').DataTable({
-        order: [[1, 'desc']]
-      });
-      // **NEW**: Initialize Market Invoices DataTable
-      marketInvoicesTable = $('#marketInvoicesTable').DataTable({
-        order: [[1, 'desc']]
-      });
-      loadInvoices(coreAccountId); // **FIX**: Use coreAccountId
+      invoicesTable = $('#invoicesTable').DataTable({ order: [[1, 'desc']] });
+      marketInvoicesTable = $('#marketInvoicesTable').DataTable({ order: [[1, 'desc']] });
+      loadInvoices(coreAccountId);
 
-      // Check for URL param to auto-show an invoice
       const urlParams = new URLSearchParams(window.location.search);
       const invoiceToView = urlParams.get('view');
-      if (invoiceToView) {
-        viewInvoice(invoiceToView);
-      }
+      if (invoiceToView) { viewInvoice(invoiceToView); }
+      
+      document.getElementById('printLogoToggle').onchange = function() {
+        document.querySelectorAll('.logo-on-print').forEach(el => el.classList.toggle('hidden-print', !this.checked));
+      };
+      document.getElementById('printStampToggle').onchange = function() {
+        document.querySelectorAll('.stamp-on-print').forEach(el => el.classList.toggle('hidden-print', !this.checked));
+      };
+      document.getElementById('printSignToggle').onchange = function() {
+        document.querySelectorAll('.signature-on-print').forEach(el => el.classList.toggle('hidden-print', !this.checked));
+      };
     }
 
     async function loadInvoices(userId) {
-      // **FIX**: Use the determined coreAccountId to fetch shared invoices.
       const invoicesRef = ref(db, `users/${coreAccountId}/invoices`);
       const snapshot = await get(invoicesRef);
 
       if (invoicesTable) invoicesTable.clear();
-      if (marketInvoicesTable) marketInvoicesTable.clear(); // **NEW**
+      if (marketInvoicesTable) marketInvoicesTable.clear();
 
       if (snapshot.exists()) {
         const invoices = [];
@@ -263,10 +261,9 @@
           else if (status === 'partial') statusClass = 'bg-warning text-dark';
           else statusClass = 'bg-danger';
 
-          // **NEW**: For market invoices, the company name is stored differently
           const companyName = inv.invoiceType === 'market' 
             ? (inv.items && inv.items.length > 0 ? inv.items[0].marketCompanyName || 'Market LR' : 'Market LR')
-            : (inv.companyDetails?.name || inv.clientName || 'N/A');
+            : (inv.items && inv.items.length > 0 ? inv.items[0].consignor || 'N/A' : 'N/A'); // Use consignor name for client invoice list
 
           const rowData = [
             inv.invoiceNumber,
@@ -279,7 +276,6 @@
              <button class="btn btn-sm btn-outline-warning ms-1" onclick="undoInvoice('${inv.id}')" title="Undo Invoice"><i class="fas fa-undo"></i> Undo</button>`
           ];
 
-          // **NEW**: Add row to the correct table based on invoiceType
           if (inv.invoiceType === 'market') {
             if (marketInvoicesTable) marketInvoicesTable.row.add(rowData);
           } else {
@@ -288,10 +284,9 @@
         });
       }
       if (invoicesTable) invoicesTable.draw();
-      if (marketInvoicesTable) marketInvoicesTable.draw(); // **NEW**
+      if (marketInvoicesTable) marketInvoicesTable.draw();
     }
 
-    // Function to convert number to words (Indian Rupees)
     function numberToWords(num) {
       const a = ['', 'one ', 'two ', 'three ', 'four ', 'five ', 'six ', 'seven ', 'eight ', 'nine ', 'ten ', 'eleven ', 'twelve ', 'thirteen ', 'fourteen ', 'fifteen ', 'sixteen ', 'seventeen ', 'eighteen ', 'nineteen '];
       const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
@@ -309,7 +304,8 @@
       
       return str.trim().replace(/\s+/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') + ' Only';
     }
-
+    
+    // --- viewInvoice (FIXED MARKET INVOICE BILLING) ---
     window.viewInvoice = async function(invoiceId) {
       const modalBody = document.getElementById('printableInvoiceDetail');
       modalBody.innerHTML = '<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading invoice...</p></div>';
@@ -319,50 +315,121 @@
         const user = auth.currentUser;
         if (!user) throw new Error("User not authenticated.");
 
-        // **FIX**: Use coreAccountId to fetch the specific invoice.
         const invoiceSnap = await get(ref(db, `users/${coreAccountId}/invoices/${invoiceId}`));
         if (!invoiceSnap.exists()) {
           modalBody.innerHTML = '<p class="text-danger text-center">Invoice not found.</p>';
           return;
         }
         const invoice = invoiceSnap.val();
-        currentInvoiceData = invoice; // Store for PDF download
+        currentInvoiceData = invoice;
+
+        let billedToName = 'N/A';
+        let billedToGstin = 'N/A';
+        let billedToAddress = 'N/A';
+        let billedToMobile = 'N/A';
 
         const lrs = invoice.items || [];
+        
+        if (invoice.invoiceType === 'market') {
+            // FIX: Billed to Transporter/Market Company
+            const firstLRId = lrs[0]?.lrId;
+            if (firstLRId) {
+                // We need to fetch the LR to get the transporterId, then fetch the transporter's data.
+                const lrSnap = await get(ref(db, `users/${coreAccountId}/lrReports/${firstLRId}`));
+                const lr = lrSnap.val();
+                
+                if (lr && lr.transporterId) {
+                    const transporterSnap = await get(ref(db, `users/${coreAccountId}/transporters/${lr.transporterId}`));
+                    if (transporterSnap.exists()) {
+                        const t = transporterSnap.val();
+                        billedToName = t.name || 'Market Company';
+                        billedToGstin = t.gstin || 'N/A';
+                        billedToAddress = t.address || 'N/A';
+                        billedToMobile = t.mobile || 'N/A';
+                    }
+                } else {
+                    // Fallback to name stored in invoice item if Transporter is deleted/missing ID
+                    billedToName = lrs[0]?.marketCompanyName || 'Market Company (Transporter Missing)';
+                }
+            }
+        } else {
+            // Client Invoice: Billed to Client/Consignor
+            if (invoice.clientId) {
+                const clientSnap = await get(ref(db, `users/${coreAccountId}/clients/${invoice.clientId}`));
+                if (clientSnap.exists()) {
+                    const c = clientSnap.val();
+                    billedToName = c.clientName || 'N/A';
+                    billedToGstin = c.gstin || 'N/A';
+                    billedToAddress = c.billingAddress || 'N/A';
+                    billedToMobile = c.mobile || 'N/A';
+                }
+            } else {
+                // Fallback to name stored in invoice item
+                billedToName = lrs[0]?.consignor || 'N/A';
+            }
+        }
 
 
-        // **MODIFIED**: Build the invoice HTML with conditional stamps
+        // Use the globally loaded profile data (currentUserProfile)
+        const profile = currentUserProfile; 
+        const companyLogoUrl = profile.companyLogoUrl || '';
+        const companyName = profile.transportName || 'Transvortex Logistics';
+        const companyPhone = profile.phoneNumber || 'N/A';
+        const fullCompanyAddress = `${profile.address || 'N/A'}, ${profile.city || 'N/A'} - ${profile.pincode || 'N/A'}`;
+        const companyGstin = profile.gstin || 'N/A';
+        const ownerName = profile.ownerName || 'N/A';
+
         const status = invoice.paymentStatus || 'pending';
         let stampHtml = '';
         switch (status) {
-          case 'paid':
-            stampHtml = '<div class="paid-stamp">Paid</div>';
-            break;
-          case 'partial':
-            stampHtml = '<div class="partial-stamp">Partially Paid</div>';
-            break;
-          case 'pending':
-            stampHtml = '<div class="pending-stamp">Pending</div>';
-            break;
+          case 'paid': stampHtml = '<div class="paid-stamp">Paid</div>'; break;
+          case 'partial': stampHtml = '<div class="partial-stamp">Partially Paid</div>'; break;
+          case 'pending': stampHtml = '<div class="pending-stamp">Pending</div>'; break;
         }
+        
+        const getSealSVG = (name, gstin) => `
+          <svg class="company-seal stamp-on-print" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" style="display: block;">
+            <defs>
+              <path id="topTextPath" fill="none" d="M 30,100 a 70,70 0 1,1 140,0" />
+              <path id="bottomTextPath" fill="none" d="M 30,100 a 70,70 0 1,0 140,0" />
+            </defs>
+            <g fill="#003366" stroke="#003366">
+              <circle cx="100" cy="100" r="95" stroke-width="3" fill="none"/>
+              <circle cx="100" cy="100" r="88" stroke-width="1.5" fill="none"/>
+              <text font-family="'Arial Black', 'Impact', sans-serif" font-size="15" letter-spacing="1.5">
+                <textPath xlink:href="#topTextPath" startOffset="50%" text-anchor="middle">${name.toUpperCase().substring(0, 20)}</textPath>
+              </text>
+              <text font-family="'Arial Black', 'Impact', sans-serif" font-size="12" letter-spacing="1">
+                <textPath xlink:href="#bottomTextPath" startOffset="50%" text-anchor="middle">OFFICIAL SEAL</textPath>
+              </text>
+              <text x="100" y="125" font-family="'Arial', sans-serif" font-size="14" font-weight="bold" text-anchor="middle" letter-spacing="1">TRANSPORT</text>
+              <text x="100" y="145" font-family="'Arial', sans-serif" font-size="9" font-weight="normal" text-anchor="middle">GSTIN: ${gstin || 'N/A'}</text>
+            </g>
+          </svg>
+        `;
 
         const invoiceHtml = `
-          <div class="p-4" style="position: relative;">
+          <div class="printable-area" style="position: relative;">
             ${stampHtml}
             <div class="row mb-4">
-              <div class="col-12 text-center">
-                <h2 class="mb-1 fw-bold text-success">${invoice.companyDetails.name || 'Transport Company'}</h2>
-                <p class="mb-1 text-muted">${invoice.companyDetails.address || 'N/A'}</p>
-                <p class="mb-0 text-muted"><strong>GST:</strong> ${invoice.companyDetails.gstNumber || 'N/A'}</p>
+              <div class="col-12 invoice-header-content">
+                ${companyLogoUrl ? `<img src="${companyLogoUrl}" alt="Logo" class="logo-on-print" style="max-height: 80px; max-width: 200px;">` : ''}
+                <div class="invoice-header-details text-center text-sm-start">
+                  <h2 class="mb-1 fw-bold text-success">${companyName}</h2>
+                  <p class="mb-0 text-muted small">${fullCompanyAddress}</p>
+                  <p class="mb-0 text-muted small"><strong>GSTIN:</strong> ${companyGstin} | <strong>Phone:</strong> ${companyPhone}</p>
+                  <p class="mb-0 text-muted small"><strong>Proprietor:</strong> ${ownerName}</p>
+                </div>
               </div>
             </div>
             <hr>
             <div class="row mb-4">
               <div class="col-sm-6">
                 <h6 class="fw-bold">Billed To:</h6>
-                <p class="mb-0">${invoice.invoiceType === 'market'
-                  ? (invoice.items[0]?.marketCompanyName || 'Market Company')
-                  : (lrs[0]?.consignor || 'N/A')}</p>
+                <p class="mb-0"><strong>${billedToName}</strong></p>
+                <p class="mb-0 small text-muted">${billedToAddress}</p>
+                <p class="mb-0 small text-muted"><strong>GSTIN:</strong> ${billedToGstin}</p>
+                <p class="mb-0 small text-muted"><strong>Phone:</strong> ${billedToMobile}</p>
               </div>
               <div class="col-sm-6 text-sm-end mt-3 mt-sm-0">
                 <h6 class="fw-bold">Invoice Details:</h6>
@@ -374,7 +441,7 @@
               <table class="table table-bordered">
                 <thead class="table-light">
                   <tr>
-                    <th>Date</th><th>LR No</th><th>Truck No</th><th>Consignor</th><th>Consignee</th><th>From</th><th>To</th><th class="text-end">Weight</th><th class="text-end">Amount</th>
+                    <th>Date</th><th>LR No</th><th>Truck No</th><th>Consignor</th><th>Consignee</th><th>From</th><th>To</th><th class="text-end">Weight (MT)</th><th class="text-end">Amount (₹)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -395,25 +462,32 @@
                 <tfoot>
                   <tr>
                     <td colspan="7" rowspan="4" class="align-bottom">
-                      <p class="mb-1"><strong>Bank Details:</strong></p>
-                      <p class="mb-1 small">Bank: <span>${invoice.bankDetails.bankName}</span></p>
-                      <p class="mb-1 small">A/C No: <span>${invoice.bankDetails.accountNumber}</span></p>
-                      <p class="mb-1 small">Holder: <span>${invoice.bankDetails.accountHolder || 'N/A'}</span></p>
-                      <p class="mb-0 small">IFSC: <span>${invoice.bankDetails.ifscCode || 'N/A'}</span></p>
+                      <div class="row">
+                        <div class="col-md-6">
+                          <p class="mb-1"><strong>Bank Details:</strong></p>
+                          <p class="mb-1 small">Bank: <span>${invoice.bankDetails.bankName}</span></p>
+                          <p class="mb-1 small">A/C No: <span>${invoice.bankDetails.accountNumber}</span></p>
+                          <p class="mb-1 small">Holder: <span>${invoice.bankDetails.accountHolder || 'N/A'}</span></p>
+                          <p class="mb-0 small">IFSC: <span>${invoice.bankDetails.ifscCode || 'N/A'}</span></p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            ${getSealSVG(companyName, companyGstin)}
+                        </div>
+                      </div>
                       <div class="mt-3">
                         <p class="mb-1"><strong>Amount in Words:</strong></p>
-                        <p class="mb-0 small">${numberToWords(invoice.grandTotal || 0)}</p>
+                        <p class="mb-0 small fw-bold">${numberToWords(invoice.grandTotal || 0)}</p>
                       </div>
                     </td>
                     <td class="text-end"><strong>Subtotal:</strong></td>
                     <td class="text-end fw-bold">₹${(invoice.subtotal || 0).toFixed(2)}</td>
                   </tr>
                   <tr>
-                    <td class="text-end"><strong>CGST:</strong></td>
+                    <td class="text-end"><strong>CGST (${invoice.cgstPercentage || 9}%):</strong></td>
                     <td class="text-end fw-bold">₹${(invoice.cgstAmount || 0).toFixed(2)}</td>
                   </tr>
                   <tr>
-                    <td class="text-end"><strong>SGST:</strong></td>
+                    <td class="text-end"><strong>SGST (${invoice.sgstPercentage || 9}%):</strong></td>
                     <td class="text-end fw-bold">₹${(invoice.sgstAmount || 0).toFixed(2)}</td>
                   </tr>
                   <tr class="table-success">
@@ -425,11 +499,11 @@
             </div>
             <div class="row mt-4">
               <div class="col-md-6">
-                <p class="small text-muted">This is a computer-generated invoice.</p>
+                <p class="small text-muted"><strong>Note:</strong> Subject to ${invoice.companyDetails.city || 'Jurisdiction'} Jurisdiction. This is a computer-generated invoice, hence no physical signature is required unless specifically requested.</p>
               </div>
-              <div class="col-md-6 text-end">
+              <div class="col-md-6 text-end signature-on-print">
                 <div class="mt-5">
-                  <p class="mb-4">For ${invoice.companyDetails.name}</p>
+                  <p class="mb-4">For <strong>${companyName}</strong></p>
                   <p class="mb-0">___________________</p>
                   <p class="mb-0">Authorized Signatory</p>
                 </div>
@@ -457,16 +531,20 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const invoice = currentInvoiceData;
-
+      
+      const company = invoice.companyDetails;
+      const client = currentInvoiceData.items[0];
+      const lrs = invoice.items;
+      
       // --- Header ---
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text(invoice.companyDetails.name || 'Transport Company', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+      doc.text(company.name || 'Transport Company', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100);
-      doc.text(invoice.companyDetails.address || 'Company Address', doc.internal.pageSize.getWidth() / 2, 26, { align: 'center' });
-      doc.text(`GST: ${invoice.companyDetails.gst || 'N/A'}`, doc.internal.pageSize.getWidth() / 2, 31, { align: 'center' });
+      doc.text(company.address || 'Company Address', doc.internal.pageSize.getWidth() / 2, 26, { align: 'center' });
+      doc.text(`GSTIN: ${company.gstNumber || 'N/A'}`, doc.internal.pageSize.getWidth() / 2, 31, { align: 'center' });
 
       // --- Bill To & Invoice Details ---
       doc.setLineWidth(0.5);
@@ -474,9 +552,14 @@
       doc.setFontSize(11);
       doc.setTextColor(0);
       doc.setFont('helvetica', 'bold');
-      doc.text('Consignor:', 14, 42);
+      doc.text('Billed To:', 14, 42);
       doc.setFont('helvetica', 'normal');
-      doc.text(invoice.items[0]?.consignor || 'No consignor provided', 14, 48);
+      
+      const billedToDisplay = invoice.invoiceType === 'market' 
+        ? client?.marketCompanyName || 'Market Company' 
+        : client?.consignor || 'N/A';
+        
+      doc.text(billedToDisplay, 14, 48);
 
       doc.setFont('helvetica', 'bold');
       doc.text(`Invoice #: ${invoice.invoiceNumber}`, 196, 42, { align: 'right' });
@@ -484,15 +567,15 @@
       doc.text(`Date: ${new Date(invoice.createdAt).toLocaleDateString('en-IN')}`, 196, 48, { align: 'right' });
 
       // --- Table ---
-      const head = [['Date', 'LR No', 'Truck No', 'From', 'To', 'Weight', 'Amount']];
-      const body = invoice.items.map(lr => [
-        lr.date || 'N/A',
+      const head = [['Date', 'LR No', 'Truck No', 'From', 'To', 'Weight (MT)', 'Amount (₹)']];
+      const body = lrs.map(lr => [
+        new Date(lr.date).toLocaleDateString('en-IN') || 'N/A',
         lr.lrNumber || 'N/A',
         lr.truckNumber || 'N/A',
         lr.from || 'N/A',
         lr.to || 'N/A',
         (lr.weight || 0).toFixed(2),
-        `Rs. ${(lr.amount || 0).toFixed(2)}`
+        (lr.amount || 0).toFixed(2)
       ]);
 
       doc.autoTable({
@@ -502,18 +585,35 @@
         theme: 'grid',
         headStyles: { fillColor: [46, 139, 87] },
         styles: { fontSize: 8 },
+        columnStyles: {
+            5: { halign: 'right' },
+            6: { halign: 'right' }
+        },
         didDrawPage: function (data) {
           // --- Footer Totals ---
           doc.setFontSize(10);
-          doc.text(`Subtotal:`, 150, doc.internal.pageSize.height - 30, { align: 'right' });
-          doc.text(`Rs. ${(invoice.subtotal || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 30, { align: 'right' });
-          doc.text(`CGST:`, 150, doc.internal.pageSize.height - 25, { align: 'right' });
-          doc.text(`Rs. ${(invoice.cgstAmount || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 25, { align: 'right' });
-          doc.text(`SGST:`, 150, doc.internal.pageSize.height - 20, { align: 'right' });
-          doc.text(`Rs. ${(invoice.sgstAmount || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 20, { align: 'right' });
+          
+          doc.text(`Subtotal:`, 150, doc.internal.pageSize.height - 35, { align: 'right' });
+          doc.text(`₹${(invoice.subtotal || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 35, { align: 'right' });
+          
+          doc.text(`CGST (${invoice.cgstPercentage || 9}%):`, 150, doc.internal.pageSize.height - 30, { align: 'right' });
+          doc.text(`₹${(invoice.cgstAmount || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 30, { align: 'right' });
+          
+          doc.text(`SGST (${invoice.sgstPercentage || 9}%):`, 150, doc.internal.pageSize.height - 25, { align: 'right' });
+          doc.text(`₹${(invoice.sgstAmount || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 25, { align: 'right' });
+          
           doc.setFont('helvetica', 'bold');
-          doc.text(`Grand Total:`, 150, doc.internal.pageSize.height - 15, { align: 'right' });
-          doc.text(`Rs. ${(invoice.grandTotal || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 15, { align: 'right' });
+          doc.text(`Grand Total:`, 150, doc.internal.pageSize.height - 20, { align: 'right' });
+          doc.text(`₹${(invoice.grandTotal || 0).toFixed(2)}`, 196, doc.internal.pageSize.height - 20, { align: 'right' });
+          
+          // --- Amount in Words and Signature ---
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Amount in Words: ${numberToWords(invoice.grandTotal || 0)}`, 14, doc.internal.pageSize.height - 15);
+          
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`For ${company.name || 'Transport Company'}`, 196, doc.internal.pageSize.height - 10, { align: 'right' });
         }
       });
 
@@ -521,55 +621,37 @@
     }
 
     window.undoInvoice = async function(invoiceId) {
-      if (!confirm('Are you sure you want to undo this invoice? This will move all associated LRs back to the LR Report page and delete this invoice.')) {
-        return;
-      }
-
+      if (!confirm('Are you sure you want to undo this invoice? This will move all associated LRs back to the LR Report page and delete this invoice.')) { return; }
       try {
         const user = auth.currentUser;
-        if (!user) {
-          alert('Authentication error. Please log in again.');
-          return;
-        }
-
+        if (!user) { alert('Authentication error. Please log in again.'); return; }
         const dataRoot = coreAccountId || user.uid;
 
-        // 1. Get the invoice data
         const invoiceRef = ref(db, `users/${dataRoot}/invoices/${invoiceId}`);
         const invoiceSnap = await get(invoiceRef);
-        if (!invoiceSnap.exists()) {
-          throw new Error('Invoice not found. It may have already been deleted.');
-        }
+        if (!invoiceSnap.exists()) { throw new Error('Invoice not found. It may have already been deleted.'); }
         const invoiceData = invoiceSnap.val();
-
-        // 2. Prepare a multi-path update
         const updates = {};
 
-        // 3. Revert each LR status
         if (invoiceData.lrEntries && invoiceData.lrEntries.length > 0) {
           invoiceData.lrEntries.forEach(lrId => {
             updates[`/users/${dataRoot}/lrReports/${lrId}/status`] = 'active';
-            updates[`/users/${dataRoot}/lrReports/${lrId}/invoiceId`] = null; // Remove invoice link
+            updates[`/users/${dataRoot}/lrReports/${lrId}/invoiceId`] = null;
           });
         }
-
-        // 4. Delete the invoice
         updates[`/users/${dataRoot}/invoices/${invoiceId}`] = null;
 
-        // 5. Adjust client's outstanding balance
         if (invoiceData.clientId && invoiceData.grandTotal) {
           const clientOutstandingRef = ref(db, `users/${dataRoot}/clients/${invoiceData.clientId}/outstanding`);
-          // Use a transaction to safely decrement the outstanding balance
           await runTransaction(clientOutstandingRef, (currentValue) => {
             return (currentValue || 0) - invoiceData.grandTotal;
           });
         }
 
-        // 6. Execute the atomic update for LRs and the invoice
         await update(ref(db), updates);
 
         alert('Invoice successfully undone. The LRs are now available for invoicing again.');
-        window.location.reload(); // Reload the page to reflect the changes
+        window.location.reload();
       } catch (error) {
         console.error("Error undoing invoice:", error);
         alert(`Failed to undo invoice: ${error.message}`);
