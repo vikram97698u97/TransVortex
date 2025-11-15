@@ -277,7 +277,7 @@
           <li><i class="fas fa-check-circle"></i>Tyre & Expense Tracking</li>
           <li><i class="fas fa-check-circle"></i>Basic Analytics Dashboard</li>
         </ul>
-        <button class="btn-select-plan">Start 14-Day Trial</button>
+        <button class="btn-select-plan" data-plan-id="starter" data-plan-name="Starter" data-vehicle-limit="25" data-price="1999">Start 14-Day Trial</button>
       </div>
 
       <div class="plan-card recommended">
@@ -290,7 +290,7 @@
           <li><i class="fas fa-check-circle"></i>Branch Account Management</li>
           <li><i class="fas fa-check-circle"></i>Advanced Analytics + Reports</li>
         </ul>
-        <button class="btn-select-plan">Start 14-Day Trial</button>
+        <button class="btn-select-plan" data-plan-id="business" data-plan-name="Business" data-vehicle-limit="50" data-price="3999">Start 14-Day Trial</button>
       </div>
 
       <div class="plan-card">
@@ -302,7 +302,7 @@
           <li><i class="fas fa-check-circle"></i>Priority 24/7 Support</li>
           <li><i class="fas fa-check-circle"></i>Custom Integrations</li>
         </ul>
-        <button class="btn-select-plan">Start 14-Day Trial</button>
+        <button class="btn-select-plan" data-plan-id="enterprise" data-plan-name="Enterprise" data-vehicle-limit="100" data-price="6999">Start 14-Day Trial</button>
       </div>
 
       <div class="plan-card">
@@ -314,7 +314,7 @@
           <li><i class="fas fa-check-circle"></i>Dedicated Account Manager</li>
           <li><i class="fas fa-check-circle"></i>Full API & Automation Access</li>
         </ul>
-        <button class="btn-select-plan">Start 14-Day Trial</button>
+        <button class="btn-select-plan" data-plan-id="ultimate" data-plan-name="Ultimate" data-vehicle-limit="200" data-price="14999">Start 14-Day Trial</button>
       </div>
     </div>
 
@@ -326,5 +326,85 @@
       <p><i class="fas fa-lock"></i> Your data is encrypted and safe — trusted by transport companies nationwide.</p>
     </div>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // If no user is logged in, redirect to the login page.
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const planButtons = document.querySelectorAll('.btn-select-plan');
+      planButtons.forEach(button => {
+        button.addEventListener('click', async (event) => {
+          const planId = event.target.dataset.planId;
+          const planName = event.target.dataset.planName;
+          const vehicleLimit = parseInt(event.target.dataset.vehicleLimit, 10);
+          const price = parseInt(event.target.dataset.price, 10);
+
+          // Disable all buttons to prevent multiple clicks
+          planButtons.forEach(btn => btn.disabled = true);
+          event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting up...';
+
+          try {
+            // The signup process already creates a 14-day trial.
+            // Here, we update the plan details based on the user's selection.
+            const trialStart = new Date();
+            const trialEnd = new Date();
+            trialEnd.setDate(trialStart.getDate() + 14);
+
+            const subscriptionData = {
+              status: 'trial',
+              planId: planId,
+              planName: planName,
+              vehicleLimit: vehicleLimit,
+              monthlyRate: price,
+              trialStart: trialStart.toISOString(),
+              trialEnd: trialEnd.toISOString(),
+              createdAt: new Date().toISOString(),
+              subscribedAt: new Date().getTime()
+            };
+
+            // Update the subscription data in the user's profile in Firebase.
+            const userSubscriptionRef = ref(db, `users/${user.uid}/subscription`);
+            await update(userSubscriptionRef, subscriptionData);
+
+            alert(`Your ${planName} plan 14-day trial has started!`);
+            
+            // Redirect to the branch selection page after successful plan selection.
+            window.location.href = 'branch-selection.html';
+
+          } catch (error) {
+            console.error("Error updating plan:", error);
+            alert("Failed to start your trial. Please try again or contact support.");
+            // Re-enable buttons on error
+            planButtons.forEach(btn => btn.disabled = false);
+            event.target.textContent = 'Start 14-Day Trial';
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>
