@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Payment Management</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Firebase SDKs will be imported as modules in the main script -->
-    
     <style>
         :root {
             --primary-color: #4a6bff;
@@ -212,14 +210,19 @@
             color: #856404;
         }
         
-        .status-verified {
+        .status-verified, .status-active {
             background-color: #d4edda;
             color: #155724;
         }
         
-        .status-failed {
+        .status-failed, .status-expired {
             background-color: #f8d7da;
             color: #721c24;
+        }
+
+        .status-n-a, .status-default {
+            background-color: #e2e6ea;
+            color: #383d41;
         }
         
         .search-box {
@@ -696,7 +699,6 @@
             </button>
         </div>
         
-        <!-- Payments Tab -->
         <div id="paymentsSection" class="tab-content active">
             <h1><i class="fas fa-money-bill-wave"></i> Payment Management</h1>
         
@@ -722,11 +724,9 @@
                         <th>Date</th>
                         <th>Status</th>
                         <th>Actions</th>
-                        <th></th> <!-- For delete button -->
-                    </tr>
+                        <th></th> </tr>
                 </thead>
                 <tbody id="paymentsBody">
-                    <!-- Payments will be loaded here -->
                     <tr>
                         <td colspan="7" style="text-align: center; padding: 40px;">
                             <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
@@ -736,7 +736,6 @@
                 </tbody>
             </table>
         </div>
-        <!-- Pagination Controls (tab-based) -->
         <div class="pagination" style="justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
             <span id="entriesInfo">Showing 0 to 0 of 0 entries</span>
             <div style="display:flex; gap:6px; align-items:center;">
@@ -747,7 +746,6 @@
         </div>
     </div>
 
-    <!-- Branch Payments Tab -->
     <div id="branchPaymentsSection" class="tab-content">
         <h1><i class="fas fa-code-branch"></i> Branch Creation Payments</h1>
         <div class="search-box">
@@ -769,8 +767,7 @@
                         <th>Date</th>
                         <th>Status</th>
                         <th>Actions</th>
-                        <th></th> <!-- For delete button -->
-                    </tr>
+                        <th></th> </tr>
                 </thead>
                 <tbody id="branchPaymentsBody">
                     <tr>
@@ -784,7 +781,6 @@
         </div>
     </div>
 
-    <!-- User Management Tab -->
     <div id="usersSection" class="tab-content">
         <h1><i class="fas fa-users"></i> User Management</h1>
         <div class="search-box">
@@ -792,7 +788,6 @@
             <i class="fas fa-search"></i>
         </div>
         <div id="userCardsContainer" class="user-grid"></div>
-        <!-- Pagination Controls for Users -->
         <div class="pagination" style="justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
             <span id="entriesInfoUsers">Showing 0 to 0 of 0 entries</span>
             <div style="display:flex; gap:6px; align-items:center;">
@@ -803,7 +798,6 @@
         </div>
     </div>
 
-    <!-- User Detail Modal -->
     <div class="modal fade" id="userDetailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
@@ -825,10 +819,8 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS for Modal -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Firebase and other scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import {
@@ -941,25 +933,14 @@
 
         // Check if user is admin
         async function checkAdmin(user) {
+            // The most reliable way to check for admin is to try reading a protected route.
+            // If the read succeeds, the security rules have confirmed they are an admin.
             try {
-                // Check if user has admin role in the database
-                const userRef = ref(database, `users/${user.uid}`);
-                const snapshot = await get(userRef);
-                
-                if (!snapshot.exists()) {
-                    console.error('User data not found in database');
-                    showNotification('Error: User account not found', 'error');
-                    return false;
-                }
-                
-                const userData = snapshot.val();
-                const isAdmin = userData && userData.role === 'admin';
-
-                return isAdmin;
-                
+                const usersRef = ref(database, 'users');
+                await get(usersRef); // Attempt to read the entire /users node
+                return true; // If this doesn't throw an error, they are an admin.
             } catch (error) {
-                console.error('Error checking admin status:', error);
-                showNotification('Error verifying admin status: ' + (error.message || 'Unknown error'), 'error');
+                // If it fails, they are not an admin.
                 return false;
             }
         }
@@ -969,6 +950,47 @@
             if (!timestamp) return 'N/A';
             const date = new Date(timestamp);
             return date.toLocaleString();
+        }
+
+        // Function to determine the display text and class for subscription time (FIX and Refinement)
+        function getSubscriptionTimeDetails(subscription = {}) {
+            const endDateStr = subscription.endDate;
+            const status = subscription.status;
+            
+            if (status === 'active' && endDateStr) {
+                const endDate = new Date(endDateStr);
+                const now = new Date();
+                const diffMilliseconds = endDate - now;
+                let diffDays = Math.ceil(diffMilliseconds / (1000 * 60 * 60 * 24));
+
+                if (diffDays > 7) {
+                    return { class: 'status-verified', text: `${diffDays} days left` };
+                } else if (diffDays > 0) {
+                    return { class: 'status-pending', text: `Expiring soon (${diffDays} days left)` };
+                } else {
+                    // Check if the current time is past the end date (but status is still 'active')
+                    const timePassedMilliseconds = now - endDate;
+                    const daysExpired = Math.ceil(timePassedMilliseconds / (1000 * 60 * 60 * 24));
+                    
+                    if (daysExpired > 0) {
+                        return { class: 'status-failed', text: `Expired ${daysExpired} days ago` };
+                    }
+                    return { class: 'status-pending', text: 'Expires Today' };
+                }
+            } else if (status === 'expired' && endDateStr) {
+                const endDate = new Date(endDateStr);
+                const now = new Date();
+                // Calculate days expired (always positive since status is 'expired')
+                const daysExpired = Math.ceil((now - endDate) / (1000 * 60 * 60 * 24));
+                if (daysExpired > 0) {
+                    return { class: 'status-failed', text: `Expired ${daysExpired} days ago` };
+                }
+                return { class: 'status-failed', text: 'Expired' };
+            } else if (status === 'trial') {
+                return { class: 'status-pending', text: 'On Trial' };
+            }
+            
+            return { class: 'status-n-a', text: 'N/A' };
         }
 
         // Update payment status
@@ -1202,7 +1224,7 @@
                 
                 // Status badge
                 const statusBadge = document.createElement('span');
-                statusBadge.className = `status-badge ${payment.status}`;
+                statusBadge.className = `status-badge status-${payment.status}`;
                 statusBadge.textContent = payment.status || 'pending';
                 
                 // Actions cell
@@ -1373,9 +1395,8 @@
                 if (user.accountType === 'core') {
                     if (!userHierarchy[user.id]) userHierarchy[user.id] = { core: null, branches: [] };
                     userHierarchy[user.id].core = user;
-                } else if (user.coreAccountId) { // This will catch both 'branch' and 'main' types if they have a coreAccountId
+                } else if (user.coreAccountId) {
                     if (!userHierarchy[user.coreAccountId]) userHierarchy[user.coreAccountId] = { core: null, branches: [] };
-                    // Differentiate between main and sub-branches for display
                     const branchType = user.branchType || (user.type === 'main' ? 'main' : 'sub');
                     user.displayBranchType = branchType;
                     userHierarchy[user.coreAccountId].branches.push(user);
@@ -1386,43 +1407,52 @@
             userCardsContainer.innerHTML = '';
 
             Object.values(userHierarchy).forEach(group => {
-                if (!group.core) return; // Don't render branch groups without a visible core user
+                if (!group.core) return;
 
                 const groupContainer = document.createElement('div');
                 groupContainer.className = 'core-account-group';
 
+                // --- Compile Branch Emails List ---
+                const branchEmails = group.branches.map(branch => {
+                    const type = branch.displayBranchType === 'main' ? 'Main' : 'Sub';
+                    // Display first 5 chars of ID for brevity
+                    return `<li>${branch.email || 'N/A'} (ID: ${branch.id.substring(0, 5)}... / ${type})</li>`;
+                }).join('');
+                
+                const branchDisplay = branchEmails.length > 0 ? 
+                    `<p class="mt-2"><strong>Associated Branches (${group.branches.length}):</strong></p><ul style="list-style-type: none; padding-left: 0; font-size: 13px;">${branchEmails}</ul>` : 
+                    `<p class="mt-2" style="font-size: 13px;"><strong>Associated Branches:</strong> None</p>`;
+                // ----------------------------------------
+
                 // Render Core Account Card
                 const coreCard = document.createElement('div');
                 coreCard.className = 'user-card';
-                const coreSubStatus = group.core.subscription?.status || 'N/A';
+                const coreSubscription = group.core.subscription || {};
+                const coreSubStatus = coreSubscription.status || 'N/A';
+                const coreTimeDetails = getSubscriptionTimeDetails(coreSubscription);
+                
+                const timeClass = coreTimeDetails.class;
+
                 coreCard.innerHTML = `
-                    <div class="user-card-header"><h5>${group.core.email || 'N/A'}</h5><span class="status-badge status-core">Core Account</span></div>
+                    <div class="user-card-header">
+                        <h5>${group.core.email || 'N/A'}</h5>
+                        <span class="status-badge status-core">Core Account</span>
+                    </div>
                     <div class="user-card-body">
                         <p><strong>User ID:</strong> ${group.core.id}</p>
-                        <p><strong>Phone:</strong> ${group.core.profile?.phoneNumber || '-'}</p>
-                        <p><strong>Subscription:</strong> <span class="status-badge status-${coreSubStatus}">${coreSubStatus}</span></p>
+                        <p><strong>Subscription Status:</strong> <span class="status-badge status-${coreSubStatus}">${coreSubStatus}</span></p>
+                        <p><strong>Payment Due:</strong> <span class="status-badge ${timeClass}">${coreTimeDetails.text}</span></p>
+                        <hr style="margin: 10px 0;">
+                        ${branchDisplay}
                     </div>
-                    <div class="action-buttons mt-auto"><button class="btn btn-sm btn-primary" onclick="viewUserDetails('${group.core.id}')"><i class="fas fa-eye"></i> View Details</button></div>
+                    <div class="action-buttons mt-auto">
+                        <button class="btn btn-sm btn-primary" onclick="viewUserDetails('${group.core.id}')">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                    </div>
                 `;
                 groupContainer.appendChild(coreCard);
-
-                // Render Branch Account Cards
-                if (group.branches.length > 0) {
-                    const branchContainer = document.createElement('div');
-                    branchContainer.className = 'branch-cards-container';
-                    group.branches.forEach(branch => {
-                        const branchCard = document.createElement('div');
-                        branchCard.className = 'user-card';
-                        const branchSubStatus = branch.subscription?.status || coreSubStatus; // Inherit status
-                        branchCard.innerHTML = `
-                            <div class="user-card-header"><h5>${branch.email || 'N/A'}</h5><span class="status-badge status-branch">${branch.displayBranchType === 'main' ? 'Main Branch' : 'Sub-Branch'}</span></div>
-                            <div class="user-card-body"><p><strong>User ID:</strong> ${branch.id}</p><p><strong>Phone:</strong> ${branch.profile?.phoneNumber || '-'}</p></div>
-                            <div class="action-buttons mt-auto"><button class="btn btn-sm btn-primary" onclick="viewUserDetails('${branch.id}')"><i class="fas fa-eye"></i> View Details</button></div>
-                        `;
-                        branchContainer.appendChild(branchCard);
-                    });
-                    groupContainer.appendChild(branchContainer);
-                }
+                
                 userCardsContainer.appendChild(groupContainer);
             });
         }
