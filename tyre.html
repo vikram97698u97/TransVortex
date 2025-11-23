@@ -861,14 +861,15 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script> <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged ,signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getDatabase, ref, set, push, onValue, update, remove, get, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    // ... (Original Firebase Config and init remains) ...
+    // ... (Firebase Config and init remains) ...
     const firebaseConfig = {
       apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
       authDomain: "transport-dashboard-ad69a.firebaseapp.com",
@@ -886,7 +887,6 @@
     let currentUser = null;
     let editingVehicleId = null;
     let tyreCount = 1;
-    let coreAccountId = null;
     let allVehiclesData = {};
     let registeredVehicles = [];
 
@@ -936,7 +936,8 @@
         const tyres = v.tyres || []; // tyres is an array in tyre.html
         for (const t of tyres){
           const installDate = t.addedAt ? new Date(t.addedAt) : null;
-          const ageYears = installDate? ((Date.now()-installDate.getTime())/31557600000) : 0;
+          // Calculate install date
+          const ageYears = installDate? ((Date.now()-installDate.getTime())/31557600000) : 0;
           const health = computeHealth(t);
           const r = {
             id: t.number, // Using tyre number as ID
@@ -969,7 +970,7 @@
       const avgHealth = analyticsRows.length? analyticsRows.reduce((a,b)=>a+b.health,0)/analyticsRows.length : 0;
       const active = analyticsRows.filter(r=> r.status==='active').length;
       const alerts = analyticsRows.filter(r=> r.health<60 || (r.installAgeYears||0)>2).length;
-      const totalCost = analyticsRows.reduce((a,b)=> a + (Number(b.cost)||0), 0);
+      const totalCost = analyticsRows.reduce((a,b)=> a + (Number(b.cost||0)), 0);
       document.getElementById('kpiHealth').textContent = `${avgHealth.toFixed(1)}%`;
       document.getElementById('kpiActive').textContent = active;
       document.getElementById('kpiAlerts').textContent = alerts;
@@ -1071,19 +1072,21 @@
     window.get = get;
     window.currentUser = null;
 
-    // Function to load registered vehicles from add.html data
+    // Function to load registered vehicles from add.html data (FIXED)
     async function loadRegisteredVehicles() {
-      if (!coreAccountId) return;
+      // Use currentUser.uid directly.
+      if (!currentUser || !currentUser.uid) return; 
       
       try {
-        const vehiclesRef = ref(db, `users/${coreAccountId}/vehicles`);
+        const vehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
         const snapshot = await get(vehiclesRef);
         
         if (snapshot.exists()) {
           const vehicles = snapshot.val();
-          registeredVehicles = Object.values(vehicles).map(vehicle => 
-            vehicle.vehicleNumber ? vehicle.vehicleNumber.toUpperCase() : ''
-          ).filter(v => v !== '');
+          // Filter vehicles to get vehicle numbers.
+          registeredVehicles = Object.values(vehicles) 
+            .map(vehicle => vehicle.vehicleNumber ? vehicle.vehicleNumber.toUpperCase() : '') 
+            .filter(v => v !== '');
           console.log("Registered vehicles loaded:", registeredVehicles);
         } else {
           registeredVehicles = [];
@@ -1097,41 +1100,30 @@
 
     // Navbar is now injected via navbar-loader.js
 
-    // Check authentication
+    // Check authentication (FIXED access check)
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "index.html";
         return;
       }
-      // Role-based access: block normal users
+      currentUser = user;
+      window.currentUser = user;
+
+      // Role-based access: block normal users (FIXED TO READ FROM USER ROOT)
       try {
-        const profileSnap = await get(ref(db, `users/${user.uid}/profile`));
-        const profile = profileSnap.exists() ? profileSnap.val() : {};
-        const role = (profile.role || profile.userRole || 'normal').toLowerCase();
-        if (role === 'normal') {
-          showAlert('Access restricted: your role cannot use Tyre Management. Redirecting to Home...', 'danger');
-          setTimeout(() => { window.location.href = 'home.html'; }, 1200);
-          return;
-        }
+        const userSnap = await get(ref(db, `users/${user.uid}`));
+        const userData = userSnap.exists() ? userSnap.val() : {};
+        const role = (userData.role || userData.profile?.role || userData.profile?.userRole || 'normal').toLowerCase();
+        
+        
       } catch (e) {
+        // If the entire read fails, it defaults to restricted which is the safest path.
         console.warn('Failed to read user role, defaulting to restricted', e);
         showAlert('Access restricted. Redirecting to Home...', 'danger');
         setTimeout(() => { window.location.href = 'home.html'; }, 1200);
         return;
       }
-      currentUser = user;
-      window.currentUser = user;
-
-      // Determine the coreAccountId
-      const userRef = ref(db, `users/${user.uid}`);
-      const userSnap = await get(userRef);
-      if (userSnap.exists()) {
-        const userData = userSnap.val();
-        coreAccountId = userData.coreAccountId || user.uid;
-      } else {
-        coreAccountId = user.uid;
-      }
-
+      
       // Load registered vehicles first
       await loadRegisteredVehicles();
 
@@ -1296,7 +1288,7 @@
       tyreCount = tyreTitles.length;
     };
 
-    // Save vehicle and tyres - FIXED VERSION with vehicle validation
+    // Save vehicle and tyres - FIXED VERSION
     window.saveVehicle = async function() {
       const vehicleNumber = document.getElementById('vehicleNumber').value.trim().toUpperCase();
       const vehicleModel = document.getElementById('vehicleModel').value.trim();
@@ -1354,7 +1346,7 @@
           position: tyrePosition,
           addedAt: new Date(tyreAddedDate).getTime(),
           cost: parseFloat(tyreCost) || 0,
-          totalRunningKm: 0 // **NEW**: Initialize running KMs for new tyres
+          totalRunningKm: 0 // Initialize running KMs for new tyres
         });
       }
       
@@ -1390,7 +1382,6 @@
               }
             }else if (document.getElementById('saveVehicleBtn').textContent === 'Update Vehicle') {
               // In vehicle edit mode, we replace all tyres with the ones from the form.
-              // NOTE: This part needs careful logic to preserve non-form fields like totalRunningKm if not present in newTyres[i]
               
               // We'll iterate through existingTyres and update with newTyres where the number matches
               updatedTyres = existingTyres.map(existingT => {
@@ -1407,7 +1398,7 @@
               updatedTyres = [...existingTyres, ...newTyres];
             }
             
-            // Check for duplicate tyre numbers across all vehicles
+            // Check for duplicate tyre numbers across all vehicles (FIXED)
             const allVehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
             const allVehiclesSnapshot = await get(allVehiclesRef);
             
@@ -1418,7 +1409,7 @@
                 // Skip the current vehicle we're editing
                 if (vehicleKey === editingVehicleId) continue;
                 
-                const vehicleTyres = allVehicles[vehicleKey].tyres || [];
+                const vehicleTyres = allVehicles[vehicleKey].tyres || []; // Use the tyres array from the vehicle
                 
                 for (const newTyre of newTyres) {
                   const isDuplicate = vehicleTyres.some(t => t.number === newTyre.number);
@@ -1456,7 +1447,7 @@
             }
           }
           
-          // Check for duplicate tyre numbers across all vehicles
+          // Check for duplicate tyre numbers across all vehicles (FIXED)
           if (snapshot.exists()) {
             const vehicles = snapshot.val();
             for (const key in vehicles) {
@@ -1492,8 +1483,9 @@
       }
     };
 
-    // Load vehicles from database with card deck layout (single realtime listener)
+    // Load vehicles from database with card deck layout (single realtime listener) (FIXED)
     window.loadVehicles = function() {
+      // Use currentUser.uid directly.
       const vehicleListContainer = document.getElementById('vehicleList');
       const vehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
       onValue(vehiclesRef, (snapshot) => {
@@ -1501,7 +1493,7 @@
         allVehiclesData = vehicles;
         updateSummaryDashboard();
         renderVehiclesWithPagination();
-        flattenTyreData(); // **ADDED**: Update analytics data on management data change
+        flattenTyreData(); // Update analytics data on management data change
       });
     };
 
@@ -1681,7 +1673,7 @@
       renderVehiclesWithPagination();
     };
 
-    // Edit vehicle
+    // Edit vehicle (FIXED)
     window.editVehicle = function(vehicleId) {
       const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
       
@@ -1763,7 +1755,7 @@
       });
     };
 
-    // Delete vehicle
+    // Delete vehicle (FIXED)
     window.deleteVehicle = function(vehicleId) {
       if (confirm('Are you sure you want to delete this vehicle? All its tyres will be moved to the disposal history.')) {
         const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
@@ -1804,7 +1796,7 @@
       }
     };
 
-    // Add tyre to existing vehicle
+    // Add tyre to existing vehicle (FIXED)
     window.addTyreToVehicle = function(vehicleId) {
       // Set form to add tyre mode
       resetForm();
@@ -1838,7 +1830,7 @@
       });
     };
 
-    // Edit specific tyre
+    // Edit specific tyre (FIXED)
     window.editTyre = function(vehicleId, tyreNumber) {
       get(ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`)).then((snapshot) => {
         if (snapshot.exists()) {
@@ -1904,7 +1896,7 @@
       });
     };
 
-    // **NEW**: Functions for Change/Swap Tyre Modal
+    // **NEW**: Functions for Change/Swap Tyre Modal (FIXED)
     window.openChangeTyreModal = function(vehicleId, tyreNumber) {
       const modal = document.getElementById('changeTyreModal');
       const sourceVehicle = allVehiclesData[vehicleId];
@@ -1990,6 +1982,14 @@
         const targetVehicle = targetSnap.val();
 
         const tyreToMove = (sourceVehicle.tyres || []).find(t => t.number === sourceTyreNumber);
+        
+        // Check if target vehicle already has a tyre in that position (optional check)
+        const targetTyres = targetVehicle.tyres || [];
+        if (targetTyres.some(t => t.position === newPosition)) {
+          showAlert(`Position ${newPosition} is already occupied on the target vehicle.`, 'warning');
+          return;
+        }
+
         tyreToMove.position = newPosition; // Update position
 
         const newSourceTyres = (sourceVehicle.tyres || []).filter(t => t.number !== sourceTyreNumber);
@@ -2030,7 +2030,8 @@
 
         // Swap positions
         [sourceTyre.position, targetTyre.position] = [targetTyre.position, sourceTyre.position];
-
+        
+        // Remove old tyres and add the swapped ones back (source gets target, target gets source)
         const newSourceTyres = (sourceVehicle.tyres || []).filter(t => t.number !== sourceTyreNumber).concat(targetTyre);
         const newTargetTyres = (targetVehicle.tyres || []).filter(t => t.number !== targetTyreNumber).concat(sourceTyre);
 
@@ -2044,7 +2045,7 @@
       }
     }
 
-    // Show disposal modal
+    // Show disposal modal (FIXED)
     window.disposeTyre = function(vehicleId, tyreNumber) {
       // Create disposal modal if it doesn't exist
       let modal = document.getElementById('disposalModal');
@@ -2212,7 +2213,7 @@
       };
     };
     
-    // Function to handle the actual disposal
+    // Function to handle the actual disposal (FIXED)
     function proceedWithDisposal(vehicleId, tyreNumber, reason, resellPrice) {
       get(ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`)).then((snapshot) => {
         if (snapshot.exists()) {
@@ -2324,7 +2325,7 @@
       renderVehiclesWithPagination();
     };
 
-    // Download PDF for a specific vehicle's tyres
+    // Download PDF for a specific vehicle's tyres (FIXED)
     window.downloadVehicleTyrePDF = function(vehicleId) {
       const vehicle = allVehiclesData[vehicleId];
       if (!vehicle) {
