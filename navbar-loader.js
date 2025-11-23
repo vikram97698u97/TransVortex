@@ -1,3 +1,9 @@
+// Navbar Loader: injects the new vertical sidebar from navbar.html into any page
+// - Extracts styles, toggle button, and sidebar markup
+// - Wraps existing page content in .main-content if missing
+// - Sets active nav link based on current page
+// - Applies branch restriction click-guards (no Firebase dependency)
+
 (function() {
   async function loadNavbar() {
     try {
@@ -45,79 +51,19 @@
         document.body.insertBefore(sidebar.cloneNode(true), document.body.firstChild);
       }
 
-      // Ensure logo image source and provide a fallback
+      // Ensure logo image source and provide a fallback (SIMPLIFIED)
       async function ensureLogo() {
         const logo = document.querySelector('#sidebar .logo');
         if (!logo) return;
 
-        // **NEW**: Attempt to load company logo from Firebase profile
-        try {
-          const user = window.auth?.currentUser;
-          if (user) {
-            const profileSnap = await window.db.ref(`users/${user.uid}/profile`).once('value');
-            const profile = profileSnap.val() || {};
-            if (profile.companyLogoUrl) {
-              logo.src = profile.companyLogoUrl;
-              return; // Exit if company logo is set
-            }
-          }
-        } catch (e) {
-          console.warn("Could not fetch company logo for navbar:", e);
-        }
-
-        // Fallback to default logos
+        // Fallback to default logos (relying on profile.html script to update source dynamically)
         logo.src = 'logo.jpg';
         logo.onerror = () => { logo.src = 'logo1.jpg'; logo.onerror = null; };
       }
       ensureLogo();
 
-      // **FIX**: Load user profile into navbar, ensuring auth is ready.
-      async function loadNavbarProfile() {
-        // Wait for auth to be available on the window object
-        if (!window.auth) {
-          setTimeout(loadNavbarProfile, 100); // Retry after 100ms
-          return;
-        }
-        
-        window.auth.onAuthStateChanged(async (user) => {
-          if (!user) return;
-
-          try {
-            const profileNameEl = document.getElementById('profileName');
-            const profileRoleEl = document.getElementById('profileRole');
-            const profileAvatarEl = document.getElementById('profileAvatar');
-
-            if (!profileNameEl || !profileRoleEl || !profileAvatarEl) return;
-
-            // Fetch user data from Realtime Database
-            const userRef = window.db.ref(`users/${user.uid}`);
-            const snapshot = await userRef.once('value');
-            const userData = snapshot.val() || {};
-            const profile = userData.profile || {};
-
-            // Set Name
-            const ownerName = profile.ownerName || user.displayName || 'User';
-            profileNameEl.textContent = ownerName;
-
-            // Set Role
-            const selectedBranch = localStorage.getItem('selectedBranch') || 'Main';
-            const transportName = profile.transportName || selectedBranch;
-            profileRoleEl.textContent = transportName;
-
-            // Set Avatar
-            if (profile.photoURL) {
-              profileAvatarEl.innerHTML = `<img src="${profile.photoURL}" alt="${ownerName}" />`;
-            } else {
-              const initial = ownerName.charAt(0).toUpperCase();
-              profileAvatarEl.innerHTML = `<span>${initial}</span>`;
-            }
-          } catch (e) {
-            console.warn("Could not load user profile for navbar:", e);
-          }
-        });
-      }
-      loadNavbarProfile();
-
+      // **REMOVED loadNavbarProfile function** - Logic is now handled entirely within navbar.html's script block
+      
       // Ensure main-content wrapper exists: wrap existing non-sidebar children
       if (!document.querySelector('.main-content')) {
         const wrapper = document.createElement('div');
@@ -273,22 +219,30 @@
                 .then(() => { 
                   // Ensure localStorage is cleared before redirecting
                   localStorage.removeItem('userName');
+                  localStorage.clear();
+                  sessionStorage.clear();
                   window.location.href = 'index.html'; 
                 })
                 .catch(err => { 
                   // Still clear localStorage even if there's an error
                   localStorage.removeItem('userName');
+                  localStorage.clear();
+                  sessionStorage.clear();
                   alert('Error logging out: ' + (err && err.message ? err.message : err)); 
                   window.location.href = 'index.html'; // Redirect even on error
                 });
             } else {
               // Fallback: no Firebase on page, just clear and redirect
               localStorage.removeItem('userName');
+              localStorage.clear();
+              sessionStorage.clear();
               window.location.href = 'index.html';
             }
           } catch (e) {
             // Ensure localStorage is cleared even if there's an error
             localStorage.removeItem('userName');
+            localStorage.clear();
+            sessionStorage.clear();
             window.location.href = 'index.html';
           }
         };
