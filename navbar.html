@@ -769,14 +769,13 @@
         <div class="nav-text">Home</div>
       </a>
 
-      <!-- Operations Dropdown -->
       <div class="nav-item dropdown-toggle">
         <div class="nav-icon"><i class="fas fa-cogs"></i></div>
         <div class="nav-text">Operations</div>
         <div class="dropdown-arrow"></div>
       </div>
       <ul class="sub-nav">
-        <li class="sub-nav-item"><a href="add.html" data-branch-restricted="true">Vehicle Info</a></li>
+        <li class="sub-nav-item"><a href="add.html" data-feature-name="Vehicle Info">Vehicle Info</a></li>
         <li class="sub-nav-item"><a href="booking.html">Client Manager</a></li>
         <li class="sub-nav-item"><a href="transporters.html">Market orders</a></li>
         <li class="sub-nav-item"><a href="lr-report.html">LR Report</a></li>
@@ -784,7 +783,6 @@
         <li class="sub-nav-item"><a href="route.html">Routes</a></li>
       </ul>
 
-      <!-- Finance Dropdown -->
       <div class="nav-item dropdown-toggle">
         <div class="nav-icon"><i class="fas fa-dollar-sign"></i></div>
         <div class="nav-text">Finance</div>
@@ -796,7 +794,6 @@
         <li class="sub-nav-item"><a href="combined_ca.html">Trip Reports</a></li>
       </ul>
 
-      <!-- Maintenance Dropdown -->
       <div class="nav-item dropdown-toggle">
         <div class="nav-icon"><i class="fas fa-wrench"></i></div>
         <div class="nav-text">Maintenance</div>
@@ -804,8 +801,8 @@
       </div>
       <ul class="sub-nav">
         <li class="sub-nav-item"><a href="work-management.html">Work Mgmt</a></li>
-        <li class="sub-nav-item"><a href="tyre.html" data-branch-restricted="true">Tyres</a></li>
-        <li class="sub-nav-item"><a href="tyre_history.html" data-branch-restricted="true">Tyre History</a></li>
+        <li class="sub-nav-item"><a href="tyre.html" data-feature-name="Tyres">Tyres</a></li>
+        <li class="sub-nav-item"><a href="tyre_history.html" data-feature-name="Tyre History">Tyre History</a></li>
       </ul>
 
       
@@ -841,7 +838,6 @@
     </div>
   </div>
 
-  <!-- Main Content Area -->
   <div class="main-content">
     
     
@@ -932,56 +928,41 @@
       }
       
       // Load user profile information
-      let role = 'normal';
       try {
-        const profileSnap = await get(ref(db, `users/${user.uid}/profile`));
-        const profile = profileSnap.exists() ? profileSnap.val() : {};
-        // **FIX**: Use ownerName from profile, fallback to display name or email.
+        const userSnap = await get(ref(db, `users/${user.uid}`));
+        const userData = userSnap.exists() ? userSnap.val() : {};
+        const profile = userData.profile || {};
+
+        // Use ownerName from profile, fallback to display name or email.
         const ownerName = profile.ownerName || user.displayName || user.email.split('@')[0];
         
         // Update Profile section
         document.getElementById('profileName').textContent = ownerName;
         
-        // **FIX**: Get branch name from localStorage and display it directly.
-        const selectedBranch = localStorage.getItem('selectedBranch') || 'Main';
-        document.getElementById('profileRole').textContent = selectedBranch;
+        // Since branch selection is removed, all users are effectively 'Main'
+        const role = (userData.role || profile.role || 'Main').toLowerCase();
+        document.getElementById('profileRole').textContent = role.charAt(0).toUpperCase() + role.slice(1);
 
-        // **REMOVED**: The role-based access logic is now simplified or handled elsewhere.
-        role = (profile.role || profile.userRole || 'normal').toLowerCase();
-        // Enforce branch access restrictions and role-based visibility
-        const isMainBranch = selectedBranch === 'main';
-        const restricted = document.querySelectorAll('[data-branch-restricted="true"]');
+        // --- Simplified Access Logic (All logged-in users get access) ---
+        // 1. Remove display:none style on restricted links (if it was set via HTML attribute which is now removed)
+        // 2. Attach a simple handler to show a notice if the feature name is present (for future role-based updates).
         
-        restricted.forEach(el => {
-          el.style.display = '';
-          if (!isMainBranch) {
-            el.addEventListener('click', function(e) {
-              e.preventDefault();
-              showBranchNotice('This feature is only available in Main Branch.');
+        document.querySelectorAll('.nav-links a, .sub-nav-item a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                const featureName = this.getAttribute('data-feature-name');
+                const isNormalRole = (userData.role || 'Main').toLowerCase() === 'normal';
+
+                if (featureName && isNormalRole) {
+                    e.preventDefault();
+                    showBranchNotice(`Access to '${featureName}' is restricted by your account role.`);
+                }
             });
-          }
         });
 
-        if (role === 'normal') {
-          const linkSelectors = [
-            'a[href="add.html"]',
-            'a[href="tyre.html"]',
-            'a[href="tyre_history.html"]'
-          ];
-          linkSelectors.forEach(sel => {
-            const el = document.querySelector(sel);
-            if (el) {
-              el.style.display = 'none';
-              el.addEventListener('click', function(e) {
-                e.preventDefault();
-                showBranchNotice('Not allowed: your role cannot access this feature.');
-              });
-            }
-          });
-        }
       } catch (e) {
           // Fallback if profile load fails
           document.getElementById('profileName').textContent = user.email.split('@')[0];
+          document.getElementById('profileRole').textContent = 'User';
       }
     });
 
@@ -1030,19 +1011,6 @@
             subNav.style.maxHeight = null;
           } else {
             subNav.style.maxHeight = subNav.scrollHeight + "px";
-          }
-        });
-      });
-
-      document.querySelectorAll('.nav-item, .sub-nav-item a').forEach(item => {
-        item.addEventListener('click', function(e) {
-          if (this.getAttribute('data-branch-restricted') === 'true') {
-            const isMainBranch = localStorage.getItem('selectedBranch') === 'main';
-            if (!isMainBranch) {
-              e.preventDefault();
-              showBranchNotice('This feature is only available in Main Branch.');
-              return;
-            }
           }
         });
       });
