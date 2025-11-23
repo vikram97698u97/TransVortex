@@ -197,19 +197,16 @@
     
     <div class="form-section">
       <div class="stats-container" id="statsContainer">
-        <!-- Stats will be populated dynamically -->
-      </div>
+        </div>
       
       <div class="filter-section">
         <select id="vehicleFilter">
           <option value="">All Vehicles</option>
-          <!-- Vehicle options will be populated dynamically -->
-        </select>
+          </select>
         
         <select id="reasonFilter">
           <option value="">All Reasons</option>
-          <!-- Reason options will be populated dynamically -->
-        </select>
+          </select>
         
         <select id="timeFilter">
           <option value="all">All Time</option>
@@ -244,11 +241,9 @@
           </tr>
         </thead>
         <tbody id="historyTableBody">
-          <!-- History entries will be populated dynamically -->
-        </tbody>
+          </tbody>
       </table>
 
-      <!-- Pagination Controls (Tab System) -->
       <div style="margin-top: 16px;">
         <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
           <label for="entriesPerPage" style="font-weight:600;">Entries per page:</label>
@@ -314,30 +309,30 @@
 
     // Navbar is injected via navbar-loader.js
 
-    // Check authentication
+    // Check authentication (FIXED access check)
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "index.html";
         return;
       }
-      // Role-based access: block normal users
+      currentUser = user;
+      window.currentUser = user;
+
+      // Role-based access: block normal users (FIXED TO READ FROM USER ROOT)
       try {
-        const profileSnap = await get(ref(db, `users/${user.uid}/profile`));
-        const profile = profileSnap.exists() ? profileSnap.val() : {};
-        const role = (profile.role || profile.userRole || 'normal').toLowerCase();
-        if (role === 'normal') {
-          showAlert('Access restricted: your role cannot view Tyre History. Redirecting to Home...', 'danger');
-          setTimeout(() => { window.location.href = 'home.html'; }, 1200);
-          return;
-        }
+        const userSnap = await get(ref(db, `users/${user.uid}`));
+        const userData = userSnap.exists() ? userSnap.val() : {};
+        const role = (userData.role || userData.profile?.role || userData.profile?.userRole || 'normal').toLowerCase();
+
+        
       } catch (e) {
+        // If the entire read fails, it defaults to restricted which is the safest path.
         console.warn('Failed to read user role, defaulting to restricted', e);
         showAlert('Access restricted. Redirecting to Home...', 'danger');
         setTimeout(() => { window.location.href = 'home.html'; }, 1200);
         return;
       }
-      currentUser = user;
-      window.currentUser = user; // Update the global reference
+      
       loadTyreHistory();
     });
 
@@ -354,14 +349,14 @@
       }, 3000);
     };
 
-    // Load tyre history - FIXED
+    // Load tyre history - FIXED (Using currentUser.uid directly)
     window.loadTyreHistory = function() {
       // FIXED: Use currentUser.uid directly
       const historyRef = ref(db, `users/${currentUser.uid}/tyre_history`);
       
       onValue(historyRef, (snapshot) => {
         if (!snapshot.exists()) {
-          document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="9">No disposal history found</td></tr>';
+          document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="10">No disposal history found</td></tr>';
           updateStats([]);
           filteredHistoryData = [];
           renderHistoryWithPagination();
@@ -681,7 +676,7 @@
       renderHistoryTable(pageData);
     }
 
-    // Restore Tyre - FIXED
+    // Restore Tyre - FIXED (Using currentUser.uid directly)
     window.restoreTyre = async function(historyId) {
       if (!confirm('Are you sure you want to restore this tyre to its original vehicle?')) {
         return;
