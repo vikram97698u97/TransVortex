@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Payment Management</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link 
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" 
+      integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" 
+      crossorigin="anonymous" 
+      referrerpolicy="no-referrer" 
+    />
     <style>
         :root {
             --primary-color: #4a6bff;
@@ -697,6 +703,9 @@
             <button id="usersTab" class="tab-btn">
                 <i class="fas fa-users"></i> User Management
             </button>
+            <button id="demoRequestsTab" class="tab-btn">
+                <i class="fas fa-user-plus"></i> Demo Requests
+            </button>
         </div>
         
         <div id="paymentsSection" class="tab-content active">
@@ -798,6 +807,33 @@
         </div>
     </div>
 
+    <div id="demoRequestsSection" class="tab-content">
+        <h1><i class="fas fa-user-plus"></i> Demo Account Requests</h1>
+        <div class="search-box">
+            <input type="text" id="demoSearchInput" placeholder="Search by name, email, or phone...">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="table-responsive">
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="demoRequestsBody">
+                    <tr>
+                        <td colspan="6" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading demo requests...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="modal fade" id="userDetailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
@@ -819,6 +855,7 @@
         </div>
     </div>
 
+    // ... (omitted HTML structure and CSS) ...
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script type="module">
@@ -871,6 +908,10 @@
         const usersTab = document.getElementById('usersTab');
         const usersSection = document.getElementById('usersSection');
         
+        // New elements for demo requests
+        const demoRequestsTab = document.getElementById('demoRequestsTab');
+        const demoRequestsSection = document.getElementById('demoRequestsSection');
+
         let currentFilter = 'all';
         let allPayments = [];
         let filteredPayments = [];
@@ -902,10 +943,12 @@
             paymentsTab.classList.remove('active');
             branchPaymentsTab.classList.remove('active');
             usersTab.classList.remove('active');
+            demoRequestsTab.classList.remove('active');
             paymentsSection.classList.remove('active');
             branchPaymentsSection.classList.remove('active');
             usersSection.classList.remove('active');
-
+            demoRequestsSection.classList.remove('active');
+            
             activeTab.classList.add('active');
             activeSection.classList.add('active');
         }
@@ -925,22 +968,38 @@
             loadUsers(); // Load users
         });
 
-        // Initial load based on which tab is active
-        if (paymentsTab.classList.contains('active')) loadPayments();
-        else if (branchPaymentsTab.classList.contains('active')) loadBranchPayments();
-        else if (usersTab.classList.contains('active')) loadUsers();
-        else loadBranchPayments();
+        demoRequestsTab.addEventListener('click', () => {
+            switchTab(demoRequestsTab, demoRequestsSection);
+            loadDemoRequests();
+        });
 
-        // Check if user is admin
+        // Initial load based on which tab is active
+        // This is now moved into the auth handler for proper sequencing.
+
+        // Check if user is admin (FIXED FOR RESILIENCE)
         async function checkAdmin(user) {
-            // The most reliable way to check for admin is to try reading a protected route.
-            // If the read succeeds, the security rules have confirmed they are an admin.
+            if (!user) return false;
+            
             try {
-                const usersRef = ref(database, 'users');
-                await get(usersRef); // Attempt to read the entire /users node
-                return true; // If this doesn't throw an error, they are an admin.
+                // Read the user's profile and check the role property
+                const userRef = ref(database, `users/${user.uid}`);
+                const snapshot = await get(userRef);
+                
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    const email = user.email || '';
+                    
+                    const isAdminByRole = (userData.role === 'admin') ||
+                                         (userData.profile && userData.profile.role === 'admin');
+                                         
+                    const isAdminByHardcode = (email === 'transvortex@gmail.com');
+
+                    return isAdminByRole || isAdminByHardcode;
+                }
+                return false;
             } catch (error) {
-                // If it fails, they are not an admin.
+                console.error("Error checking admin role:", error);
+                // On failure (e.g., connection issue), assume false to be safe.
                 return false;
             }
         }
@@ -1157,6 +1216,55 @@
             }
         }
 
+        // --- NEW: Demo Request Logic ---
+        async function approveDemoRequest(requestId) {
+            if (!confirm('Are you sure you want to approve this demo request and create a new user account?')) return;
+
+            const createDemoUserFn = httpsCallable(functions, 'createDemoUser');
+            try {
+                showNotification('Creating user account...', 'info');
+                const result = await createDemoUserFn({ requestId: requestId });
+                showNotification(result.data.message, 'success');
+                loadDemoRequests(); // Refresh the list
+            } catch (error) {
+                console.error('Error approving demo request:', error);
+                showNotification(`Failed to approve request: ${error.message}`, 'error');
+            }
+        }
+
+        async function rejectDemoRequest(requestId) {
+            if (!confirm('Are you sure you want to reject this demo request?')) return;
+
+            try {
+                const requestRef = ref(database, `demoRequests/${requestId}`);
+                await update(requestRef, { status: 'rejected' });
+                showNotification('Demo request has been rejected.', 'success');
+                loadDemoRequests(); // Refresh the list
+            } catch (error) {
+                console.error('Error rejecting demo request:', error);
+                showNotification(`Failed to reject request: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadDemoRequests() {
+            const demoBody = document.getElementById('demoRequestsBody');
+            demoBody.innerHTML = '<tr><td colspan="6" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+            try {
+                const requestsRef = ref(database, 'demoRequests');
+                const snapshot = await get(requestsRef);
+                if (snapshot.exists()) {
+                    const requests = Object.entries(snapshot.val()).map(([id, data]) => ({ id, ...data }));
+                    requests.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    renderDemoRequests(requests);
+                } else {
+                    demoBody.innerHTML = '<tr><td colspan="6" class="no-data">No demo requests found.</td></tr>';
+                }
+            } catch (error) {
+                console.error("Error loading demo requests:", error);
+                demoBody.innerHTML = `<tr><td colspan="6" class="no-data text-danger">Error: Could not load demo requests.</td></tr>`;
+            }
+        }
+
         // Update branch payment status
         async function updateBranchPaymentStatus(paymentId, status) {
             try {
@@ -1340,6 +1448,48 @@
                 fragment.appendChild(row);
             });
             paymentsBody.appendChild(fragment);
+        }
+
+        // Render Demo Requests
+        function renderDemoRequests(requests) {
+            const demoBody = document.getElementById('demoRequestsBody');
+            if (!demoBody) return;
+
+            if (!requests || requests.length === 0) {
+                demoBody.innerHTML = '<tr><td colspan="6" class="no-data">No demo requests found.</td></tr>';
+                return;
+            }
+
+            demoBody.innerHTML = '';
+            requests.forEach(req => {
+                const row = document.createElement('tr');
+                const statusBadge = `<span class="status-badge status-${req.status || 'pending'}">${req.status || 'pending'}</span>`;
+
+                let actions = '';
+                if (req.status === 'pending') {
+                    actions = `
+                        <button class="btn btn-success btn-sm"><i class="fas fa-check"></i> Approve</button>
+                        <button class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</button>
+                    `;
+                } else {
+                    actions = `<span class="text-muted">${req.status}</span>`;
+                }
+
+                row.innerHTML = `
+                    <td>${req.name || 'N/A'}</td>
+                    <td>${req.email || 'N/A'}</td>
+                    <td>${req.phone || 'N/A'}</td>
+                    <td>${formatDate(req.timestamp)}</td>
+                    <td>${statusBadge}</td>
+                    <td class="action-buttons">${actions}</td>
+                `;
+
+                if (req.status === 'pending') {
+                    row.querySelector('.btn-success').addEventListener('click', () => approveDemoRequest(req.id));
+                    row.querySelector('.btn-danger').addEventListener('click', () => rejectDemoRequest(req.id));
+                }
+                demoBody.appendChild(row);
+            });
         }
 
         // Load branch payments from Firebase
@@ -2080,23 +2230,38 @@
         `;
         document.head.appendChild(style);
         
-        // Initialize auth state
-        onAuthStateChanged(auth, async (user) => { // This is the single source of truth for auth state
-            if (user) {
-                // User is signed in, now verify they are an admin.
-                const isAdmin = await checkAdmin(user); // Pass the user object directly
-                if (isAdmin === true) {
-                    // Only load data if the user is a verified admin.
-                    if (paymentsTab.classList.contains('active')) loadPayments();
-                    else loadBranchPayments();
-                } else {
-                    // If checkAdmin returns false, the user is not an admin. Redirect them.
-                    showNotification('Access Denied: Admin privileges required.', 'error');
-                    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
-                }
-            } else {
-                // No user is signed in. This is the only place we should redirect to login.
+        // Initialize auth state (FIXED FOR RESILIENCE)
+        let authCheckAttempts = 0;
+        const maxAuthCheckAttempts = 5;
+
+        onAuthStateChanged(auth, async (user) => { 
+            if (!user) {
+                // No user is signed in. Redirect to login.
                 window.location.href = 'login.html';
+                return;
+            }
+            
+            // Check if the user is an admin
+            let isAdmin = await checkAdmin(user);
+            
+            while (!isAdmin && authCheckAttempts < maxAuthCheckAttempts) {
+                // Wait briefly for data to propagate in the database
+                await new Promise(resolve => setTimeout(resolve, 500));
+                isAdmin = await checkAdmin(user);
+                authCheckAttempts++;
+            }
+
+            if (isAdmin) {
+                // If verified, proceed with loading data for the active tab.
+                if (paymentsTab.classList.contains('active')) loadPayments();
+                else if (branchPaymentsTab.classList.contains('active')) loadBranchPayments();
+                else if (usersTab.classList.contains('active')) loadUsers();
+                else if (demoRequestsTab.classList.contains('active')) loadDemoRequests();
+            } else {
+                // If still not admin after retry, deny access.
+                showNotification('Access Denied: Admin privileges required.', 'error');
+                // Redirect to login instead of index for better flow control
+                setTimeout(() => { window.location.href = 'login.html'; }, 1500); 
             }
         });
 
