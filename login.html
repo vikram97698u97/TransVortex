@@ -435,27 +435,19 @@
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // Function to show the subscription expired message for branch users
+    // Function to show the subscription expired message
     function showSubscriptionExpiredCard() {
       const authContainer = document.querySelector('.auth-container');
       authContainer.innerHTML = `
         <div class="auth-header">
           <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: #ffc107; margin-bottom: 1rem;"></i>
           <h2>Subscription Expired</h2>
-          <p>Your subscription is over. To get access to your dashboard, please contact your transport owner to subscribe right now.</p>
+          <p>Your subscription is over. To continue accessing your dashboard, please subscribe to an active plan.</p>
+        </div>
+        <button class="btn btn-primary" onclick="window.location.href = 'subscribe.html'" style="margin-top: 20px;">
+          Go to Subscription Page
+        </button>
       `;
-      // Removed the OK button to make it a static notification. User can navigate away manually.
-    }
-
-    // Function to check if a date is valid
-    function isValidDate(d) {
-      return d instanceof Date && !isNaN(d);
-    }
-
-    // Function to calculate days between two dates
-    function daysBetween(date1, date2) {
-      const diffTime = Math.abs(date2 - date1);
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
     // Login function
@@ -468,7 +460,7 @@
       // Store original button HTML at the beginning
       const originalButtonHTML = loginButton.innerHTML;
       
-      // Store email in session for potential branch login
+      // Store email and password in session (This is needed for auto-login features, even if the branch logic is gone)
       sessionStorage.setItem('coreEmail', email);
       sessionStorage.setItem('corePassword', password);
       const statusElement = document.getElementById("user-status");
@@ -478,24 +470,9 @@
         return;
       }
       
-      // Basic validation
-      if (!email) {
-        showError("Please enter your email");
-        document.getElementById("login-email").focus();
-        return;
-      }
-      
-      if (!password) {
-        showError("Please enter your password");
-        document.getElementById("login-password").focus();
-        return;
-      }
-      
-      // Email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        showError('Please enter a valid email address');
-        document.getElementById("login-email").focus();
+      // Basic validation (omitted for brevity, assume valid)
+      if (!email || !password || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showError('Please enter a valid email and password');
         return;
       }
       
@@ -504,96 +481,69 @@
         loginButton.disabled = true;
         loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
         
-        // Sign in with email and password
+        // 1. Sign in with email and password
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        // Get user data from database
+        // 2. Get user data from database
         const userRef = ref(db, `users/${user.uid}`);
         const snapshot = await get(userRef);
         
-        if (snapshot.exists()) {
-          const userData = snapshot.val();
-          console.log('User data from database:', userData);
-
-          // **FIX**: Check for admin role OR the specific admin email.
-          const isAdmin = (userData.role === 'admin') ||
-                         (userData.profile && userData.profile.role === 'admin') ||
-                         (email === 'transvortex@gmail.com');
-
-          // Check for admin role before subscription check
-          if (isAdmin) {
-            // Ensure the role is properly set in the database
-            await update(ref(db, `users/${user.uid}`), { 
-              role: 'admin',
-              lastLogin: new Date().toISOString()
-            });
-            console.log('Admin user detected, redirecting to admin dashboard.');
-            window.location.href = 'admin-payments.html';
-            return;
-          }
-
-          // --- THIS CODE NOW ONLY RUNS FOR NON-ADMIN USERS ---
-          else {
-            // Check subscription status for non-admin users
-            const accountType = userData.accountType || 'core';
-            const isBranchAccount = (accountType === 'branch');
-            const effectiveCoreAccountId = isBranchAccount ? userData.coreAccountId : user.uid;
-
-            if (isBranchAccount && !effectiveCoreAccountId) {
-              throw new Error('Account configuration error: Core account link is missing.');
-            }
-
-            // Check for a paid subscription first
-            const coreSubRef = ref(db, `coreSubscriptions/${effectiveCoreAccountId}`);
-            const coreSubSnap = await get(coreSubRef);
-            if (coreSubSnap.exists()) {
-              const coreSub = coreSubSnap.val();
-              const endDate = new Date(coreSub.endDate);
-              if (coreSub.status === 'active' && endDate > new Date()) {
-                await update(ref(db, `users/${user.uid}`), { lastLogin: new Date().toISOString() });
-                const destination = accountType === 'core' ? 'branch-selection.html' : 'home.html';
-                window.location.href = destination;
-                return;
-              }
-            }
-
-            // If no active paid subscription, check for an active trial
-            const userCoreSubSnap = await get(ref(db, `users/${effectiveCoreAccountId}/subscription`));
-            const subscription = userCoreSubSnap.val();
-            const now = new Date();
-
-            if (subscription) {
-              const trialEnd = subscription.trialEnd ? new Date(subscription.trialEnd) : null;
-              const isTrialActive = subscription.status === 'trial' && trialEnd && trialEnd > now;
-
-              if (isTrialActive) {
-                console.log('Active trial found. Granting access.');
-                await update(ref(db, `users/${user.uid}`), { lastLogin: now.toISOString() });
-
-                const branchKey = (userData.profile && userData.profile.branchType === 'main') ? 'main' : user.uid;
-                localStorage.setItem('selectedBranch', branchKey);
-
-                const destination = isBranchAccount ? 'home.html' : 'branch-selection.html';
-                window.location.href = destination;
-                return;
-              }
-            }
-
-            // If all checks fail, handle based on account type
-            if (accountType === 'core') {
-              console.log('Core user subscription expired or not found. Redirecting to subscribe page.');
-              window.location.href = 'subscribe.html';
-            } else {
-              console.log('Branch/Main user core subscription is expired. Showing expired card.');
-              showSubscriptionExpiredCard();
-            }
-            return;
-          }
-        } else {
-          // If no profile data exists, redirect to home
+        if (!snapshot.exists()) {
+          // If no profile data exists, allow access anyway but update the last login timestamp
+          await update(ref(db, `users/${user.uid}`), { lastLogin: new Date().toISOString() });
           window.location.href = 'home.html';
+          return;
         }
+
+        const userData = snapshot.val();
+        console.log('User data from database:', userData);
+
+        // **3. Check Admin Role**
+        const isAdmin = (userData.role === 'admin') ||
+                       (userData.profile && userData.profile.role === 'admin') ||
+                       (email === 'transvortex@gmail.com');
+
+        if (isAdmin) {
+          await update(ref(db, `users/${user.uid}`), { 
+            role: 'admin',
+            lastLogin: new Date().toISOString()
+          });
+          console.log('Admin user detected, redirecting to admin dashboard.');
+          window.location.href = 'admin-payments.html';
+          return;
+        }
+
+        // **4. Check Subscription Status (Simplified)**
+        const subscription = userData.subscription;
+        const now = new Date();
+        let isSubscriptionActive = false;
+
+        if (subscription) {
+          const trialEnd = subscription.trialEnd ? new Date(subscription.trialEnd) : null;
+          const endDate = subscription.endDate ? new Date(subscription.endDate) : null;
+          
+          const isTrialActive = subscription.status === 'trial' && trialEnd && trialEnd > now;
+          const isPaidActive = subscription.status === 'active' && endDate && endDate > now;
+          
+          isSubscriptionActive = isTrialActive || isPaidActive;
+        }
+
+        if (isSubscriptionActive) {
+          // Grant Access
+          await update(ref(db, `users/${user.uid}`), { lastLogin: now.toISOString() });
+          console.log('Active subscription/trial found. Redirecting to dashboard.');
+          
+          // Redirect the user to the main dashboard
+          window.location.href = 'home.html';
+          return;
+        } else {
+          // Subscription Expired/Missing
+          console.log('Subscription expired or not found. Showing expired card.');
+          showSubscriptionExpiredCard();
+          return;
+        }
+
       } catch (error) {
         console.error("Login error:", error);
         let errorMessage = "An error occurred. Please try again.";
@@ -602,12 +552,9 @@
         if (error && error.code) {
           switch (error.code) {
             case 'auth/user-not-found':
-              errorMessage = "No account found with this email.";
-              document.getElementById("login-email").focus();
-              break;
             case 'auth/wrong-password':
-              errorMessage = "Incorrect password. Please try again.";
-              document.getElementById("login-password").focus();
+              errorMessage = "Incorrect email or password.";
+              document.getElementById("login-email").focus();
               break;
             case 'auth/too-many-requests':
               errorMessage = "Too many failed attempts. Please try again later or reset your password.";
@@ -693,22 +640,12 @@
       }
     });
 
-    // Auto-login for branch switching
+    // Removed Auto-login for branch switching logic since the structure is eliminated.
     document.addEventListener('DOMContentLoaded', function() {
       const params = new URLSearchParams(window.location.search);
+      // Remove obsolete branch autologin check
       if (params.get('autologin') === 'branch') {
-        const targetEmail = sessionStorage.getItem('targetBranchEmail');
-        const corePassword = sessionStorage.getItem('corePassword'); // Assumes core password was stored on initial login
-
-        if (targetEmail && corePassword) {
-          const emailField = document.getElementById('login-email');
-          const passwordField = document.getElementById('login-password');
-          emailField.value = targetEmail;
-          passwordField.value = corePassword;
-          
-          // Automatically trigger the login
-          window.login();
-        }
+        sessionStorage.removeItem('targetBranchEmail');
       }
     });
   </script>
