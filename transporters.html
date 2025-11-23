@@ -15,6 +15,10 @@
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
+
+    /* Match green active tab/pill used across the site */
+    .nav-tabs .nav-link.active { background-color: #198754; color: #fff; }
+    .nav-pills .nav-link.active { background-color: #198754; color: #fff; }
     .form-section {
       background-color: #f8f9fa;
       padding: 20px;
@@ -64,7 +68,7 @@
       border: none;
     }
     .lr-detail-modal .modal-header {
-      background-color: #0d6efd;
+      background-color: #198754;
       color: white;
       border-bottom: none;
       border-radius: 12px 12px 0 0;
@@ -76,6 +80,51 @@
     .lr-detail-modal .detail-row:last-child {
       border-bottom: none;
     }
+    /* --- Classy Invoice List Styles --- */
+    .invoice-list { list-style: none; padding: 0; margin: 0; }
+    .invoice-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border: 0; border-bottom: 1px solid #eee; transition: background .2s, transform .2s; }
+    .invoice-item:hover { background: #fafafa; transform: translateY(-1px); }
+    .invoice-left { display: flex; align-items: center; gap: 12px; }
+    .invoice-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(13,110,253,.08); color: #0d6efd; display: flex; align-items: center; justify-content: center; }
+    .invoice-title { font-weight: 600; margin: 0; }
+    .invoice-meta { font-size: .8rem; color: #6c757d; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .chip { font-size: .72rem; padding: 2px 8px; border-radius: 12px; background: #f1f3f5; color: #495057; }
+    .chip-lr { background: #e7f5ff; color: #0b7285; }
+    .chip-market { background: #fff9db; color: #e67700; }
+    .invoice-right { text-align: right; }
+    .invoice-amount { font-weight: 700; }
+    .action-buttons .btn { padding: 4px 8px; }
+    /* Enhanced table styling like client list */
+    .table-modern {
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .table-modern thead th {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+      padding: 12px 15px;
+    }
+    .table-modern tbody td {
+      padding: 12px 15px;
+      vertical-align: middle;
+    }
+    /* Match booking view table colors */
+    #transporterDetail table thead th { background-color: #0d6efd; color: #fff; border-color: #0b5ed7; }
+    #transporterDetail table tbody tr:nth-child(odd) { background-color: #f8fbff; }
+    #transporterDetail table tbody tr:hover { background-color: #eef5ff; }
+    /* Center the transporter detail card */
+    #transporterDetail { max-width: 1100px; margin: 0 auto; }
+    /* New Offcanvas (View) styling to match booking "View" card */
+    #transporterDetailDrawer { right: auto !important; left: 50% !important; transform: translateX(-50%); }
+    #transporterDetailDrawer.show { transform: translateX(-50%) !important; }
+    #transporterDetailDrawer .offcanvas-body { max-width: 1100px; margin: 0 auto; }
+    #transporterDetailDrawer table thead th { background-color: #198754; color: #fff; border-color: #146c43; }
+    #transporterDetailDrawer table tbody tr:nth-child(odd) { background-color: #f4fbf6; }
+    #transporterDetailDrawer table tbody tr:hover { background-color: #e9f7ee; }
   </style>
 </head>
 <body>
@@ -151,7 +200,114 @@
     </div>
   </div>
 
-  <!-- **NEW**: Transporter Detail View -->
+  <!-- Offcanvas: Transporter View (like booking view) -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="transporterDetailDrawer" aria-labelledby="transporterDetailDrawerLabel" style="width: 920px; max-width: 100%;">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="transporterDetailDrawerLabel"><i class="fas fa-truck me-2"></i><span id="transporterDrawerTitle">Transporter Details</span></h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body bg-slate-50">
+      <div class="erp-summary-bar mb-4 d-flex gap-3">
+        <div class="erp-summary-item shadow-sm flex-fill">
+          <div class="text-uppercase text-xs text-muted">Outstanding</div>
+          <div id="tSummaryOutstanding" class="h4 fw-bold text-danger mb-0">₹0.00</div>
+        </div>
+        <div class="erp-summary-item shadow-sm flex-fill">
+          <div class="text-uppercase text-xs text-muted">Trips</div>
+          <div id="tSummaryTrips" class="h4 fw-bold mb-0">0</div>
+        </div>
+        <div class="erp-summary-item shadow-sm flex-fill">
+          <div class="text-uppercase text-xs text-muted">Total Billed</div>
+          <div id="tSummaryTotalBilled" class="h4 fw-bold mb-0">₹0.00</div>
+        </div>
+      </div>
+
+      <ul class="nav nav-pills nav-fill mb-3" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#t-details-tab" type="button" role="tab"><i class="fas fa-info-circle me-1"></i>Details</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-lrs-tab" type="button" role="tab"><i class="fas fa-list-alt me-1"></i>LR Reports</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-invoices-tab" type="button" role="tab"><i class="fas fa-file-invoice-dollar me-1"></i>Invoices</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-payments-tab" type="button" role="tab"><i class="fas fa-money-check-alt me-1"></i>Payments & Pay</button></li>
+      </ul>
+
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="t-details-tab" role="tabpanel">
+          <div class="card modern-card p-3">
+            <h5 class="card-title"><i class="fas fa-building me-2"></i>General Information</h5>
+            <hr class="my-2">
+            <div class="row g-2" id="tGeneralDetails"></div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="t-lrs-tab" role="tabpanel">
+          <div class="card modern-card">
+            <div class="card-header bg-primary text-white"><i class="fas fa-list-alt me-2"></i>LR Reports (Market)</div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table id="tLrTable" class="table table-striped table-bordered table-modern" style="width:100%">
+                  <thead>
+                    <tr>
+                      <th>LR No</th><th>Date</th><th>From/To</th><th class="text-end">Billed (₹)</th><th class="text-center">Status</th><th class="text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="t-invoices-tab" role="tabpanel">
+          <div class="card modern-card">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+              <span><i class="fas fa-file-invoice-dollar me-2"></i>Generated Invoices</span>
+              <span class="badge bg-light text-success" id="tInvoiceCount">0</span>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table id="tInvoicesTable" class="table table-striped table-bordered table-modern" style="width:100%">
+                  <thead>
+                    <tr>
+                      <th>Invoice #</th><th>Date</th><th>LRs</th><th class="text-end">Total (₹)</th><th class="text-center">Payment Status</th><th class="text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="t-payments-tab" role="tabpanel">
+          <div class="row g-4">
+            <div class="col-lg-5">
+              <div class="card modern-card">
+                <div class="card-header bg-info text-white"><i class="fas fa-plus-circle me-2"></i>Record New Payment</div>
+                <div class="card-body">
+                  <form id="tPaymentForm" class="space-y-3">
+                    <div class="mb-2"><label class="form-label small">Amount (₹)</label><input type="number" step="0.01" class="form-control form-control-sm" id="tPayAmount" required></div>
+                    <div class="mb-2"><label class="form-label small">Date</label><input type="date" class="form-control form-control-sm" id="tPayDate" required></div>
+                    <div class="mb-3"><label class="form-label small">Notes</label><input type="text" class="form-control form-control-sm" id="tPayNotes" placeholder="UTR/Remarks"></div>
+                    <button type="submit" class="btn btn-sm btn-info w-100 text-white"><i class="fas fa-save me-2"></i>Save Payment</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-7">
+              <div class="card modern-card">
+                <div class="card-header bg-secondary text-white"><i class="fas fa-history me-2"></i>Payment History</div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table id="tPaymentsTable" class="table table-striped table-bordered table-modern" style="width:100%">
+                      <thead><tr><th>Date</th><th class="text-end">Amount (₹)</th><th>Notes</th><th class="text-end">Actions</th></tr></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="transporterDetail" class="main-content hidden">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 id="transporterTitle" class="mb-0">Transporter Details</h2>
@@ -168,10 +324,9 @@
       </div>
     </div>
 
-    <!-- **MOVED**: Add Transporter Payment Form is now part of the detail view -->
     <form id="transporterPaymentForm" class="form-section mt-4">
       <h4 class="mb-3">Add/Edit Payment</h4>
-      <input type="hidden" id="paymentTransporterIdHidden">
+      <input type="hidden" id="paymentTransporterIdHidden"> 
       <div class="row">
         <div class="col-md-4 mb-3">
           <label for="paymentAmount" class="form-label">Amount (₹) <span class="text-danger">*</span></label>
@@ -197,19 +352,8 @@
     <div class="row">
       <div class="col-md-6 mb-4">
         <div class="card modern-card h-100">
-          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Invoices</h5>
-            <span class="badge bg-light text-dark" id="invoiceCount">0</span>
-          </div>
-          <div class="card-body p-0">
-            <ul id="invoiceList" class="list-group list-group-flush"></ul>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6 mb-4">
-        <div class="card modern-card h-100">
           <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>LR Reports</h5>
+            <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>LR Reports (Market)</h5>
             <span class="badge bg-light text-dark" id="lrCount">0</span>
           </div>
           <div class="card-body p-0">
@@ -229,9 +373,21 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-md-12 mb-4">
+        <div class="card modern-card h-100">
+          <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Invoices</h5>
+            <span class="badge bg-light text-dark" id="transporterInvoiceCount">0</span>
+          </div>
+          <div class="card-body p-0">
+            <ul id="transporterInvoiceList" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- LR Detail Modal -->
   <div class="modal fade lr-detail-modal" id="lrDetailModal" tabindex="-1" aria-labelledby="lrDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -240,16 +396,13 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="lrDetailContent">
-          <!-- LR details will be loaded here -->
-        </div>
+          </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
   </div>
-
-  <script src="https://www.gstatic.com/firebasejs/9.8.0/firebase-app-compat.js"></script>
 
   <script src="navbar-loader.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -259,7 +412,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, push, onValue, update, remove, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, push, onValue, update, remove, get, query, orderByChild, equalTo, runTransaction, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
@@ -280,11 +433,15 @@
     let currentUser = null;
     let coreAccountId = null;
     let currentEditingTransporterId = null;
-    let currentEditingPaymentId = null; // **NEW**: To track payment being edited
-    let currentDetailTransporterId = null; // **NEW**: To track which transporter detail view is open
+    let currentEditingPaymentId = null; 
+    let currentDetailTransporterId = null;
+    let detailViewListeners = []; // **NEW**: To manage real-time listeners
     let transporterTable;
+    // DT handles for offcanvas tables
+    let dtTLR = null, dtTInv = null, dtTPay = null;
 
-    let allLrsData = [];
+    let allTransporterLrs = {}; // Cache for LR data {transporterId: {trips: N, tonnage: N}} - used for metrics/lists
+    let allTransporterPayments = {}; // Cache for Payment data {transporterId: [{key: V, amount: N}, ...]}
 
     onAuthStateChanged(auth, user => {
       if (!user) {
@@ -296,34 +453,66 @@
           const userData = snapshot.val() || {};
           coreAccountId = userData.coreAccountId || user.uid;
           
-          transporterTable = $('#transporterTable').DataTable({
-            "pageLength": 10,
-            "columnDefs": [{ "orderable": false, "targets": 5 }]
-          });
+          if (!transporterTable) {
+            transporterTable = $('#transporterTable').DataTable({
+              "pageLength": 10,
+              "columnDefs": [{ "orderable": false, "targets": 5 }]
+            });
+          }
 
-          // Add search functionality to the new input field
           document.getElementById('transporterSearchInput').addEventListener('keyup', function() {
             transporterTable.search(this.value).draw();
           });
 
-          // **NEW**: Back button for the new detail view
           document.getElementById('backToListBtn').addEventListener('click', () => {
             document.getElementById('transporterListView').classList.remove('hidden');
             document.getElementById('transporterDetail').classList.add('hidden');
             currentDetailTransporterId = null;
           });
 
-          // **NEW**: Add event listener for the new payment form
           document.getElementById('transporterPaymentForm').addEventListener('submit', saveTransporterPayment);
-          // Set default date for payment form
           document.getElementById('paymentDate').valueAsDate = new Date();
-          // **NEW**: Cancel button for payment edit
           document.getElementById('cancelPaymentEditBtn').addEventListener('click', resetPaymentForm);
 
-          loadTransporters();
+          loadAllTransporterMetrics();
+
+          // Offcanvas payment form bind
+          const tPayForm = document.getElementById('tPaymentForm');
+          if (tPayForm) {
+            const dateEl = document.getElementById('tPayDate');
+            if (dateEl && !dateEl.value) dateEl.valueAsDate = new Date();
+            tPayForm.addEventListener('submit', async (e) => {
+              e.preventDefault();
+              const transporterId = currentDetailTransporterId;
+              if (!transporterId) return alert('Open a transporter first');
+              const amount = parseFloat(document.getElementById('tPayAmount').value) || 0;
+              const date = document.getElementById('tPayDate').value;
+              const notes = document.getElementById('tPayNotes').value;
+              if (!amount || !date) return alert('Enter amount and date');
+              const payRef = push(ref(db, `users/${coreAccountId}/transporterPayments`));
+              await set(payRef, { id: payRef.key, transporterId, amount, date, notes, userId: currentUser?.uid, createdAt: new Date().toISOString() });
+              await updateTransporterLRStatus(transporterId);
+              await Promise.all([
+                renderTSummary(transporterId),
+                renderTLRS(transporterId),
+                renderTInvoices(transporterId),
+                renderTPayments(transporterId),
+                updateTransporterOutstanding(transporterId),
+              ]);
+              tPayForm.reset();
+              if (dateEl) dateEl.valueAsDate = new Date();
+              alert('Payment saved');
+            });
+          }
         });
       }
     });
+    
+    
+    function detachDetailViewListeners() {
+        detailViewListeners.forEach(offFunction => offFunction());
+        detailViewListeners = [];
+    }
 
     const transporterForm = document.getElementById("transporterForm");
     const nameInput = document.getElementById("transporterName");
@@ -366,52 +555,61 @@
         alert("Error saving transporter: " + error.message);
       }
     });
+    
+    async function loadAllTransporterMetrics() {
+        if (!coreAccountId) return;
+        
+        const lrRef = ref(db, `users/${coreAccountId}/lrReports`);
 
-    async function loadTransporters() {
+        const paymentRef = ref(db, `users/${coreAccountId}/transporterPayments`);
+
+        onValue(lrRef, (snapshot) => {
+            allTransporterLrs = {};
+            snapshot.forEach(child => {
+                const lr = child.val();
+                if (!lr.transporterId || (lr.lrType !== 'market' && lr.lrType !== 'market_company')) return;
+
+                const transporterId = lr.transporterId;
+                if (!allTransporterLrs[transporterId]) {
+                    allTransporterLrs[transporterId] = { trips: 0, tonnage: 0, totalBilled: 0, totalPaid: 0 };
+                }
+                allTransporterLrs[transporterId].trips++;
+                allTransporterLrs[transporterId].tonnage += lr.weight || 0;
+                allTransporterLrs[transporterId].totalBilled += lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0;
+            });
+            loadTransporters(); // Refresh list after LRs are cached
+        });
+
+        onValue(paymentRef, (snapshot) => {
+            allTransporterPayments = {};
+            snapshot.forEach(child => {
+                const payment = child.val();
+                if (!payment.transporterId) return;
+
+                if (!allTransporterPayments[payment.transporterId]) allTransporterPayments[payment.transporterId] = [];
+                allTransporterPayments[payment.transporterId].push({ key: child.key, ...payment });
+            });
+            loadTransporters(); // Refresh the list when payment data changes
+        });
+    }
+
+    function loadTransporters() {
       if (!coreAccountId) return;
       const transportersRef = ref(db, `users/${coreAccountId}/transporters`);
-      
-      // **MODIFIED**: No longer need to populate a separate payment dropdown
-      const [transporterSnap, lrSnap, paymentSnap] = await Promise.all([
-        get(transportersRef),
-        get(query(ref(db, `users/${coreAccountId}/lrReports`))), // Fetch all, then filter
-        get(ref(db, `users/${coreAccountId}/transporterPayments`))
-      ]);
 
-      allLrsData = lrSnap.exists() ? Object.values(lrSnap.val()) : [];
-      const lrsByTransporter = {};
-      if (lrSnap.exists()) {
-        lrSnap.forEach(child => {
-          const lr = child.val();
-          // **MODIFIED**: Only include LRs that have a transporterId
-          if (!lr.transporterId) return;
-          if (!lrsByTransporter[lr.transporterId]) lrsByTransporter[lr.transporterId] = [];
-          lrsByTransporter[lr.transporterId].push(lr);
-        });
-      }
-
-      const paymentsByTransporter = {};
-      if (paymentSnap.exists()) {
-        paymentSnap.forEach(child => {
-          const p = child.val();
-          if (!paymentsByTransporter[p.transporterId]) paymentsByTransporter[p.transporterId] = [];
-          paymentsByTransporter[p.transporterId].push(p);
-        });
-      }
-
-      onValue(transportersRef, (snapshot) => { // Keep onValue for real-time updates of the list itself
+      onValue(transportersRef, (snapshot) => {
         transporterTable.clear();
         if (snapshot.exists()) {
           snapshot.forEach(child => {
             const transporter = child.val();
             const transporterId = child.key;
-
-            const associatedLRs = lrsByTransporter[transporterId] || [];
-            const associatedPayments = paymentsByTransporter[transporterId] || [];
-
-            const totalBilled = associatedLRs.reduce((sum, lr) => sum + (lr.tripDetails?.totalBillingAmount || 0), 0);
-            const totalPaid = associatedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-            const outstanding = totalBilled - totalPaid;
+            
+            const lrMetrics = allTransporterLrs[transporterId] || { trips: 0, tonnage: 0, totalBilled: 0, totalPaid: 0 };
+            const payments = allTransporterPayments[transporterId] || [];
+            
+            const totalInvoiced = lrMetrics.totalBilled || 0;
+            const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+            const outstanding = totalInvoiced - totalPaid;
 
             transporterTable.row.add([
               transporter.name,
@@ -431,383 +629,385 @@
       });
     }
 
-    // **NEW**: Function to apply a transporter payment to their outstanding LRs
-    async function updateTransporterLRStatus(transporterId, paymentAmount) {
-      if (!coreAccountId || !transporterId || paymentAmount === undefined || paymentAmount === null) return; // Safety check
+    async function updateTransporterLRStatus(transporterId) {
+      if (!coreAccountId || !transporterId) return;
+      
+      const updates = {};
+      const dataRoot = coreAccountId;
 
-      // 1. Fetch all LRs for this transporter that are not fully paid
-      const lrsQuery = query(ref(db, `users/${coreAccountId}/lrReports`), orderByChild('transporterId'), equalTo(transporterId));
-      const lrsSnap = await get(lrsQuery);
+      const payments = allTransporterPayments[transporterId] || [];
+      const totalPaidByTransporter = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
-      if (!lrsSnap.exists()) {
-        console.log(`No LRs found for transporter ${transporterId}.`);
-        return;
-      }
-
-      const lrsToPay = [];
-      const invoicesToRecalculate = new Set(); // Collect unique invoice IDs to recalculate later
-
-      lrsSnap.forEach(child => {
-        const lr = child.val();
-        // Only consider LRs that are not fully paid
-        if (lr.paymentStatus !== 'paid') {
-          lrsToPay.push({ key: child.key, ...lr });
-          if (lr.invoiceId) {
-            invoicesToRecalculate.add(lr.invoiceId); // Add invoice ID to the set
-          }
-        }
-      });
-
-      // 2. Sort LRs by date (oldest first) to ensure FIFO payment application
-      lrsToPay.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-      let remainingAmount = paymentAmount;
-      const updates = {}; // For LR updates
-
-      // 3. Iterate through the sorted LRs and apply the payment
-      for (const lr of lrsToPay) {
-        if (remainingAmount <= 0) break;
-
-        // Use totalBillingAmount as the amount owed for the service
-        const freight = lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0; // Fallback to billingAmount
-        const paid = lr.paidAmount || 0;
-        const outstanding = freight - paid;
-
-        if (outstanding > 0) {
-          const paymentToApply = Math.min(remainingAmount, outstanding);
-          const newPaidAmount = paid + paymentToApply;
-          // Use a small tolerance for floating point comparisons
-          const newStatus = newPaidAmount >= freight - 0.01 ? 'paid' : 'partial';
-
-          updates[`/users/${coreAccountId}/lrReports/${lr.key}/paidAmount`] = newPaidAmount;
-          updates[`/users/${coreAccountId}/lrReports/${lr.key}/paymentStatus`] = newStatus;
-          remainingAmount -= paymentToApply;
-        }
-      }
-
-      // 4. Atomically update all modified LRs
-      if (Object.keys(updates).length > 0) {
-        await update(ref(db), updates);
-        console.log("Applied payment to LRs:", Object.keys(updates));
-      }
-
-      // 5. Now, recalculate and update the status of all affected invoices
-      for (const invoiceId of invoicesToRecalculate) {
-        await recalculateInvoicePaymentStatus(invoiceId);
-      }
-    }
-
-    // **NEW**: Helper function to recalculate an invoice's payment status based on its LRs
-    async function recalculateInvoicePaymentStatus(invoiceId) {
-      if (!coreAccountId || !invoiceId) return;
-
-      const invoiceRef = ref(db, `users/${coreAccountId}/invoices/${invoiceId}`);
-      const invoiceSnap = await get(invoiceRef);
-
-      if (!invoiceSnap.exists()) {
-        console.warn(`Invoice ${invoiceId} not found for recalculation.`);
-        return;
-      }
-
-      const invoice = invoiceSnap.val();
-      const invoiceGrandTotal = invoice.grandTotal || 0;
-      let totalPaidForInvoice = 0;
-
-      if (invoice.items && invoice.items.length > 0) {
-        // invoice.items contains the LR objects as they were when the invoice was created.
-        // We need to fetch the *current* state of these LRs from lrReports to get their updated paidAmount.
-        const lrPromises = invoice.items.map(item => get(ref(db, `users/${coreAccountId}/lrReports/${item.lrId}`))); // Assuming item.lrId is the LR ID
-        const lrSnaps = await Promise.all(lrPromises);
-
-        lrSnaps.forEach(lrSnap => {
-          if (lrSnap.exists()) {
-            const lr = lrSnap.val();
-            totalPaidForInvoice += (lr.paidAmount || 0);
+      const lrsSnap = await get(query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('transporterId')));
+      const lrs = [];
+      if (lrsSnap.exists()) {
+        lrsSnap.forEach(child => {
+          const lr = child.val();
+          if (lr && lr.transporterId === transporterId && (lr.lrType === 'market' || lr.lrType === 'market_company')) {
+            lrs.push({ id: child.key, ...lr });
           }
         });
       }
+      lrs.sort((a,b) => new Date(a.date || a.createdAt || 0) - new Date(b.date || b.createdAt || 0));
 
-      let newInvoiceStatus = 'pending';
-      if (totalPaidForInvoice >= invoiceGrandTotal - 0.01) { // Use tolerance for float comparison
-        newInvoiceStatus = 'paid';
-      } else if (totalPaidForInvoice > 0) {
-        newInvoiceStatus = 'partial';
+      let remainingPayment = totalPaidByTransporter;
+      for (const lr of lrs) {
+        const lrRefPath = `/users/${dataRoot}/lrReports/${lr.id}`;
+        const lrTotal = lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0;
+        const applied = Math.min(remainingPayment, lrTotal);
+        remainingPayment -= applied;
+        const newStatus = applied >= lrTotal - 0.01 ? 'paid' : (applied > 0 ? 'partial' : 'pending');
+        updates[`${lrRefPath}/paidAmount`] = applied;
+        updates[`${lrRefPath}/paymentStatus`] = newStatus;
       }
 
-      // Only update if there's a change to avoid unnecessary writes
-      if (invoice.paidAmount !== totalPaidForInvoice || invoice.paymentStatus !== newInvoiceStatus) {
-        const invoiceUpdates = {
-          paidAmount: totalPaidForInvoice,
-          paymentStatus: newInvoiceStatus
-        };
-        await update(invoiceRef, invoiceUpdates);
-        console.log(`Recalculated invoice ${invoiceId}: paidAmount=${totalPaidForInvoice.toFixed(2)}, status=${newInvoiceStatus}`);
+      if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
       }
     }
 
-    // **NEW**: Function to view an invoice in a new tab
-    window.viewInvoice = (invoiceId) => {
-      window.open(`invoice.html?view=${invoiceId}`, '_blank');
-    };
+    function renderTGeneralDetails(transporter) {
+      const detailsEl = document.getElementById('tGeneralDetails');
+      if (!detailsEl) return;
+      const fields = [
+        { label: 'Contact Person', value: transporter.contactPerson, icon: 'user' },
+        { label: 'Mobile Number', value: transporter.mobile, icon: 'mobile-alt' },
+        { label: 'Email', value: transporter.email, icon: 'envelope' },
+        { label: 'GSTIN', value: transporter.gstin, icon: 'file-invoice' },
+        { label: 'Address', value: transporter.address, icon: 'map-marked-alt' }
+      ];
+      detailsEl.innerHTML = fields.map(field => `
+        <div class="col-md-6">
+          <div class="d-flex align-items-center p-2 bg-light rounded shadow-sm">
+            <i class="fas fa-${field.icon} text-primary me-3 fa-fw"></i>
+            <div>
+              <div class="small text-muted">${field.label}</div>
+              <div class="fw-bold text-break">${field.value || '—'}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
 
-    // **NEW**: Save Transporter Payment
+    // Save Transporter Payment (adds/updates a payment, adjusts outstanding, and recalculates LR statuses)
     async function saveTransporterPayment(e) {
       e.preventDefault();
       if (!coreAccountId) return alert("Account not verified. Please reload.");
-      if (!currentDetailTransporterId) return alert("No transporter selected. Please view a transporter's details first.");
+      const transporterId = currentDetailTransporterId;
+      if (!transporterId) return alert("No transporter selected. Please view a transporter's details first.");
 
       const paymentData = {
-        transporterId: currentDetailTransporterId,
+        transporterId: transporterId,
         amount: parseFloat(document.getElementById('paymentAmount').value),
         date: document.getElementById('paymentDate').value,
         notes: document.getElementById('paymentNotes').value,
-        createdAt: new Date().toISOString(),
-        userId: currentUser.uid
+        updatedAt: new Date().toISOString(),
+        userId: currentUser?.uid
       };
 
       if (!paymentData.amount || !paymentData.date) {
-        alert('Please select a transporter and enter an amount and date.');
+        alert('Please enter an amount and date.');
         return;
       }
 
       try {
-        if (currentEditingPaymentId) {
-          // Update existing payment
-          const paymentRef = ref(db, `users/${coreAccountId}/transporterPayments/${currentEditingPaymentId}`);
-          const oldPaymentSnap = await get(paymentRef);
-          const oldAmount = oldPaymentSnap.val().amount || 0;
-          const amountDifference = paymentData.amount - oldAmount;
+        const transporterOutstandingRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}/outstanding`);
+        let amountChange = 0;
 
+        if (currentEditingPaymentId) {
+          const oldPaymentSnap = await get(ref(db, `users/${coreAccountId}/transporterPayments/${currentEditingPaymentId}`));
+          const oldAmount = oldPaymentSnap.val()?.amount || 0;
+          amountChange = oldAmount - paymentData.amount; // increase outstanding if reduced
+
+          const paymentRef = ref(db, `users/${coreAccountId}/transporterPayments/${currentEditingPaymentId}`);
           await update(paymentRef, paymentData);
           alert('Payment updated successfully!');
-
-          // Apply the difference to LRs
-          if (amountDifference !== 0) {
-            await updateTransporterLRStatus(paymentData.transporterId, amountDifference);
-          }
-          currentEditingPaymentId = null;
-          resetPaymentForm();
         } else {
-          // Add new payment
+          amountChange = -paymentData.amount; // reduce outstanding on new payment
           await push(ref(db, `users/${coreAccountId}/transporterPayments`), paymentData);
           alert('Payment saved successfully!');
-
-          // After saving the payment, apply it to the transporter's LRs
-          await updateTransporterLRStatus(paymentData.transporterId, paymentData.amount);
         }
 
+        await runTransaction(transporterOutstandingRef, (currentValue) => {
+          return (currentValue || 0) + amountChange;
+        });
+
+        await updateTransporterLRStatus(transporterId);
+        await updateTransporterOutstanding(transporterId);
         resetPaymentForm();
-        loadTransporters();
-        // If detail view is open, refresh it
-        if (currentDetailTransporterId) {
-          const transporterId = currentDetailTransporterId;
-          if (transporterId) viewTransporterDetails(transporterId);
-        }
       } catch (error) {
         console.error('Error saving payment:', error);
         alert('Error saving payment: ' + error.message);
       }
     }
 
-    // **NEW**: View Transporter Details
     window.viewTransporterDetails = async (transporterId) => {
-      currentDetailTransporterId = transporterId; // **NEW**: Set the current transporter
-      const transporterRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}`);
-      const transporterSnap = await get(transporterRef);
-      if (!transporterSnap.exists()) return;
-      const transporter = transporterSnap.val();
+        currentDetailTransporterId = transporterId;
+        resetPaymentForm();
+        detachDetailViewListeners(); 
 
-      const [lrSnap, paymentSnap, invoiceSnap] = await Promise.all([
-        get(query(ref(db, `users/${coreAccountId}/lrReports`), orderByChild('transporterId'), equalTo(transporterId))), // LRs
-        get(query(ref(db, `users/${coreAccountId}/transporterPayments`), orderByChild('transporterId'), equalTo(transporterId))),
-        get(ref(db, `users/${coreAccountId}/invoices`)) // Fetch all invoices
-      ]);
+        document.getElementById('transporterListView').classList.remove('hidden');
+        document.getElementById('transporterDetail').classList.add('hidden');
 
-      let totalBilled = 0;
-      const transporterLrs = [];
-      if (lrSnap.exists()) {
-        lrSnap.forEach(child => {
-          const lr = child.val();
-          transporterLrs.push({ key: child.key, ...lr, invoiceId: lr.invoiceId });
-          const billingAmount = lr.tripDetails?.totalBillingAmount || 0;
-          totalBilled += billingAmount;
+        const transporterRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}`);
+        const offTransporter = onValue(transporterRef, (snapshot) => {
+            if (!snapshot.exists()) return;
+            const transporter = snapshot.val();
+            document.getElementById('transporterTitle').textContent = `${transporter.name} - Details`;
+            document.getElementById('transporterDrawerTitle').textContent = transporter.name;
+            // Populate General Information tab
+            renderTGeneralDetails(transporter);
+            // Outstanding is computed from LR allocations separately
         });
-      }
+        detailViewListeners.push(offTransporter);
 
-      // **NEW**: Process invoices related to this transporter's LRs
-      const transporterInvoiceIds = new Set(transporterLrs.map(lr => lr.invoiceId).filter(Boolean));
-      const transporterInvoices = [];
-      if (invoiceSnap.exists()) {
-        invoiceSnap.forEach(child => {
-          if (transporterInvoiceIds.has(child.key)) {
-            transporterInvoices.push({ key: child.key, ...child.val() });
+        // Load payments and LRs for this transporter
+        const paymentsRef = query(ref(db, `users/${coreAccountId}/transporterPayments`), orderByChild('transporterId'), equalTo(transporterId));
+        const offPayments = onValue(paymentsRef, async (snapshot) => {
+            const paymentList = document.getElementById('paymentList');
+            paymentList.innerHTML = '';
+            let paymentCount = 0;
+            if (snapshot.exists()) {
+                const payments = [];
+                snapshot.forEach(child => {
+                    paymentCount++;
+                    payments.push({ key: child.key, ...child.val() });
+                });
+                payments.sort((a,b) => new Date(b.date) - new Date(a.date));
+                payments.forEach(p => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    listItem.innerHTML = `
+                        <div>
+                            <div class="fw-bold">Payment on ${p.date}</div>
+                            <small class="text-muted">${p.notes || 'Payment'}</small>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <span class="fw-bold text-success me-2">₹${(p.amount || 0).toFixed(2)}</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="window.editTransporterPayment('${p.key}')" title="Edit Payment"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="window.deleteTransporterPayment('${p.key}', '${p.transporterId}', ${p.amount})" title="Delete Payment"><i class="fas fa-trash"></i></button>
+                        </div>`;
+                    paymentList.appendChild(listItem);
+                });
+            }
+            if (paymentCount === 0) paymentList.innerHTML = '<li class="list-group-item text-center text-muted">No payment history found.</li>';
+            document.getElementById('paymentCount').textContent = paymentCount;
+            await updateTransporterOutstanding(transporterId);
+        });
+        detailViewListeners.push(offPayments);
+
+        // Initial render of tabs
+        await Promise.all([
+          renderTSummary(transporterId),
+          renderTLRS(transporterId),
+          renderTInvoices(transporterId),
+          renderTPayments(transporterId),
+          updateTransporterOutstanding(transporterId),
+        ]);
+
+        // Open offcanvas and activate Details tab
+        try {
+          const drawerEl = document.getElementById('transporterDetailDrawer');
+          if (drawerEl) {
+            if (window.bootstrap && window.bootstrap.Offcanvas) {
+              const drawer = window.bootstrap.Offcanvas.getOrCreateInstance(drawerEl);
+              drawer.show();
+            } else {
+              drawerEl.classList.add('show');
+              drawerEl.style.visibility = 'visible';
+              drawerEl.style.display = 'block';
+            }
           }
-        });
-      }
-
-      const invoiceList = document.getElementById('invoiceList');
-      invoiceList.innerHTML = '';
-      if (transporterInvoices.length > 0) {
-        transporterInvoices.forEach(invoice => {
-          const status = invoice.paymentStatus || 'pending';
-          const statusClass = status === 'paid' ? 'status-paid' :
-                              status === 'partial' ? 'status-pending' : 'status-overdue';
-          const listItem = document.createElement('li');
-          listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-          listItem.innerHTML = `
-            <div>
-              <div class="fw-bold">${invoice.invoiceNumber || 'N/A'}</div>
-              <small class="text-muted">₹${(invoice.grandTotal || 0).toFixed(2)}</small>
-            </div>
-            <div>
-              <span class="status-badge ${statusClass} me-2">${status}</span>
-              <button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('${invoice.key}')">
-                <i class="fas fa-eye"></i>
-              </button>
-            </div>
-          `;
-          invoiceList.appendChild(listItem);
-        });
-      } else {
-        invoiceList.innerHTML = '<li class="list-group-item text-center text-muted">No invoices found for this transporter.</li>';
-      }
-      document.getElementById('invoiceCount').textContent = transporterInvoices.length;
-
-      const lrList = document.getElementById('lrList'); // This was the duplicate declaration
-      lrList.innerHTML = '';
-      if (transporterLrs.length > 0) {
-        transporterLrs.forEach(lr => {
-          const status = lr.paymentStatus || 'pending';
-          const statusClass = status === 'paid' ? 'status-paid' :
-                              status === 'partial' ? 'status-pending' : 'status-overdue';
-          const displayAmount = (lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0);
-
-          const listItem = document.createElement('li');
-          listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-          listItem.innerHTML = `
-            <div>
-              <div class="fw-bold">${lr.lrNumber || 'N/A'}</div>
-              <small class="text-muted">₹${displayAmount.toFixed(2)}</small>
-            </div>
-            <div>
-              <span class="status-badge ${statusClass} me-2">${status}</span>
-              <button class="btn btn-sm btn-outline-primary" onclick="viewLRDetails('${lr.key}')">
-                <i class="fas fa-eye"></i>
-              </button>
-            </div>
-          `;
-          lrList.appendChild(listItem);
-        });
-      } else {
-        lrList.innerHTML = '<li class="list-group-item text-center text-muted">No LR Reports found for this transporter.</li>';
-      }
-      document.getElementById('lrCount').textContent = transporterLrs.length;
-
-      let totalPaid = 0;
-      const transporterPayments = [];
-      if (paymentSnap.exists()) {
-        paymentSnap.forEach(child => {
-          const payment = child.val();
-          transporterPayments.push({ key: child.key, ...payment });
-          totalPaid += payment.amount || 0;
-        });
-      }
-
-      const paymentList = document.getElementById('paymentList');
-      paymentList.innerHTML = '';
-      if (transporterPayments.length > 0) {
-        transporterPayments.forEach(payment => {
-          const listItem = document.createElement('li');
-          listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-          listItem.innerHTML = `
-            <div>
-              <div class="fw-bold">Payment on ${payment.date}</div>
-              <small class="text-muted">₹${(payment.amount || 0).toFixed(2)}</small>
-            </div>
-            <div class="btn-group" role="group">
-              <button class="btn btn-sm btn-outline-secondary" onclick="window.editTransporterPayment('${payment.key}')" title="Edit Payment"><i class="fas fa-edit"></i></button>
-              <button class="btn btn-sm btn-outline-danger" onclick="window.deleteTransporterPayment('${payment.key}', '${payment.transporterId}', ${payment.amount})" title="Delete Payment"><i class="fas fa-trash"></i></button>
-            </div>
-          `;
-          paymentList.appendChild(listItem);
-        });
-      } else {
-        paymentList.innerHTML = '<li class="list-group-item text-center text-muted">No payment history found for this transporter.</li>';
-      }
-      document.getElementById('paymentCount').textContent = transporterPayments.length;
-
-      const outstanding = totalBilled - totalPaid;
-      document.getElementById('transporterOutstanding').textContent = `₹${outstanding.toFixed(2)}`;
-      document.getElementById('transporterOutstanding').className = `fw-bold ${outstanding > 0 ? 'text-danger' : 'text-success'}`;
-      document.getElementById('transporterTrips').textContent = transporterLrs.length;
-      document.getElementById('transporterTitle').textContent = `${transporter.name} - Details`;
-      document.getElementById('transporterTotalBilled').textContent = `₹${totalBilled.toFixed(2)}`;
-
-      document.getElementById('transporterListView').classList.add('hidden');
-      document.getElementById('transporterDetail').classList.remove('hidden');
+          const detailsBtn = document.querySelector('button[data-bs-target="#t-details-tab"]');
+          if (detailsBtn) detailsBtn.click();
+        } catch (e) { console.warn('Offcanvas open fallback error', e); }
     };
 
-    window.viewLRDetails = async (lrId) => {
-      if (!coreAccountId) return;
-      const lrRef = ref(db, `users/${coreAccountId}/lrReports/${lrId}`);
-      const lrSnap = await get(lrRef);
+    async function renderTSummary(transporterId) {
+      let trips = 0, totalBilled = 0, totalPaid = 0;
+      const lrsRef = query(ref(db, `users/${coreAccountId}/lrReports`), orderByChild('transporterId'), equalTo(transporterId));
+      const lrsSnap = await get(lrsRef);
+      if (lrsSnap.exists()) {
+        lrsSnap.forEach(c => {
+          const lr = c.val();
+          if (lr.lrType !== 'market' && lr.lrType !== 'market_company') return; // market only
+          trips++;
+          totalBilled += lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0;
+          totalPaid += lr.paidAmount || 0;
+        });
+      }
+      const tTrips = document.getElementById('tSummaryTrips');
+      const tTotal = document.getElementById('tSummaryTotalBilled');
+      const tOutstanding = document.getElementById('tSummaryOutstanding');
+      if (tTrips) tTrips.textContent = trips;
+      if (tTotal) tTotal.textContent = `₹${(totalBilled||0).toFixed(2)}`;
+      if (tOutstanding) {
+        const outstanding = (totalBilled - totalPaid) || 0;
+        tOutstanding.textContent = `₹${outstanding.toFixed(2)}`;
+        tOutstanding.classList.toggle('text-danger', outstanding > 0.01);
+        tOutstanding.classList.toggle('text-success', outstanding < -0.01);
+      }
+    }
 
-      const lrDetailContent = document.getElementById('lrDetailContent');
-      lrDetailContent.innerHTML = ''; // Clear previous content
+    async function updateTransporterOutstanding(transporterId) {
+      const lrsRef = query(ref(db, `users/${coreAccountId}/lrReports`), orderByChild('transporterId'), equalTo(transporterId));
+      const lrsSnap = await get(lrsRef);
+      let totalBilled = 0, totalPaid = 0;
+      if (lrsSnap.exists()) {
+        lrsSnap.forEach(c => {
+          const lr = c.val();
+          if (lr.lrType !== 'market' && lr.lrType !== 'market_company') return;
+          totalBilled += lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0;
+          totalPaid += lr.paidAmount || 0;
+        });
+      }
+      const outstanding = totalBilled - totalPaid;
+      const headerOut = document.getElementById('transporterOutstanding');
+      if (headerOut) {
+        headerOut.textContent = `₹${outstanding.toFixed(2)}`;
+        headerOut.className = `fw-bold ${outstanding > 0.01 ? 'text-danger' : 'text-success'}`;
+      }
+      const tOut = document.getElementById('tSummaryOutstanding');
+      if (tOut) {
+        tOut.textContent = `₹${outstanding.toFixed(2)}`;
+        tOut.classList.toggle('text-danger', outstanding > 0.01);
+        tOut.classList.toggle('text-success', outstanding < -0.01);
+      }
+    }
 
-      if (lrSnap.exists()) {
-        const lr = lrSnap.val();
-        let transporterName = 'N/A';
-        if (lr.transporterId) {
-          const transporterSnap = await get(ref(db, `users/${coreAccountId}/transporters/${lr.transporterId}`));
-          if (transporterSnap.exists()) {
-            transporterName = transporterSnap.val().name;
+    async function renderTLRS(transporterId) {
+      const tbody = document.querySelector('#tLrTable tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const snap = await get(query(ref(db, `users/${coreAccountId}/lrReports`), orderByChild('transporterId'), equalTo(transporterId)));
+      const rows = [];
+      if (snap.exists()) {
+        snap.forEach(c => {
+          const lr = c.val();
+          if (lr.lrType !== 'market' && lr.lrType !== 'market_company') return;
+          const lrNo = lr.lrNumber || c.key;
+          const dateStr = lr.date ? new Date(lr.date).toLocaleDateString('en-IN') : (lr.createdAt ? new Date(lr.createdAt).toLocaleDateString('en-IN') : '—');
+          const from = lr.from || lr.fromLocation || lr.source || lr.pickup || lr.origin || '—';
+          const to = lr.to || lr.toLocation || lr.destination || lr.drop || lr.destinationCity || '—';
+          const amount = (lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0).toFixed(2);
+          const status = lr.paymentStatus || 'pending';
+          let statusBadge = status === 'paid' ? '<span class="status-badge status-paid">Paid</span>' : (status === 'partial' ? '<span class="status-badge status-partial">Partial</span>' : '<span class="status-badge status-pending">Pending</span>');
+          rows.push(`<tr><td>${lrNo}</td><td>${dateStr}</td><td>${from} <i class='fas fa-arrow-right fa-xs text-muted mx-1'></i> ${to}</td><td class='text-end'>₹${amount}</td><td class='text-center'>${statusBadge}</td><td class='text-center'><button class='btn btn-sm btn-outline-primary' onclick="openInvoiceForLR('${c.key}')"><i class='fas fa-eye'></i></button></td></tr>`);
+        });
+      }
+      tbody.innerHTML = rows.join('');
+      try { if (dtTLR) { dtTLR.destroy(); dtTLR = null; } } catch(e) {}
+      dtTLR = $('#tLrTable').DataTable({ pageLength: 10, lengthMenu: [[10,20,50,100,-1],[10,20,50,100,'All']], order: [[1,'desc']], dom: 'frtip' });
+    }
+
+    async function renderTInvoices(transporterId) {
+      const tbody = document.querySelector('#tInvoicesTable tbody');
+      if (!tbody) return; tbody.innerHTML = '';
+      const invSnap = await get(ref(db, `users/${coreAccountId}/invoices`));
+      const list = [];
+      if (invSnap.exists()) {
+        invSnap.forEach(c => { const inv = c.val(); if ((inv.invoiceType === 'market' || inv.invoiceType === 'market_company') && inv.transporterId === transporterId) list.push({ id: c.key, ...inv }); });
+      }
+      list.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const rows = [];
+      for (const inv of list) {
+        const lrCount = inv.lrEntries ? inv.lrEntries.length : 0;
+        const dateStr = new Date(inv.createdAt).toLocaleDateString('en-IN');
+        const total = Number(inv.grandTotal || 0);
+        let paid = 0;
+        if (Array.isArray(inv.lrEntries)) {
+          for (const entry of inv.lrEntries) {
+            const lrId = typeof entry === 'string' ? entry : (entry && entry.lrId);
+            if (!lrId) continue;
+            const lrSnap = await get(ref(db, `users/${coreAccountId}/lrReports/${lrId}`));
+            if (lrSnap.exists()) paid += lrSnap.val()?.paidAmount || 0;
           }
         }
-
-        lrDetailContent.innerHTML = `
-          <div class="row detail-row">
-            <div class="col-md-6"><strong>LR Number:</strong> ${lr.lrNumber || 'N/A'}</div>
-            <div class="col-md-6"><strong>Date:</strong> ${lr.date || 'N/A'}</div>
-          </div>
-          <div class="row detail-row">
-            <div class="col-md-6"><strong>From:</strong> ${lr.fromLocation || 'N/A'}</div>
-            <div class="col-md-6"><strong>To:</strong> ${lr.toLocation || 'N/A'}</div>
-          </div>
-          <div class="row detail-row">
-            <div class="col-md-6"><strong>Consignor:</strong> ${lr.consignorName || 'N/A'}</div>
-            <div class="col-md-6"><strong>Consignee:</strong> ${lr.consigneeName || 'N/A'}</div>
-          </div>
-          <div class="row detail-row">
-            <div class="col-md-6"><strong>Transporter:</strong> ${transporterName}</div>
-            <div class="col-md-6"><strong>Vehicle Number:</strong> ${lr.truckNumber || 'N/A'}</div>
-          </div>
-          <div class="row detail-row">
-            <div class="col-md-6"><strong>Driver Name:</strong> ${lr.driverName || 'N/A'}</div>
-            <div class="col-md-6"><strong>Driver Mobile:</strong> ${lr.driverMobile || 'N/A'}</div>
-          </div>
-          <div class="row detail-row">
-            <div class="col-md-6"><strong>Material:</strong> ${lr.materialType || 'N/A'}</div>
-            <div class="col-md-6"><strong>Weight:</strong> ${lr.weight || 'N/A'} ${lr.unit || ''}</div>
-          </div>
-          <div class="row detail-row">
-            <div class="col-md-6"><strong>Freight:</strong> ₹${(lr.freight || 0).toFixed(2)}</div>
-            <div class="col-md-6"><strong>Advance:</strong> ₹${(lr.advance || 0).toFixed(2)}</div>
-          </div>
-          <div class="row detail-row">
-            <div class="col-md-6"><strong>Balance:</strong> ₹${(lr.tripDetails?.balance || 0).toFixed(2)}</div>
-            <div class="col-md-6"><strong>Total Billing Amount:</strong> ₹${(lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0).toFixed(2)}</div>
-          </div>
-          <div class="row detail-row">
-            <div class="col-md-12"><strong>Notes:</strong> ${lr.notes || 'N/A'}</div>
-          </div>
-        `;
-      } else {
-        lrDetailContent.innerHTML = '<p>LR report not found.</p>';
+        let badge = '<span class="badge bg-danger">pending</span>';
+        if (paid >= (total - 0.01)) badge = '<span class="badge bg-success">paid</span>';
+        else if (paid > 0) badge = '<span class="badge bg-warning text-dark">partial</span>';
+        const amount = (total || 0).toFixed(2);
+        rows.push(`<tr><td>${inv.invoiceNumber}</td><td>${dateStr}</td><td>${lrCount}</td><td class='text-end'>₹${amount}</td><td class='text-center'>${badge}</td><td class='text-center'><button class='btn btn-sm btn-outline-primary' onclick="window.location.href='invoice.html?view=${inv.id}'"><i class='fas fa-eye'></i></button></td></tr>`);
       }
+      document.getElementById('tInvoiceCount').textContent = list.length;
+      tbody.innerHTML = rows.join('');
+      try { if (dtTInv) { dtTInv.destroy(); dtTInv = null; } } catch(e) {}
+      dtTInv = $('#tInvoicesTable').DataTable({ pageLength: 10, lengthMenu: [[10,20,50,100,-1],[10,20,50,100,'All']], order: [[1,'desc']], dom: 'frtip' });
+    }
 
-      const lrDetailModal = new bootstrap.Modal(document.getElementById('lrDetailModal'));
-      lrDetailModal.show();
+    async function renderTPayments(transporterId) {
+      const tbody = document.querySelector('#tPaymentsTable tbody');
+      if (!tbody) return; tbody.innerHTML = '';
+      const paymentsRef = query(ref(db, `users/${coreAccountId}/transporterPayments`), orderByChild('transporterId'), equalTo(transporterId));
+      const snap = await get(paymentsRef);
+      const rows = [];
+      if (snap.exists()) {
+        const list = [];
+        snap.forEach(c => list.push({ id: c.key, ...c.val() }));
+        list.sort((a,b) => new Date(b.date) - new Date(a.date));
+        list.forEach(p => rows.push(`<tr><td>${p.date || '—'}</td><td class='text-end'>₹${(p.amount||0).toFixed(2)}</td><td>${p.notes||''}</td><td class='text-end'><button class='btn btn-sm btn-outline-secondary me-1' onclick="window.editTransporterPayment('${p.id}')"><i class='fas fa-edit'></i></button><button class='btn btn-sm btn-outline-danger' onclick="window.deleteTransporterPayment('${p.id}', '${p.transporterId}', ${p.amount||0})"><i class='fas fa-trash'></i></button></td></tr>`));
+      }
+      tbody.innerHTML = rows.join('');
+      try { if (dtTPay) { dtTPay.destroy(); dtTPay = null; } } catch(e) {}
+      dtTPay = $('#tPaymentsTable').DataTable({ pageLength: 10, lengthMenu: [[10,20,50,100,-1],[10,20,50,100,'All']], order: [[0,'desc']], dom: 'frtip' });
+    }
+
+    async function loadTransporterInvoices(transporterId) {
+      if (!coreAccountId) return;
+      const list = document.getElementById('transporterInvoiceList');
+      list.innerHTML = '';
+      let count = 0;
+      const invSnap = await get(ref(db, `users/${coreAccountId}/invoices`));
+      if (invSnap.exists()) {
+        const invoices = [];
+        invSnap.forEach(c => {
+          const inv = c.val();
+          if ((inv.invoiceType === 'market' || inv.invoiceType === 'market_company') && inv.transporterId === transporterId) {
+            invoices.push({ id: c.key, ...inv });
+          }
+        });
+        invoices.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        invoices.forEach(inv => {
+          count++;
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          li.innerHTML = `
+            <div>
+              <div class="fw-bold">${inv.invoiceNumber}</div>
+              <small class="text-muted">${new Date(inv.createdAt).toLocaleDateString('en-IN')} • LRs: ${inv.lrEntries ? inv.lrEntries.length : 0} • ₹${(inv.grandTotal || 0).toFixed(2)}</small>
+            </div>
+            <div>
+              <button class="btn btn-sm btn-outline-primary" onclick="window.location.href='invoice.html?view=${inv.id}'"><i class="fas fa-eye"></i></button>
+            </div>`;
+          list.appendChild(li);
+        });
+      }
+      document.getElementById('transporterInvoiceCount').textContent = count;
+    }
+
+
+    // Open invoice in new tab for a given LR
+    window.openInvoiceForLR = async (lrId) => {
+      if (!coreAccountId) return;
+      const lrSnap = await get(ref(db, `users/${coreAccountId}/lrReports/${lrId}`));
+      if (!lrSnap.exists()) return alert('LR not found');
+      const lr = lrSnap.val();
+      let invoiceId = lr.invoiceId;
+      if (!invoiceId) {
+        // fallback: scan invoices to find this LR in items
+        const invSnap = await get(ref(db, `users/${coreAccountId}/invoices`));
+        if (invSnap.exists()) {
+          invSnap.forEach(c => {
+            if (invoiceId) return;
+            const inv = c.val();
+            if (Array.isArray(inv.items) && inv.items.some(it => it.lrId === lrId)) {
+              invoiceId = c.key;
+            }
+          });
+        }
+      }
+      if (!invoiceId) return alert('No invoice linked to this LR');
+      window.open(`lr-report.html?view=${invoiceId}`, '_blank');
     };
 
     window.editTransporter = (transporterId) => {
@@ -815,6 +1015,7 @@
       get(transporterRef).then(snapshot => {
         if (snapshot.exists()) {
           const transporter = snapshot.val();
+          renderTGeneralDetails(transporter);
           nameInput.value = transporter.name;
           contactPersonInput.value = transporter.contactPerson || '';
           mobileInput.value = transporter.mobile || '';
@@ -841,8 +1042,6 @@
       const payment = snapshot.val();
       currentEditingPaymentId = paymentId;
 
-      // The transporter is already known since we are in the detail view
-      document.getElementById('paymentTransporterIdHidden').value = payment.transporterId;
       document.getElementById('paymentAmount').value = payment.amount;
       document.getElementById('paymentDate').value = payment.date;
       document.getElementById('paymentNotes').value = payment.notes || '';
@@ -856,34 +1055,29 @@
 
     // **NEW**: Delete Transporter Payment
     window.deleteTransporterPayment = async (paymentId, transporterId, amount) => {
+      // **MODIFIED**: This function now correctly reverses the payment from the outstanding balance.
       if (!confirm(`Are you sure you want to delete this payment of ₹${amount}? This action cannot be undone.`)) {
         return;
       }
-      if (!coreAccountId) return;
+      if (!coreAccountId || !transporterId) return alert("Error: Account or Transporter ID is missing.");
 
       try {
-        // 1. Delete the payment record
-        await remove(ref(db, `users/${coreAccountId}/transporterPayments/${paymentId}`));
+        const updates = {};
+        // 1. Mark the payment for deletion
+        updates[`/users/${coreAccountId}/transporterPayments/${paymentId}`] = null;
 
-        // 2. Reverse the payment amount from LRs and Invoices
-        // We pass a negative amount to the update function to reverse the payment.
-        await updateTransporterLRStatus(transporterId, -amount);
+        // 2. Add the payment amount back to the transporter's outstanding balance
+        const outstandingRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}/outstanding`);
+        const snapshot = await get(outstandingRef);
+        const currentOutstanding = snapshot.val() || 0;
+        updates[`/users/${coreAccountId}/transporters/${transporterId}/outstanding`] = currentOutstanding + amount;
+
+        await update(ref(db), updates);
+        
+        // 3. Trigger a full recalculation of invoice statuses
+        await updateTransporterLRStatus(transporterId);
 
         alert('Payment deleted successfully!');
-
-        // 3. Refresh the view
-        loadTransporters();
-        const detailView = document.getElementById('transporterDetail');
-        if (!detailView.classList.contains('hidden')) {
-          // Check if we are still viewing the same transporter
-          if (transporterId === window.currentDetailTransporterId) {
-            viewTransporterDetails(transporterId);
-          } else {
-            // If not, just hide the detail view
-            detailView.classList.add('hidden');
-            document.getElementById('transporterListView').classList.remove('hidden');
-          }
-        }
       } catch (error) {
         console.error('Error deleting payment:', error);
         alert('Failed to delete payment: ' + error.message);
@@ -917,7 +1111,6 @@
     }
 
     cancelBtn.addEventListener("click", resetForm);
-    window.viewTransporterDetails = viewTransporterDetails;
 
   </script>
 </body>
