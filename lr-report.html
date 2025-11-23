@@ -10,6 +10,152 @@
   <style>
     body { padding: 0; margin: 0; background-color: #f8f9fa; }
     .tab-content { background: white; padding: 20px; border-radius: 0 0 8px 8px; }
+
+    /* --- INVOICE MODAL & PRINT STYLES (Copied from invoice.html) --- */
+    @media print {
+      body * { visibility: hidden; }
+      #invoiceDetailModal .modal-content {
+          visibility: hidden; 
+      }
+      #printableInvoiceDetail, #printableInvoiceDetail * { 
+          visibility: visible; 
+      }
+      #printableInvoiceDetail {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        min-height: 100vh; 
+        page-break-before: always;
+        page-break-after: always;
+        overflow: visible;
+      }
+      .modal-footer, .style-panel-section { display: none !important; }
+      
+      .invoice-theme-color { color: #000 !important; }
+      .invoice-theme-bg { background-color: #f0f0f0 !important; border-color: #000 !important; color: #000 !important;}
+      .table-zebra-stripe { background-color: #f0f0f0 !important; }
+
+      .table-responsive { overflow: visible !important; }
+    }
+    
+    .hidden-print { display: none !important; }
+
+    .paid-stamp, .partial-stamp, .pending-stamp {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-25deg);
+      font-weight: 700;
+      border: 8px solid;
+      padding: 10px 25px;
+      border-radius: 15px;
+      opacity: 0.2;
+      text-transform: uppercase;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .paid-stamp { font-size: 6rem; color: red; border-color: red; }
+    .partial-stamp { font-size: 4rem; color: #ff8c00; border-color: #ff8c00; opacity: 0.35; }
+    .pending-stamp { font-size: 6rem; color: #6c757d; border-color: #6c757d; }
+
+    .invoice-header-box {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 25px;
+    }
+    .company-details-left {
+        width: 45%;
+    }
+    .invoice-details-right {
+        width: 45%;
+        text-align: right;
+    }
+    .invoice-title {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+    .logo-placeholder {
+        width: 100px;
+        height: 100px;
+        background-color: #ccc;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #666;
+        margin-left: auto;
+        margin-bottom: 15px;
+    }
+    .logo-on-print {
+        max-width: 100px;
+        max-height: 100px;
+        margin-left: auto;
+        margin-bottom: 15px;
+        display: block;
+    }
+    .billing-shipping-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+    }
+    .bill-to-box {
+        width: 45%;
+        border: 1px solid #ccc;
+        padding: 15px;
+    }
+    .ship-to-box {
+        width: 45%;
+        border: 1px solid #ccc;
+        padding: 15px;
+    }
+
+    .company-seal {
+        width: 180px; 
+        height: 180px; 
+        margin: 0 auto; 
+        display: block; 
+    }
+    
+    .invoice-theme-color { transition: color 0.3s; }
+    .invoice-theme-bg { 
+        transition: background-color 0.3s, border-color 0.3s; 
+        color: #fff !important;
+    }
+    .table-zebra-stripe {
+        background-color: rgba(0, 0, 0, 0.03);
+    }
+
+    .invoice-preview-container {
+        max-height: 80vh; 
+        overflow: auto; /* Combined scroll for both axes */
+    }
+
+    /* Responsive adjustments for the invoice modal */
+    @media (min-width: 992px) {
+        .invoice-preview-container {
+            padding-right: 15px;
+            border-right: 1px solid #ccc;
+        }
+    }
+    @media (max-width: 991.98px) {
+        .style-panel-section { margin-bottom: 2rem; }
+    }
+    
+    #styleSettingsPanel {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    /* --- END INVOICE STYLES --- */
     
     /* Vehicle Validation Styles */
     .vehicle-suggestions {
@@ -18,7 +164,7 @@
       border: 1px solid #ccc;
       border-radius: 4px;
       max-height: 200px;
-overflow-y: auto;
+      overflow-y: auto;
       z-index: 1000;
       width: calc(100% - 30px);
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -30,7 +176,7 @@ overflow-y: auto;
       color: #333;
       padding: 20px;
       background: #ffffff;
-      max-width: 800px;
+      max-width: 800px; /* Max-width for screen view */
       margin: 0 auto;
     }
     .lr-header {
@@ -49,9 +195,14 @@ overflow-y: auto;
       display: flex;
       justify-content: space-between;
       margin-bottom: 15px;
+      /* IMPROVED RESPONSIVENESS FOR SMALL SCREENS */
+      flex-wrap: wrap; 
     }
     .lr-info-left, .lr-info-right {
       width: 48%;
+      /* IMPROVED RESPONSIVENESS FOR SMALL SCREENS */
+      min-width: 300px; 
+      margin-bottom: 10px;
     }
     .lr-row {
       margin-bottom: 10px;
@@ -83,10 +234,14 @@ overflow-y: auto;
       display: flex;
       justify-content: space-between;
       margin-top: 30px;
+      /* IMPROVED RESPONSIVENESS FOR SMALL SCREENS */
+      flex-wrap: wrap; 
     }
     .signature-box {
       width: 45%;
       text-align: center;
+      /* IMPROVED RESPONSIVENESS FOR SMALL SCREENS */
+      min-width: 250px; 
     }
     .signature-line {
       margin-top: 50px;
@@ -104,7 +259,7 @@ overflow-y: auto;
       }
       .lr-copy-container {
         box-shadow: none;
-        max-width: 100%;
+        max-width: 100%; /* FIX: Ensure full width for print/PDF on all devices */
       }
       .no-print {
         display: none;
@@ -119,6 +274,12 @@ overflow-y: auto;
     }
     .lr-header-content {
       display: flex; align-items: center; justify-content: center; gap: 20px;
+      /* IMPROVED RESPONSIVENESS FOR SMALL SCREENS */
+      /* MODIFIED: Changed from center to space-between for better logo placement */
+      justify-content: space-between;
+      text-align: left; /* Align text to the left within the details block */
+      width: 100%;
+      flex-wrap: wrap; 
     }
     .terms-conditions h6 {
       margin-top: 0;
@@ -368,7 +529,6 @@ overflow-y: auto;
               <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Basic LR Information</h5>
             </div>
             <div class="card-body">
-              <!-- Row 1: Date, LR Number, and Vehicle Selection -->
               <div class="row mb-3">
                 <div class="col-md-3">
                   <label for="lrDate" class="form-label">Date*</label>
@@ -381,7 +541,7 @@ overflow-y: auto;
                 <div class="col-md-6 vehicle-input-container">
                   <div class="form-check form-switch mb-2 pt-1">
                     <input class="form-check-input" type="checkbox" role="switch" id="vehicleTypeToggle" onchange="toggleVehicleInput(this.checked)">
-                    <label class="form-check-label" for="vehicleTypeToggle">Use Market Vehicle</label>
+<label class="form-check-label" for="vehicleTypeToggle">Use Market Vehicle</label>
                   </div>
                   <div id="ownVehicleFields">
                     <label for="truckNumber" class="form-label">Own Truck Number <span class="text-danger">*</span></label>
@@ -396,7 +556,6 @@ overflow-y: auto;
                   </div>
                 </div>
               </div>
-              <!-- Row 2: Secondary Reference Numbers -->
               <div class="row mb-3">
                 <div class="col-md-3">
                   <label for="invoiceNumberInput" class="form-label">Invoice No.</label>
@@ -415,7 +574,6 @@ overflow-y: auto;
                   <input type="text" class="form-control" id="orderNo" placeholder="Auto-generated">
                 </div>
               </div>
-              <!-- Row 3: Driver, Client, and Transporter Selection -->
               <div class="row">
                 <div class="col-md-4 mb-3">                  
                   <div id="ownDriverField">
@@ -664,11 +822,13 @@ overflow-y: auto;
             <div class="tab-pane fade" id="fuel-entry-content" role="tabpanel">
               <div class="card mb-3">
                 <div class="card-body bg-light">
-                  <div class="row">
+                  <div class="row align-items-center">
                     <div class="col-md-6">
                       <h6 class="mb-0">Selected Truck: <strong id="fuelEntryTruckNumber">N/A</strong></h6>
                     </div>
-                   
+                    <div class="col-md-6 text-end">
+                      <h6 class="mb-0">Current Tank Level: <strong id="currentFuelLevel" class="text-secondary">-- L</strong></h6>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -685,20 +845,21 @@ overflow-y: auto;
                     <label for="fuelFillDate" class="form-label">Date <span class="text-danger">*</span></label>
                     <input type="date" id="fuelFillDate" class="form-control" required>
                   </div>
-                  <div class="col-md-2 mb-3">
+                  <div class="col-md-3 mb-3">
                     <label for="fuelLiters" class="form-label">Liters <span class="text-danger">*</span></label>
                     <input type="number" id="fuelLiters" class="form-control" placeholder="0.00" required step="0.01" oninput="calculateFuelTotalAmount()">
                   </div>
-                  <div class="col-md-2 mb-3">
-                    <label for="fuelPerLiter" class="form-label">₹/Liter <span class="text-danger">*</span></label>
+                  <div class="col-md-3 mb-3">
+                    <input type="number" id="fuelTripKm" class="form-control" required>
+                  </div>
+                  <div class="col-md-3 mb-3">
+                    <label for="fuelPerLiter" class="form-label">Price/Liter <span class="text-danger">*</span></label>
                     <input type="number" id="fuelPerLiter" class="form-control" placeholder="0.00" required step="0.01" oninput="calculateFuelTotalAmount()">
                   </div>
-                  <div class="col-md-2 mb-3">
+                  <div class="col-md-3 mb-3">
                     <label class="form-label">Amount (₹)</label>
                     <input type="number" id="fuelAmount" class="form-control bg-light" placeholder="0.00" required step="0.01" readonly>
                   </div>
-                </div>
-                <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="fuelRemarks" class="form-label">Remarks</label>
                     <input type="text" id="fuelRemarks" class="form-control" placeholder="Driver name or note">
@@ -796,7 +957,72 @@ overflow-y: auto;
     </div>
   </div>
 
-  <div class="modal fade" id="invoiceModal" tabindex="-1" aria-hidden="true"></div>
+  <!-- INVOICE DETAIL MODAL (Copied from invoice.html) -->
+  <div class="modal fade" id="invoiceDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title">Invoice Details & Style Customization</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <div class="row">
+                <div class="col-lg-3 style-panel-section">
+                    <div id="styleSettingsPanel">
+                        <h6 class="mb-3"><i class="fas fa-palette me-2"></i>Invoice Style</h6>
+                        <form id="invoiceStyleForm">
+                            <div class="mb-3">
+                                <label for="templatePreset" class="form-label small fw-bold">Style Template</label>
+                                <select id="templatePreset" class="form-select form-select-sm" onchange="applyTemplate(this.value)">
+                                    <option value="custom">-- Custom Style --</option>
+                                    <option value="default">Template 1: Default Red (Like Sample)</option>
+                                    <option value="blue">Template 2: Corporate Blue</option>
+                                    <option value="green">Template 3: Traditional Green</option>
+                                    <option value="minimal">Template 4: Minimal</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="themeColor" class="form-label small fw-bold">Primary Theme Color</label>
+                                <input type="color" id="themeColor" class="form-control form-control-color" value="#dc3545" title="Choose your primary color">
+                            </div>
+                            <div class="mb-3">
+                                <label for="accentStyle" class="form-label small fw-bold">Table Accent Style</label>
+                                <select id="accentStyle" class="form-select form-select-sm">
+                                    <option value="header">Header Only</option>
+                                    <option value="zebra">Zebra Stripes (Alternating Rows)</option>
+                                    <option value="footer">Footer Only</option>
+                                    <option value="none">No Accent</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="fontStyle" class="form-label small fw-bold">Font Style</label>
+                                <select id="fontStyle" class="form-select form-select-sm">
+                                    <option value="sans-serif">Modern Sans-serif (Default)</option>
+                                    <option value="serif">Classic Serif</option>
+                                    <option value="monospace">Monospace (Technical)</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-9">
+                    <h6 class="mb-3">Live Invoice Preview (Scrollable)</h6>
+                    <div class="invoice-preview-container">
+                        <div id="printableInvoiceDetail" style="width: 100%; min-height: 800px; padding: 15px; background: white; border: 1px solid #ddd;">
+                            <div class="text-center p-5 text-muted">Select an invoice to see the live preview.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-end">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="printInvoiceDetail()"><i class="fas fa-print me-2"></i>Print</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal fade" id="lrCopyModal" tabindex="-1" aria-labelledby="lrCopyModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
@@ -834,7 +1060,6 @@ overflow-y: auto;
         </div>
         <div class="modal-body">
           <form id="editLrForm">
-            <!-- Basic LR Information -->
             <div class="card mb-4">
               <div class="card-header bg-light"><h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Basic LR Information</h5></div>
               <div class="card-body">
@@ -913,7 +1138,6 @@ overflow-y: auto;
                 </div>
               </div>
             </div>
-            <!-- Shipment Details -->
             <div class="card mb-4">
               <div class="card-header bg-light"><h5 class="mb-0"><i class="fas fa-box me-2"></i>Shipment Details</h5></div>
               <div class="card-body">
@@ -1120,6 +1344,81 @@ overflow-y: auto;
       }
     });
 
+    // --- Helper: Sync an existing invoice with current LR data ---
+    async function syncInvoiceWithCurrentLR(invoiceId) {
+      if (!currentCoreAccountId) throw new Error('Core account ID not found');
+      const invRef = db.ref(`users/${currentCoreAccountId}/invoices/${invoiceId}`);
+      const invSnap = await invRef.once('value');
+      if (!invSnap.exists()) throw new Error('Invoice not found');
+      const invoice = invSnap.val();
+
+      const lrIds = Array.isArray(invoice.lrEntries) ? invoice.lrEntries : [];
+      if (lrIds.length === 0) return; // Nothing to sync
+
+      const snaps = await Promise.all(lrIds.map(id => db.ref(`users/${currentCoreAccountId}/lrReports/${id}`).once('value')));
+      const lrs = snaps.map(s => ({ id: s.key, data: s.val() })).filter(x => !!x.data);
+      if (lrs.length === 0) return;
+
+      // Rebuild items and totals
+      let subtotal = 0;
+      const items = [];
+      lrs.forEach(({ id, data: lr }) => {
+        const amount = lr.tripDetails?.billingAmount || 0;
+        subtotal += amount;
+        const consignor = (allClients.find(c => c.id === lr.clientId)?.name) || 'N/A';
+        const consignee = (allClients.find(c => c.id === lr.consigneeId)?.name) || consignor;
+        items.push({
+          lrId: id,
+          date: lr.date,
+          lrNumber: lr.lrNumber,
+          truckNumber: lr.truckNumber,
+          consignor: consignor,
+          consignee: consignee,
+          from: lr.fromLocation,
+          to: lr.toLocation,
+          weight: lr.weight,
+          amount: amount,
+          marketCompanyName: lr.transporterCompany || ''
+        });
+      });
+
+      // Determine bill-to mode from current LRs
+      const allMarketCompany = lrs.every(({ data }) => data.lrType === 'market_company');
+      let invoiceType, transporterId = null, clientId = null;
+      if (allMarketCompany) {
+        const firstTid = lrs[0].data.transporterId || null;
+        const sameTid = lrs.every(({ data }) => data.transporterId === firstTid);
+        invoiceType = 'market_company';
+        transporterId = sameTid ? firstTid : (firstTid || null);
+        clientId = null;
+      } else {
+        const firstCid = lrs[0].data.clientId || null;
+        const sameCid = lrs.every(({ data }) => data.clientId === firstCid);
+        invoiceType = 'client';
+        clientId = sameCid ? firstCid : (firstCid || null);
+        transporterId = null;
+      }
+
+      const cgstPercentage = 9;
+      const sgstPercentage = 9;
+      const cgstAmount = (subtotal * cgstPercentage) / 100;
+      const sgstAmount = (subtotal * sgstPercentage) / 100;
+      const grandTotal = subtotal + cgstAmount + sgstAmount;
+
+      const updates = {
+        items: items,
+        subtotal: subtotal,
+        cgstAmount: cgstAmount,
+        sgstAmount: sgstAmount,
+        grandTotal: grandTotal,
+        invoiceType: invoiceType,
+        transporterId: transporterId,
+        clientId: clientId
+      };
+
+      await invRef.update(updates);
+    }
+
     // Global Constants
     const SHORTAGE_DEDUCTION_RATE = 100; // Example: Deduct ₹100 per tonne of shortage
 
@@ -1128,15 +1427,31 @@ overflow-y: auto;
     let allWorkVendors = []; 
     let allTransporters = []; // **NEW**
     let allPumps = []; // **NEW**: Global to store pump data
-    let selectedLRs = [];
-    let selectedMarketLRs = []; // FIXED: Added missing variable
     let currentEditingLRId = null;
+    let currentUserProfile = null; // For invoice rendering
     let currentCoreAccountId = null;
     let lrTable;
     let marketLrTable; // **NEW**
     let currentTripWeight = 0; 
     let currentTripLRId = null; 
     let currentTripTruckNumber = null; // **NEW**
+
+    // --- INVOICE STYLING GLOBALS (Copied from invoice.html) ---
+    let currentInvoiceData = null;
+    let invoiceStyle = {
+        themeColor: '#dc3545',
+        accentStyle: 'header',
+        fontStyle: 'sans-serif'
+    };
+    const styleTemplates = {
+        default: { themeColor: '#dc3545', accentStyle: 'header', fontStyle: 'sans-serif' },
+        blue: { themeColor: '#0d6efd', accentStyle: 'zebra', fontStyle: 'sans-serif' },
+        green: { themeColor: '#198754', accentStyle: 'footer', fontStyle: 'serif' },
+        minimal: { themeColor: '#343a40', accentStyle: 'none', fontStyle: 'sans-serif' }
+    };
+    // --- END INVOICE STYLING GLOBALS ---
+
+
 
     // Auto-Generation Settings
     let autoSettings = {
@@ -1322,6 +1637,11 @@ overflow-y: auto;
          const userProfileRef = db.ref(`users/${userId}`);
          const userSnapshot = await userProfileRef.once('value');
          const userData = userSnapshot.val();
+
+         // **NEW**: Fetch and store user profile for invoice generation
+         const profileSnap = await db.ref(`users/${userId}/profile`).once('value');
+         currentUserProfile = profileSnap.val() || {};
+
          currentCoreAccountId = (userData && userData.coreAccountId) || userId;
  
          // Load Vehicles
@@ -1365,6 +1685,9 @@ overflow-y: auto;
       
       // Apply auto-generation settings after currentCoreAccountId is set
       applyAutoGenerationSettings();
+
+      // Load invoice style settings from localStorage
+      loadStyleSettings();
 
       // **FIX**: Clients must be loaded from the core account's path to ensure
       // that clients added by any branch user are visible to all.
@@ -1549,7 +1872,12 @@ overflow-y: auto;
       const lrData = {
         date: document.getElementById('lrDate').value,
         lrNumber: document.getElementById('lrNumber').value,
-        lrType: isMarketVehicle ? 'market' : (transporterId ? 'market_company' : 'own'),
+        // **FIX**: Correctly determine lrType. If a transporter is selected, it's a market_company LR.
+        // If the market vehicle toggle is on (and no transporter), it's a generic market LR.
+        // Otherwise, it's an own vehicle LR.
+        lrType: transporterId 
+          ? 'market_company' 
+          : (isMarketVehicle ? 'market' : 'own'),
         transporterId: transporterId,
         transporterCompany: transporterName,
         routeId: document.getElementById('routeSelect').value, 
@@ -1696,15 +2024,16 @@ overflow-y: auto;
       const transporterField = document.getElementById('editTransporterField');
       const ownDriverField = document.getElementById('editOwnDriverField'); // The container div
       const marketDriverField = document.getElementById('editMarketDriverField'); // The container div
-ownVehicleFields.style.display = isMarket ? 'none' : 'block';
+      ownVehicleFields.style.display = isMarket ? 'none' : 'block';
       marketVehicleFields.style.display = isMarket ? 'block' : 'none';
-      if (transporterField) transporterField.style.display = isMarket ? 'none' : 'block';
+      // Always show transporter field to allow switching bill-to in edit
+      if (transporterField) transporterField.style.display = 'block';
       ownDriverField.style.display = isMarket ? 'none' : 'block';
       marketDriverField.style.display = isMarket ? 'block' : 'none';
 
       document.getElementById('editTruckNumber').required = !isMarket;
       document.getElementById('editMarketTruckNumber').required = isMarket;
-      document.getElementById('editTransporterSelect').required = false; // **FIX**: Transporter is always optional
+      document.getElementById('editTransporterSelect').required = false; // Transporter optional
     }
 
     // --- TRIP DETAILS MODAL LOGIC (POST-SAVE) ---
@@ -1940,7 +2269,12 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
     
     // 3. Load Current Fuel Level
     async function loadCurrentFuelLevel(truckNumber) {
+        // FIX 1: Ensure currentFuelLevel element exists
         const currentFuelDisplay = document.getElementById('currentFuelLevel');
+        if (!currentFuelDisplay) {
+            console.error("DOM element #currentFuelLevel not found.");
+            return;
+        }
         currentFuelDisplay.textContent = '...';
         
         const vehicle = allVehicles.find(v => (v.vehicleNo || v.vehicleNumber || '').toUpperCase() === truckNumber.toUpperCase());
@@ -2013,7 +2347,8 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
         const amount = parseFloat(document.getElementById('fuelAmount').value);
         const pumpId = document.getElementById('fuelPumpSelect').value;
         const fillDate = document.getElementById('fuelFillDate').value;
-        const kmReading = document.getElementById('fuelTripKm').value;
+        // FIX 2: Added #fuelTripKm to HTML
+        const kmReading = document.getElementById('fuelTripKm').value; 
         const remarks = document.getElementById('fuelRemarks').value;
         
         if (!currentTripTruckNumber || !currentCoreAccountId) {
@@ -2029,7 +2364,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
         
         const logData = {
             timestamp: new Date().toISOString(),
-            date: fillDate,
+            date: fillDate, 
             source: 'pump-fillup',
             truckNumber: currentTripTruckNumber,
             vehicleId: vehicle.id,
@@ -2198,17 +2533,12 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
       const fuelUsedLiters = parseFloat(document.getElementById('tripFuelUsedLiters').value) || 0;
       const vehicleNumber = currentTripTruckNumber;
 
-      // Validation for Own Vehicles
-      if (!isMarketVehicle) {
-          if (endingKm === 0) {
-              alert('Please enter a valid Ending KM.');
-              return;
-          }
+      // **MODIFIED**: Validation for Own Vehicles - only if Ending KM is entered.
+      if (!isMarketVehicle && endingKm > 0) {
           if (endingKm < startingKm) {
               alert('Ending KM cannot be less than Starting KM.');
               return;
           }
-          // NOTE: fuelUsedLiters validation removed as zero is acceptable if the tank was full/trip was short.
       }
 
       // Collect Generic Expenses (Main Trip)
@@ -2396,21 +2726,40 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
             console.log('Fuel already deducted for this trip. Skipping fuel deduction.');
         }
         // --- END FIXED FUEL DEDUCTION LOGIC ---
-        // 2. Log vehicle work payment (if applicable) - only for main trip for now
-        if (tripDetails.vehicleWorkAmount > 0) {
+        // **FIX**: 2. Log or Update vehicle work payment to prevent duplicates
+        const workPaymentsRef = db.ref(`users/${currentCoreAccountId}/workPayments`);
+        const existingPaymentQuery = workPaymentsRef.orderByChild('lrId').equalTo(currentTripLRId);
+        const existingPaymentSnap = await existingPaymentQuery.once('value');
+
+        if (existingPaymentSnap.exists()) {
+            // Payment for this LR already exists, update it
+            const paymentId = Object.keys(existingPaymentSnap.val())[0];
+            const paymentUpdateRef = db.ref(`users/${currentCoreAccountId}/workPayments/${paymentId}`);
+            if (tripDetails.vehicleWorkAmount > 0) {
+                // Update the existing payment amount
+                await paymentUpdateRef.update({ amount: tripDetails.vehicleWorkAmount });
+                console.log(`Updated vehicle work payment for LR ${currentTripLRId}.`);
+            } else {
+                // If work amount is set to 0, remove the payment log
+                await paymentUpdateRef.remove();
+                console.log(`Removed vehicle work payment for LR ${currentTripLRId} as amount was zero.`);
+            }
+        } else if (tripDetails.vehicleWorkAmount > 0) {
+            // No existing payment, create a new one
             const lrSnap = await lrRef.once('value');
             const lr = lrSnap.val() || {};
-            const workData = {
+            const newWorkData = {
                 amount: tripDetails.vehicleWorkAmount,
                 date: lr.date,
                 notes: `Work for LR No: ${lr.lrNumber} (Trip Expense)`,
                 userId: auth.currentUser.uid,
                 createdAt: new Date().toISOString(),
-                lrId: currentTripLRId,
+                lrId: currentTripLRId, // Associate payment with LR
                 lrNumber: lr.lrNumber,
                 truckNumber: lr.truckNumber
             };
-            await db.ref(`users/${currentCoreAccountId}/workPayments`).push(workData);
+            await workPaymentsRef.push(newWorkData);
+            console.log(`Created new vehicle work payment for LR ${currentTripLRId}.`);
         }
         
         
@@ -2759,10 +3108,6 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
 
         if (lrTable) lrTable.clear();
         if (marketLrTable) marketLrTable.clear(); // **NEW**
-        selectedLRs = [];
-        selectedMarketLRs = []; // Reset selected LRs
-        
-        // **NEW**: Fetch clients once to resolve names
         // **FIX**: Fetch clients from the core account ID to ensure consignor/consignee names are found.
         const clientsSnap = await db.ref(`users/${currentCoreAccountId}/clients`).once('value');
         const clients = clientsSnap.val() || {};
@@ -2772,7 +3117,8 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
           const lr = childSnapshot.val();
           const lrId = childSnapshot.key;
           
-          if (lr.status === 'invoiced') return; // Skip invoiced LRs
+          // Skip invoiced LRs so they move off the LR page once invoiced
+          if (lr.status === 'invoiced') return;
 
           const details = lr.tripDetails || {};
           const emptyDetails = lr.emptyTripData || {};
@@ -2783,15 +3129,18 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
           const detailButtonClass = detailsExist ? 'btn-success' : 'btn-warning';
           const detailButtonIcon = detailsExist ? 'fas fa-check' : 'fas fa-plus';
           const detailButtonTitle = detailsExist ? 'View/Edit Trip Details' : 'Add Trip Details';
-          const displayStatus = detailsExist ? 'Completed' : 'Active';
-          const displayStatusClass = detailsExist ? 'bg-success' : 'bg-info';
+          const isInvoiced = lr.status === 'invoiced';
+          const displayStatus = isInvoiced ? 'Invoiced' : (detailsExist ? 'Completed' : 'Active');
+          const displayStatusClass = isInvoiced ? 'bg-secondary' : (detailsExist ? 'bg-success' : 'bg-info');
+
+          const invoiceButton = isInvoiced
+            ? `<button class="btn btn-sm btn-outline-success" onclick="viewInvoice('${lr.invoiceId}')" title="View Invoice ${lr.invoiceNumber || ''}"><i class="fas fa-eye me-1"></i>View</button>`
+            : `<button class="btn btn-sm btn-primary" onclick="createAndSaveInvoice(false, '${lrId}')" title="Generate Invoice"><i class="fas fa-file-invoice me-1"></i>Generate</button>`;
           
           // **NEW**: Logic to separate LRs into two tables
           if (lr.lrType === 'market_company') {
             marketLrTable.row.add([
-              `<div class="form-check">
-                 <input class="form-check-input market-lr-checkbox" type="checkbox" value="${lrId}" onchange="toggleLRSelection('${lrId}', this.checked, true)">
-               </div>`,
+              `<div class=\"form-check\">\n                 <input class=\"form-check-input market-lr-checkbox\" type=\"checkbox\" value=\"${lrId}\" onchange=\"toggleLRSelection('${lrId}', this.checked, true)\">\n               </div>`,
               lr.date,
               lr.lrNumber,
               lr.truckNumber,
@@ -2819,9 +3168,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
             const consigneeName = getClientName(lr.consigneeId) || consignorName;
 
             lrTable.row.add([
-              `<div class="form-check">
-                 <input class="form-check-input lr-checkbox" type="checkbox" value="${lrId}" onchange="toggleLRSelection('${lrId}', this.checked, false)">
-               </div>`,
+              `<div class=\"form-check\">\n                 <input class=\"form-check-input lr-checkbox\" type=\"checkbox\" value=\"${lrId}\" onchange=\"toggleLRSelection('${lrId}', this.checked, false)\">\n               </div>`,
               lr.date,
               lr.lrNumber,
               lr.truckNumber,
@@ -2852,6 +3199,84 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
         if (marketLrTable) marketLrTable.draw(); // **NEW**
         updateInvoiceButtonStates();
       });
+    }
+
+    // Selection logic copied from lr-report1.html
+    let selectedLRs = [];
+    let selectedMarketLRs = [];
+
+    function toggleLRSelection(lrId, isChecked, isMarket) {
+      if (isChecked) {
+        if (isMarket) {
+          if (!selectedMarketLRs.includes(lrId)) selectedMarketLRs.push(lrId);
+        } else {
+          if (!selectedLRs.includes(lrId)) selectedLRs.push(lrId);
+        }
+      } else {
+        if (isMarket) {
+          selectedMarketLRs = selectedMarketLRs.filter(id => id !== lrId);
+        } else {
+          selectedLRs = selectedLRs.filter(id => id !== lrId);
+        }
+      }
+      updateInvoiceButtonStates();
+      updateSelectAllCheckboxes();
+    }
+
+    function updateInvoiceButtonStates() {
+      const ownBtn = document.getElementById('generateInvoiceBtn');
+      const mkBtn = document.getElementById('generateMarketInvoiceBtn');
+      if (ownBtn) ownBtn.disabled = selectedLRs.length === 0;
+      if (mkBtn) mkBtn.disabled = selectedMarketLRs.length === 0;
+    }
+
+    function updateSelectAllCheckboxes() {
+      const allOwnCheckboxes = document.querySelectorAll('.lr-checkbox');
+      const allMarketCheckboxes = document.querySelectorAll('.market-lr-checkbox');
+      const selectAllOwn = document.getElementById('selectAllCheckbox');
+      const selectAllMarket = document.getElementById('selectAllMarketCheckbox');
+
+      if (selectAllOwn) {
+        const allOwnChecked = allOwnCheckboxes.length > 0 && selectedLRs.length === allOwnCheckboxes.length;
+        selectAllOwn.checked = allOwnChecked;
+        selectAllOwn.indeterminate = selectedLRs.length > 0 && !allOwnChecked;
+      }
+      if (selectAllMarket) {
+        const allMarketChecked = allMarketCheckboxes.length > 0 && selectedMarketLRs.length === allMarketCheckboxes.length;
+        selectAllMarket.checked = allMarketChecked;
+        selectAllMarket.indeterminate = selectedMarketLRs.length > 0 && !allMarketChecked;
+      }
+    }
+
+    function toggleSelectAll(isMarket = false) {
+      if (isMarket) {
+        const selectAllMarketCheckbox = document.getElementById('selectAllMarketCheckbox');
+        const allMarketCheckboxes = document.querySelectorAll('.market-lr-checkbox');
+        const isChecked = selectAllMarketCheckbox && selectAllMarketCheckbox.checked;
+        allMarketCheckboxes.forEach(checkbox => {
+          checkbox.checked = !!isChecked;
+          toggleLRSelection(checkbox.value, !!isChecked, true);
+        });
+      } else {
+        const selectAllOwnCheckbox = document.getElementById('selectAllCheckbox');
+        const allOwnCheckboxes = document.querySelectorAll('.lr-checkbox');
+        const isChecked = selectAllOwnCheckbox && selectAllOwnCheckbox.checked;
+        allOwnCheckboxes.forEach(checkbox => {
+          checkbox.checked = !!isChecked;
+          toggleLRSelection(checkbox.value, !!isChecked, false);
+        });
+      }
+    }
+
+    // Bridge function to trigger invoice generation for selected LRs
+    window.showBankDetailsModal = function(isMarket = false) {
+      const lrsToInvoice = isMarket ? selectedMarketLRs : selectedLRs;
+      if (!lrsToInvoice || lrsToInvoice.length === 0) {
+        alert('Please select at least one LR to generate an invoice.');
+        return;
+      }
+      // Reuse existing creator; it will read selected arrays when single id is not provided
+      createAndSaveInvoice(isMarket, null);
     }
 
     // Edit LR (Streamlined)
@@ -2929,15 +3354,18 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
       const truckNumber = isMarketVehicle ? document.getElementById('editMarketTruckNumber').value : document.getElementById('editTruckNumber').value;
       const driverName = isMarketVehicle ? document.getElementById('editMarketDriverName').value : document.getElementById('editDriverSelect').value;
       const transporterSelect = document.getElementById('editTransporterSelect'); // Get the select element
-      const transporterId = !isMarketVehicle ? transporterSelect.value : null; // Transporter is only for own vehicles
-      const transporterName = !isMarketVehicle && transporterSelect.value ? transporterSelect.options[transporterSelect.selectedIndex].dataset.name : null;
+      const transporterId = transporterSelect.value;
+      const transporterName = transporterSelect.value ? transporterSelect.options[transporterSelect.selectedIndex].dataset.name : null;
 
       const vehicle = allVehicles.find(v => (v.vehicleNo || '').toUpperCase() === truckNumber.toUpperCase() && v.driverName === driverName);
       
       const lrUpdateData = {
         date: document.getElementById('editLrDate').value,
         lrNumber: document.getElementById('editLrNumber').value,
-        lrType: isMarketVehicle ? 'market' : (transporterId ? 'market_company' : 'own'),
+        // **FIX**: Correctly determine lrType on update.
+        lrType: transporterId 
+          ? 'market_company' 
+          : (isMarketVehicle ? 'market' : 'own'),
         transporterId: transporterId,
         transporterCompany: transporterName,
         routeId: document.getElementById('editRouteSelect').value, // **FIX**: Save routeId on update
@@ -2999,6 +3427,15 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
         // Perform the update
         await lrRef.update(lrUpdateData);
 
+        // If LR is linked to an invoice, update that invoice to reflect current LR types and bill-to
+        if (existingLR && existingLR.invoiceId) {
+          try {
+            await syncInvoiceWithCurrentLR(existingLR.invoiceId);
+          } catch (e) {
+            console.warn('Invoice sync warning:', e);
+          }
+        }
+
         alert('LR updated successfully!');
         const editModal = bootstrap.Modal.getInstance(document.getElementById('editLRModal'));
         editModal.hide();
@@ -3031,70 +3468,6 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
     function searchVehicles(query) { /* ... (same as original) ... */ }
     function searchEditVehicles(query) { /* ... (same as original) ... */ }
     
-    // **FIXED**: Implemented checkbox selection logic
-    // let selectedMarketLRs = []; // Already declared globally
-
-    function toggleLRSelection(lrId, isChecked, isMarket) {
-      if (isChecked) {
-        if (isMarket) {
-          if (!selectedMarketLRs.includes(lrId)) selectedMarketLRs.push(lrId);
-        } else {
-          if (!selectedLRs.includes(lrId)) selectedLRs.push(lrId);
-        }
-      } else {
-        if (isMarket) {
-          selectedMarketLRs = selectedMarketLRs.filter(id => id !== lrId);
-        } else {
-          selectedLRs = selectedLRs.filter(id => id !== lrId);
-        }
-      }
-      updateInvoiceButtonStates();
-      updateSelectAllCheckboxes();
-    }
-
-    function updateInvoiceButtonStates() {
-      document.getElementById('generateInvoiceBtn').disabled = selectedLRs.length === 0;
-      document.getElementById('generateMarketInvoiceBtn').disabled = selectedMarketLRs.length === 0;
-    }
-
-    function updateSelectAllCheckboxes() {
-      const allOwnCheckboxes = document.querySelectorAll('.lr-checkbox');
-      const allMarketCheckboxes = document.querySelectorAll('.market-lr-checkbox');
-      const selectAllOwn = document.getElementById('selectAllCheckbox');
-      const selectAllMarket = document.getElementById('selectAllMarketCheckbox');
-
-      if (selectAllOwn) {
-        const allOwnChecked = allOwnCheckboxes.length > 0 && selectedLRs.length === allOwnCheckboxes.length;
-        selectAllOwn.checked = allOwnChecked;
-        selectAllOwn.indeterminate = selectedLRs.length > 0 && !allOwnChecked;
-      }
-      if (selectAllMarket) {
-        const allMarketChecked = allMarketCheckboxes.length > 0 && selectedMarketLRs.length === allMarketCheckboxes.length;
-        selectAllMarket.checked = allMarketChecked;
-        selectAllMarket.indeterminate = selectedMarketLRs.length > 0 && !allMarketChecked;
-      }
-    }
-
-    function toggleSelectAll(isMarket = false) {
-      if (isMarket) {
-        const selectAllMarketCheckbox = document.getElementById('selectAllMarketCheckbox');
-        const allMarketCheckboxes = document.querySelectorAll('.market-lr-checkbox');
-        const isChecked = selectAllMarketCheckbox.checked;
-        allMarketCheckboxes.forEach(checkbox => {
-          checkbox.checked = isChecked;
-          toggleLRSelection(checkbox.value, isChecked, true);
-        });
-      } else {
-        const selectAllOwnCheckbox = document.getElementById('selectAllCheckbox');
-        const allOwnCheckboxes = document.querySelectorAll('.lr-checkbox');
-        const isChecked = selectAllOwnCheckbox.checked;
-        allOwnCheckboxes.forEach(checkbox => {
-          checkbox.checked = isChecked;
-          toggleLRSelection(checkbox.value, isChecked, false);
-        });
-      }
-    }
-
     async function showLRCopy(lrId) {
       const user = auth.currentUser;
       if (!user) return;
@@ -3124,23 +3497,22 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
         const companyGstin = profile.gstin || 'N/A';
 
         const vehicle = allVehicles.find(v => (v.vehicleNo || v.vehicleNumber) === lr.truckNumber);
-        if (!vehicle) {
-          console.warn(`Vehicle ${lr.truckNumber} not found in master list.`);
-        }
-        const driverName = vehicle ? vehicle.driverName : (lr.driverName || 'N/A');
-        const driverContact = vehicle ? vehicle.contactNumber : 'N/A';
+        // Removed driverName and driverContact as requested by user.
+
         const client = allClients.find(c => c.id === lr.clientId) || {};
 
         const lrCopyContent = `
           <div class="lr-copy-container printable-area" id="lr-pdf-content">
+            <!-- MODIFIED: Wrapped header in a container for better alignment -->
             <div class="lr-header lr-header-content">
               ${companyLogoUrl ? `<img src="${companyLogoUrl}" alt="Logo" class="logo-on-print" style="max-height: 60px; max-width: 150px;">` : ''}
-              <div>
+              <div style="text-align: center;">
                 <h4>${companyName}</h4>
                 <p>Authorized transport contractor of ${client.clientName || client.name || 'To be billed'}</p>
                 <p>Address: ${profile.address || 'N/A'}, City: ${profile.city || 'N/A'}, Pincode: ${profile.pincode || 'N/A'}</p>
                 <p>GSTIN: ${companyGstin} | Phone: ${companyPhone}</p>
               </div>
+              <div style="width: 150px;"></div> <!-- Spacer to balance the flex layout -->
             </div>
             
             <div class="lr-info">
@@ -3187,9 +3559,8 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
             </table>
             
             <div class="lr-row">Remarks: <strong>GIT TO BE PAID BY CONSIGNOR / GOODS TRANSPORTED BY ${client.clientName || client.name || 'N/A'}.</strong></div>
-            <div class="lr-row">Driver Name: <strong>${driverName || 'N/A'}</strong></div>
+            
             <div class="lr-row">Truck Owner: <strong>${ownerName || 'N/A'}</strong></div>
-            <div class="lr-row">Driver Mobile Number: <strong>${driverContact}</strong></div>
             <div class="lr-row">Truck Type: <strong>${vehicle ? (vehicle.vehicleType || 'N/A') : 'N/A'}</strong></div>
             
             <div class="safety-section">
@@ -3229,7 +3600,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
                         <textPath xlink:href="#bottomTextPath" startOffset="50%" text-anchor="middle">LOGISTICS & TRANSPORT SERVICE</textPath>
                       </text>
                       <g transform="translate(65, 75) scale(0.4)">
-                        <path d="M15,1H4A2,2,0,0,0,2,3V16H1V18H3A3,3,0,0,0,6,21H8A3,3,0,0,0,11,18H21A3,3,0,0,0,24,15V11.5A4.5,4.5,0,0,0,19.5,7H15V1M6,19a1,1,0,1,1,1-1A1,1,0,0,1,6,19M8,19a1,1,0,1,1,1-1A1,1,0,0,1,8,19M19.5,9A2.5,2.5,0,0,1,22,11.5V15H15V9h4.5Z" fill="#003366" stroke="none"/>
+<path d="M15,1H4A2,2,0,0,0,2,3V16H1V18H3A3,3,0,0,0,6,21H8A3,3,0,0,0,11,18H21A3,3,0,0,0,24,15V11.5A4.5,4.5,0,0,0,19.5,7H15V1M6,19a1,1,0,1,1,1-1A1,1,0,0,1,6,19M8,19a1,1,0,1,1,1-1A1,1,0,0,1,8,19M19.5,9A2.5,2.5,0,0,1,22,11.5V15H15V9h4.5Z" fill="#003366" stroke="none"/>
                       </g>
                       <text x="100" y="125" font-family="'Arial', sans-serif" font-size="14" font-weight="bold" text-anchor="middle" letter-spacing="1">OFFICIAL SEAL</text>
                       <text x="100" y="145" font-family="'Arial', sans-serif" font-size="9" font-weight="normal" text-anchor="middle">GSTIN: ${companyGstin}</text>
@@ -3245,8 +3616,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
         document.getElementById('lrCopyModalLabel').textContent = `${companyName} - Lorry Receipt`;
         const lrCopyModal = new bootstrap.Modal(document.getElementById('lrCopyModal'));
         lrCopyModal.show();
-
-        // **NEW**: Add event listeners for print settings toggles
+// **NEW**: Add event listeners for print settings toggles
         document.getElementById('printLogoToggle').onchange = function() {
           document.querySelectorAll('.logo-on-print').forEach(el => el.classList.toggle('hidden-print', !this.checked));
         };
@@ -3269,12 +3639,26 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
         return;
       }
 
+      // --- FIX FOR MOBILE PDF GENERATION ---
+      // Temporarily set a fixed width to ensure the layout is not cramped on mobile
+      const originalWidth = content.style.width;
+      const originalMaxWidth = content.style.maxWidth;
+      content.style.width = '800px';
+      content.style.maxWidth = '800px';
+      // --- END FIX ---
+
       try {
         const canvas = await html2canvas(content, {
           scale: 2,
           useCORS: true
         });
         
+        // --- FIX FOR MOBILE PDF GENERATION ---
+        // Restore original styles after canvas is created
+        content.style.width = originalWidth;
+        content.style.maxWidth = originalMaxWidth;
+        // --- END FIX ---
+
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
           orientation: 'portrait',
@@ -3344,21 +3728,12 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
       }
     }
     
-    // MODIFIED: This function now directly calls createAndSaveInvoice()
-    window.showBankDetailsModal = function(isMarket = false) {
-      const lrsToInvoice = isMarket ? selectedMarketLRs : selectedLRs;
-      if (lrsToInvoice.length === 0) {
-        alert('Please select at least one LR to generate an invoice.');
-        return;
-      }
-      // Directly proceed to invoice creation, fetching bank details from profile
-      createAndSaveInvoice(isMarket);
-    }
-
     // MODIFIED: This function now fetches bank details from the user's profile
-    window.createAndSaveInvoice = async function(isMarket = false) {
-      
+    window.createAndSaveInvoice = async function(isMarket = false, singleLrId = null) {
       const user = auth.currentUser;
+      // If a single LR ID is passed, use it. Otherwise, fall back to selected lists (from lr-report1.html behavior)
+      const lrsToProcess = singleLrId ? [singleLrId] : (isMarket ? selectedMarketLRs : selectedLRs);
+
       if (!user || !currentCoreAccountId) {
         alert('Authentication error. Please log in again.');
         return;
@@ -3395,28 +3770,47 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
         // 2. Fetch details for all selected LRs
         let subtotal = 0;
         let firstClientId = null;
-        let firstTransporterId = null; // **NEW**: To validate market invoices
-        const invoiceItems = [];
+        let firstTransporterId = null; 
+        let invoiceItems = []; // **FIX**: Changed to let to allow reassignment.
+        let marketMode = null; // null until determined; true => market_company, false => client
 
-        // **NEW**: Use correct list of LRs
-        const lrsToProcess = isMarket ? selectedMarketLRs : selectedLRs;
-        const lrPromises = lrsToProcess.map(lrId => db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`).once('value'));
+        const lrPromises = lrsToProcess.map(lrId => db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`).once('value')); 
         const lrSnapshots = await Promise.all(lrPromises);
-
+        
+        // --- STEP 1: Loop through LRs to calculate subtotal and validate entities ---
         for (const snap of lrSnapshots) {
           const lr = snap.val();
           if (!lr) continue;
 
-          // **NEW**: For non-market LRs, ensure they belong to the same client
-          if (isMarket) {
-            // For market invoices, ensure all LRs have the same transporter.
+          if (lr.tripDetails?.billingAmount === undefined || lr.tripDetails?.billingAmount <= 0) {
+            alert(`Error: LR ${lr.lrNumber} does not have a valid billing amount. Please add trip details first.`);
+            return;
+          }
+
+          // Determine invoice mode strictly from the LR's current type
+          const isMarketLR = lr.lrType === 'market_company';
+
+          // Establish or validate a consistent mode across all selected LRs
+          if (marketMode === null) marketMode = isMarketLR;
+          if (marketMode !== isMarketLR) {
+            alert('Error: Mixed LR types selected. Please select LRs of the same type.');
+            return;
+          }
+
+          if (invoiceItems.length === 0) {
+            // Initialize once before pushing items
+            invoiceItems = [];
+          }
+
+          if (marketMode) {
+            // For market LRs, the billing entity is always the transporter.
             if (!firstTransporterId) firstTransporterId = lr.transporterId;
             if (lr.transporterId !== firstTransporterId) {
               alert('Error: All selected market LRs must belong to the same transporter/market company.');
               return;
             }
           } else {
-            // For client invoices, ensure all LRs have the same client.
+            // For own company LRs, the billing entity is the client.
             if (!firstClientId) firstClientId = lr.clientId;
             if (lr.clientId !== firstClientId) {
               alert('Error: All selected LRs must belong to the same client.');
@@ -3427,7 +3821,6 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
           const billingAmount = lr.tripDetails?.billingAmount || 0;
           subtotal += billingAmount;
 
-          // **FIX**: Use the correct client list for name resolution
           const consignor = allClients.find(c => c.id === lr.clientId)?.name || 'N/A';
           const consignee = allClients.find(c => c.id === lr.consigneeId)?.name || consignor;
 
@@ -3442,34 +3835,60 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
             to: lr.toLocation,
             weight: lr.weight,
             amount: billingAmount,
-            marketCompanyName: lr.transporterCompany || '' // **FIX**: Use the correct field 'transporterCompany'
+            marketCompanyName: lr.transporterCompany || ''
           });
         }
 
-        // 3. Calculate totals
+        // --- STEP 2: Calculate final totals for the new invoice ---
         const cgstPercentage = 9;
         const sgstPercentage = 9;
         const cgstAmount = (subtotal * cgstPercentage) / 100;
         const sgstAmount = (subtotal * sgstPercentage) / 100;
-        const grandTotal = subtotal + cgstAmount + sgstAmount;
+        let grandTotal = subtotal + cgstAmount + sgstAmount;
 
-        // 4. Create invoice object
-        const invoiceNumber = `INV-${Date.now()}`; 
+        // --- STEP 3: Fetch the CURRENT outstanding balance for the relevant entity ---
+        let entityOutstanding = 0;
+        if (marketMode && firstTransporterId) {
+            const transporterSnap = await db.ref(`users/${currentCoreAccountId}/transporters/${firstTransporterId}`).once('value');
+            if (transporterSnap.exists()) entityOutstanding = transporterSnap.val().outstanding || 0;
+        } else if (!marketMode && firstClientId) {
+            const clientSnap = await db.ref(`users/${currentCoreAccountId}/clients/${firstClientId}`).once('value');
+            if (clientSnap.exists()) entityOutstanding = clientSnap.val().outstanding || 0;
+        }
+
+        // --- STEP 4: Apply existing credit (if any) to the new invoice ---
+        let paidAmount = 0;
+        let paymentStatus = 'pending';
+        if (entityOutstanding < 0) { // A negative balance means they have a credit.
+            const creditToApply = Math.min(Math.abs(entityOutstanding), grandTotal);
+            paidAmount = creditToApply;
+            if (paidAmount >= grandTotal - 0.01) {
+                paymentStatus = 'paid';
+                paidAmount = grandTotal; // Cap the paid amount at the grand total
+            }
+            else if (paidAmount > 0) paymentStatus = 'partial';
+        }
+
+        // --- STEP 5: Create the final invoice object ---
+        const invoiceNumber = `INV-${Date.now()}`;
         const invoiceData = {
           invoiceNumber: invoiceNumber,
           createdAt: new Date().toISOString(),
-          clientId: isMarket ? null : firstClientId, 
-          invoiceType: isMarket ? 'market' : 'client', // **NEW**: Differentiate invoice type
+          // **FIX**: Correctly assign transporterId for market invoices and clientId for client invoices.
+          // Ensure clientId is null for market invoices to prevent incorrect billing lookups. This was the final fix.
+          transporterId: marketMode ? firstTransporterId : null,
+          clientId: marketMode ? null : firstClientId,
+          invoiceType: marketMode ? 'market_company' : 'client',
           companyDetails: companyDetails,
           bankDetails: bankDetails, // Use fetched bank details
           items: invoiceItems,
           lrEntries: lrsToProcess, // Keep the original LR IDs
           subtotal: subtotal,
-          cgstAmount: cgstAmount,
+          cgstAmount: cgstAmount, // This was already correct
           sgstAmount: sgstAmount,
           grandTotal: grandTotal,
-          paymentStatus: 'pending',
-          paidAmount: 0,
+          paymentStatus: paymentStatus,
+          paidAmount: paidAmount,
         };
 
         // 5. Save invoice and update LRs atomically
@@ -3481,60 +3900,328 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
           updates[`/users/${currentCoreAccountId}/lrReports/${lrId}/invoiceId`] = newInvoiceKey;
         });
 
+        // --- STEP 6: Update the outstanding balance for the entity ---
+        if (marketMode) {
+            const newOutstanding = entityOutstanding + grandTotal;
+            updates[`/users/${currentCoreAccountId}/transporters/${firstTransporterId}/outstanding`] = newOutstanding;
+        } else {
+            const newOutstanding = entityOutstanding + grandTotal;
+            updates[`/users/${currentCoreAccountId}/clients/${firstClientId}/outstanding`] = newOutstanding;
+        }
+
         await db.ref().update(updates);
 
         alert('Invoice generated successfully!');
+        // Redirect to the invoice page and open the created invoice
         window.location.href = `invoice.html?view=${newInvoiceKey}`;
-
       } catch (error) {
         console.error('Error creating invoice:', error);
         alert('Failed to create invoice: ' + error.message);
       }
     }
 
-    function convertNumberToWords(num) { /* ... (same as original) ... */ }
-    
-    // --- INITIALIZATION ---
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize DataTable
-      // The initialization for lrTable is now at the top of the DOMContentLoaded block
-      
-      auth.onAuthStateChanged(async (user) => {
-        if (user) {
-          await loadAllData();
-          loadAutoGenerationSettings();
+        // --- INVOICE VIEWING & STYLING FUNCTIONS (Copied from invoice.html) ---
+
+        function loadStyleSettings() {
+            const storedStyle = localStorage.getItem('invoiceStyleSettings');
+            if (storedStyle) {
+                invoiceStyle = JSON.parse(storedStyle);
+            }
+            const invoiceModal = document.getElementById('invoiceDetailModal');
+            if (invoiceModal) {
+                invoiceModal.addEventListener('show.bs.modal', setupLivePreviewListeners);
+                invoiceModal.addEventListener('hidden.bs.modal', cleanupLivePreviewListeners);
+            }
+        }
+
+        function setupLivePreviewListeners() {
+            const colorInput = document.getElementById('themeColor');
+            const accentInput = document.getElementById('accentStyle');
+            const fontInput = document.getElementById('fontStyle');
+            colorInput.value = invoiceStyle.themeColor;
+            accentInput.value = invoiceStyle.accentStyle;
+            fontInput.value = invoiceStyle.fontStyle;
+            document.getElementById('templatePreset').value = 'custom';
+            if (currentInvoiceData) {
+                 applyLiveStyles();
+            }
+            colorInput.addEventListener('input', applyLiveStyles);
+            accentInput.addEventListener('change', applyLiveStyles);
+            fontInput.addEventListener('change', applyLiveStyles);
+        }
+
+        function cleanupLivePreviewListeners() {
+            const colorInput = document.getElementById('themeColor');
+            const accentInput = document.getElementById('accentStyle');
+            const fontInput = document.getElementById('fontStyle');
+            if (colorInput) colorInput.removeEventListener('input', applyLiveStyles);
+            if (accentInput) accentInput.removeEventListener('change', applyLiveStyles);
+            if (fontInput) fontInput.removeEventListener('change', applyLiveStyles);
+        }
+
+        window.applyTemplate = function(templateName) {
+            if (templateName === 'custom') return;
+            const template = styleTemplates[templateName] || styleTemplates.default;
+            document.getElementById('themeColor').value = template.themeColor;
+            document.getElementById('accentStyle').value = template.accentStyle;
+            document.getElementById('fontStyle').value = template.fontStyle;
+            applyLiveStyles();
+            document.getElementById('templatePreset').value = templateName;
+        }
+
+        function applyLiveStyles() {
+            if (!currentInvoiceData) return;
+            const themeColor = document.getElementById('themeColor').value;
+            const accentStyle = document.getElementById('accentStyle').value;
+            const fontStyle = document.getElementById('fontStyle').value;
+            const previewElement = document.getElementById('printableInvoiceDetail');
+            if (!previewElement) return;
+            previewElement.style.fontFamily = fontStyle;
+            document.querySelectorAll('#printableInvoiceDetail .invoice-theme-color').forEach(el => {
+                el.style.color = themeColor;
+            });
+            const table = previewElement.querySelector('.table');
+            if (table) {
+                const thead = table.querySelector('thead');
+                const tfoot = table.querySelector('tfoot');
+                const tbodyRows = table.querySelectorAll('tbody tr');
+                const tfootTotalRow = tfoot ? tfoot.querySelector('tr:last-child') : null;
+                if (thead) { thead.style.backgroundColor = ''; thead.style.color = ''; }
+                if (tfootTotalRow) { tfootTotalRow.style.backgroundColor = ''; tfootTotalRow.style.color = ''; }
+                tbodyRows.forEach(row => row.classList.remove('table-zebra-stripe'));
+                if (accentStyle === 'header' && thead) {
+                    thead.style.backgroundColor = themeColor;
+                    thead.style.color = 'white';
+                } else if (accentStyle === 'footer' && tfootTotalRow) {
+                    tfootTotalRow.style.backgroundColor = themeColor;
+                    tfootTotalRow.style.color = 'white';
+                } else if (accentStyle === 'zebra') {
+                    tbodyRows.forEach((row, index) => {
+                        if (index % 2 !== 0) row.classList.add('table-zebra-stripe');
+                    });
+                }
+            }
+        }
+
+        window.viewInvoice = async function(invoiceId) {
+          const modalBody = document.getElementById('printableInvoiceDetail');
+          modalBody.innerHTML = '<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading invoice...</p></div>';
           
-          // Set default date to today
-          const today = new Date().toISOString().split('T')[0];
-          document.getElementById('lrDate').value = today;
+          new bootstrap.Modal(document.getElementById('invoiceDetailModal')).show();
 
-          // Event listeners
-          document.getElementById('saveLRBtn').addEventListener('click', saveLR);
-          document.getElementById('applyFiltersBtn').addEventListener('click', loadLRData);
+          try {
+            const user = auth.currentUser;
+            if (!user) throw new Error("User not authenticated.");
 
-        } else {
-          window.location.href = "index.html";
+            const invoiceSnap = await db.ref(`users/${currentCoreAccountId}/invoices/${invoiceId}`).once('value');
+            if (!invoiceSnap.exists()) {
+              modalBody.innerHTML = '<p class="text-danger text-center">Invoice not found.</p>';
+              return;
+            }
+            const invoice = invoiceSnap.val();
+            currentInvoiceData = invoice;
+            
+            const themeColor = document.getElementById('themeColor').value;
+            const accentStyle = document.getElementById('accentStyle').value;
+            const fontStyle = document.getElementById('fontStyle').value;
+
+            // **FIX**: Define getSealSVG before it is called in the invoiceHtml template.
+            const getSealSVG = (name, gstin) => `
+              <svg class="company-seal stamp-on-print" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" style="display: block;"><defs><path id="topTextPath" fill="none" d="M 30,100 a 70,70 0 1,1 140,0" /><path id="bottomTextPath" fill="none" d="M 30,100 a 70,70 0 1,0 140,0" /></defs><g fill="${themeColor}" stroke="${themeColor}"><circle cx="100" cy="100" r="95" stroke-width="3" fill="none"/><circle cx="100" cy="100" r="88" stroke-width="1.5" fill="none"/><text font-family="'Arial Black', 'Impact', sans-serif" font-size="15" letter-spacing="1.5"><textPath xlink:href="#topTextPath" startOffset="50%" text-anchor="middle">${name.toUpperCase().substring(0, 20)}</textPath></text><text font-family="'Arial Black', 'Impact', sans-serif" font-size="12" letter-spacing="1"><textPath xlink:href="#bottomTextPath" startOffset="50%" text-anchor="middle">OFFICIAL SEAL</textPath></text><text x="100" y="125" font-family="'Arial', sans-serif" font-size="14" font-weight="bold" text-anchor="middle" letter-spacing="1">TRANSPORT</text><text x="100" y="145" font-family="'Arial', sans-serif" font-size="9" font-weight="normal" text-anchor="middle">GSTIN: ${gstin || 'N/A'}</text></g></svg>
+            `;
+
+            let billedToName = 'N/A', billedToGstin = 'N/A', billedToAddress = 'N/A', billedToMobile = 'N/A';
+            let billToLabel = 'Client Company';
+            const lrs = invoice.items || [];
+            
+            if (invoice.invoiceType === 'market' || invoice.invoiceType === 'market_company') {
+                billToLabel = 'Transporter Company';
+                if (invoice.transporterId) {
+                    const transporterSnap = await db.ref(`users/${currentCoreAccountId}/transporters/${invoice.transporterId}`).once('value');
+                    if (transporterSnap.exists()) {
+                        const t = transporterSnap.val();
+                        billedToName = t.name || 'Market Company';
+                        billedToGstin = t.gstin || 'N/A';
+                        // **FIX**: Use the correct address field from the transporter object.
+                        billedToAddress = t.address || t.billingAddress || 'N/A';
+                        billedToMobile = t.mobile || 'N/A';
+                    }
+                }
+            } else if (invoice.clientId) {
+                const clientSnap = await db.ref(`users/${currentCoreAccountId}/clients/${invoice.clientId}`).once('value');
+                if (clientSnap.exists()) {
+                    const c = clientSnap.val();
+                    billedToName = c.clientName || 'N/A';
+                    billedToGstin = c.gstin || 'N/A';
+                    billedToAddress = c.billingAddress || 'N/A';
+                    billedToMobile = c.mobile || 'N/A';
+                }
+            }
+
+            const profile = currentUserProfile; 
+            const companyLogoUrl = profile.companyLogoUrl || '';
+            const companyName = profile.transportName || 'Transvortex Logistics';
+            const companyPhone = profile.phoneNumber || 'N/A';
+            const fullCompanyAddress = `${profile.address || 'N/A'}, ${profile.city || 'N/A'}, ${profile.pincode || 'N/A'}`;
+            const companyGstin = profile.gstin || 'N/A';
+            const ownerName = profile.ownerName || 'N/A';
+
+            const status = invoice.paymentStatus || 'pending';
+            let stampHtml = '';
+            switch (status) {
+              case 'paid': stampHtml = '<div class="paid-stamp">Paid</div>'; break;
+              case 'partial': stampHtml = '<div class="partial-stamp">Partially Paid</div>'; break;
+              case 'pending': stampHtml = '<div class="pending-stamp">Pending</div>'; break;
+            }
+            
+            const headerBgStyle = accentStyle === 'header' ? `style="background-color: ${themeColor}; color: white !important;" class="invoice-theme-bg"` : 'class="table-light"';
+            const footerBgStyle = accentStyle === 'footer' ? `style="background-color: ${themeColor}; color: white !important;" class="invoice-theme-bg"` : 'class="table-success"';
+            const fontStyleAttr = `style="font-family: ${fontStyle}, sans-serif;"`;
+
+            const invoiceHtml = `
+              <div class="printable-area" ${fontStyleAttr} style="position: relative;">
+                ${stampHtml}
+                <div style="height: 10px; background-color: ${themeColor}; margin-bottom: 20px;"></div>
+                <div class="invoice-header-box px-3">
+                    <div class="company-details-left">
+                        <div class="invoice-title invoice-theme-color" style="color: ${themeColor} !important;">INVOICE</div>
+                        <p class="fw-bold mb-1">${companyName}</p>
+                        <p class="small mb-0">${fullCompanyAddress}</p>
+                        <p class="small mb-0">GSTIN: ${companyGstin}</p>
+                    </div>
+                    <div class="invoice-details-right">
+                        ${companyLogoUrl ? `<img src="${companyLogoUrl}" alt="Logo" class="logo-on-print" style="max-height: 80px; max-width: 100px;">` : `<div class="logo-placeholder">LOGO</div>`}
+                        <p class="small mb-1 mt-3">DATE: ${new Date(invoice.createdAt).toLocaleDateString('en-IN')}</p>
+                        <p class="small mb-3 fw-bold">INVOICE NO: ${invoice.invoiceNumber}</p>
+                    </div>
+                </div>
+                <div class="billing-shipping-row px-3">
+                    <div class="bill-to-box">
+                        <p class="fw-bold mb-1 invoice-theme-color" style="color: ${themeColor} !important; border-bottom: 2px solid ${themeColor}; padding-bottom: 5px;">BILL TO:</p>
+                        <p class="mb-1 small">${billToLabel}: ${billedToName}</p>
+                        <p class="mb-1 small">Address: ${billedToAddress}</p>
+                        <p class="mb-0 small">GSTIN: ${billedToGstin}</p>
+                    </div>
+                </div>
+                <div class="table-responsive px-3">
+                  <table class="table table-bordered">
+                    <thead ${headerBgStyle}>
+                      <tr>
+                        <th>LR No / Item</th><th>Date</th><th>Truck No</th><th class="text-end">Weight (MT)</th><th class="text-end">Rate</th><th class="text-end">Amount (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${lrs.map((lr, index) => {
+                          const rate = lr.weight > 0 ? (lr.amount / lr.weight).toFixed(2) : '0.00';
+                          const rowStyle = accentStyle === 'zebra' && index % 2 !== 0 ? `class="table-zebra-stripe"` : '';
+                          return `<tr ${rowStyle}><td>${lr.lrNumber || 'N/A'} - ${lr.item || 'Freight'}</td><td>${new Date(lr.date).toLocaleDateString('en-IN')}</td><td>${lr.truckNumber || 'N/A'}</td><td class="text-end">${(lr.weight || 0).toFixed(2)}</td><td class="text-end">₹${rate}</td><td class="text-end">₹${(lr.amount || 0).toFixed(2)}</td></tr>`;
+                      }).join('')}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="3" rowspan="4" class="align-bottom">
+                          <p class="fw-bold mb-1">Remarks / Payment Instructions:</p>
+                          <p class="small">Payment is due on receipt. Please include the Invoice number in all bank transfers.</p>
+                          <div class="row">
+                            <div class="col-md-6"><p class="mb-1 mt-3 fw-bold">Bank Details:</p><p class="mb-1 small">Bank: <span>${invoice.bankDetails.bankName}</span></p><p class="mb-1 small">A/C No: <span>${invoice.bankDetails.accountNumber}</span></p><p class="mb-1 small">IFSC: <span>${invoice.bankDetails.ifscCode || 'N/A'}</span></p></div>
+                            <div class="col-md-6 text-end">
+                                ${getSealSVG(companyName, companyGstin)}
+                            </div>
+                          </div>
+                        </td><td colspan="2" class="text-end"><strong>SUBTOTAL:</strong></td><td class="text-end fw-bold">₹${(invoice.subtotal || 0).toFixed(2)}</td></tr>
+                      <tr><td colspan="2" class="text-end"><strong>CGST (${invoice.cgstPercentage || 9}%):</strong></td><td class="text-end fw-bold">₹${(invoice.cgstAmount || 0).toFixed(2)}</td></tr>
+                      <tr><td colspan="2" class="text-end"><strong>SGST (${invoice.sgstPercentage || 9}%):</strong></td><td class="text-end fw-bold">₹${(invoice.sgstAmount || 0).toFixed(2)}</td></tr>
+                      <tr ${footerBgStyle}><td colspan="3" class="text-start ps-3 small fw-bold">AMOUNT IN WORDS: ${numberToWords(invoice.grandTotal || 0)}</td><td colspan="2" class="text-end"><strong>BALANCE DUE:</strong></td><td class="text-end fw-bold fs-5">₹${(invoice.grandTotal || 0).toFixed(2)}</td></tr>
+                    </tfoot>
+                  </table>
+                </div>
+                <div class="row mt-5 px-3"><div class="col-md-7"><p class="small text-muted">Note: Subject to ${invoice.companyDetails.city || 'Jurisdiction'} Jurisdiction.</p></div><div class="col-md-5 text-end signature-on-print"><div class="mt-4"><p class="mb-4">For <strong class="invoice-theme-color" style="color: ${themeColor} !important;">${companyName}</strong></p><p class="mb-0">___________________</p><p class="mb-0">Authorized Signatory</p></div></div></div>
+                <div style="height: 10px; background-color: ${themeColor}; margin-top: 20px;"></div>
+              </div>
+            `;
+            modalBody.innerHTML = invoiceHtml;
+            applyLiveStyles();
+
+          } catch (error) {
+            console.error("Error viewing invoice:", error);
+            modalBody.innerHTML = '<p class="text-danger text-center">Could not load invoice details.</p>';
+          }
         }
-      });
-    });
 
-    // --- NEW TRANSPORTER FUNCTIONS (KEEPING FOR COMPLETENESS, BUT NOT RELEVANT TO LR PAGE FIX) ---
-    // (Omitted the `loadTransporterList`, `saveTransporterPayment`, and `viewTransporterDetails` functions to save space, assuming they are defined elsewhere or not used on this specific page)
+        window.printInvoiceDetail = function() {
+          window.print();
+        }
 
-  </script>
+        function numberToWords(num) {
+          const a = ['', 'one ', 'two ', 'three ', 'four ', 'five ', 'six ', 'seven ', 'eight ', 'nine ', 'ten ', 'eleven ', 'twelve ', 'thirteen ', 'fourteen ', 'fifteen ', 'sixteen ', 'seventeen ', 'eighteen ', 'nineteen '];
+          const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+          
+          if ((num = Math.floor(num).toString()).length > 9) return 'overflow';
+          const n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+          if (!n) return '';
+          
+          let str = '';
+          str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'crore ' : '';
+          str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'lakh ' : '';
+          str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'thousand ' : '';
+          str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'hundred ' : '';
+          str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+          
+          return str.trim().replace(/\s+/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') + ' Only';
+        }
+        
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', function() {
+          // Initialize DataTable
+          // The initialization for lrTable is now at the top of the DOMContentLoaded block
+          
+          auth.onAuthStateChanged(async (user) => {
+            if (user) {
+              await loadAllData();
+              loadAutoGenerationSettings();
+              
+              // Set default date to today
+              const today = new Date().toISOString().split('T')[0];
+              document.getElementById('lrDate').value = today;
+
+              // Event listeners
+              document.getElementById('saveLRBtn').addEventListener('click', saveLR);
+              document.getElementById('applyFiltersBtn').addEventListener('click', loadLRData);
+
+              // Auto-open invoice modal if invoiceId provided in URL
+              try {
+                const params = new URLSearchParams(window.location.search);
+                const invoiceId = params.get('view') || params.get('invoiceId') || params.get('viewInvoice');
+                if (invoiceId) {
+                  setTimeout(() => {
+                    window.viewInvoice(invoiceId);
+                  }, 150);
+                }
+              } catch (e) { /* ignore */ }
+
+            } else {
+              window.location.href = "index.html";
+            }
+          });
+        });
+
+        // --- NEW TRANSPORTER FUNCTIONS (KEEPING FOR COMPLETENESS, BUT NOT RELEVANT TO LR PAGE FIX) ---
+        // (Omitted the `loadTransporterList`, `saveTransporterPayment`, and `viewTransporterDetails` functions to save space, assuming they are defined elsewhere or not used on this specific page)
+
+      </script>
 <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        // Initial call to set the correct state based on the checkbox
-        const vehicleTypeToggle = document.getElementById('vehicleTypeToggle');
-        if (vehicleTypeToggle) {
-          toggleVehicleInput(vehicleTypeToggle.checked);
-        }
+          document.addEventListener('DOMContentLoaded', function() {
+            // Initial call to set the correct state based on the checkbox
+            const vehicleTypeToggle = document.getElementById('vehicleTypeToggle');
+            if (vehicleTypeToggle) {
+              toggleVehicleInput(vehicleTypeToggle.checked);
+            }
 
-        const editVehicleTypeToggle = document.getElementById('editVehicleTypeToggle');
-        if (editVehicleTypeToggle) {
-          toggleEditVehicleInput(editVehicleTypeToggle.checked);
-        }
-      });
-    </script>
-  </body>
-</html>
+            const editVehicleTypeToggle = document.getElementById('editVehicleTypeToggle');
+            if (editVehicleTypeToggle) {
+              toggleEditVehicleInput(editVehicleTypeToggle.checked);
+            }
+          });
+        </script>
+      </body>
+    </html>
