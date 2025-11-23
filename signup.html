@@ -516,8 +516,8 @@
         sessionStorage.setItem('coreEmail', email);
         sessionStorage.setItem('corePassword', password);
         
-        // Redirect to create branch account, which will then lead to plan selection.
-        window.location.href = 'create-branch-account.html'; 
+        // Redirect directly to plan selection (NEW FLOW)
+        window.location.href = 'plan-selection.html'; 
         
       } catch (error) {
         console.error('Signup error:', error);
