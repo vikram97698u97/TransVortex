@@ -606,7 +606,14 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-12 mb-3">
+                <div class="col-md-6 mb-3">
+                  <label for="employeeSelect" class="form-label">Employee</label>
+                  <select id="employeeSelect" class="form-select">
+                    <option value="">Select Employee</option>
+                  </select>
+                  <small class="text-muted">Select the employee managing this LR</small>
+                </div>
+                <div class="col-md-6 mb-3">
                   <label class="form-label">Route (From --> To) <span class="text-danger">*</span></label>
                   <div class="input-group">
                     <select class="form-select" id="routeSelect" required></select>
@@ -1128,7 +1135,14 @@
                   </div>
                 </div>
                 <div class="row">
-                  <div class="col-md-12">
+                  <div class="col-md-6 mb-3">
+                    <label for="editEmployeeSelect" class="form-label">Employee</label>
+                    <select id="editEmployeeSelect" class="form-select">
+                      <option value="">Select Employee</option>
+                    </select>
+                    <small class="text-muted">Select the employee managing this LR</small>
+                  </div>
+                  <div class="col-md-6 mb-3">
                     <label for="editRouteSelect" class="form-label">Route*</label>
                     <div class="input-group">
                       <select id="editRouteSelect" class="form-select" required></select>
@@ -1776,6 +1790,26 @@
         }
       });
 
+      // **NEW**: Load Employees for the dropdown
+      const employeesRef = db.ref(`users/${currentCoreAccountId}/employees`);
+      employeesRef.on('value', (snapshot) => {
+        const employeeSelect = document.getElementById('employeeSelect');
+        const editEmployeeSelect = document.getElementById('editEmployeeSelect');
+        if (employeeSelect) employeeSelect.innerHTML = '<option value="">Select Employee</option>';
+        if (editEmployeeSelect) editEmployeeSelect.innerHTML = '<option value="">Select Employee</option>';
+        
+        if (snapshot.exists()) {
+          snapshot.forEach((child) => {
+            const employee = { id: child.key, ...child.val() };
+            const option = document.createElement('option');
+            option.value = employee.id;
+            option.textContent = `${employee.name || 'Unknown'} (${employee.designation || 'N/A'})`;
+            if (employeeSelect) employeeSelect.appendChild(option.cloneNode(true));
+            if (editEmployeeSelect) editEmployeeSelect.appendChild(option.cloneNode(true));
+          });
+        }
+      });
+
       // **NEW**: Load all Pumps (for Fuel Entry tab)
       const pumpsRef = db.ref(`users/${auth.currentUser.uid}/petrolPumps`);
       pumpsRef.on('value', (snapshot) => {
@@ -1869,6 +1903,9 @@
 
       const vehicle = allVehicles.find(v => (v.vehicleNo || '').toUpperCase() === truckNumber.toUpperCase() && v.driverName === driverName);
 
+      const employeeSelect = document.getElementById('employeeSelect');
+      const employeeId = employeeSelect ? employeeSelect.value : null;
+
       const lrData = {
         date: document.getElementById('lrDate').value,
         lrNumber: document.getElementById('lrNumber').value,
@@ -1890,6 +1927,7 @@
         truckId: vehicle ? vehicle.id : null,
         clientId: document.getElementById('clientId').value,
         consigneeId: document.getElementById('consigneeId').value || document.getElementById('clientId').value,
+        employeeId: employeeId || null, // Store registered employee ID
         fromLocation: fromLoc,
         toLocation: toLoc,
         routeDistanceKm: routeDistance,
@@ -3319,6 +3357,11 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
         document.getElementById('editTransporterSelect').value = lr.transporterId || '';
         document.getElementById('editConsigneeId').value = lr.consigneeId || '';
         document.getElementById('editRouteSelect').value = lr.routeId || '';
+        // Set employee on edit
+        const editEmployeeSelect = document.getElementById('editEmployeeSelect');
+        if (editEmployeeSelect && lr.employeeId) {
+          setTimeout(() => { editEmployeeSelect.value = lr.employeeId || ''; }, 100);
+        }
 
         document.getElementById('editNumPackages').value = lr.numPackages || '';
         document.getElementById('editWeightPerPackage').value = lr.weightPerPackage || '';
@@ -3353,6 +3396,8 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
       const isMarketVehicle = document.getElementById('editVehicleTypeToggle').checked;
       const truckNumber = isMarketVehicle ? document.getElementById('editMarketTruckNumber').value : document.getElementById('editTruckNumber').value;
       const driverName = isMarketVehicle ? document.getElementById('editMarketDriverName').value : document.getElementById('editDriverSelect').value;
+      const editEmployeeSelect = document.getElementById('editEmployeeSelect');
+      const employeeId = editEmployeeSelect ? editEmployeeSelect.value : null;
       const transporterSelect = document.getElementById('editTransporterSelect'); // Get the select element
       const transporterId = transporterSelect.value;
       const transporterName = transporterSelect.value ? transporterSelect.options[transporterSelect.selectedIndex].dataset.name : null;
@@ -3385,6 +3430,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
         consigneeId: document.getElementById('editConsigneeId').value,
         shipmentNo: document.getElementById('editShipmentNo').value,
         item: document.getElementById('editItem').value,
+        employeeId: employeeId || null, // Store registered employee ID
         updatedAt: new Date().toISOString()
       };
 
