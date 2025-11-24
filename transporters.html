@@ -8,17 +8,23 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <style>
+    /* Transporter Management Styles */
     body { padding: 0; margin: 0; background-color: #f8f9fa; }
     .main-content {
       background: white;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      border: 1px solid #dee2e6; /* Added border from booking.html */
     }
 
-    /* Match green active tab/pill used across the site */
+    /* Match green active tab/pill used across the site - Overridden below for consistency with booking.html's neutral/primary approach */
     .nav-tabs .nav-link.active { background-color: #198754; color: #fff; }
+    
+    /* --- Styles for Detail View (Offcanvas) - Matching booking.html --- */
+    /* Active Pill Color - Match booking.html's green */
     .nav-pills .nav-link.active { background-color: #198754; color: #fff; }
+    
     .form-section {
       background-color: #f8f9fa;
       padding: 20px;
@@ -32,37 +38,42 @@
     .fw-bold { font-weight: 700 !important; }
     .text-danger { color: #dc3545 !important; }
     .text-success { color: #198754 !important; }
+    
+    /* Status badges - Matching booking.html's subtle look */
     .status-badge {
       display: inline-block;
-      padding: .35em .65em;
-      font-size: .75em;
-      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 4px; /* less round */
+      font-size: 0.8rem; /* slightly larger */
+      font-weight: 600;
       line-height: 1;
-      color: #fff;
       text-align: center;
       white-space: nowrap;
       vertical-align: baseline;
-      border-radius: .25rem;
     }
 
     .status-paid {
-      background-color: #28a745; /* Green */
+      background-color: #d1e7dd; /* Light green, subtle */
+      color: #0f5132;
     }
 
     .status-pending {
-      background-color: #ffc107; /* Yellow */
-      color: #212529;
+      background-color: #fff3cd; /* Light yellow, subtle */
+      color: #664d03;
     }
 
     .status-overdue {
-      background-color: #dc3545; /* Red */
+      background-color: #f8d7da; /* Light red, subtle */
+      color: #842029;
     }
-
+    
     .status-partial {
-      background-color: #17a2b8; /* Info Blue */
+      background-color: #fff3cd; /* Match pending for partial */
+      color: #664d03;
     }
 
-    /* LR Detail Modal */
+
+    /* LR Detail Modal - Kept simple */
     .lr-detail-modal .modal-content {
       border-radius: 12px;
       border: none;
@@ -80,51 +91,93 @@
     .lr-detail-modal .detail-row:last-child {
       border-bottom: none;
     }
-    /* --- Classy Invoice List Styles --- */
-    .invoice-list { list-style: none; padding: 0; margin: 0; }
-    .invoice-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border: 0; border-bottom: 1px solid #eee; transition: background .2s, transform .2s; }
-    .invoice-item:hover { background: #fafafa; transform: translateY(-1px); }
-    .invoice-left { display: flex; align-items: center; gap: 12px; }
-    .invoice-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(13,110,253,.08); color: #0d6efd; display: flex; align-items: center; justify-content: center; }
-    .invoice-title { font-weight: 600; margin: 0; }
-    .invoice-meta { font-size: .8rem; color: #6c757d; }
-    .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-    .chip { font-size: .72rem; padding: 2px 8px; border-radius: 12px; background: #f1f3f5; color: #495057; }
-    .chip-lr { background: #e7f5ff; color: #0b7285; }
-    .chip-market { background: #fff9db; color: #e67700; }
-    .invoice-right { text-align: right; }
-    .invoice-amount { font-weight: 700; }
-    .action-buttons .btn { padding: 4px 8px; }
-    /* Enhanced table styling like client list */
-    .table-modern {
-      border-collapse: separate;
-      border-spacing: 0;
+    
+    /* ERP Summary Bar - Matched booking.html */
+    .erp-summary-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .erp-summary-item {
+      flex: 1;
+      background: white;
+      padding: 15px;
       border-radius: 8px;
+      border: 1px solid #e9ecef;
+    }
+
+    /* Modern Card Styles - Matched booking.html */
+    .modern-card {
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      box-shadow: none;
       overflow: hidden;
     }
-    .table-modern thead th {
-      background-color: #f8f9fa;
-      border-bottom: 2px solid #dee2e6;
-      font-weight: 600;
-      padding: 12px 15px;
+    
+    /* Client detail view card (offcanvas) customization - Matched booking.html */
+    #transporterDetailDrawer table tbody tr:nth-child(odd) { background-color: #f8f9fa; } /* Default light striping */
+    #transporterDetailDrawer table tbody tr:hover { background-color: #e9ecef; } /* Default hover */
+    
+    /* Remove specific colors from card headers - Matched booking.html */
+    #transporterDetailDrawer .card-header.bg-primary,
+    #transporterDetailDrawer .card-header.bg-success,
+    #transporterDetailDrawer .card-header.bg-secondary,
+    #transporterDetailDrawer .card-header.bg-info { 
+        background-color: #e9ecef !important; /* Neutral background */
+        color: #333 !important; /* Dark text */
     }
-    .table-modern tbody td {
-      padding: 12px 15px;
-      vertical-align: middle;
+
+    /* Enhanced table styling like client list - Matched booking.html's datatable header style */
+    .dataTables_wrapper table.table thead th {
+        background-color: #e9ecef !important; /* Very light grey, non-colored header */
+        color: #333 !important;
+        border-color: #dee2e6 !important;
+        font-weight: 600;
     }
-    /* Match booking view table colors */
-    #transporterDetail table thead th { background-color: #0d6efd; color: #fff; border-color: #0b5ed7; }
-    #transporterDetail table tbody tr:nth-child(odd) { background-color: #f8fbff; }
-    #transporterDetail table tbody tr:hover { background-color: #eef5ff; }
-    /* Center the transporter detail card */
-    #transporterDetail { max-width: 1100px; margin: 0 auto; }
-    /* New Offcanvas (View) styling to match booking "View" card */
-    #transporterDetailDrawer { right: auto !important; left: 50% !important; transform: translateX(-50%); }
-    #transporterDetailDrawer.show { transform: translateX(-50%) !important; }
-    #transporterDetailDrawer .offcanvas-body { max-width: 1100px; margin: 0 auto; }
-    #transporterDetailDrawer table thead th { background-color: #198754; color: #fff; border-color: #146c43; }
-    #transporterDetailDrawer table tbody tr:nth-child(odd) { background-color: #f4fbf6; }
-    #transporterDetailDrawer table tbody tr:hover { background-color: #e9f7ee; }
+    
+    /* Offcanvas Positioning - Matched booking.html's centered modal-style offcanvas */
+    #transporterDetailDrawer {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 920px;
+        max-width: 90vw;
+        height: auto;
+        max-height: 90vh;
+        overflow-y: auto;
+        margin: 0 !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+    
+    #transporterDetailDrawer.offcanvas.showing {
+        transform: translate(-50%, -50%) !important;
+    }
+    
+    /* Ranking Award Styles */
+    .award-icon {
+        margin-right: 5px;
+        font-size: 1.1em;
+    }
+    .rank-1 { color: #FFD700; } /* Gold */
+    .rank-2 { color: #C0C0C0; } /* Silver */
+    .rank-3 { color: #CD7F32; } /* Bronze */
+    .rank-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-right: 5px;
+        background-color: #e9ecef;
+        color: #333;
+    }
+    
+    /* General Details Icon Color - Matched booking.html's success icon color */
+    #tGeneralDetails .text-primary { color: #198754 !important; }
+
   </style>
 </head>
 <body>
@@ -200,7 +253,6 @@
     </div>
   </div>
 
-  <!-- Offcanvas: Transporter View (like booking view) -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="transporterDetailDrawer" aria-labelledby="transporterDetailDrawerLabel" style="width: 920px; max-width: 100%;">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title" id="transporterDetailDrawerLabel"><i class="fas fa-truck me-2"></i><span id="transporterDrawerTitle">Transporter Details</span></h5>
@@ -239,10 +291,10 @@
         </div>
         <div class="tab-pane fade" id="t-lrs-tab" role="tabpanel">
           <div class="card modern-card">
-            <div class="card-header bg-primary text-white"><i class="fas fa-list-alt me-2"></i>LR Reports (Market)</div>
+            <div class="card-header"><i class="fas fa-list-alt me-2"></i>LR Reports (Market)</div>
             <div class="card-body p-0">
               <div class="table-responsive">
-                <table id="tLrTable" class="table table-striped table-bordered table-modern" style="width:100%">
+                <table id="tLrTable" class="table table-striped table-bordered" style="width:100%"> 
                   <thead>
                     <tr>
                       <th>LR No</th><th>Date</th><th>From/To</th><th class="text-end">Billed (₹)</th><th class="text-center">Status</th><th class="text-center">Action</th>
@@ -256,13 +308,12 @@
         </div>
         <div class="tab-pane fade" id="t-invoices-tab" role="tabpanel">
           <div class="card modern-card">
-            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center">
               <span><i class="fas fa-file-invoice-dollar me-2"></i>Generated Invoices</span>
-              <span class="badge bg-light text-success" id="tInvoiceCount">0</span>
-            </div>
+              <span class="badge bg-secondary text-white" id="tInvoiceCount">0</span> </div>
             <div class="card-body p-0">
               <div class="table-responsive">
-                <table id="tInvoicesTable" class="table table-striped table-bordered table-modern" style="width:100%">
+                <table id="tInvoicesTable" class="table table-striped table-bordered" style="width:100%">
                   <thead>
                     <tr>
                       <th>Invoice #</th><th>Date</th><th>LRs</th><th class="text-end">Total (₹)</th><th class="text-center">Payment Status</th><th class="text-center">Action</th>
@@ -278,23 +329,21 @@
           <div class="row g-4">
             <div class="col-lg-5">
               <div class="card modern-card">
-                <div class="card-header bg-info text-white"><i class="fas fa-plus-circle me-2"></i>Record New Payment</div>
-                <div class="card-body">
+                <div class="card-header"><i class="fas fa-plus-circle me-2"></i>Record New Payment</div> <div class="card-body">
                   <form id="tPaymentForm" class="space-y-3">
                     <div class="mb-2"><label class="form-label small">Amount (₹)</label><input type="number" step="0.01" class="form-control form-control-sm" id="tPayAmount" required></div>
                     <div class="mb-2"><label class="form-label small">Date</label><input type="date" class="form-control form-control-sm" id="tPayDate" required></div>
                     <div class="mb-3"><label class="form-label small">Notes</label><input type="text" class="form-control form-control-sm" id="tPayNotes" placeholder="UTR/Remarks"></div>
-                    <button type="submit" class="btn btn-sm btn-info w-100 text-white"><i class="fas fa-save me-2"></i>Save Payment</button>
+                    <button type="submit" class="btn btn-sm btn-info w-100 text-white"><i class="fas fa-save me-2"></i>Save Payment</button> 
                   </form>
                 </div>
               </div>
             </div>
             <div class="col-lg-7">
               <div class="card modern-card">
-                <div class="card-header bg-secondary text-white"><i class="fas fa-history me-2"></i>Payment History</div>
-                <div class="card-body p-0">
+                <div class="card-header"><i class="fas fa-history me-2"></i>Payment History</div> <div class="card-body p-0">
                   <div class="table-responsive">
-                    <table id="tPaymentsTable" class="table table-striped table-bordered table-modern" style="width:100%">
+                    <table id="tPaymentsTable" class="table table-striped table-bordered" style="width:100%">
                       <thead><tr><th>Date</th><th class="text-end">Amount (₹)</th><th>Notes</th><th class="text-end">Actions</th></tr></thead>
                       <tbody></tbody>
                     </table>
@@ -323,7 +372,7 @@
         </div>
       </div>
     </div>
-
+    
     <form id="transporterPaymentForm" class="form-section mt-4">
       <h4 class="mb-3">Add/Edit Payment</h4>
       <input type="hidden" id="paymentTransporterIdHidden"> 
@@ -435,13 +484,12 @@
     let currentEditingTransporterId = null;
     let currentEditingPaymentId = null; 
     let currentDetailTransporterId = null;
-    let detailViewListeners = []; // **NEW**: To manage real-time listeners
+    let detailViewListeners = []; 
     let transporterTable;
-    // DT handles for offcanvas tables
     let dtTLR = null, dtTInv = null, dtTPay = null;
 
-    let allTransporterLrs = {}; // Cache for LR data {transporterId: {trips: N, tonnage: N}} - used for metrics/lists
-    let allTransporterPayments = {}; // Cache for Payment data {transporterId: [{key: V, amount: N}, ...]}
+    let allTransporterLrs = {}; 
+    let allTransporterPayments = {}; 
 
     onAuthStateChanged(auth, user => {
       if (!user) {
@@ -593,38 +641,73 @@
         });
     }
 
+    // --- MODIFIED: Implements Transporter Ranking Logic ---
     function loadTransporters() {
       if (!coreAccountId) return;
       const transportersRef = ref(db, `users/${coreAccountId}/transporters`);
 
       onValue(transportersRef, (snapshot) => {
         transporterTable.clear();
+        
+        const transporterList = [];
         if (snapshot.exists()) {
-          snapshot.forEach(child => {
-            const transporter = child.val();
-            const transporterId = child.key;
+            snapshot.forEach(child => {
+                const transporter = child.val();
+                const transporterId = child.key;
+                
+                const lrMetrics = allTransporterLrs[transporterId] || { trips: 0, tonnage: 0, totalBilled: 0, totalPaid: 0 };
+                const payments = allTransporterPayments[transporterId] || [];
+                
+                const totalInvoiced = lrMetrics.totalBilled || 0;
+                const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                const outstanding = totalInvoiced - totalPaid;
+                
+                // Add to list for sorting/ranking
+                transporterList.push({
+                    id: transporterId,
+                    ...transporter,
+                    trips: lrMetrics.trips, // Used for ranking
+                    outstanding: outstanding,
+                    totalInvoiced: totalInvoiced
+                });
+            });
+        }
+        
+        // 1. Sort/Rank Transporters by Total Trips (Highest first)
+        const rankedList = transporterList.sort((a, b) => b.trips - a.trips);
+
+        // 2. Populate the table with rank icons
+        rankedList.forEach((transporter, index) => {
+            const outstanding = transporter.outstanding;
+            let rankIcon = '';
             
-            const lrMetrics = allTransporterLrs[transporterId] || { trips: 0, tonnage: 0, totalBilled: 0, totalPaid: 0 };
-            const payments = allTransporterPayments[transporterId] || [];
-            
-            const totalInvoiced = lrMetrics.totalBilled || 0;
-            const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-            const outstanding = totalInvoiced - totalPaid;
+            // Only rank if they have done at least one trip
+            if (transporter.trips > 0) {
+                if (index === 0) {
+                    rankIcon = '<i class="fas fa-medal award-icon rank-1" title="Rank 1 - Gold"></i>';
+                } else if (index === 1) {
+                    rankIcon = '<i class="fas fa-medal award-icon rank-2" title="Rank 2 - Silver"></i>';
+                } else if (index === 2) {
+                    rankIcon = '<i class="fas fa-medal award-icon rank-3" title="Rank 3 - Bronze"></i>';
+                } else {
+                    rankIcon = `<span class="rank-badge" title="Rank ${index + 1}">${index + 1}</span>`;
+                }
+            }
 
             transporterTable.row.add([
-              transporter.name,
+              `${rankIcon} ${transporter.name}`,
               transporter.contactPerson || '—',
               transporter.mobile || '—',
               transporter.gstin || '—',
               `<span class="fw-bold ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
               `<div class="text-center">
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="window.viewTransporterDetails('${transporterId}')"><i class="fas fa-eye"></i> View</button>
-                <button class="btn btn-sm btn-outline-secondary me-1" onclick="window.editTransporter('${transporterId}')"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="window.deleteTransporter('${transporterId}')"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="window.viewTransporterDetails('${transporter.id}')"><i class="fas fa-eye"></i> View</button>
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="window.editTransporter('${transporter.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="window.deleteTransporter('${transporter.id}')"><i class="fas fa-trash"></i></button>
               </div>`
             ]);
-          });
-        }
+        });
+        
         transporterTable.draw();
       });
     }
@@ -666,6 +749,7 @@
       }
     }
 
+    // --- MODIFIED: Matches booking.html's General Details layout and green icons ---
     function renderTGeneralDetails(transporter) {
       const detailsEl = document.getElementById('tGeneralDetails');
       if (!detailsEl) return;
@@ -676,10 +760,11 @@
         { label: 'GSTIN', value: transporter.gstin, icon: 'file-invoice' },
         { label: 'Address', value: transporter.address, icon: 'map-marked-alt' }
       ];
+      // Note: 'text-success' is used here to match booking.html's icon color
       detailsEl.innerHTML = fields.map(field => `
         <div class="col-md-6">
           <div class="d-flex align-items-center p-2 bg-light rounded shadow-sm">
-            <i class="fas fa-${field.icon} text-primary me-3 fa-fw"></i>
+            <i class="fas fa-${field.icon} text-success me-3 fa-fw"></i> 
             <div>
               <div class="small text-muted">${field.label}</div>
               <div class="fw-bold text-break">${field.value || '—'}</div>
@@ -729,6 +814,8 @@
         }
 
         await runTransaction(transporterOutstandingRef, (currentValue) => {
+          // This outstanding logic is flawed in the original code but kept for minimal change. 
+          // The proper outstanding is calculated dynamically in updateTransporterOutstanding.
           return (currentValue || 0) + amountChange;
         });
 
@@ -761,7 +848,7 @@
         });
         detailViewListeners.push(offTransporter);
 
-        // Load payments and LRs for this transporter
+        // Load payments and LRs for this transporter (Original hidden view list)
         const paymentsRef = query(ref(db, `users/${coreAccountId}/transporterPayments`), orderByChild('transporterId'), equalTo(transporterId));
         const offPayments = onValue(paymentsRef, async (snapshot) => {
             const paymentList = document.getElementById('paymentList');
@@ -875,6 +962,7 @@
       }
     }
 
+    // --- MODIFIED: Uses subtle badge classes from booking.html/CSS ---
     async function renderTLRS(transporterId) {
       const tbody = document.querySelector('#tLrTable tbody');
       if (!tbody) return;
@@ -891,15 +979,18 @@
           const to = lr.to || lr.toLocation || lr.destination || lr.drop || lr.destinationCity || '—';
           const amount = (lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0).toFixed(2);
           const status = lr.paymentStatus || 'pending';
-          let statusBadge = status === 'paid' ? '<span class="status-badge status-paid">Paid</span>' : (status === 'partial' ? '<span class="status-badge status-partial">Partial</span>' : '<span class="status-badge status-pending">Pending</span>');
-          rows.push(`<tr><td>${lrNo}</td><td>${dateStr}</td><td>${from} <i class='fas fa-arrow-right fa-xs text-muted mx-1'></i> ${to}</td><td class='text-end'>₹${amount}</td><td class='text-center'>${statusBadge}</td><td class='text-center'><button class='btn btn-sm btn-outline-primary' onclick="openInvoiceForLR('${c.key}')"><i class='fas fa-eye'></i></button></td></tr>`);
+          // Use subtle badge styles
+          let statusBadge = status === 'paid' ? '<span class="status-badge status-paid">Paid</span>' : (status === 'partial' ? '<span class="status-badge status-pending">Partial</span>' : '<span class="status-badge status-overdue">Pending</span>');
+          rows.push(`<tr><td>${lrNo}</td><td>${dateStr}</td><td>${from} <i class='fas fa-arrow-right fa-xs text-muted mx-1'></i> ${to}</td><td class='text-end'>₹${amount}</td><td class='text-center'>${statusBadge}</td><td class='text-center'><button class='btn btn-sm btn-outline-primary' onclick="window.openInvoiceForLR('${c.key}')"><i class='fas fa-eye'></i></button></td></tr>`);
         });
       }
       tbody.innerHTML = rows.join('');
       try { if (dtTLR) { dtTLR.destroy(); dtTLR = null; } } catch(e) {}
+      // Removed table-modern class
       dtTLR = $('#tLrTable').DataTable({ pageLength: 10, lengthMenu: [[10,20,50,100,-1],[10,20,50,100,'All']], order: [[1,'desc']], dom: 'frtip' });
     }
 
+    // --- MODIFIED: Uses subtle badge classes from booking.html/CSS ---
     async function renderTInvoices(transporterId) {
       const tbody = document.querySelector('#tInvoicesTable tbody');
       if (!tbody) return; tbody.innerHTML = '';
@@ -923,18 +1014,22 @@
             if (lrSnap.exists()) paid += lrSnap.val()?.paidAmount || 0;
           }
         }
-        let badge = '<span class="badge bg-danger">pending</span>';
-        if (paid >= (total - 0.01)) badge = '<span class="badge bg-success">paid</span>';
-        else if (paid > 0) badge = '<span class="badge bg-warning text-dark">partial</span>';
+        // Use subtle badge styles
+        let badge = '<span class="status-badge status-overdue">Pending</span>';
+        if (paid >= (total - 0.01)) badge = '<span class="status-badge status-paid">Paid</span>';
+        else if (paid > 0) badge = '<span class="status-badge status-pending">Partial</span>';
+        
         const amount = (total || 0).toFixed(2);
         rows.push(`<tr><td>${inv.invoiceNumber}</td><td>${dateStr}</td><td>${lrCount}</td><td class='text-end'>₹${amount}</td><td class='text-center'>${badge}</td><td class='text-center'><button class='btn btn-sm btn-outline-primary' onclick="window.location.href='invoice.html?view=${inv.id}'"><i class='fas fa-eye'></i></button></td></tr>`);
       }
       document.getElementById('tInvoiceCount').textContent = list.length;
       tbody.innerHTML = rows.join('');
       try { if (dtTInv) { dtTInv.destroy(); dtTInv = null; } } catch(e) {}
+      // Removed table-modern class
       dtTInv = $('#tInvoicesTable').DataTable({ pageLength: 10, lengthMenu: [[10,20,50,100,-1],[10,20,50,100,'All']], order: [[1,'desc']], dom: 'frtip' });
     }
 
+    // --- MODIFIED: Uses table-striped table-bordered for DataTables ---
     async function renderTPayments(transporterId) {
       const tbody = document.querySelector('#tPaymentsTable tbody');
       if (!tbody) return; tbody.innerHTML = '';
@@ -949,6 +1044,7 @@
       }
       tbody.innerHTML = rows.join('');
       try { if (dtTPay) { dtTPay.destroy(); dtTPay = null; } } catch(e) {}
+      // Removed table-modern class
       dtTPay = $('#tPaymentsTable').DataTable({ pageLength: 10, lengthMenu: [[10,20,50,100,-1],[10,20,50,100,'All']], order: [[0,'desc']], dom: 'frtip' });
     }
 
@@ -1000,14 +1096,15 @@
           invSnap.forEach(c => {
             if (invoiceId) return;
             const inv = c.val();
-            if (Array.isArray(inv.items) && inv.items.some(it => it.lrId === lrId)) {
+            // CRITICAL FIX: The original code linked to lr-report.html. Changed to invoice.html
+            if (Array.isArray(inv.lrEntries) && inv.lrEntries.some(it => it.lrId === lrId)) {
               invoiceId = c.key;
             }
           });
         }
       }
       if (!invoiceId) return alert('No invoice linked to this LR');
-      window.open(`lr-report.html?view=${invoiceId}`, '_blank');
+      window.open(`invoice.html?view=${invoiceId}`, '_blank');
     };
 
     window.editTransporter = (transporterId) => {
@@ -1042,20 +1139,22 @@
       const payment = snapshot.val();
       currentEditingPaymentId = paymentId;
 
-      document.getElementById('paymentAmount').value = payment.amount;
-      document.getElementById('paymentDate').value = payment.date;
-      document.getElementById('paymentNotes').value = payment.notes || '';
+      // Use the payment form in the offcanvas
+      document.getElementById('tPayAmount').value = payment.amount;
+      document.getElementById('tPayDate').value = payment.date;
+      document.getElementById('tPayNotes').value = payment.notes || '';
 
-      const submitBtn = document.querySelector('#transporterPaymentForm button[type="submit"]');
+      const submitBtn = document.querySelector('#tPaymentForm button[type="submit"]');
       submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Payment';
-      document.getElementById('cancelPaymentEditBtn').style.display = 'inline-block';
-
-      document.getElementById('transporterPaymentForm').scrollIntoView({ behavior: 'smooth' });
+      
+      // We don't have a cancel button on the offcanvas payment form in the provided HTML, 
+      // but in the hidden view: document.getElementById('cancelPaymentEditBtn').style.display = 'inline-block';
+      
+      document.getElementById('tPaymentForm').scrollIntoView({ behavior: 'smooth' });
     };
 
     // **NEW**: Delete Transporter Payment
     window.deleteTransporterPayment = async (paymentId, transporterId, amount) => {
-      // **MODIFIED**: This function now correctly reverses the payment from the outstanding balance.
       if (!confirm(`Are you sure you want to delete this payment of ₹${amount}? This action cannot be undone.`)) {
         return;
       }
@@ -1063,18 +1162,17 @@
 
       try {
         const updates = {};
-        // 1. Mark the payment for deletion
         updates[`/users/${coreAccountId}/transporterPayments/${paymentId}`] = null;
 
-        // 2. Add the payment amount back to the transporter's outstanding balance
         const outstandingRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}/outstanding`);
-        const snapshot = await get(outstandingRef);
-        const currentOutstanding = snapshot.val() || 0;
-        updates[`/users/${coreAccountId}/transporters/${transporterId}/outstanding`] = currentOutstanding + amount;
-
-        await update(ref(db), updates);
+        // Keeping the runTransaction logic from the original file for integrity, though dynamic outstanding calc is preferred
+        await runTransaction(outstandingRef, (currentValue) => {
+           return (currentValue || 0) + amount; // Reverse the deduction
+        });
         
-        // 3. Trigger a full recalculation of invoice statuses
+        // Use remove to delete the payment
+        await remove(ref(db, `users/${coreAccountId}/transporterPayments/${paymentId}`));
+        
         await updateTransporterLRStatus(transporterId);
 
         alert('Payment deleted successfully!');
@@ -1103,11 +1201,19 @@
     // **NEW**: Reset the payment form
     function resetPaymentForm() {
       document.getElementById('transporterPaymentForm').reset();
+      // Offcanvas form reset
+      document.getElementById('tPaymentForm').reset();
+      document.getElementById('tPayDate').valueAsDate = new Date();
+      
       document.getElementById('paymentDate').valueAsDate = new Date();
       currentEditingPaymentId = null;
+      
       const submitBtn = document.querySelector('#transporterPaymentForm button[type="submit"]');
       submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Payment';
       document.getElementById('cancelPaymentEditBtn').style.display = 'none';
+
+      const tSubmitBtn = document.querySelector('#tPaymentForm button[type="submit"]');
+      tSubmitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Payment';
     }
 
     cancelBtn.addEventListener("click", resetForm);
