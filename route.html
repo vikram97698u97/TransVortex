@@ -125,6 +125,7 @@
           const userData = snapshot.val() || {};
           coreAccountId = userData.coreAccountId || user.uid;
           loadRoutesAndVehicleStatus();
+          setupRealtimeListeners();
         });
       }
     });
@@ -170,6 +171,8 @@
           alert("Route saved successfully!");
         }
         resetForm();
+        // Automatically refresh the table after save
+        loadRoutesAndVehicleStatus();
       } catch (error) {
         alert("Error saving route: " + error.message);
       }
@@ -260,10 +263,29 @@
     window.deleteRoute = (routeId) => {
       if (confirm("Are you sure you want to delete this route?")) {
         remove(ref(db, `users/${coreAccountId}/routes/${routeId}`))
-          .then(() => alert("Route deleted."))
+          .then(() => {
+            alert("Route deleted successfully!");
+            loadRoutesAndVehicleStatus(); // Refresh table after delete
+          })
           .catch(err => alert("Error deleting route: " + err.message));
       }
     };
+
+    function setupRealtimeListeners() {
+      if (!coreAccountId) return;
+
+      // Listen for route changes
+      const routesRef = ref(db, `users/${coreAccountId}/routes`);
+      onValue(routesRef, (snapshot) => {
+        loadRoutesAndVehicleStatus();
+      });
+
+      // Listen for LR report changes (to update vehicle status)
+      const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
+      onValue(lrReportsRef, (snapshot) => {
+        loadRoutesAndVehicleStatus();
+      });
+    }
 
     function resetForm() {
       routeForm.reset();
