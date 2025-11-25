@@ -897,11 +897,11 @@
         
         // Check if we're using fallback values
         if (false) { // Condition is always false in the final logic, keeping as per original structure
-            console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+            
         } else {
-            console.log('✅ Firebase configuration loaded securely from EVM');
-            console.log('🔥 Database URL:', firebaseConfig.databaseURL);
-            console.log('🔥 Project ID:', firebaseConfig.projectId);
+            
+            
+            
         }
     } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
@@ -917,7 +917,7 @@
             appId: "1:526889676196:web:66032c80a4aede690ae531",
             measurementId: "G-7F9R7HJYDH"
         };
-        console.warn('⚠️  Using fallback Firebase configuration');
+        
     }} catch (error) {
       console.error('❌ Failed to load Firebase configuration:', error);
       
@@ -1131,10 +1131,10 @@
           registeredVehicles = Object.values(vehicles) 
             .map(vehicle => vehicle.vehicleNumber ? vehicle.vehicleNumber.toUpperCase() : '') 
             .filter(v => v !== '');
-          console.log("Registered vehicles loaded:", registeredVehicles);
+          
         } else {
           registeredVehicles = [];
-          console.log("No registered vehicles found");
+          
         }
       } catch (error) {
         console.error("Error loading registered vehicles:", error);

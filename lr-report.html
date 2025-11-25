@@ -1354,11 +1354,11 @@
         
         // Check if we're using fallback values
         if (false) { // Condition is always false in the final logic, keeping as per original structure
-            console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+            
         } else {
-            console.log('✅ Firebase configuration loaded securely from EVM');
-            console.log('🔥 Database URL:', firebaseConfig.databaseURL);
-            console.log('🔥 Project ID:', firebaseConfig.projectId);
+            
+            
+            
         }
     } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
@@ -1374,7 +1374,7 @@
             appId: "1:526889676196:web:66032c80a4aede690ae531",
             measurementId: "G-7F9R7HJYDH"
         };
-        console.warn('⚠️  Using fallback Firebase configuration');
+        
     }} catch (error) {
       console.error('❌ Failed to load Firebase configuration:', error);
       
@@ -1395,10 +1395,10 @@
     auth.onAuthStateChanged(user => {
       if (user) {
         currentCoreAccountId = user.uid;
-        console.log("currentCoreAccountId set to:", currentCoreAccountId);
+        
       } else {
         currentCoreAccountId = null;
-        console.log("User logged out, currentCoreAccountId set to null.");
+        
       }
     });
 
@@ -1810,9 +1810,9 @@
                 snapshot.forEach(child => {
                     allWorkVendors.push({ id: child.key, ...child.val() });
                 });
-                console.log("✅ Successfully loaded work vendors for expense modal:", allWorkVendors.length);
+                
             } else {
-                console.log("ℹ️ No work vendors found for this account.");
+                
             }
         });
 
@@ -1862,9 +1862,9 @@
               snapshot.forEach(child => {
                   allPumps.push({ id: child.key, ...child.val() });
               });
-              console.log("✅ Successfully loaded pumps:", allPumps.length);
+              
           } else {
-              console.log("ℹ️ No pumps found for this account.");
+              
           }
       });
 
@@ -2802,10 +2802,10 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
                 });
 
                 await vehicleUpdateRef.update(updates);
-                console.log(`Fuel deducted: ${fuelUsedLiters.toFixed(2)}L. Tank level: ${before.toFixed(2)}L -> ${after.toFixed(2)}L`);
+                }L. Tank level: ${before.toFixed(2)}L -> ${after.toFixed(2)}L`);
             }
         } else if (fuelAlreadyDeducted) {
-            console.log('Fuel already deducted for this trip. Skipping fuel deduction.');
+            
         }
         // --- END FIXED FUEL DEDUCTION LOGIC ---
         // **FIX**: 2. Log or Update vehicle work payment to prevent duplicates
@@ -2820,11 +2820,11 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
             if (tripDetails.vehicleWorkAmount > 0) {
                 // Update the existing payment amount
                 await paymentUpdateRef.update({ amount: tripDetails.vehicleWorkAmount });
-                console.log(`Updated vehicle work payment for LR ${currentTripLRId}.`);
+                
             } else {
                 // If work amount is set to 0, remove the payment log
                 await paymentUpdateRef.remove();
-                console.log(`Removed vehicle work payment for LR ${currentTripLRId} as amount was zero.`);
+                
             }
         } else if (tripDetails.vehicleWorkAmount > 0) {
             // No existing payment, create a new one
@@ -2841,7 +2841,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
                 truckNumber: lr.truckNumber
             };
             await workPaymentsRef.push(newWorkData);
-            console.log(`Created new vehicle work payment for LR ${currentTripLRId}.`);
+            
         }
         
         
@@ -2876,7 +2876,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
               }
 
               await vehicleUpdateRef.update(updates);
-              console.log(`Updated running KMs for vehicle ${vehicleNumber}.`);
+              
             }
           } catch (kmError) {
             console.error("Error updating tyre running KMs:", kmError);
@@ -3490,7 +3490,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
 
         // Check if weight has changed and if rates exist to perform recalculation
         if (existingLR.weight !== newWeight && existingTripDetails.billingRate > 0) {
-          console.log("Weight changed. Recalculating trip financials...");
+          
 
           const newBillingAmount = newWeight * (existingTripDetails.billingRate || 0);
           const newFreightAmount = newWeight * (existingTripDetails.freightRate || 0);

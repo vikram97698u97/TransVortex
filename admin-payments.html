@@ -905,11 +905,11 @@
         
         // Check if we're using fallback values
         if (false) { // Condition is always false in the final logic, keeping as per original structure
-            console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+            
         } else {
-            console.log('✅ Firebase configuration loaded securely from EVM');
-            console.log('🔥 Database URL:', firebaseConfig.databaseURL);
-            console.log('🔥 Project ID:', firebaseConfig.projectId);
+            
+            
+            
         }
     } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
@@ -925,7 +925,7 @@
             appId: "1:526889676196:web:66032c80a4aede690ae531",
             measurementId: "G-7F9R7HJYDH"
         };
-        console.warn('⚠️  Using fallback Firebase configuration');
+        
     }} catch (error) {
       console.error('❌ Failed to load Firebase configuration:', error);
       
@@ -1142,7 +1142,7 @@
                             lastLogin: now.toISOString()
                         });
                         
-                        console.log('Subscription updated successfully for user:', payment.userId);
+                        
                     }
                 }
                 
@@ -1975,7 +1975,7 @@
 
         // Initialize event listeners
         function initEventListeners() {
-            console.log('Initializing event listeners...');
+            
             
             // Get references to DOM elements
             const searchInput = document.getElementById('searchInput');
@@ -1997,7 +1997,7 @@
                     
                     // Update current filter and apply
                     currentFilter = this.getAttribute('data-filter');
-                    console.log('Filter changed to:', currentFilter);
+                    
                     applyFilters();
                 });
             });
@@ -2035,7 +2035,7 @@
                 
                 // Debounced search handler
                 const handleSearch = debounce(() => {
-                    console.log('Searching for:', newSearchInput.value);
+                    
                     if (clearBtn) {
                         clearBtn.style.display = newSearchInput.value ? 'block' : 'none';
                     }
@@ -2056,16 +2056,16 @@
         
         // Apply all active filters and search
         function applyFilters() {
-            console.log('Applying filters...', { currentFilter, allPaymentsLength: allPayments ? allPayments.length : 0 });
+            
             
             if (!allPayments || allPayments.length === 0) {
-                console.log('No payments to filter');
+                
                 return;
             }
             
             const searchEl = document.getElementById('searchInput');
             const searchTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
-            console.log('Search term:', searchTerm);
+            
             
             // Filter by status
             let filtered = [...allPayments];
@@ -2073,7 +2073,7 @@
                 filtered = filtered.filter(payment => 
                     payment && payment.status && payment.status.toLowerCase() === currentFilter
                 );
-                console.log(`Filtered by status '${currentFilter}':`, filtered.length);
+                
             }
             
             // Filter by search term if provided
@@ -2093,12 +2093,12 @@
                     
                     return matches;
                 });
-                console.log('Filtered by search term:', filtered.length);
+                
             }
             
             // If no results after filtering
             if (filtered.length === 0) {
-                console.log('No matching payments found');
+                
                 const paymentsBody = document.getElementById('paymentsBody');
                 if (paymentsBody) {
                     paymentsBody.innerHTML = `

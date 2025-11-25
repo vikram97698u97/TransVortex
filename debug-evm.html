@@ -81,20 +81,20 @@
             output.innerHTML = html;
             
             // Also log to console
-            console.log('🔍 Running EVM Debug...');
-            console.log('Window object:', typeof window);
-            console.log('ENV_CONFIG:', window.ENV_CONFIG);
-            console.log('FIREBASE_CONFIG:', window.FIREBASE_CONFIG);
-            console.log('window:', typeof window);
+            
+            
+            
+            
+            
             if (typeof window !== 'undefined') {
-                console.log('Environment Info:', window.getEnvironmentInfo());
-                console.log('Firebase Config:', window.FIREBASE_CONFIG);
+                );
+                
             }
         }
         
         // Auto-run on page load
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔍 Debug page loaded');
+            
             setTimeout(runDebug, 1000);
         });
     </script>

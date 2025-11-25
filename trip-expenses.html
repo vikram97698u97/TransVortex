@@ -256,11 +256,11 @@
         
         // Check if we're using fallback values
         if (false) { // Condition is always false in the final logic, keeping as per original structure
-            console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+            
         } else {
-            console.log('✅ Firebase configuration loaded securely from EVM');
-            console.log('🔥 Database URL:', firebaseConfig.databaseURL);
-            console.log('🔥 Project ID:', firebaseConfig.projectId);
+            
+            
+            
         }
     } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
@@ -276,7 +276,7 @@
             appId: "1:526889676196:web:66032c80a4aede690ae531",
             measurementId: "G-7F9R7HJYDH"
         };
-        console.warn('⚠️  Using fallback Firebase configuration');
+        
     }} catch (error) {
       console.error('❌ Failed to load Firebase configuration:', error);
       
@@ -312,7 +312,7 @@
           // **FIX**: Determine the core account ID to fetch shared data
           getCoreAccountId(user.uid).then((id) => {
             coreAccountId = id;
-            console.log("Core Account ID determined for trip expenses:", coreAccountId);
+            
             loadWorkVendors(); // Load vendors first
             loadLRData();
             loadAllRoutes(); 
@@ -372,7 +372,7 @@
           if (userSnap.exists()) {
               const userData = userSnap.val();
               if (userData.coreAccountId) {
-                console.log("Found coreAccountId in user root:", userData.coreAccountId);
+                
                 return userData.coreAccountId;
               }
           }
@@ -383,12 +383,12 @@
           if (userProfileSnap.exists()) {
               const profileData = userProfileSnap.val();
               if (profileData.coreAccountId) {
-                console.log("Found coreAccountId in user profile:", profileData.coreAccountId);
+                
                 return profileData.coreAccountId;
               }
           }
           
-          console.log("No coreAccountId found, using user's own UID:", userId);
+          
           return userId; // Fallback to user's own UID
         } catch (error) {
           console.error("Error getting core account ID:", error);
@@ -399,7 +399,7 @@
     // Function now accepts the ID directly.
     function loadAllPetrolPumps(accountId) {
       // The old recursive check is removed for robustness.
-      console.log("Loading petrol pumps from core account:", accountId);
+      
       
       const pumpsRef = db.ref(`users/${accountId}/petrolPumps`);
       pumpsRef.on('value', (snapshot) => {
@@ -420,10 +420,10 @@
             // Build the options string
             emptyDieselPumpOptions += `<option value="${pump.name}" data-pump-id="${child.key}">${pump.name} - ${pump.place || 'No location'}</option>`;
           });
-          console.log("✅ Successfully loaded petrol pumps:", allPetrolPumps.length);
+          
         } else {
           emptyDieselPumpOptions += '<option value="" disabled>No pumps registered</option>';
-          console.log("❌ No petrol pumps found");
+          
         }
       }, (error) => {
         console.error("❌ Error loading petrol pumps:", error);
@@ -442,7 +442,7 @@
           if (userSnap.exists()) {
               const userData = userSnap.val();
               if (userData.coreAccountId) {
-                console.log("Found coreAccountId in user root:", userData.coreAccountId);
+                
                 return userData.coreAccountId;
               }
           }
@@ -453,7 +453,7 @@
           if (userProfileSnap.exists()) {
               const profileData = userProfileSnap.val();
               if (profileData.coreAccountId) {
-                console.log("Found coreAccountId in user profile:", profileData.coreAccountId);
+                
                 return profileData.coreAccountId;
               }
           }
@@ -462,13 +462,13 @@
           if (userSnap.exists()) {
             const userData = userSnap.val();
             if (userData.accountType === 'branch' && userData.coreAccountId) {
-              console.log("Found coreAccountId in branch account:", userData.coreAccountId);
+              
               return userData.coreAccountId;
             }
           }
           
           // 4. Fallback to user's own UID if no core ID is found (user is a core account)
-          console.log("No coreAccountId found, using user's own UID:", userId);
+          
           return userId; // Fallback
         } catch (error) {
           console.error("Error getting core account ID:", error);

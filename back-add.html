@@ -1212,11 +1212,11 @@
         
         // Check if we're using fallback values
         if (false) { // Condition is always false in the final logic, keeping as per original structure
-            console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+            
         } else {
-            console.log('✅ Firebase configuration loaded securely from EVM');
-            console.log('🔥 Database URL:', firebaseConfig.databaseURL);
-            console.log('🔥 Project ID:', firebaseConfig.projectId);
+            
+            
+            
         }
     } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
@@ -1232,7 +1232,7 @@
             appId: "1:526889676196:web:66032c80a4aede690ae531",
             measurementId: "G-7F9R7HJYDH"
         };
-        console.warn('⚠️  Using fallback Firebase configuration');
+        
     }} catch (error) {
       console.error('❌ Failed to load Firebase configuration:', error);
       
@@ -1352,7 +1352,7 @@
          if (snapshot.exists()) {
            snapshot.forEach(child => { allClients[child.key] = child.val(); });
          }
-         console.log("Clients loaded for LR detail modal:", Object.keys(allClients).length);
+         .length);
        });
      }
 
@@ -2387,8 +2387,8 @@
              }
              
              // --- DEBUGGING: Print extracted text to the console ---
-             console.log("--- OCR Text Extraction ---");
-             console.log("Full text extracted from PDF:", fullText);
+             
+             
              // ----------------------------------------------------
 
              // Look for date patterns (simple implementation)
@@ -2409,8 +2409,8 @@
              }
              
              // --- DEBUGGING: Print found date to the console ---
-             console.log("Expiry date found:", foundDate || "None");
-             console.log("---------------------------");
+             
+             
              // --------------------------------------------------
 
              resolve(foundDate);

@@ -1,5 +1,5 @@
 /**
- * 🔐 EVM - Environment Variables Module
+ * 🔐 EVM - Environment Variables Module (Production)
  * 
  * Contains Firebase and other API configurations
  * This file should be kept out of version control (.gitignore)
@@ -46,26 +46,9 @@ if (!window.CLOUDINARY_CONFIG) {
 // ========================================
 if (!window.ENVIRONMENT) {
     window.ENVIRONMENT = {
-        name: "netlify-production",
+        name: "production",
         debug: false,
         apiBaseUrl: window.location.origin,
         version: "1.0.0"
-    };
-}
-
-// ========================================
-// ✅ VALIDATION
-// ========================================
-console.log('✅ EVM Loaded Successfully');
-console.log('🔥 Firebase Project:', window.FIREBASE_CONFIG.projectId);
-console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-console.log('🌍 Environment:', window.ENVIRONMENT.name);
-
-// Export for Node.js environments (if needed)
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        ENVIRONMENT: window.ENVIRONMENT,
-        FIREBASE_CONFIG: window.FIREBASE_CONFIG,
-        CLOUDINARY_CONFIG: window.CLOUDINARY_CONFIG
     };
 }
