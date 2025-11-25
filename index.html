@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TransVortex – AI‑Powered Transport Management System</title>
+  <meta name="description" content="TransVortex is an AI‑powered Transport Management System for fleets and logistics. Automate dispatch, billing, GST, and driver ops with real‑time tracking." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/J6MD2G6G8JbZj6jv4MZ1e6qP1VJQXx9G3lJYqf8K5W3lMZC7i0y7w7H2mWQ4J8T2vQz9Z3fYg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    :root {
+      --primary: #2E8B57;   /* Sea Green */
+      --secondary: #43B97F; /* Mint */
+      --accent: #3CB371;    /* Medium Green */
+      --text: #1F1F1F;
+      --muted: #4a5568;
+      --bg: #F7FCF9;
+      --white: #fff;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text); background: var(--bg); line-height: 1.6; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* --- Layout helpers --- */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .section { padding: 96px 0; position: relative; }
+    .section-title { font-size: clamp(1.8rem, 2.5vw, 2.4rem); font-weight: 800; margin: 0 0 12px; letter-spacing: -.4px; }
+    .section-sub { color: #566173; margin: 0 auto 40px; max-width: 760px; }
+
+    /* --- Header --- */
+    header {
+      position: fixed; inset-inline: 0; top: 0; z-index: 50; backdrop-filter: blur(8px);
+      background: rgba(255,255,255,.7); border-bottom: 1px solid rgba(0,0,0,.06);
+    }
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+    .brand img { height: 40px; width: 40px; border-radius: 10px; object-fit: cover; }
+    .brand span { font-weight: 800; letter-spacing: -.2px; }
+    .nav-links { display: flex; gap: 22px; align-items: center; }
+    .nav-links a { color: var(--text); text-decoration: none; font-weight: 600; font-size: .95rem; opacity: .9; }
+    .nav-links a:hover { color: var(--primary); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 20px; border: 0; border-radius: 999px; cursor: pointer; font-weight: 700; text-decoration: none; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; box-shadow: 0 6px 20px rgba(46,139,87,.25); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(46,139,87,.3); }
+    .btn-ghost { background: rgba(46,139,87,.08); color: var(--primary); }
+
+    /* --- Hero --- */
+    .hero { padding-top: 120px; overflow: clip; }
+    .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: 48px; }
+    .headline { font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 900; line-height: 1.08; letter-spacing: -1px; margin: 0 0 16px; }
+    .headline .accent { background-image: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .lead { color: #4b5563; font-size: 1.08rem; margin: 0 0 28px; max-width: 620px; }
+    .hero-cta { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+
+    /* Animated gradient blobs */
+    .blob-wrap { position: absolute; inset: -180px -120px auto auto; pointer-events: none; z-index: -1; }
+    .blob, .blob2 {
+      position: absolute; filter: blur(60px); opacity: .55; mix-blend-mode: multiply; border-radius: 50%;
+      animation: float 12s ease-in-out infinite;
+    }
+    .blob { width: 480px; height: 480px; background: radial-gradient(circle at 30% 30%, #7BE495, var(--secondary)); top: 0; right: 10%; }
+    .blob2 { width: 360px; height: 360px; background: radial-gradient(circle at 30% 30%, #9BE7C4, #7BE495); left: -80px; bottom: -40px; animation-delay: -3s; }
+    @keyframes float { 0%{ transform: translateY(0) } 50%{ transform: translateY(20px) } 100%{ transform: translateY(0) } }
+
+    /* Dashboard mockup card */
+    .mock { background: var(--white); border-radius: 18px; box-shadow: var(--shadow); border: 1px solid #e7eef0; overflow: hidden; }
+    .mock-header { display: flex; align-items: center; gap: 8px; padding: 14px; background: #f8fbf9; border-bottom: 1px solid #e8f0eb; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; }
+    .mock-body { padding: 18px; }
+    .mock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .card { background: #ffffff; border: 1px solid #e9f1ec; border-radius: 14px; padding: 14px; box-shadow: 0 4px 14px rgba(46,139,87,.06); }
+    .card h4 { margin: 0 0 6px; font-size: .95rem; color: #334155; }
+    .metric { font-weight: 800; font-size: 1.4rem; }
+    .tag { display: inline-flex; gap: 6px; align-items: center; padding: 6px 10px; border-radius: 999px; background: rgba(67,185,127,.12); color: var(--primary); font-weight: 700; font-size: .8rem; }
+
+    /* --- How it works --- */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .step { background: #fff; border: 1px solid #e6efe9; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); transition: transform .2s ease; }
+    .step:hover { transform: translateY(-4px); }
+    .step .num { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; font-weight: 800; }
+
+    /* --- Features --- */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .feature { background: #fff; border: 1px solid #e6efe9; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); transition: transform .2s ease; }
+    .feature:hover { transform: translateY(-4px); }
+    .feature i { width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; background: rgba(46,139,87,.12); color: var(--primary); margin-bottom: 12px; font-size: 1.1rem; }
+
+    /* --- AI Capabilities --- */
+    .ai { background: radial-gradient(1200px 600px at 85% -50%, rgba(67,185,127,.18), transparent 60%), var(--bg); }
+    .ai-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 28px; align-items: center; }
+    .ai-box { background: #0f172a; color: #e5e7eb; border-radius: 16px; padding: 20px; border: 1px solid rgba(255,255,255,.08); box-shadow: 0 12px 30px rgba(15,23,42,.35); }
+    .ai-box code { color: #c6f6d5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: .95rem; }
+
+    /* --- Mobile App --- */
+    .phones { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .phone { background: #111827; border-radius: 26px; padding: 12px; border: 1px solid #212b3b; box-shadow: 0 20px 40px rgba(0,0,0,.2); }
+    .screen { height: 360px; border-radius: 18px; background: linear-gradient(180deg, #0b1220, #1b2a2a); border: 1px solid #1f2937; padding: 16px; color: #e5e7eb; font-size: .95rem; }
+
+    /* --- Why Choose Us --- */
+    .why { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+    .why .stat { background: #fff; border: 1px solid #e6efe9; border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); }
+    .stat .big { font-size: 2rem; font-weight: 900; color: var(--primary); }
+
+    /* --- Testimonials --- */
+    .testi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .quote { background: #fff; border: 1px solid #e6efe9; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); position: relative; }
+    .quote:before { content: "\f10d"; font-family: "Font Awesome 6 Free"; font-weight: 900; color: rgba(46,139,87,.12); font-size: 42px; position: absolute; top: 10px; right: 16px; }
+
+    /* --- Contact --- */
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .input, textarea.input { width: 100%; border: 1px solid #dfe9e3; border-radius: 12px; padding: 14px 14px; font: inherit; background: #fff; }
+    .input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(46,139,87,.15); }
+
+    /* --- Footer --- */
+    footer { background: #0b1320; color: #a3b0c2; padding: 54px 0 24px; }
+    .foot { display: grid; grid-template-columns: 1.2fr .8fr .8fr; gap: 24px; }
+    footer a { color: #d9fff0; text-decoration: none; opacity: .8; }
+    footer a:hover { opacity: 1; }
+    .copyright { margin-top: 22px; border-top: 1px solid rgba(255,255,255,.06); padding-top: 18px; text-align: center; font-size: .9rem; }
+
+    /* --- Reveal on scroll --- */
+    .reveal { opacity: 0; transform: translateY(24px); transition: .6s ease; }
+    .reveal.show { opacity: 1; transform: none; }
+
+    /* --- Responsive --- */
+    @media (max-width: 1024px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .ai-grid { grid-template-columns: 1fr; }
+      .phones { grid-template-columns: 1fr; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps { grid-template-columns: 1fr 1fr; }
+      .why { grid-template-columns: 1fr 1fr; }
+      .testi { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 680px) {
+      .nav-links { display: none; }
+      .features-grid, .steps { grid-template-columns: 1fr; }
+      .testi { grid-template-columns: 1fr; }
+      .foot { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container">
+      <nav>
+        <a class="brand" href="#home" aria-label="TransVortex home">
+          <img src="logo1.jpg" alt="TransVortex logo" />
+          <span>TransVortex</span>
+        </a>
+        <div class="nav-links">
+          <a href="#how">How it works</a>
+          <a href="#features">Features</a>
+          <a href="#ai">AI</a>
+          <a href="#mobile">Mobile</a>
+          <a href="#contact">Contact</a>
+          <button class="btn btn-primary" id="demoBtn">Request a Demo</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <main id="home" class="hero section">
+    <div class="container hero-grid">
+      <div>
+        <h1 class="headline reveal">An <span class="accent">AI‑Powered</span> Transport Management System</h1>
+        <p class="lead reveal" style="transition-delay:.08s">Automate dispatch, LR & billing, GST compliance, and driver ops. Track your fleet in real‑time and grow margins with predictive insights.</p>
+        <div class="hero-cta reveal" style="transition-delay:.12s">
+          <button class="btn btn-primary" id="demoBtn2"><i class="fa-solid fa-rocket"></i> Request a Demo</button>
+          <a href="signup.html" class="btn btn-ghost">Start Free Trial</a>
+        </div>
+        <div class="reveal" style="margin-top:22px; display:flex; gap:14px; align-items:center; color:#475569; transition-delay:.16s">
+          <i class="fa-solid fa-shield-check" style="color:var(--primary)"></i>
+          <small>Bank‑grade security • 99.9% uptime • India‑ready GST</small>
+        </div>
+      </div>
+      <div class="reveal" style="transition-delay:.1s">
+        <div class="mock" aria-label="Dashboard preview">
+          <div class="mock-header">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span style="margin-left:8px; font-weight:700; color:#334155">Live Fleet Overview</span>
+          </div>
+          <div class="mock-body">
+            <div class="mock-grid">
+              <div class="card">
+                <h4>Active Vehicles</h4>
+                <div class="metric">128</div>
+                <div class="tag"><i class="fa-solid fa-arrow-trend-up"></i><span>+6 today</span></div>
+              </div>
+              <div class="card">
+                <h4>On‑time Deliveries</h4>
+                <div class="metric">98.4%</div>
+                <div class="tag"><i class="fa-solid fa-clock"></i><span>SLA 30m</span></div>
+              </div>
+              <div class="card">
+                <h4>Fuel Spend (MTD)</h4>
+                <div class="metric">₹ 12.4L</div>
+                <div class="tag"><i class="fa-solid fa-gas-pump"></i><span>‑4.2% AI save</span></div>
+              </div>
+              <div class="card">
+                <h4>Revenue (MTD)</h4>
+                <div class="metric">₹ 3.8Cr</div>
+                <div class="tag"><i class="fa-solid fa-indian-rupee-sign"></i><span>+8.1%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="blob-wrap" aria-hidden="true">
+      <div class="blob"></div>
+      <div class="blob2"></div>
+    </div>
+  </main>
+
+  <!-- How it Works -->
+  <section id="how" class="section">
+    <div class="container">
+      <h2 class="section-title reveal">How it works</h2>
+      <p class="section-sub reveal" style="transition-delay:.06s">Go live in minutes. Import your fleet and routes, invite your team, and let TransVortex automate the rest.</p>
+      <div class="steps">
+        <div class="step reveal"><div class="num">1</div><h3>Sign up & onboard</h3><p>Create your account, add company details, and configure GST & billing.</p></div>
+        <div class="step reveal" style="transition-delay:.06s"><div class="num">2</div><h3>Add fleet & lanes</h3><p>Import vehicles, drivers, clients, and preferred routes. Set SLA & pricing.</p></div>
+        <div class="step reveal" style="transition-delay:.12s"><div class="num">3</div><h3>Track & optimize</h3><p>Get live tracking, auto‑generated LR/invoices, and AI‑based cost controls.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="section" style="background: var(--white)">
+    <div class="container">
+      <h2 class="section-title reveal">Powerful features</h2>
+      <p class="section-sub reveal" style="transition-delay:.06s">Everything you need to run modern fleet operations efficiently.</p>
+      <div class="features-grid">
+        <div class="feature reveal"><i class="fa-solid fa-route"></i><h3>Live GPS & Trips</h3><p>Track vehicles in real‑time with trip events, ETA, and geofences.</p></div>
+        <div class="feature reveal" style="transition-delay:.04s"><i class="fa-solid fa-file-invoice"></i><h3>LR, e‑way, Billing</h3><p>Create LR/bilty, e‑way bills, and invoices with one click.</p></div>
+        <div class="feature reveal" style="transition-delay:.08s"><i class="fa-solid fa-indian-rupee-sign"></i><h3>Expense & Profit</h3><p>AI groups fuel, toll, maintenance by trip/vehicle to show true margins.</p></div>
+        <div class="feature reveal"><i class="fa-solid fa-user-helmet-safety"></i><h3>Driver App</h3><p>Share trips, collect POD, advance/settlement, and attendance.</p></div>
+        <div class="feature reveal" style="transition-delay:.04s"><i class="fa-solid fa-shield-halved"></i><h3>Compliance</h3><p>GST, e‑way, permits & renewals with reminders and audit logs.</p></div>
+        <div class="feature reveal" style="transition-delay:.08s"><i class="fa-solid fa-gears"></i><h3>APIs & Webhooks</h3><p>Integrate TMS with ERP, GPS devices, WhatsApp, and more.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Capabilities -->
+  <section id="ai" class="section ai">
+    <div class="container ai-grid">
+      <div>
+        <h2 class="section-title reveal">AI capabilities</h2>
+        <p class="section-sub reveal" style="transition-delay:.06s">Let AI handle repetitive ops and surface insights that protect margins.</p>
+        <ul class="reveal" style="list-style:none; padding:0; margin:0; display:grid; gap:12px; max-width:720px">
+          <li><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--primary)"></i> Auto‑generate LR & invoices from trip details.</li>
+          <li><i class="fa-solid fa-chart-line" style="color:var(--primary)"></i> Predictive ETA & late‑risk alerts on every consignment.</li>
+          <li><i class="fa-solid fa-leaf" style="color:var(--primary)"></i> Fuel anomaly detection and best‑route suggestions.</li>
+          <li><i class="fa-solid fa-scale-balanced" style="color:var(--primary)"></i> Cost attribution by job to reveal real profitability.</li>
+        </ul>
+      </div>
+      <div class="ai-box reveal" style="transition-delay:.06s">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px">
+          <span class="tag"><i class="fa-solid fa-brain"></i> AI Assist</span>
+          <small style="opacity:.8">sample prompt ▶ output</small>
+        </div>
+        <pre style="margin:0; white-space:pre-wrap"><code>// Ask
+"Optimize trip LR-572 for fuel & toll costs, suggest best departure time."
+
+// AI Output
+• Best route: Pune → Nashik (NH60) • ETA 4h 20m
+• Fuel @ 4.1 km/l • Toll ₹ 540 • Depart 06:10 to avoid 18% delay risk
+• Suggested stops: Chakan, Alephata. Save ~₹ 1,450 this run.</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile App Preview -->
+  <section id="mobile" class="section" style="background: var(--white)">
+    <div class="container">
+      <h2 class="section-title reveal">Driver & Manager apps</h2>
+      <p class="section-sub reveal" style="transition-delay:.06s">Real‑time visibility for managers, simple workflows for drivers.</p>
+      <div class="phones">
+        <div class="phone reveal">
+          <div class="screen">
+            <strong>Driver App</strong>
+            <ul style="margin:12px 0 0 18px">
+              <li>Trips & Navigation</li>
+              <li>Upload POD & expense slips</li>
+              <li>Advance & settlement</li>
+              <li>Attendance</li>
+            </ul>
+          </div>
+        </div>
+        <div class="phone reveal" style="transition-delay:.08s">
+          <div class="screen">
+            <strong>Manager App</strong>
+            <ul style="margin:12px 0 0 18px">
+              <li>Live tracking & alerts</li>
+              <li>Approve expenses</li>
+              <li>Customer updates</li>
+              <li>Dashboard KPIs</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose Us -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title reveal">Why choose TransVortex?</h2>
+      <p class="section-sub reveal" style="transition-delay:.06s">Built in India for Indian logistics. Scales globally, integrates easily, and pays for itself.</p>
+      <div class="why">
+        <div class="stat reveal"><div class="big">99.9%</div><div>Uptime SLA</div></div>
+        <div class="stat reveal" style="transition-delay:.04s"><div class="big">30m</div><div>Avg. faster invoicing</div></div>
+        <div class="stat reveal" style="transition-delay:.08s"><div class="big">8.1%</div><div>Avg. margin uplift</div></div>
+        <div class="stat reveal" style="transition-delay:.12s"><div class="big">7 days</div><div>Go‑live time</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="section" style="background: var(--white)">
+    <div class="container">
+      <h2 class="section-title reveal">What customers say</h2>
+      <div class="testi">
+        <div class="quote reveal"><strong>Speed Logistics</strong><br/>“LR to invoice in a click and live ETA alerts cut our calls by half.”</div>
+        <div class="quote reveal" style="transition-delay:.06s"><strong>Chandra Transport</strong><br/>“Fuel leak detection alone paid for the product in 2 months.”</div>
+        <div class="quote reveal" style="transition-delay:.12s"><strong>RapidMove</strong><br/>“Simple driver app, fewer POD issues, happier clients.”</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="section">
+    <div class="container">
+      <h2 class="section-title reveal">Contact</h2>
+      <p class="section-sub reveal" style="transition-delay:.06s">Have questions or need a custom demo? Send a quick message.</p>
+      <div class="contact-grid">
+        <form id="contactForm" class="reveal" autocomplete="on" novalidate>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+            <input class="input" type="text" id="name" name="name" placeholder="Your name" required />
+            <input class="input" type="email" id="email" name="email" placeholder="Email address" required />
+          </div>
+          <input class="input" type="text" id="company" name="company" placeholder="Company" style="margin-top:12px" />
+          <textarea class="input" id="message" name="message" placeholder="How can we help?" rows="5" style="margin-top:12px" required></textarea>
+          <div style="display:flex; align-items:center; gap:12px; margin-top:14px">
+            <button type="submit" class="btn btn-primary"><i class="fa-regular fa-paper-plane"></i> Send</button>
+            <small id="contactStatus" aria-live="polite"></small>
+          </div>
+        </form>
+        <div class="reveal" style="align-self:center">
+          <h3 style="margin-top:0">Talk to sales</h3>
+          <p><i class="fa-solid fa-envelope" style="color:var(--primary)"></i> hello@transvortex.app</p>
+          <p><i class="fa-solid fa-phone" style="color:var(--primary)"></i> +91‑00000‑00000</p>
+          <p><i class="fa-solid fa-location-dot" style="color:var(--primary)"></i> Pune • Mumbai • Remote</p>
+          <div style="display:flex; gap:10px; margin-top:10px">
+            <a class="btn btn-ghost" href="signup.html">Start Free Trial</a>
+            <button class="btn btn-primary" id="demoBtn3">Request a Demo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container foot">
+      <div>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px"><img src="logo1.jpg" alt="logo" style="height:36px; width:36px; border-radius:10px"> <strong style="color:#eafcf6">TransVortex</strong></div>
+        <p>AI‑powered TMS for fleets and logistics. Automate, optimize, and grow.</p>
+      </div>
+      <div>
+        <strong style="color:#eafcf6">Product</strong>
+        <ul style="list-style:none; padding:0; margin:10px 0 0; display:grid; gap:8px">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#ai">AI</a></li>
+          <li><a href="#mobile">Mobile</a></li>
+          <li><a href="login.html">Login</a></li>
+        </ul>
+      </div>
+      <div>
+        <strong style="color:#eafcf6">Company</strong>
+        <ul style="list-style:none; padding:0; margin:10px 0 0; display:grid; gap:8px">
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container copyright">© <span id="year"></span> TransVortex. All rights reserved.</div>
+  </footer>
+
+  <!-- Load secure configuration first -->
+  <script src="evm.js"></script>
+  <script src="config-loader.js"></script>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  </script>
+  <!-- Demo Modal -->
+  <dialog id="demoModal" style="border:none; padding:0; border-radius: 16px; width:min(560px, 92vw); box-shadow: 0 30px 60px rgba(0,0,0,.35);">
+    <form id="demoForm" method="dialog" style="background:#fff; border-radius:16px; overflow:hidden">
+      <div style="padding:18px 20px; border-bottom:1px solid #eef4f0; display:flex; justify-content:space-between; align-items:center; background: linear-gradient(135deg,#f7fcf9,#ecfaf3)">
+        <strong style="font-size:1.1rem">Request a Demo</strong>
+        <button type="button" id="demoClose" class="btn" style="background:transparent">✕</button>
+      </div>
+      <div style="padding:18px 20px; display:grid; gap:12px">
+        <input class="input" type="text" id="dName" placeholder="Your name" required />
+        <input class="input" type="email" id="dEmail" placeholder="Work email" required />
+        <input class="input" type="tel" id="dPhone" placeholder="Phone number" required />
+        <input class="input" type="text" id="dCompany" placeholder="Company" />
+        <textarea class="input" id="dMessage" rows="4" placeholder="What would you like to see in the demo?" required></textarea>
+        <label style="display:flex; align-items:center; gap:8px; font-size:.9rem; color:#475569"><input type="checkbox" id="dConsent" required> I agree to be contacted about this request.</label>
+        <button class="btn btn-primary" type="submit"><i class="fa-regular fa-calendar-check"></i> Submit request</button>
+        <small id="demoStatus" aria-live="polite"></small>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    // Load Firebase configuration securely from EVM
+    let firebaseConfig;
+    
+    try {
+      // Get Firebase configuration from secure EVM system
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+      
+      // Check if we're using fallback values
+      if (ConfigManager.isUsingFallbackValues()) {
+        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+      } else {
+        console.log('✅ Firebase configuration loaded securely from EVM');
+      }
+    } catch (error) {
+      console.error('❌ Failed to load Firebase configuration:', error);
+      
+      // Use fallback configuration to prevent complete failure
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+    }
+    
+    let db; // Will be initialized after module scripts load
+
+    // Year in footer
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Reveal on scroll
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('show'); io.unobserve(e.target); } });
+    }, { threshold: 0.14 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    // Smooth scrolling for hash links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', (e) => {
+        const id = a.getAttribute('href');
+        if (id.length > 1) {
+          e.preventDefault(); document.querySelector(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // Demo modal
+    const modal = document.getElementById('demoModal');
+    const openers = [document.getElementById('demoBtn'), document.getElementById('demoBtn2'), document.getElementById('demoBtn3')].filter(Boolean);
+    openers.forEach(btn => btn.addEventListener('click', () => { if (typeof modal.showModal === 'function') modal.showModal(); else modal.setAttribute('open',''); }));
+    document.getElementById('demoClose').addEventListener('click', () => modal.close());
+
+    // This runs after the module scripts have loaded and defined the Firebase functions
+    document.addEventListener('DOMContentLoaded', async () => {
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+        const { getDatabase, ref, push, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+
+        const app = initializeApp(firebaseConfig);
+        db = getDatabase(app);
+
+        // Request Demo form – wired to Firebase
+        document.getElementById('demoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusEl = document.getElementById('demoStatus');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            const payload = {
+                name: document.getElementById('dName').value.trim(),
+                email: document.getElementById('dEmail').value.trim(),
+                phone: document.getElementById('dPhone').value.trim(),
+                company: document.getElementById('dCompany').value.trim(),
+                message: document.getElementById('dMessage').value.trim(),
+                consent: document.getElementById('dConsent').checked,
+            };
+
+            if (!payload.name || !payload.email || !payload.phone || !payload.message || !payload.consent) {
+                statusEl.textContent = 'Please complete all required fields.';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            statusEl.textContent = 'Submitting...';
+
+            try {
+                // The payload for the database needs status and timestamp
+                const dbPayload = { name: payload.name, email: payload.email, phone: payload.phone, status: 'pending', timestamp: serverTimestamp() };
+                const dbRef = ref(db, 'demoRequests');
+                await push(dbRef, dbPayload);
+
+                statusEl.textContent = 'Thanks! We\'ll reach out shortly.';
+                setTimeout(() => modal.close(), 1200);
+                e.target.reset();
+            } catch (error) {
+                console.error("Error submitting demo request:", error);
+                statusEl.textContent = 'Submission failed. Please try again.';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Contact form – wired to Firebase
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusEl = document.getElementById('contactStatus');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            const data = {
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                company: document.getElementById('company').value.trim(),
+                message: document.getElementById('message').value.trim(),
+            };
+
+            if (!data.name || !data.email || !data.message) {
+                statusEl.textContent = 'Please fill name, email and message.';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            statusEl.textContent = 'Sending...';
+
+            try {
+                const dbRef = ref(db, 'contactMessages');
+                await push(dbRef, { ...data, createdAt: serverTimestamp(), status: 'unread' });
+
+                statusEl.textContent = 'Message sent! We\'ll respond soon.';
+                e.target.reset();
+                setTimeout(() => { statusEl.textContent = ''; }, 3000);
+            } catch (error) {
+                console.error("Error submitting contact form:", error);
+                statusEl.textContent = 'Failed to send. Please try again.';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    });
+  </script>
+</body>
+</html>

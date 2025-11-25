@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TransVortex – AI Insights Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Load secure configuration first -->
+  <script src="evm.js"></script>
+  <script src="config-loader.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #2E8B57;
+      --secondary: #43B97F;
+      --accent: #3CB371;
+      --text: #1F1F1F;
+      --muted: #556070;
+      --bg: #F6FBF8;
+      --white: #fff;
+      --card: #ffffff;
+      --border: #e8efe9;
+      --shadow: 0 10px 28px rgba(0,0,0,.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Header */
+    header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(8px); background: rgba(255,255,255,.8); border-bottom: 1px solid var(--border); }
+    .bar { max-width: 1280px; margin: 0 auto; padding: 14px 22px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; }
+    .title { display: flex; align-items: center; gap: 12px; }
+    .title strong { font-size: 1.15rem; }
+    .filters { display: flex; gap: 10px; align-items: center; }
+    .input { border: 1px solid var(--border); border-radius: 10px; background: var(--white); padding: 10px 12px; font: inherit; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px; border: 0; cursor: pointer; font-weight: 700; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; box-shadow: 0 8px 22px rgba(46,139,87,.25); }
+
+    /* Main */
+    .wrap { max-width: 1280px; margin: 20px auto 60px; padding: 0 22px; }
+
+    /* KPI Grid */
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 16px 0 22px; }
+    .kpi { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+    .kpi .label { color: var(--muted); font-size: .9rem; }
+    .kpi .value { font-size: 1.6rem; font-weight: 900; margin-top: 6px; }
+    .kpi .delta { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-weight: 700; font-size: .85rem; color: var(--primary); }
+
+    /* Grids */
+    .grid-2 { display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-2-even { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* Card / Chart container */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; position: relative; }
+    .card h3 { margin: 0 0 10px; font-size: 1.05rem; letter-spacing: .2px; }
+    .chart-wrap { position: relative; height: 320px; }
+    .chart-wrap.tall { height: 420px; }
+
+    /* AI Insights */
+    .ai { background: linear-gradient(135deg, #f7fcf9, #eefaf3); border: 1px solid var(--border); }
+    .ai ul { margin: 10px 0 0; padding: 0 0 0 18px; color: #3a4656; }
+
+    /* Loading */
+    .skeleton { background: linear-gradient(100deg, #e9f2ed 20%, #f5fbf8 40%, #e9f2ed 60%); background-size: 200% 100%; animation: shine 1.2s infinite; border-radius: 12px; height: 320px; }
+    @keyframes shine { 0%{ background-position: 200% 0 } 100%{ background-position: -200% 0 } }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+      .grid-2-even { grid-template-columns: 1fr; }
+      .chart-wrap { height: 300px; }
+      .chart-wrap.tall { height: 380px; }
+    }
+
+    @media (max-width: 768px) {
+      .bar { grid-template-columns: 1fr; padding: 10px 16px; }
+      .title { justify-content: center; margin-bottom: 10px; }
+      .filters { flex-direction: column; gap: 8px; width: 100%; }
+      .filters .input, .filters .btn { width: 100%; }
+      .kpis { grid-template-columns: 1fr; }
+      .grid-2, .grid-3, .grid-2-even { grid-template-columns: 1fr; }
+      .wrap { padding: 0 16px; margin: 16px auto 40px; }
+      .chart-wrap { height: 250px; }
+      .chart-wrap.tall { height: 320px; }
+      .card { padding: 12px; }
+      .kpi .value { font-size: 1.4rem; }
+    }
+
+    /* Footer */
+    footer { text-align: center; color: #687280; padding: 28px 0; }
+
+    /* Responsive */
+    @media (max-width: 1080px) { .kpis { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 720px) { .grid-2, .grid-2-even { grid-template-columns: 1fr; } .kpis { grid-template-columns: 1fr; } .chart-wrap { height: 280px; } }
+  </style>
+</head>
+<body>
+  <script src="navbar-loader.js"></script>
+  <header>
+    <div class="bar">
+      <div class="title">
+        <strong>AI Insights Dashboard</strong>
+      </div>
+      <div class="filters">
+        <input type="date" class="input" id="startDate" />
+        <input type="date" class="input" id="endDate" />
+        <button class="btn btn-primary" id="applyFilter"><i class="fa-solid fa-filter"></i> Apply</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- KPIs -->
+    <section class="kpis" id="kpiSection">
+      <div class="kpi">
+        <div class="label">Total Revenue</div>
+        <div class="value" id="kpiRevenue">₹0</div>
+        <div class="delta" id="kpiRevenueDelta" style="display:none"><i class="fa-solid fa-arrow-trend-up"></i><span>+0%</span></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Total Expenses</div>
+        <div class="value" id="kpiExpenses">₹0</div>
+        <div class="delta" id="kpiExpensesDelta" style="display:none"><i class="fa-solid fa-arrow-trend-down"></i><span>-0%</span></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Net Profit</div>
+        <div class="value" id="kpiProfit">₹0</div>
+        <div class="delta" id="kpiProfitDelta" style="display:none"><i class="fa-solid fa-arrow-trend-up"></i><span>+0%</span></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Cost per KM</div>
+        <div class="value" id="kpiCpk">₹0.00</div>
+      </div>
+    </section>
+
+    <!-- Row 1: Financial overview (wide) + AI insights -->
+    <section class="grid-2">
+      <div class="card">
+        <h3>Revenue vs Expenses (Monthly)</h3>
+        <div class="chart-wrap tall"><canvas id="revExpChart"></canvas></div>
+      </div>
+      <div class="card ai">
+        <h3>AI Insights</h3>
+        <ul id="aiInsights">
+          <li class="skeleton" style="height: 120px; list-style:none"></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Row 2: Route & Client -->
+    <section class="grid-2-even" style="margin-top:16px">
+      <div class="card">
+        <h3>Route Profitability</h3>
+        <div class="chart-wrap"><canvas id="routeProfitChart"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Client-wise Revenue</h3>
+        <div class="chart-wrap"><canvas id="clientRevChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Row 3: Vehicle & Driver -->
+    <section class="grid-2-even" style="margin-top:16px">
+      <div class="card">
+        <h3>Profit by Vehicle</h3>
+        <div class="chart-wrap"><canvas id="vehicleProfitChart"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Driver Performance (Trips vs Expenses)</h3>
+        <div class="chart-wrap"><canvas id="driverPerfChart"></canvas></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Last updated: <span id="updatedAt">—</span></footer>
+
+  <!-- Firebase (use same versioning as your project) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    /* ===== Chart.js theme & helpers ===== */
+    const gridColor = '#e8efe9';
+    const textColor = '#3b4758';
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+    Chart.defaults.font.family = 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+
+    const baseOpts = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12 } },
+        tooltip: { mode: 'index', intersect: false },
+      },
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { grid: { color: gridColor }},
+        y: { grid: { color: gridColor }, beginAtZero: true, ticks: { callback: (v)=> new Intl.NumberFormat('en-IN',{maximumFractionDigits:0}).format(v) } }
+      }
+    };
+
+    let charts = {};
+    function destroyCharts(){ Object.values(charts).forEach(c=>c.destroy()); charts = {}; }
+
+    function fmtINR(n){ return '₹' + (n||0).toLocaleString('en-IN'); }
+
+    function setKPI(id, value){ document.getElementById(id).textContent = value; }
+
+    function setUpdated(){ document.getElementById('updatedAt').textContent = new Date().toLocaleString(); }
+
+    /* ===== Firebase init ===== */
+    // Load Firebase configuration securely from EVM
+    let firebaseConfig;
+    
+    try {
+      // Get Firebase configuration from secure EVM system
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+      
+      // Check if we're using fallback values
+      if (ConfigManager.isUsingFallbackValues()) {
+        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+      } else {
+        console.log('✅ Firebase configuration loaded securely from EVM');
+      }
+    } catch (error) {
+      console.error('❌ Failed to load Firebase configuration:', error);
+      
+      // Use fallback configuration to prevent complete failure
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+    }
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // State
+    let allLR = {};
+    let clients = {}; // id -> clientName
+    let registeredVehicles = [];
+
+    // Fetch helpers
+    async function fetchCoreAccountId(uid){
+      const snap = await get(ref(db, `users/${uid}`));
+      const data = snap.exists() ? snap.val() : {};
+      return data.coreAccountId || uid;
+    }
+
+    async function fetchAllData(coreId, uid){
+      const [lrSnap, clientSnap, vehSnap, drvSnap] = await Promise.all([
+        get(ref(db, `users/${coreId}/lrReports`)),
+        get(ref(db, `users/${coreId}/clients`)),
+        get(ref(db, `users/${coreId}/vehicles`)),
+        get(ref(db, `users/${coreId}/drivers`)),
+      ]);
+      allLR = lrSnap.exists()? lrSnap.val() : {};
+      if(clientSnap.exists()){
+        const raw = clientSnap.val();
+        clients = Object.fromEntries(Object.entries(raw).map(([id, v]) => [id, v.clientName || 'Client']));
+      }
+      registeredVehicles = vehSnap.exists() ? Object.values(vehSnap.val()).map(v=>v.vehicleNumber).filter(Boolean) : [];
+    }
+
+    // Filter LR by date range
+    function filterLR(from, to){
+      const start = from ? new Date(from) : null;
+      const end = to ? new Date(to) : null; if (end) end.setHours(23,59,59,999);
+      return Object.values(allLR).filter(lr => {
+        const d = lr.date ? new Date(lr.date) : null; if(!d) return false;
+        if(start && d < start) return false; if(end && d > end) return false; return true;
+      });
+    }
+
+    // Compute aggregates from LR list
+    function computeAggregates(list){
+      let totalRevenue=0, totalExpenses=0, totalKm=0;
+      const monthly = Array.from({length:12}, ()=>({revenue:0, expenses:0}));
+      const routeProfit = {}; // "A to B" -> profit
+      const clientRevenue = {}; // name -> revenue
+      const vehicleProfit = {}; // vehicle -> profit
+      const driverPerf = {}; // name -> { trips, expenses }
+
+      for(const lr of list){
+        const dt = lr.tripDetails || {}; const e = lr.emptyTripData || {};
+        const rev = parseFloat(dt.billingAmount)||0;
+        // diesel
+        const dieselMain = (parseFloat(dt.fuelUsedLiters)||0) * (parseFloat(dt.dieselRatePerLiter)||0);
+        const dieselEmpty = (parseFloat(e.fuelUsedLiters)||0) * (parseFloat(e.dieselRatePerLiter)||0);
+        // expenses main
+        const mainAgg = (parseFloat(dt.tyreExpenses)||0) + (parseFloat(dt.tollExpenses)||0) + (parseFloat(dt.foodExpenses)||0) + (parseFloat(dt.vehicleWorkAmount)||0) + (parseFloat(dt.commissionExpenses)||0) + (parseFloat(dt.tirpalRopeExpenses)||0) + (parseFloat(dt.loadingUnloadingExpenses)||0) + (parseFloat(dt.policeChallanExpenses)||0) + (parseFloat(dt.tacExpenses)||0) + (parseFloat(dt.permitExpenses)||0) + (parseFloat(dt.brokerageExpenses)||0) + (parseFloat(dt.otherExpenses)||0);
+        const mainExp = mainAgg + dieselMain + (parseFloat(dt.advance)||0);
+        // expenses empty
+        const emptyAgg = (parseFloat(e.tyreExpenses)||0) + (parseFloat(e.tollExpenses)||0) + (parseFloat(e.foodExpenses)||0) + (parseFloat(e.vehicleWorkAmount)||0) + (parseFloat(e.commissionExpenses)||0) + (parseFloat(e.tirpalRopeExpenses)||0) + (parseFloat(e.loadingUnloadingExpenses)||0) + (parseFloat(e.policeChallanExpenses)||0) + (parseFloat(e.tacExpenses)||0) + (parseFloat(e.permitExpenses)||0) + (parseFloat(e.brokerageExpenses)||0) + (parseFloat(e.otherExpenses)||0);
+        const emptyExp = emptyAgg + dieselEmpty;
+        // shortage
+        const billingRate = (lr.weight>0)? (rev/lr.weight):0;
+        const shortageDeduct = ((parseFloat(dt.shortage)||0)/1000) * billingRate;
+        const exp = mainExp + emptyExp + shortageDeduct;
+
+        totalRevenue += rev; totalExpenses += exp;
+        totalKm += (parseFloat(dt.totalKm)||0) + (parseFloat(e.totalKm)||0);
+
+        const month = lr.date ? new Date(lr.date).getMonth() : null;
+        if(month!=null) { monthly[month].revenue += rev; monthly[month].expenses += exp; }
+
+        const route = `${lr.fromLocation||'Start'} to ${lr.toLocation||'End'}`;
+        routeProfit[route] = (routeProfit[route]||0) + (rev-exp);
+
+        const clientName = clients[lr.clientId] || 'Client';
+        clientRevenue[clientName] = (clientRevenue[clientName]||0) + rev;
+
+        const vehicle = lr.truckNumber || 'Vehicle';
+        vehicleProfit[vehicle] = (vehicleProfit[vehicle]||0) + (rev-exp);
+
+        const driver = lr.driverName || 'Driver';
+        if(!driverPerf[driver]) driverPerf[driver] = { trips:0, expenses:0 };
+        driverPerf[driver].trips += 1; driverPerf[driver].expenses += exp;
+      }
+
+      // Keep only registered vehicles
+      const filteredVehicleProfit = Object.fromEntries(Object.entries(vehicleProfit).filter(([v]) => registeredVehicles.includes(v)));
+
+      return {
+        totals: { totalRevenue, totalExpenses, totalKm, netProfit: totalRevenue-totalExpenses },
+        monthly, routeProfit, clientRevenue, vehicleProfit: filteredVehicleProfit, driverPerf
+      };
+    }
+
+    function renderAll(data){
+      destroyCharts();
+      const { totals, monthly, routeProfit, clientRevenue, vehicleProfit, driverPerf } = data;
+
+      // KPIs
+      setKPI('kpiRevenue', fmtINR(totals.totalRevenue));
+      setKPI('kpiExpenses', fmtINR(totals.totalExpenses));
+      setKPI('kpiProfit', fmtINR(totals.netProfit));
+      const cpk = totals.totalKm>0 ? (totals.totalExpenses/totals.totalKm) : 0; setKPI('kpiCpk', `₹${cpk.toFixed(2)}`);
+
+      // Revenue vs Expenses
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      charts.revExp = new Chart(document.getElementById('revExpChart'), {
+        type: 'line',
+        data: { labels: months, datasets: [
+          { label: 'Revenue', data: monthly.map(m=>m.revenue), tension:.25, borderColor: '#2E8B57', backgroundColor: 'rgba(46,139,87,.1)', fill: true },
+          { label: 'Expenses', data: monthly.map(m=>m.expenses), tension:.25, borderColor: '#e76f51', backgroundColor: 'rgba(231,111,81,.08)', fill: true },
+        ]},
+        options: baseOpts
+      });
+
+      // Route Profitability (Top 10)
+      const topRoutes = Object.entries(routeProfit).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      charts.route = new Chart(document.getElementById('routeProfitChart'), {
+        type: 'bar',
+        data: { labels: topRoutes.map(([r])=>r), datasets: [{ label:'Net Profit', data: topRoutes.map(([,p])=>p), backgroundColor: topRoutes.map(([,p])=> p>=0 ? 'rgba(46,139,87,.7)' : 'rgba(231,76,60,.7)'), borderColor: topRoutes.map(([,p])=> p>=0 ? '#2E8B57' : '#e74c3c' ), borderWidth: 1 }]},
+        options: { ...baseOpts, indexAxis: 'y' }
+      });
+
+      // Client revenue (Top 8)
+      const topClients = Object.entries(clientRevenue).sort((a,b)=>b[1]-a[1]).slice(0,8);
+      charts.client = new Chart(document.getElementById('clientRevChart'), {
+        type: 'doughnut',
+        data: { labels: topClients.map(([c])=>c), datasets: [{ data: topClients.map(([,v])=>v), backgroundColor: ['#2E8B57','#3CB371','#20B2AA','#66CDAA','#8FBC8F','#A1E3B5','#7BD389','#43B97F'] }]},
+        options: { plugins: { legend: { position: 'right' }}}
+      });
+
+      // Vehicle profit
+      const vehEntries = Object.entries(vehicleProfit).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      charts.vehicle = new Chart(document.getElementById('vehicleProfitChart'), {
+        type: 'bar',
+        data: { labels: vehEntries.map(([v])=>v), datasets: [{ label:'Net Profit', data: vehEntries.map(([,p])=>p), backgroundColor: vehEntries.map(([,p])=> p>=0 ? 'rgba(46,139,87,.7)' : 'rgba(231,76,60,.7)') }]},
+        options: { ...baseOpts, indexAxis: 'y' }
+      });
+
+      // Driver performance (trips vs expenses)
+      const dLabels = Object.keys(driverPerf);
+      const dTrips = dLabels.map(k=>driverPerf[k].trips);
+      const dExp = dLabels.map(k=>driverPerf[k].expenses);
+      charts.driver = new Chart(document.getElementById('driverPerfChart'), {
+        type: 'bar',
+        data: { labels: dLabels, datasets: [
+          { label: 'Trips', data: dTrips, backgroundColor: 'rgba(99, 179, 237, .8)', yAxisID: 'y1' },
+          { label: 'Expenses (₹)', data: dExp, backgroundColor: 'rgba(231, 111, 81, .8)', yAxisID: 'y2' },
+        ]},
+        options: { ...baseOpts, scales: { x: baseOpts.scales.x, y1: { type:'linear', position:'left', beginAtZero:true, grid:{ color: gridColor }}, y2: { type:'linear', position:'right', beginAtZero:true, grid:{ drawOnChartArea:false }}} }
+      });
+
+      // AI (simple heuristic summary from aggregates — no external API)
+      const list = document.getElementById('aiInsights');
+      const pm = totals.totalRevenue>0 ? (totals.netProfit/totals.totalRevenue)*100 : 0;
+      const bestRoute = topRoutes[0]?.[0] || '—';
+      list.innerHTML = `
+        <li>Net profit margin is <strong>${pm.toFixed(2)}%</strong>. Aim for 12–18% by optimizing diesel & toll.</li>
+        <li>Top performing route: <strong>${bestRoute}</strong>. Consider increasing capacity here.</li>
+        <li>Avg cost per km: <strong>₹${(totals.totalKm? (totals.totalExpenses/totals.totalKm):0).toFixed(2)}</strong>. Target ≤ ₹10/km.</li>
+        <li>Highest spending drivers flagged in chart — review their expense slips.</li>
+        <li>Two quick wins: maintain tyre pressure weekly; avoid peak‑hour departures on loss‑making lanes.</li>`;
+
+      setUpdated();
+    }
+
+    async function loadAndRender(from, to){
+      const lrList = filterLR(from, to);
+      if(!lrList.length){
+        // Reset KPIs and clear charts
+        destroyCharts();
+        setKPI('kpiRevenue', '₹0'); setKPI('kpiExpenses','₹0'); setKPI('kpiProfit','₹0'); setKPI('kpiCpk','₹0.00');
+        document.getElementById('aiInsights').innerHTML = '<li>No data for the selected period.</li>';
+        setUpdated();
+        return;
+      }
+      const aggregates = computeAggregates(lrList);
+      renderAll(aggregates);
+    }
+
+    // Date helpers
+    function setDefaultRange(){
+      const t = new Date();
+      const first = new Date(t.getFullYear(), t.getMonth(), 1).toISOString().split('T')[0];
+      const last = new Date(t.getFullYear(), t.getMonth()+1, 0).toISOString().split('T')[0];
+      document.getElementById('startDate').value = first;
+      document.getElementById('endDate').value = last;
+    }
+
+    // Init
+    onAuthStateChanged(auth, async (user) => {
+      if(!user){ window.location.href = 'index.html'; return; }
+      const coreId = await fetchCoreAccountId(user.uid);
+      await fetchAllData(coreId, user.uid);
+      setDefaultRange();
+      await loadAndRender(document.getElementById('startDate').value, document.getElementById('endDate').value);
+
+      document.getElementById('applyFilter').addEventListener('click', () => {
+        loadAndRender(document.getElementById('startDate').value, document.getElementById('endDate').value);
+      });
+    });
+  </script>
+</body>
+</html>

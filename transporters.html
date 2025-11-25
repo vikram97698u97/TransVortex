@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transporter Management - Transport System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <style>
+    /* Transporter Management Styles */
+    body { padding: 0; margin: 0; background-color: #f8f9fa; }
+    .main-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      border: 1px solid #dee2e6; /* Added border from booking.html */
+    }
+
+    /* Match green active tab/pill used across the site - Overridden below for consistency with booking.html's neutral/primary approach */
+    .nav-tabs .nav-link.active { background-color: #198754; color: #fff; }
+    
+    /* --- Styles for Detail View (Offcanvas) - Matching booking.html --- */
+    /* Active Pill Color - Match booking.html's green */
+    .nav-pills .nav-link.active { background-color: #198754; color: #fff; }
+    
+    .form-section {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #dee2e6;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .fw-bold { font-weight: 700 !important; }
+    .text-danger { color: #dc3545 !important; }
+    .text-success { color: #198754 !important; }
+    
+    /* Status badges - Matching booking.html's subtle look */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px; /* less round */
+      font-size: 0.8rem; /* slightly larger */
+      font-weight: 600;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+    }
+
+    .status-paid {
+      background-color: #d1e7dd; /* Light green, subtle */
+      color: #0f5132;
+    }
+
+    .status-pending {
+      background-color: #fff3cd; /* Light yellow, subtle */
+      color: #664d03;
+    }
+
+    .status-overdue {
+      background-color: #f8d7da; /* Light red, subtle */
+      color: #842029;
+    }
+    
+    .status-partial {
+      background-color: #fff3cd; /* Match pending for partial */
+      color: #664d03;
+    }
+
+
+    /* LR Detail Modal - Kept simple */
+    .lr-detail-modal .modal-content {
+      border-radius: 12px;
+      border: none;
+    }
+    .lr-detail-modal .modal-header {
+      background-color: #198754;
+      color: white;
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+    }
+    .lr-detail-modal .detail-row {
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .lr-detail-modal .detail-row:last-child {
+      border-bottom: none;
+    }
+    
+    /* ERP Summary Bar - Matched booking.html */
+    .erp-summary-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .erp-summary-item {
+      flex: 1;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+    }
+
+    /* Modern Card Styles - Matched booking.html */
+    .modern-card {
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      box-shadow: none;
+      overflow: hidden;
+    }
+    
+    /* Client detail view card (offcanvas) customization - Matched booking.html */
+    #transporterDetailDrawer table tbody tr:nth-child(odd) { background-color: #f8f9fa; } /* Default light striping */
+    #transporterDetailDrawer table tbody tr:hover { background-color: #e9ecef; } /* Default hover */
+    
+    /* Remove specific colors from card headers - Matched booking.html */
+    #transporterDetailDrawer .card-header.bg-primary,
+    #transporterDetailDrawer .card-header.bg-success,
+    #transporterDetailDrawer .card-header.bg-secondary,
+    #transporterDetailDrawer .card-header.bg-info { 
+        background-color: #e9ecef !important; /* Neutral background */
+        color: #333 !important; /* Dark text */
+    }
+
+    /* Enhanced table styling like client list - Matched booking.html's datatable header style */
+    .dataTables_wrapper table.table thead th {
+        background-color: #e9ecef !important; /* Very light grey, non-colored header */
+        color: #333 !important;
+        border-color: #dee2e6 !important;
+        font-weight: 600;
+    }
+    
+    /* Offcanvas Positioning - Matched booking.html's centered modal-style offcanvas */
+    #transporterDetailDrawer {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 920px;
+        max-width: 90vw;
+        height: auto;
+        max-height: 90vh;
+        overflow-y: auto;
+        margin: 0 !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+    
+    #transporterDetailDrawer.offcanvas.showing {
+        transform: translate(-50%, -50%) !important;
+    }
+    
+    /* Ranking Award Styles */
+    .award-icon {
+        margin-right: 5px;
+        font-size: 1.1em;
+    }
+    .rank-1 { color: #FFD700; } /* Gold */
+    .rank-2 { color: #C0C0C0; } /* Silver */
+    .rank-3 { color: #CD7F32; } /* Bronze */
+    .rank-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-right: 5px;
+        background-color: #e9ecef;
+        color: #333;
+    }
+    
+    /* General Details Icon Color - Matched booking.html's success icon color */
+    #tGeneralDetails .text-primary { color: #198754 !important; }
+
+  </style>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <div class="container mt-4" id="transporterListView">
+    <div class="main-content">
+      <h2 class="mb-4"><i class="fas fa-truck-loading me-2"></i>Transporter Management</h2>
+
+      <form id="transporterForm" class="form-section">
+        <h4 id="formTitle" class="mb-3">Add New Transporter</h4>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-building me-2"></i>Transporter Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="transporterName" class="form-label">Transporter Name <span class="text-danger">*</span></label>
+                <input type="text" id="transporterName" class="form-control" placeholder="e.g., ABC Logistics" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="contactPerson" class="form-label">Contact Person</label>
+                <input type="text" id="contactPerson" class="form-control" placeholder="Contact Person Name">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="mobile" class="form-label">Mobile Number</label>
+                <input type="tel" id="mobile" class="form-control" placeholder="Mobile Number">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="gstin" class="form-label">GSTIN</label>
+                <input type="text" id="gstin" class="form-control" placeholder="GST Identification Number">
+              </div>
+            </div>
+             <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea id="address" class="form-control" placeholder="Full Address"></textarea>
+            </div>
+          </div>
+        </div>
+        
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Save Transporter</button>
+          <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display: none;"><i class="fas fa-times me-2"></i>Cancel Edit</button>
+        </div>
+      </form>
+
+      <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4>Saved Transporters</h4>
+          <input type="text" id="transporterSearchInput" class="form-control" style="width: 300px;" placeholder="Search by name, contact, GSTIN...">
+        </div>
+        <div class="table-responsive">
+          <table id="transporterTable" class="table table-striped table-bordered" style="width:100%">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Contact Person</th>
+                <th>Mobile</th>
+                <th>GSTIN</th>
+                <th class="text-end">Outstanding (₹)</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transporterTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="transporterDetailDrawer" aria-labelledby="transporterDetailDrawerLabel" style="width: 920px; max-width: 100%;">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="transporterDetailDrawerLabel"><i class="fas fa-truck me-2"></i><span id="transporterDrawerTitle">Transporter Details</span></h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body bg-slate-50">
+      <div class="erp-summary-bar mb-4 d-flex gap-3">
+        <div class="erp-summary-item shadow-sm flex-fill">
+          <div class="text-uppercase text-xs text-muted">Outstanding</div>
+          <div id="tSummaryOutstanding" class="h4 fw-bold text-danger mb-0">₹0.00</div>
+        </div>
+        <div class="erp-summary-item shadow-sm flex-fill">
+          <div class="text-uppercase text-xs text-muted">Trips</div>
+          <div id="tSummaryTrips" class="h4 fw-bold mb-0">0</div>
+        </div>
+        <div class="erp-summary-item shadow-sm flex-fill">
+          <div class="text-uppercase text-xs text-muted">Total Billed</div>
+          <div id="tSummaryTotalBilled" class="h4 fw-bold mb-0">₹0.00</div>
+        </div>
+      </div>
+
+      <ul class="nav nav-pills nav-fill mb-3" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#t-details-tab" type="button" role="tab"><i class="fas fa-info-circle me-1"></i>Details</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-lrs-tab" type="button" role="tab"><i class="fas fa-list-alt me-1"></i>LR Reports</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-invoices-tab" type="button" role="tab"><i class="fas fa-file-invoice-dollar me-1"></i>Invoices</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-payments-tab" type="button" role="tab"><i class="fas fa-money-check-alt me-1"></i>Payments & Pay</button></li>
+      </ul>
+
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="t-details-tab" role="tabpanel">
+          <div class="card modern-card p-3">
+            <h5 class="card-title"><i class="fas fa-building me-2"></i>General Information</h5>
+            <hr class="my-2">
+            <div class="row g-2" id="tGeneralDetails"></div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="t-lrs-tab" role="tabpanel">
+          <div class="card modern-card">
+            <div class="card-header"><i class="fas fa-list-alt me-2"></i>LR Reports (Market)</div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table id="tLrTable" class="table table-striped table-bordered" style="width:100%"> 
+                  <thead>
+                    <tr>
+                      <th>LR No</th><th>Date</th><th>From/To</th><th class="text-end">Billed (₹)</th><th class="text-center">Status</th><th class="text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="t-invoices-tab" role="tabpanel">
+          <div class="card modern-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span><i class="fas fa-file-invoice-dollar me-2"></i>Generated Invoices</span>
+              <span class="badge bg-secondary text-white" id="tInvoiceCount">0</span> </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table id="tInvoicesTable" class="table table-striped table-bordered" style="width:100%">
+                  <thead>
+                    <tr>
+                      <th>Invoice #</th><th>Date</th><th>LRs</th><th class="text-end">Total (₹)</th><th class="text-center">Payment Status</th><th class="text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="t-payments-tab" role="tabpanel">
+          <div class="row g-4">
+            <div class="col-lg-5">
+              <div class="card modern-card">
+                <div class="card-header"><i class="fas fa-plus-circle me-2"></i>Record New Payment</div> <div class="card-body">
+                  <form id="tPaymentForm" class="space-y-3">
+                    <div class="mb-2"><label class="form-label small">Amount (₹)</label><input type="number" step="0.01" class="form-control form-control-sm" id="tPayAmount" required></div>
+                    <div class="mb-2"><label class="form-label small">Date</label><input type="date" class="form-control form-control-sm" id="tPayDate" required></div>
+                    <div class="mb-3"><label class="form-label small">Notes</label><input type="text" class="form-control form-control-sm" id="tPayNotes" placeholder="UTR/Remarks"></div>
+                    <button type="submit" class="btn btn-sm btn-info w-100 text-white"><i class="fas fa-save me-2"></i>Save Payment</button> 
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-7">
+              <div class="card modern-card">
+                <div class="card-header"><i class="fas fa-history me-2"></i>Payment History</div> <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table id="tPaymentsTable" class="table table-striped table-bordered" style="width:100%">
+                      <thead><tr><th>Date</th><th class="text-end">Amount (₹)</th><th>Notes</th><th class="text-end">Actions</th></tr></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="transporterDetail" class="main-content hidden">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 id="transporterTitle" class="mb-0">Transporter Details</h2>
+      <button class="btn btn-secondary" id="backToListBtn"><i class="fas fa-arrow-left me-2"></i>Back to List</button>
+    </div>
+
+    <div class="card mb-4 modern-card">
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-4"><strong>Outstanding:</strong> <span id="transporterOutstanding" class="fw-bold text-danger"></span></div>
+          <div class="col-md-4"><strong>Total Trips:</strong> <span id="transporterTrips" class="fw-bold"></span></div>
+          <div class="col-md-4"><strong>Total Billed:</strong> <span id="transporterTotalBilled" class="fw-bold"></span></div>
+        </div>
+      </div>
+    </div>
+    
+    <form id="transporterPaymentForm" class="form-section mt-4">
+      <h4 class="mb-3">Add/Edit Payment</h4>
+      <input type="hidden" id="paymentTransporterIdHidden"> 
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label for="paymentAmount" class="form-label">Amount (₹) <span class="text-danger">*</span></label>
+          <input type="number" id="paymentAmount" class="form-control" required step="0.01">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="paymentDate" class="form-label">Date <span class="text-danger">*</span></label>
+          <input type="date" id="paymentDate" class="form-control" required>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="paymentNotes" class="form-label">Notes / Remarks</label>
+          <textarea id="paymentNotes" class="form-control" placeholder="Add any notes about this payment"></textarea>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-success"><i class="fas fa-save me-2"></i>Save Payment</button>
+        <button type="button" id="cancelPaymentEditBtn" class="btn btn-secondary" style="display: none;">
+          <i class="fas fa-times me-2"></i>Cancel Edit
+        </button>
+      </div>
+    </form>
+
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card modern-card h-100">
+          <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>LR Reports (Market)</h5>
+            <span class="badge bg-light text-dark" id="lrCount">0</span>
+          </div>
+          <div class="card-body p-0">
+            <ul id="lrList" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card modern-card h-100">
+          <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment History</h5>
+            <span class="badge bg-light text-dark" id="paymentCount">0</span>
+          </div>
+          <div class="card-body p-0">
+            <ul id="paymentList" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12 mb-4">
+        <div class="card modern-card h-100">
+          <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Invoices</h5>
+            <span class="badge bg-light text-dark" id="transporterInvoiceCount">0</span>
+          </div>
+          <div class="card-body p-0">
+            <ul id="transporterInvoiceList" class="list-group list-group-flush"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade lr-detail-modal" id="lrDetailModal" tabindex="-1" aria-labelledby="lrDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="lrDetailModalLabel">LR Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="lrDetailContent">
+          </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Load secure configuration first -->
+  <script src="evm.js"></script>
+  <script src="config-loader.js"></script>
+
+  <script src="navbar-loader.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove, get, query, orderByChild, equalTo, runTransaction, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // Load Firebase configuration securely from EVM
+    let firebaseConfig;
+    
+    try {
+      // Get Firebase configuration from secure EVM system
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+      
+      // Check if we're using fallback values
+      if (ConfigManager.isUsingFallbackValues()) {
+        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+      } else {
+        console.log('✅ Firebase configuration loaded securely from EVM');
+      }
+    } catch (error) {
+      console.error('❌ Failed to load Firebase configuration:', error);
+      
+      // Use fallback configuration to prevent complete failure
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+    }
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+    let coreAccountId = null;
+    let currentEditingTransporterId = null;
+    let currentEditingPaymentId = null; 
+    let currentDetailTransporterId = null;
+    let detailViewListeners = []; 
+    let transporterTable;
+    let dtTLR = null, dtTInv = null, dtTPay = null;
+
+    let allTransporterLrs = {}; 
+    let allTransporterPayments = {}; 
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "index.html";
+      } else {
+        currentUser = user;
+        const userRef = ref(db, `users/${user.uid}`);
+        get(userRef).then(snapshot => {
+          const userData = snapshot.val() || {};
+          coreAccountId = userData.coreAccountId || user.uid;
+          
+          if (!transporterTable) {
+            transporterTable = $('#transporterTable').DataTable({
+              "pageLength": 10,
+              "columnDefs": [{ "orderable": false, "targets": 5 }]
+            });
+          }
+
+          document.getElementById('transporterSearchInput').addEventListener('keyup', function() {
+            transporterTable.search(this.value).draw();
+          });
+
+          document.getElementById('backToListBtn').addEventListener('click', () => {
+            document.getElementById('transporterListView').classList.remove('hidden');
+            document.getElementById('transporterDetail').classList.add('hidden');
+            currentDetailTransporterId = null;
+          });
+
+          document.getElementById('transporterPaymentForm').addEventListener('submit', saveTransporterPayment);
+          document.getElementById('paymentDate').valueAsDate = new Date();
+          document.getElementById('cancelPaymentEditBtn').addEventListener('click', resetPaymentForm);
+
+          loadAllTransporterMetrics();
+
+          // Offcanvas payment form bind
+          const tPayForm = document.getElementById('tPaymentForm');
+          if (tPayForm) {
+            const dateEl = document.getElementById('tPayDate');
+            if (dateEl && !dateEl.value) dateEl.valueAsDate = new Date();
+            tPayForm.addEventListener('submit', async (e) => {
+              e.preventDefault();
+              const transporterId = currentDetailTransporterId;
+              if (!transporterId) return alert('Open a transporter first');
+              const amount = parseFloat(document.getElementById('tPayAmount').value) || 0;
+              const date = document.getElementById('tPayDate').value;
+              const notes = document.getElementById('tPayNotes').value;
+              if (!amount || !date) return alert('Enter amount and date');
+              const payRef = push(ref(db, `users/${coreAccountId}/transporterPayments`));
+              await set(payRef, { id: payRef.key, transporterId, amount, date, notes, userId: currentUser?.uid, createdAt: new Date().toISOString() });
+              await updateTransporterLRStatus(transporterId);
+              await Promise.all([
+                renderTSummary(transporterId),
+                renderTLRS(transporterId),
+                renderTInvoices(transporterId),
+                renderTPayments(transporterId),
+                updateTransporterOutstanding(transporterId),
+              ]);
+              tPayForm.reset();
+              if (dateEl) dateEl.valueAsDate = new Date();
+              alert('Payment saved');
+            });
+          }
+        });
+      }
+    });
+    
+    
+    function detachDetailViewListeners() {
+        detailViewListeners.forEach(offFunction => offFunction());
+        detailViewListeners = [];
+    }
+
+    const transporterForm = document.getElementById("transporterForm");
+    const nameInput = document.getElementById("transporterName");
+    const contactPersonInput = document.getElementById("contactPerson");
+    const mobileInput = document.getElementById("mobile");
+    const gstinInput = document.getElementById("gstin");
+    const addressInput = document.getElementById("address");
+    const formTitle = document.getElementById("formTitle");
+    const cancelBtn = document.getElementById("cancelEditBtn");
+
+    transporterForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!coreAccountId) return alert("Account not verified. Please reload.");
+
+      const transporterData = { 
+        name: nameInput.value.trim(), 
+        contactPerson: contactPersonInput.value.trim(),
+        mobile: mobileInput.value.trim(),
+        gstin: gstinInput.value.trim(),
+        address: addressInput.value.trim(),
+        updatedAt: new Date().toISOString() 
+      };
+
+      if (!transporterData.name) {
+        alert("Transporter Name is required.");
+        return;
+      }
+
+      try {
+        if (currentEditingTransporterId) {
+          await update(ref(db, `users/${coreAccountId}/transporters/${currentEditingTransporterId}`), transporterData);
+          alert("Transporter updated successfully!");
+        } else {
+          transporterData.createdAt = new Date().toISOString();
+          await push(ref(db, `users/${coreAccountId}/transporters`), transporterData);
+          alert("Transporter saved successfully!");
+        }
+        resetForm();
+      } catch (error) {
+        alert("Error saving transporter: " + error.message);
+      }
+    });
+    
+    async function loadAllTransporterMetrics() {
+        if (!coreAccountId) return;
+        
+        const lrRef = ref(db, `users/${coreAccountId}/lrReports`);
+
+        const paymentRef = ref(db, `users/${coreAccountId}/transporterPayments`);
+
+        onValue(lrRef, (snapshot) => {
+            allTransporterLrs = {};
+            snapshot.forEach(child => {
+                const lr = child.val();
+                if (!lr.transporterId || (lr.lrType !== 'market' && lr.lrType !== 'market_company')) return;
+
+                const transporterId = lr.transporterId;
+                if (!allTransporterLrs[transporterId]) {
+                    allTransporterLrs[transporterId] = { trips: 0, tonnage: 0, totalBilled: 0, totalPaid: 0 };
+                }
+                allTransporterLrs[transporterId].trips++;
+                allTransporterLrs[transporterId].tonnage += lr.weight || 0;
+                allTransporterLrs[transporterId].totalBilled += lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0;
+            });
+            loadTransporters(); // Refresh list after LRs are cached
+        });
+
+        onValue(paymentRef, (snapshot) => {
+            allTransporterPayments = {};
+            snapshot.forEach(child => {
+                const payment = child.val();
+                if (!payment.transporterId) return;
+
+                if (!allTransporterPayments[payment.transporterId]) allTransporterPayments[payment.transporterId] = [];
+                allTransporterPayments[payment.transporterId].push({ key: child.key, ...payment });
+            });
+            loadTransporters(); // Refresh the list when payment data changes
+        });
+    }
+
+    // --- MODIFIED: Implements Transporter Ranking Logic ---
+    function loadTransporters() {
+      if (!coreAccountId) return;
+      const transportersRef = ref(db, `users/${coreAccountId}/transporters`);
+
+      onValue(transportersRef, (snapshot) => {
+        transporterTable.clear();
+        
+        const transporterList = [];
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                const transporter = child.val();
+                const transporterId = child.key;
+                
+                const lrMetrics = allTransporterLrs[transporterId] || { trips: 0, tonnage: 0, totalBilled: 0, totalPaid: 0 };
+                const payments = allTransporterPayments[transporterId] || [];
+                
+                const totalInvoiced = lrMetrics.totalBilled || 0;
+                const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                const outstanding = totalInvoiced - totalPaid;
+                
+                // Add to list for sorting/ranking
+                transporterList.push({
+                    id: transporterId,
+                    ...transporter,
+                    trips: lrMetrics.trips, // Used for ranking
+                    outstanding: outstanding,
+                    totalInvoiced: totalInvoiced
+                });
+            });
+        }
+        
+        // 1. Sort/Rank Transporters by Total Trips (Highest first)
+        const rankedList = transporterList.sort((a, b) => b.trips - a.trips);
+
+        // 2. Populate the table with rank icons
+        rankedList.forEach((transporter, index) => {
+            const outstanding = transporter.outstanding;
+            let rankIcon = '';
+            
+            // Only rank if they have done at least one trip
+            if (transporter.trips > 0) {
+                if (index === 0) {
+                    rankIcon = '<i class="fas fa-medal award-icon rank-1" title="Rank 1 - Gold"></i>';
+                } else if (index === 1) {
+                    rankIcon = '<i class="fas fa-medal award-icon rank-2" title="Rank 2 - Silver"></i>';
+                } else if (index === 2) {
+                    rankIcon = '<i class="fas fa-medal award-icon rank-3" title="Rank 3 - Bronze"></i>';
+                } else {
+                    rankIcon = `<span class="rank-badge" title="Rank ${index + 1}">${index + 1}</span>`;
+                }
+            }
+
+            transporterTable.row.add([
+              `${rankIcon} ${transporter.name}`,
+              transporter.contactPerson || '—',
+              transporter.mobile || '—',
+              transporter.gstin || '—',
+              `<span class="fw-bold ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
+              `<div class="text-center">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="window.viewTransporterDetails('${transporter.id}')"><i class="fas fa-eye"></i> View</button>
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="window.editTransporter('${transporter.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="window.deleteTransporter('${transporter.id}')"><i class="fas fa-trash"></i></button>
+              </div>`
+            ]);
+        });
+        
+        transporterTable.draw();
+      });
+    }
+
+    async function updateTransporterLRStatus(transporterId) {
+      if (!coreAccountId || !transporterId) return;
+      
+      const updates = {};
+      const dataRoot = coreAccountId;
+
+      const payments = allTransporterPayments[transporterId] || [];
+      const totalPaidByTransporter = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+      const lrsSnap = await get(query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('transporterId')));
+      const lrs = [];
+      if (lrsSnap.exists()) {
+        lrsSnap.forEach(child => {
+          const lr = child.val();
+          if (lr && lr.transporterId === transporterId && (lr.lrType === 'market' || lr.lrType === 'market_company')) {
+            lrs.push({ id: child.key, ...lr });
+          }
+        });
+      }
+      lrs.sort((a,b) => new Date(a.date || a.createdAt || 0) - new Date(b.date || b.createdAt || 0));
+
+      let remainingPayment = totalPaidByTransporter;
+      for (const lr of lrs) {
+        const lrRefPath = `/users/${dataRoot}/lrReports/${lr.id}`;
+        const lrTotal = lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0;
+        const applied = Math.min(remainingPayment, lrTotal);
+        remainingPayment -= applied;
+        const newStatus = applied >= lrTotal - 0.01 ? 'paid' : (applied > 0 ? 'partial' : 'pending');
+        updates[`${lrRefPath}/paidAmount`] = applied;
+        updates[`${lrRefPath}/paymentStatus`] = newStatus;
+      }
+
+      if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+      }
+    }
+
+    // --- MODIFIED: Matches booking.html's General Details layout and green icons ---
+    function renderTGeneralDetails(transporter) {
+      const detailsEl = document.getElementById('tGeneralDetails');
+      if (!detailsEl) return;
+      const fields = [
+        { label: 'Contact Person', value: transporter.contactPerson, icon: 'user' },
+        { label: 'Mobile Number', value: transporter.mobile, icon: 'mobile-alt' },
+        { label: 'Email', value: transporter.email, icon: 'envelope' },
+        { label: 'GSTIN', value: transporter.gstin, icon: 'file-invoice' },
+        { label: 'Address', value: transporter.address, icon: 'map-marked-alt' }
+      ];
+      // Note: 'text-success' is used here to match booking.html's icon color
+      detailsEl.innerHTML = fields.map(field => `
+        <div class="col-md-6">
+          <div class="d-flex align-items-center p-2 bg-light rounded shadow-sm">
+            <i class="fas fa-${field.icon} text-success me-3 fa-fw"></i> 
+            <div>
+              <div class="small text-muted">${field.label}</div>
+              <div class="fw-bold text-break">${field.value || '—'}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Save Transporter Payment (adds/updates a payment, adjusts outstanding, and recalculates LR statuses)
+    async function saveTransporterPayment(e) {
+      e.preventDefault();
+      if (!coreAccountId) return alert("Account not verified. Please reload.");
+      const transporterId = currentDetailTransporterId;
+      if (!transporterId) return alert("No transporter selected. Please view a transporter's details first.");
+
+      const paymentData = {
+        transporterId: transporterId,
+        amount: parseFloat(document.getElementById('paymentAmount').value),
+        date: document.getElementById('paymentDate').value,
+        notes: document.getElementById('paymentNotes').value,
+        updatedAt: new Date().toISOString(),
+        userId: currentUser?.uid
+      };
+
+      if (!paymentData.amount || !paymentData.date) {
+        alert('Please enter an amount and date.');
+        return;
+      }
+
+      try {
+        const transporterOutstandingRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}/outstanding`);
+        let amountChange = 0;
+
+        if (currentEditingPaymentId) {
+          const oldPaymentSnap = await get(ref(db, `users/${coreAccountId}/transporterPayments/${currentEditingPaymentId}`));
+          const oldAmount = oldPaymentSnap.val()?.amount || 0;
+          amountChange = oldAmount - paymentData.amount; // increase outstanding if reduced
+
+          const paymentRef = ref(db, `users/${coreAccountId}/transporterPayments/${currentEditingPaymentId}`);
+          await update(paymentRef, paymentData);
+          alert('Payment updated successfully!');
+        } else {
+          amountChange = -paymentData.amount; // reduce outstanding on new payment
+          await push(ref(db, `users/${coreAccountId}/transporterPayments`), paymentData);
+          alert('Payment saved successfully!');
+        }
+
+        await runTransaction(transporterOutstandingRef, (currentValue) => {
+          // This outstanding logic is flawed in the original code but kept for minimal change. 
+          // The proper outstanding is calculated dynamically in updateTransporterOutstanding.
+          return (currentValue || 0) + amountChange;
+        });
+
+        await updateTransporterLRStatus(transporterId);
+        await updateTransporterOutstanding(transporterId);
+        resetPaymentForm();
+      } catch (error) {
+        console.error('Error saving payment:', error);
+        alert('Error saving payment: ' + error.message);
+      }
+    }
+
+    window.viewTransporterDetails = async (transporterId) => {
+        currentDetailTransporterId = transporterId;
+        resetPaymentForm();
+        detachDetailViewListeners(); 
+
+        document.getElementById('transporterListView').classList.remove('hidden');
+        document.getElementById('transporterDetail').classList.add('hidden');
+
+        const transporterRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}`);
+        const offTransporter = onValue(transporterRef, (snapshot) => {
+            if (!snapshot.exists()) return;
+            const transporter = snapshot.val();
+            document.getElementById('transporterTitle').textContent = `${transporter.name} - Details`;
+            document.getElementById('transporterDrawerTitle').textContent = transporter.name;
+            // Populate General Information tab
+            renderTGeneralDetails(transporter);
+            // Outstanding is computed from LR allocations separately
+        });
+        detailViewListeners.push(offTransporter);
+
+        // Load payments and LRs for this transporter (Original hidden view list)
+        const paymentsRef = query(ref(db, `users/${coreAccountId}/transporterPayments`), orderByChild('transporterId'), equalTo(transporterId));
+        const offPayments = onValue(paymentsRef, async (snapshot) => {
+            const paymentList = document.getElementById('paymentList');
+            paymentList.innerHTML = '';
+            let paymentCount = 0;
+            if (snapshot.exists()) {
+                const payments = [];
+                snapshot.forEach(child => {
+                    paymentCount++;
+                    payments.push({ key: child.key, ...child.val() });
+                });
+                payments.sort((a,b) => new Date(b.date) - new Date(a.date));
+                payments.forEach(p => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    listItem.innerHTML = `
+                        <div>
+                            <div class="fw-bold">Payment on ${p.date}</div>
+                            <small class="text-muted">${p.notes || 'Payment'}</small>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <span class="fw-bold text-success me-2">₹${(p.amount || 0).toFixed(2)}</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="window.editTransporterPayment('${p.key}')" title="Edit Payment"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="window.deleteTransporterPayment('${p.key}', '${p.transporterId}', ${p.amount})" title="Delete Payment"><i class="fas fa-trash"></i></button>
+                        </div>`;
+                    paymentList.appendChild(listItem);
+                });
+            }
+            if (paymentCount === 0) paymentList.innerHTML = '<li class="list-group-item text-center text-muted">No payment history found.</li>';
+            document.getElementById('paymentCount').textContent = paymentCount;
+            await updateTransporterOutstanding(transporterId);
+        });
+        detailViewListeners.push(offPayments);
+
+        // Initial render of tabs
+        await Promise.all([
+          renderTSummary(transporterId),
+          renderTLRS(transporterId),
+          renderTInvoices(transporterId),
+          renderTPayments(transporterId),
+          updateTransporterOutstanding(transporterId),
+        ]);
+
+        // Open offcanvas and activate Details tab
+        try {
+          const drawerEl = document.getElementById('transporterDetailDrawer');
+          if (drawerEl) {
+            if (window.bootstrap && window.bootstrap.Offcanvas) {
+              const drawer = window.bootstrap.Offcanvas.getOrCreateInstance(drawerEl);
+              drawer.show();
+            } else {
+              drawerEl.classList.add('show');
+              drawerEl.style.visibility = 'visible';
+              drawerEl.style.display = 'block';
+            }
+          }
+          const detailsBtn = document.querySelector('button[data-bs-target="#t-details-tab"]');
+          if (detailsBtn) detailsBtn.click();
+        } catch (e) { console.warn('Offcanvas open fallback error', e); }
+    };
+
+    async function renderTSummary(transporterId) {
+      let trips = 0, totalBilled = 0, totalPaid = 0;
+      const lrsRef = query(ref(db, `users/${coreAccountId}/lrReports`), orderByChild('transporterId'), equalTo(transporterId));
+      const lrsSnap = await get(lrsRef);
+      if (lrsSnap.exists()) {
+        lrsSnap.forEach(c => {
+          const lr = c.val();
+          if (lr.lrType !== 'market' && lr.lrType !== 'market_company') return; // market only
+          trips++;
+          totalBilled += lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0;
+          totalPaid += lr.paidAmount || 0;
+        });
+      }
+      const tTrips = document.getElementById('tSummaryTrips');
+      const tTotal = document.getElementById('tSummaryTotalBilled');
+      const tOutstanding = document.getElementById('tSummaryOutstanding');
+      if (tTrips) tTrips.textContent = trips;
+      if (tTotal) tTotal.textContent = `₹${(totalBilled||0).toFixed(2)}`;
+      if (tOutstanding) {
+        const outstanding = (totalBilled - totalPaid) || 0;
+        tOutstanding.textContent = `₹${outstanding.toFixed(2)}`;
+        tOutstanding.classList.toggle('text-danger', outstanding > 0.01);
+        tOutstanding.classList.toggle('text-success', outstanding < -0.01);
+      }
+    }
+
+    async function updateTransporterOutstanding(transporterId) {
+      const lrsRef = query(ref(db, `users/${coreAccountId}/lrReports`), orderByChild('transporterId'), equalTo(transporterId));
+      const lrsSnap = await get(lrsRef);
+      let totalBilled = 0, totalPaid = 0;
+      if (lrsSnap.exists()) {
+        lrsSnap.forEach(c => {
+          const lr = c.val();
+          if (lr.lrType !== 'market' && lr.lrType !== 'market_company') return;
+          totalBilled += lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0;
+          totalPaid += lr.paidAmount || 0;
+        });
+      }
+      const outstanding = totalBilled - totalPaid;
+      const headerOut = document.getElementById('transporterOutstanding');
+      if (headerOut) {
+        headerOut.textContent = `₹${outstanding.toFixed(2)}`;
+        headerOut.className = `fw-bold ${outstanding > 0.01 ? 'text-danger' : 'text-success'}`;
+      }
+      const tOut = document.getElementById('tSummaryOutstanding');
+      if (tOut) {
+        tOut.textContent = `₹${outstanding.toFixed(2)}`;
+        tOut.classList.toggle('text-danger', outstanding > 0.01);
+        tOut.classList.toggle('text-success', outstanding < -0.01);
+      }
+    }
+
+    // --- MODIFIED: Uses subtle badge classes from booking.html/CSS ---
+    async function renderTLRS(transporterId) {
+      const tbody = document.querySelector('#tLrTable tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const snap = await get(query(ref(db, `users/${coreAccountId}/lrReports`), orderByChild('transporterId'), equalTo(transporterId)));
+      const rows = [];
+      if (snap.exists()) {
+        snap.forEach(c => {
+          const lr = c.val();
+          if (lr.lrType !== 'market' && lr.lrType !== 'market_company') return;
+          const lrNo = lr.lrNumber || c.key;
+          const dateStr = lr.date ? new Date(lr.date).toLocaleDateString('en-IN') : (lr.createdAt ? new Date(lr.createdAt).toLocaleDateString('en-IN') : '—');
+          const from = lr.from || lr.fromLocation || lr.source || lr.pickup || lr.origin || '—';
+          const to = lr.to || lr.toLocation || lr.destination || lr.drop || lr.destinationCity || '—';
+          const amount = (lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0).toFixed(2);
+          const status = lr.paymentStatus || 'pending';
+          // Use subtle badge styles
+          let statusBadge = status === 'paid' ? '<span class="status-badge status-paid">Paid</span>' : (status === 'partial' ? '<span class="status-badge status-pending">Partial</span>' : '<span class="status-badge status-overdue">Pending</span>');
+          rows.push(`<tr><td>${lrNo}</td><td>${dateStr}</td><td>${from} <i class='fas fa-arrow-right fa-xs text-muted mx-1'></i> ${to}</td><td class='text-end'>₹${amount}</td><td class='text-center'>${statusBadge}</td><td class='text-center'><button class='btn btn-sm btn-outline-primary' onclick="window.openInvoiceForLR('${c.key}')"><i class='fas fa-eye'></i></button></td></tr>`);
+        });
+      }
+      tbody.innerHTML = rows.join('');
+      try { if (dtTLR) { dtTLR.destroy(); dtTLR = null; } } catch(e) {}
+      // Removed table-modern class
+      dtTLR = $('#tLrTable').DataTable({ pageLength: 10, lengthMenu: [[10,20,50,100,-1],[10,20,50,100,'All']], order: [[1,'desc']], dom: 'frtip' });
+    }
+
+    // --- MODIFIED: Uses subtle badge classes from booking.html/CSS ---
+    async function renderTInvoices(transporterId) {
+      const tbody = document.querySelector('#tInvoicesTable tbody');
+      if (!tbody) return; tbody.innerHTML = '';
+      const invSnap = await get(ref(db, `users/${coreAccountId}/invoices`));
+      const list = [];
+      if (invSnap.exists()) {
+        invSnap.forEach(c => { const inv = c.val(); if ((inv.invoiceType === 'market' || inv.invoiceType === 'market_company') && inv.transporterId === transporterId) list.push({ id: c.key, ...inv }); });
+      }
+      list.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const rows = [];
+      for (const inv of list) {
+        const lrCount = inv.lrEntries ? inv.lrEntries.length : 0;
+        const dateStr = new Date(inv.createdAt).toLocaleDateString('en-IN');
+        const total = Number(inv.grandTotal || 0);
+        let paid = 0;
+        if (Array.isArray(inv.lrEntries)) {
+          for (const entry of inv.lrEntries) {
+            const lrId = typeof entry === 'string' ? entry : (entry && entry.lrId);
+            if (!lrId) continue;
+            const lrSnap = await get(ref(db, `users/${coreAccountId}/lrReports/${lrId}`));
+            if (lrSnap.exists()) paid += lrSnap.val()?.paidAmount || 0;
+          }
+        }
+        // Use subtle badge styles
+        let badge = '<span class="status-badge status-overdue">Pending</span>';
+        if (paid >= (total - 0.01)) badge = '<span class="status-badge status-paid">Paid</span>';
+        else if (paid > 0) badge = '<span class="status-badge status-pending">Partial</span>';
+        
+        const amount = (total || 0).toFixed(2);
+        rows.push(`<tr><td>${inv.invoiceNumber}</td><td>${dateStr}</td><td>${lrCount}</td><td class='text-end'>₹${amount}</td><td class='text-center'>${badge}</td><td class='text-center'><button class='btn btn-sm btn-outline-primary' onclick="window.location.href='invoice.html?view=${inv.id}'"><i class='fas fa-eye'></i></button></td></tr>`);
+      }
+      document.getElementById('tInvoiceCount').textContent = list.length;
+      tbody.innerHTML = rows.join('');
+      try { if (dtTInv) { dtTInv.destroy(); dtTInv = null; } } catch(e) {}
+      // Removed table-modern class
+      dtTInv = $('#tInvoicesTable').DataTable({ pageLength: 10, lengthMenu: [[10,20,50,100,-1],[10,20,50,100,'All']], order: [[1,'desc']], dom: 'frtip' });
+    }
+
+    // --- MODIFIED: Uses table-striped table-bordered for DataTables ---
+    async function renderTPayments(transporterId) {
+      const tbody = document.querySelector('#tPaymentsTable tbody');
+      if (!tbody) return; tbody.innerHTML = '';
+      const paymentsRef = query(ref(db, `users/${coreAccountId}/transporterPayments`), orderByChild('transporterId'), equalTo(transporterId));
+      const snap = await get(paymentsRef);
+      const rows = [];
+      if (snap.exists()) {
+        const list = [];
+        snap.forEach(c => list.push({ id: c.key, ...c.val() }));
+        list.sort((a,b) => new Date(b.date) - new Date(a.date));
+        list.forEach(p => rows.push(`<tr><td>${p.date || '—'}</td><td class='text-end'>₹${(p.amount||0).toFixed(2)}</td><td>${p.notes||''}</td><td class='text-end'><button class='btn btn-sm btn-outline-secondary me-1' onclick="window.editTransporterPayment('${p.id}')"><i class='fas fa-edit'></i></button><button class='btn btn-sm btn-outline-danger' onclick="window.deleteTransporterPayment('${p.id}', '${p.transporterId}', ${p.amount||0})"><i class='fas fa-trash'></i></button></td></tr>`));
+      }
+      tbody.innerHTML = rows.join('');
+      try { if (dtTPay) { dtTPay.destroy(); dtTPay = null; } } catch(e) {}
+      // Removed table-modern class
+      dtTPay = $('#tPaymentsTable').DataTable({ pageLength: 10, lengthMenu: [[10,20,50,100,-1],[10,20,50,100,'All']], order: [[0,'desc']], dom: 'frtip' });
+    }
+
+    async function loadTransporterInvoices(transporterId) {
+      if (!coreAccountId) return;
+      const list = document.getElementById('transporterInvoiceList');
+      list.innerHTML = '';
+      let count = 0;
+      const invSnap = await get(ref(db, `users/${coreAccountId}/invoices`));
+      if (invSnap.exists()) {
+        const invoices = [];
+        invSnap.forEach(c => {
+          const inv = c.val();
+          if ((inv.invoiceType === 'market' || inv.invoiceType === 'market_company') && inv.transporterId === transporterId) {
+            invoices.push({ id: c.key, ...inv });
+          }
+        });
+        invoices.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        invoices.forEach(inv => {
+          count++;
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          li.innerHTML = `
+            <div>
+              <div class="fw-bold">${inv.invoiceNumber}</div>
+              <small class="text-muted">${new Date(inv.createdAt).toLocaleDateString('en-IN')} • LRs: ${inv.lrEntries ? inv.lrEntries.length : 0} • ₹${(inv.grandTotal || 0).toFixed(2)}</small>
+            </div>
+            <div>
+              <button class="btn btn-sm btn-outline-primary" onclick="window.location.href='invoice.html?view=${inv.id}'"><i class="fas fa-eye"></i></button>
+            </div>`;
+          list.appendChild(li);
+        });
+      }
+      document.getElementById('transporterInvoiceCount').textContent = count;
+    }
+
+
+    // Open invoice in new tab for a given LR
+    window.openInvoiceForLR = async (lrId) => {
+      if (!coreAccountId) return;
+      const lrSnap = await get(ref(db, `users/${coreAccountId}/lrReports/${lrId}`));
+      if (!lrSnap.exists()) return alert('LR not found');
+      const lr = lrSnap.val();
+      let invoiceId = lr.invoiceId;
+      if (!invoiceId) {
+        // fallback: scan invoices to find this LR in items
+        const invSnap = await get(ref(db, `users/${coreAccountId}/invoices`));
+        if (invSnap.exists()) {
+          invSnap.forEach(c => {
+            if (invoiceId) return;
+            const inv = c.val();
+            // CRITICAL FIX: The original code linked to lr-report.html. Changed to invoice.html
+            if (Array.isArray(inv.lrEntries) && inv.lrEntries.some(it => it.lrId === lrId)) {
+              invoiceId = c.key;
+            }
+          });
+        }
+      }
+      if (!invoiceId) return alert('No invoice linked to this LR');
+      window.open(`invoice.html?view=${invoiceId}`, '_blank');
+    };
+
+    window.editTransporter = (transporterId) => {
+      const transporterRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}`);
+      get(transporterRef).then(snapshot => {
+        if (snapshot.exists()) {
+          const transporter = snapshot.val();
+          renderTGeneralDetails(transporter);
+          nameInput.value = transporter.name;
+          contactPersonInput.value = transporter.contactPerson || '';
+          mobileInput.value = transporter.mobile || '';
+          gstinInput.value = transporter.gstin || '';
+          addressInput.value = transporter.address || '';
+          currentEditingTransporterId = transporterId;
+          formTitle.textContent = "Edit Transporter";
+          transporterForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i>Update Transporter';
+          cancelBtn.style.display = "inline-block";
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    };
+
+    // **NEW**: Edit Transporter Payment
+    window.editTransporterPayment = async (paymentId) => {
+      if (!coreAccountId) return;
+      const paymentRef = ref(db, `users/${coreAccountId}/transporterPayments/${paymentId}`);
+      const snapshot = await get(paymentRef);
+      if (!snapshot.exists()) {
+        alert('Payment record not found.');
+        return;
+      }
+      const payment = snapshot.val();
+      currentEditingPaymentId = paymentId;
+
+      // Use the payment form in the offcanvas
+      document.getElementById('tPayAmount').value = payment.amount;
+      document.getElementById('tPayDate').value = payment.date;
+      document.getElementById('tPayNotes').value = payment.notes || '';
+
+      const submitBtn = document.querySelector('#tPaymentForm button[type="submit"]');
+      submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Payment';
+      
+      // We don't have a cancel button on the offcanvas payment form in the provided HTML, 
+      // but in the hidden view: document.getElementById('cancelPaymentEditBtn').style.display = 'inline-block';
+      
+      document.getElementById('tPaymentForm').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // **NEW**: Delete Transporter Payment
+    window.deleteTransporterPayment = async (paymentId, transporterId, amount) => {
+      if (!confirm(`Are you sure you want to delete this payment of ₹${amount}? This action cannot be undone.`)) {
+        return;
+      }
+      if (!coreAccountId || !transporterId) return alert("Error: Account or Transporter ID is missing.");
+
+      try {
+        const updates = {};
+        updates[`/users/${coreAccountId}/transporterPayments/${paymentId}`] = null;
+
+        const outstandingRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}/outstanding`);
+        // Keeping the runTransaction logic from the original file for integrity, though dynamic outstanding calc is preferred
+        await runTransaction(outstandingRef, (currentValue) => {
+           return (currentValue || 0) + amount; // Reverse the deduction
+        });
+        
+        // Use remove to delete the payment
+        await remove(ref(db, `users/${coreAccountId}/transporterPayments/${paymentId}`));
+        
+        await updateTransporterLRStatus(transporterId);
+
+        alert('Payment deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting payment:', error);
+        alert('Failed to delete payment: ' + error.message);
+      }
+    };
+
+    window.deleteTransporter = (transporterId) => {
+      if (confirm("Are you sure you want to delete this transporter?")) {
+        remove(ref(db, `users/${coreAccountId}/transporters/${transporterId}`))
+          .then(() => alert("Transporter deleted."))
+          .catch(err => alert("Error deleting transporter: " + err.message));
+      }
+    };
+
+    function resetForm() {
+      transporterForm.reset();
+      currentEditingTransporterId = null;
+      formTitle.textContent = "Add New Transporter";
+      transporterForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-plus me-2"></i>Save Transporter';
+      cancelBtn.style.display = "none";
+    }
+
+    // **NEW**: Reset the payment form
+    function resetPaymentForm() {
+      document.getElementById('transporterPaymentForm').reset();
+      // Offcanvas form reset
+      document.getElementById('tPaymentForm').reset();
+      document.getElementById('tPayDate').valueAsDate = new Date();
+      
+      document.getElementById('paymentDate').valueAsDate = new Date();
+      currentEditingPaymentId = null;
+      
+      const submitBtn = document.querySelector('#transporterPaymentForm button[type="submit"]');
+      submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Payment';
+      document.getElementById('cancelPaymentEditBtn').style.display = 'none';
+
+      const tSubmitBtn = document.querySelector('#tPaymentForm button[type="submit"]');
+      tSubmitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Payment';
+    }
+
+    cancelBtn.addEventListener("click", resetForm);
+
+  </script>
+</body>
+</html>

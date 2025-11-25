@@ -1,0 +1,99 @@
+// ... existing code ...
+    // Initialize the page
+    $(document).ready(function() {
+      // First check authentication status
+      auth.onAuthStateChanged((user) => {
+        if (!user) {
+          window.location.href = 'login.html';
+        } else {
+          getCoreAccountId(user.uid).then((id) => {
+            coreAccountId = id;
+            console.log("Core Account ID determined for trip expenses:", coreAccountId);
+            loadWorkVendors(); 
+            loadLRData(); // Now safe to call
+          });
+          
+          setupEventListeners();
+          
+          // Set default date range to current month
+          const today = new Date();
+          const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+          $('#fromDate').val(formatDateForInput(firstDay));
+          $('#toDate').val(formatDateForInput(today));
+        }
+      });
+    });
+    <thead>
+      </thead>
+      <tbody>
+        </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="5" style="text-align:right;">Page Total:</th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </tfoot>
+    </table>
+    // Load LR data from Firebase
+    function loadLRData() {
+      if (!coreAccountId) {
+        console.warn('LR data cannot be loaded yet. coreAccountId not ready.');
+        return;
+      }
+      const lrRef = db.ref(`users/${coreAccountId}/lr`);
+      lrRef.on('value', (snapshot) => {
+        lrData = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const lr = child.val();
+            lr.id = child.key;
+            lrData.push(lr);
+          });
+        }
+        // **FIX**: Initialize DataTable *after* data is loaded
+        applyFilters(); 
+        initializeDataTable();
+      });
+    }
+    const user = auth.currentUser;
+    if (!user || !coreAccountId) { 
+      console.error('No authenticated user or coreAccountId found. Retrying in 500ms...');
+      setTimeout(loadLRData, 500);
+      return;
+    }
+    
+    const lrRef = db.ref(`users/${coreAccountId}/lrReports`);
+    lrRef.on('value', (snapshot) => {
+      lrData = [];
+      const data = snapshot.val() || {};
+      
+      if (data) {
+        Object.keys(data).forEach(key => {
+          lrData.push({ id: key, ...data[key] });
+        });
+        
+        processLRDataForExpenses();
+        populateTable();
+        initializeDataTable(); // **FIX**: Moved here
+        updateVehicleFilter();
+        updateSummaryCards();
+      } else {
+        // Check if expensesTable is defined before using .clear()
+        if (expensesTable) expensesTable.clear().draw(); 
+        updateSummaryCards();
+      }
+    }, (error) => {
+      console.error('Error loading LR data:', error);
+    });
+    }
