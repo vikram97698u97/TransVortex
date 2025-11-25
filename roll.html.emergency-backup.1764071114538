@@ -8,10 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Load secure configuration first -->
-  <script src="evm.js"></script>
-  <script src="config-loader.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     :root {
@@ -223,34 +219,16 @@
     function setUpdated(){ document.getElementById('updatedAt').textContent = new Date().toLocaleString(); }
 
     /* ===== Firebase init ===== */
-    // Load Firebase configuration securely from EVM
-    let firebaseConfig;
-    
-    try {
-      // Get Firebase configuration from secure EVM system
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-      
-      // Check if we're using fallback values
-      if (ConfigManager.isUsingFallbackValues()) {
-        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
-      } else {
-        console.log('✅ Firebase configuration loaded securely from EVM');
-      }
-    } catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = {
-        apiKey: "placeholder-key",
-        authDomain: "placeholder.firebaseapp.com", 
-        databaseURL: "https://placeholder.firebaseio.com",
-        projectId: "placeholder-project",
-        storageBucket: "placeholder.appspot.com",
-        messagingSenderId: "000000000000",
-        appId: "1:000000000000:web:placeholder",
-        measurementId: "G-XXXXXXXXX"
-      };
-    }
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
