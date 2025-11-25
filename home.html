@@ -4,14 +4,14 @@
     
 
     <!-- 🔥 Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    
+    
+    
     
     <!-- 🔐 Configuration Loading -->
     <script src="evm.js"></script>
-    <script src="secure-api-loader.js"></script>
+    
 
 
 
@@ -437,13 +437,13 @@
 
   </style>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    
+    
+    
     
     <script src="evm.js"></script>
-    <script src="secure-api-loader.js"></script>
+    
 </head>
 <body>
   <div id="navbar-placeholder"></div>
@@ -880,7 +880,11 @@
         // Initialize Firebase if not already initialized
         if (!firebase.apps.length) {
           if (!firebase.apps.length) {
+                    if (!firebase.apps.length) {
                     firebase.initializeApp(window.FIREBASE_CONFIG);
+                } else {
+                    firebase.app(); // Use existing app
+                };
                 };
           console.log('✅ Firebase initialized successfully');
           console.log('🔥 Database URL:', window.FIREBASE_CONFIG.databaseURL);
