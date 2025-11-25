@@ -1496,6 +1496,224 @@
         console.error('❌ Firebase initialization error:', error);
       }
     })();
+  </script><script>
+    // Data fetching functionality
+    (function() {
+      // Wait for Firebase to be ready
+      function waitForFirebase() {
+        return new Promise((resolve) => {
+          if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+            resolve();
+          } else {
+            setTimeout(() => waitForFirebase().then(resolve), 100);
+          }
+        });
+      }
+
+      // Initialize data fetching
+      waitForFirebase().then(() => {
+        console.log('🚀 Starting data fetching...');
+        
+        // Check authentication first
+        firebase.auth().onAuthStateChanged((user) => {
+          if (user) {
+            console.log('✅ User authenticated:', user.uid);
+            console.log('📊 Starting to fetch data...');
+            fetchDataForUser(user);
+          } else {
+            console.log('❌ User not authenticated');
+            window.location.href = 'login.html';
+          }
+        });
+      });
+
+      // Fetch data for the authenticated user
+      function fetchDataForUser(user) {
+        const database = firebase.database();
+        const userId = user.uid;
+        
+        console.log('🔍 Fetching data for user:', userId);
+
+        // Fetch user profile
+        database.ref('users/' + userId + '/profile').once('value')
+          .then((snapshot) => {
+            const profile = snapshot.val();
+            console.log('👤 User profile:', profile);
+            if (profile) {
+              updateUserInfo(profile);
+            }
+          })
+          .catch((error) => {
+            console.error('❌ Error fetching profile:', error);
+          });
+
+        // Fetch vehicles
+        database.ref('users/' + userId + '/vehicles').once('value')
+          .then((snapshot) => {
+            const vehicles = snapshot.val();
+            console.log('🚚 Vehicles data:', vehicles);
+            if (vehicles) {
+              updateVehiclesData(vehicles);
+            }
+          })
+          .catch((error) => {
+            console.error('❌ Error fetching vehicles:', error);
+          });
+
+        // Fetch drivers
+        database.ref('users/' + userId + '/drivers').once('value')
+          .then((snapshot) => {
+            const drivers = snapshot.val();
+            console.log('👷 Drivers data:', drivers);
+            if (drivers) {
+              updateDriversData(drivers);
+            }
+          })
+          .catch((error) => {
+            console.error('❌ Error fetching drivers:', error);
+          });
+
+        // Fetch LR reports
+        database.ref('users/' + userId + '/lrReports').once('value')
+          .then((snapshot) => {
+            const lrReports = snapshot.val();
+            console.log('📋 LR Reports data:', lrReports);
+            if (lrReports) {
+              updateLRReportsData(lrReports);
+            }
+          })
+          .catch((error) => {
+            console.error('❌ Error fetching LR reports:', error);
+          });
+
+        // Fetch clients
+        database.ref('users/' + userId + '/clients').once('value')
+          .then((snapshot) => {
+            const clients = snapshot.val();
+            console.log('🤝 Clients data:', clients);
+            if (clients) {
+              updateClientsData(clients);
+            }
+          })
+          .catch((error) => {
+            console.error('❌ Error fetching clients:', error);
+          });
+      }
+
+      // Update UI with user info
+      function updateUserInfo(profile) {
+        const userNameElement = document.getElementById('userName');
+        const userEmailElement = document.getElementById('userEmail');
+        const companyNameElement = document.getElementById('companyName');
+        
+        if (userNameElement) userNameElement.textContent = profile.name || profile.companyName || 'User';
+        if (userEmailElement) userEmailElement.textContent = profile.email || '';
+        if (companyNameElement) companyNameElement.textContent = profile.companyName || 'Transport Company';
+      }
+
+      // Update vehicles data
+      function updateVehiclesData(vehicles) {
+        const vehicleCountElement = document.getElementById('vehicleCount');
+        const vehicleListElement = document.getElementById('vehicleList');
+        
+        if (vehicleCountElement) {
+          vehicleCountElement.textContent = Object.keys(vehicles).length;
+        }
+        
+        if (vehicleListElement) {
+          vehicleListElement.innerHTML = '';
+          Object.values(vehicles).forEach(vehicle => {
+            const vehicleItem = document.createElement('div');
+            vehicleItem.className = 'vehicle-item';
+            vehicleItem.innerHTML = `
+              <div class="vehicle-info">
+                <strong>${vehicle.vehicleNumber}</strong>
+                <span>${vehicle.vehicleType || 'N/A'}</span>
+              </div>
+            `;
+            vehicleListElement.appendChild(vehicleItem);
+          });
+        }
+      }
+
+      // Update drivers data
+      function updateDriversData(drivers) {
+        const driverCountElement = document.getElementById('driverCount');
+        const driverListElement = document.getElementById('driverList');
+        
+        if (driverCountElement) {
+          driverCountElement.textContent = Object.keys(drivers).length;
+        }
+        
+        if (driverListElement) {
+          driverListElement.innerHTML = '';
+          Object.values(drivers).forEach(driver => {
+            const driverItem = document.createElement('div');
+            driverItem.className = 'driver-item';
+            driverItem.innerHTML = `
+              <div class="driver-info">
+                <strong>${driver.name}</strong>
+                <span>${driver.contact || 'N/A'}</span>
+              </div>
+            `;
+            driverListElement.appendChild(driverItem);
+          });
+        }
+      }
+
+      // Update LR reports data
+      function updateLRReportsData(lrReports) {
+        const lrCountElement = document.getElementById('lrCount');
+        const lrListElement = document.getElementById('lrList');
+        
+        if (lrCountElement) {
+          lrCountElement.textContent = Object.keys(lrReports).length;
+        }
+        
+        if (lrListElement) {
+          lrListElement.innerHTML = '';
+          Object.values(lrReports).forEach(lr => {
+            const lrItem = document.createElement('div');
+            lrItem.className = 'lr-item';
+            lrItem.innerHTML = `
+              <div class="lr-info">
+                <strong>LR: ${lr.lrNumber || 'N/A'}</strong>
+                <span>${lr.consigneeName || 'N/A'}</span>
+                <small>${lr.date || 'N/A'}</small>
+              </div>
+            `;
+            lrListElement.appendChild(lrItem);
+          });
+        }
+      }
+
+      // Update clients data
+      function updateClientsData(clients) {
+        const clientCountElement = document.getElementById('clientCount');
+        const clientListElement = document.getElementById('clientList');
+        
+        if (clientCountElement) {
+          clientCountElement.textContent = Object.keys(clients).length;
+        }
+        
+        if (clientListElement) {
+          clientListElement.innerHTML = '';
+          Object.values(clients).forEach(client => {
+            const clientItem = document.createElement('div');
+            clientItem.className = 'client-item';
+            clientItem.innerHTML = `
+              <div class="client-info">
+                <strong>${client.name}</strong>
+                <span>${client.mobile || 'N/A'}</span>
+              </div>
+            `;
+            clientListElement.appendChild(clientItem);
+          });
+        }
+      }
+
+      console.log('✅ Data fetching functions ready');
+    })();
   </script>
   
   <script src="navbar-loader.js"></script>
