@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="secure-api-loader.js"></script>
 <!-- 🔐 Secure .env Configuration Loader -->
     <!-- 🔐 Secure Configuration - Loaded from .env -->
     <script>
@@ -11,16 +12,7 @@
             
             // Firebase configuration from .env
             if (!window.FIREBASE_CONFIG) {
-                window.FIREBASE_CONFIG = {
-                    apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-                    authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-                    databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-                    projectId: "transport-dashboard-ad69a",
-                    storageBucket: "transport-dashboard-ad69a.appspot.com",
-                    messagingSenderId: "526889676196",
-                    appId: "1:526889676196:web:66032c80a4aede690ae531",
-                    measurementId: "G-7F9R7HJYDH"
-                };
+                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
             }
             
             // Cloudinary configuration from .env
@@ -86,7 +78,7 @@
                 window.API_CONFIG = {
                     email: {
                         provider: "sendgrid",
-                        apiKey: "your-sendgrid-api-key-here",
+                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
                         from: "noreply@transvortex.online",
                         fromName: "TransVortex Transport"
                     },
