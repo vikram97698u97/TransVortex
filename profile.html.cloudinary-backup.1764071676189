@@ -594,9 +594,9 @@
 
         // **NEW**: Cloudinary upload logic
         async function uploadToCloudinary(file) {
-            const CLOUDINARY_CLOUD_NAME = ConfigManager.getCloudinaryConfig().cloudName;
-            const CLOUDINARY_UPLOAD_PRESET = ConfigManager.getCloudinaryConfig().uploadPreset;
-            const url = `ConfigManager.getCloudinaryConfig().apiUrl`;
+            const CLOUDINARY_CLOUD_NAME = 'doqapn15f';
+            const CLOUDINARY_UPLOAD_PRESET = 'vehicle-driver';
+            const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
             const formData = new FormData();
             formData.append('file', file);

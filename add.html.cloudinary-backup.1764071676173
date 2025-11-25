@@ -1038,8 +1038,8 @@
     import { getDatabase, ref, onValue, update, push, remove, get, set, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
      // Cloudinary Configuration
-     const CLOUDINARY_CLOUD_NAME = ConfigManager.getCloudinaryConfig().cloudName;
-     const CLOUDINARY_UPLOAD_PRESET = ConfigManager.getCloudinaryConfig().uploadPreset;
+     const CLOUDINARY_CLOUD_NAME = 'doqapn15f';
+     const CLOUDINARY_UPLOAD_PRESET = 'vehicle-driver';
 
      // Ensure DOM-related setups run once DOM is ready
      document.addEventListener('DOMContentLoaded', () => {
@@ -1101,7 +1101,7 @@
        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
        
        const response = await fetch(
-         `ConfigManager.getCloudinaryConfig().apiUrl`,
+         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
          {
            method: 'POST',
            body: formData,
