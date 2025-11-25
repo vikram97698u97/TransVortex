@@ -1955,7 +1955,7 @@
        document.getElementById('tcoSalary').textContent = `₹0.00`; // Will be updated by salary payments query
        
        // 1. Load Vehicle Work data for this vehicle
-       const lrQuery = query(ref(database, `users/${coreAccountId}/lrReports`), orderByChild('truckNumber'), equalTo(vehicle.vehicleNumber));
+       const lrQuery = query(ref(database, `users/${coreAccountId}/lrReports`), orderByChild('truckNumber'), equalTo(vehicle.vehicleNumber);
         get(lrQuery).then(snapshot => {
             if (snapshot.exists() {
     // If block
