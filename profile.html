@@ -351,36 +351,23 @@
     <!-- **NEW**: Hidden file input for logo upload -->
     <input type="file" id="logoUploadInput" accept="image/*" style="display: none;">
 
-      <!-- Load secure configuration first -->
-  <script src="evm.js"></script>
-  <script src="config-loader.js"></script>
-
-  <script src="navbar-loader.js"></script>
+    <script src="navbar-loader.js"></script>
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
         // Firebase configuration (replace with your actual config)
-        // Load Firebase configuration securely from EVM
-    let firebaseConfig;
-    
-    try {
-      // Get Firebase configuration from secure EVM system
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-      
-      // Check if we're using fallback values
-      if (ConfigManager.isUsingFallbackValues()) {
-        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
-      } else {
-        console.log('✅ Firebase configuration loaded securely from EVM');
-      }
-    } catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-    }
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+            authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+            databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "transport-dashboard-ad69a",
+            storageBucket: "transport-dashboard-ad69a.appspot.com",
+            messagingSenderId: "526889676196",
+            appId: "1:526889676196:web:66032c80a4aede690ae531",
+            measurementId: "G-7F9R7HJYDH"
+        };
 
         // Initialize Firebase
         let app;
@@ -585,10 +572,8 @@
 
         // **NEW**: Cloudinary upload logic
         async function uploadToCloudinary(file) {
-            // Load Cloudinary configuration securely from EVM
-    const cloudinaryConfig = ConfigManager.getCloudinaryConfig();
-    const CLOUDINARY_CLOUD_NAME = cloudinaryConfig.cloudName;
-    const CLOUDINARY_UPLOAD_PRESET = cloudinaryConfig.uploadPreset;
+            const CLOUDINARY_CLOUD_NAME = 'doqapn15f';
+            const CLOUDINARY_UPLOAD_PRESET = 'vehicle-driver';
             const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
             const formData = new FormData();

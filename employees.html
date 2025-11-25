@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -233,7 +234,6 @@
                   <th>Salary (₹)</th>
                   <th class="text-end">Total LRs Generated</th>
                   <th class="text-end">Total Weight (MT)</th>
-                  <th class="text-center">Attendance (%)</th>
                   <th class="text-center">Actions</th>
                 </tr>
               </thead>
@@ -389,56 +389,24 @@
   <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
-  <!-- Load secure configuration first -->
-  <script src="evm.js"></script>
-  <script src="config-loader.js"></script>
-
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
   <script>
-    // Load Firebase configuration securely from EVM
-    let firebaseConfig;
-    
-    try {
-      // Get Firebase configuration from secure EVM system
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-      
-      // Check if we're using fallback values
-      if (ConfigManager.isUsingFallbackValues()) {
-        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
-        
-        // Show warning to user (optional - can be removed for production)
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-warning alert-dismissible fade show';
-        alertDiv.innerHTML = `
-          <strong>⚠️ Configuration Warning:</strong> Using fallback API keys. 
-          Please configure the evm.js file with your actual Firebase credentials for full functionality.
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.querySelector('.main-content').prepend(alertDiv);
-      } else {
-        console.log('✅ Firebase configuration loaded securely from EVM');
-      }
-    } catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Show error to user
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'alert alert-danger alert-dismissible fade show';
-      errorDiv.innerHTML = `
-        <strong>❌ Configuration Error:</strong> Failed to load secure configuration. 
-        Please ensure evm.js and config-loader.js files are properly configured.
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      `;
-      document.querySelector('.main-content').prepend(errorDiv);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-    }
+    // Firebase configuration - (Configuration remains the same)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
 
-    // Initialize Firebase with secure configuration
+    // Initialize Firebase
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
@@ -500,52 +468,6 @@
     
     function formatCurrency(amount) {
         return `₹${(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    }
-    
-    function calculateAttendancePercentage(employeeId) {
-        const today = new Date();
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-        
-        // Get all days in the current month up to today
-        const firstDay = new Date(currentYear, currentMonth, 1);
-        const daysInMonth = [];
-        
-        for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
-            daysInMonth.push(d.toISOString().split('T')[0]);
-        }
-        
-        if (daysInMonth.length === 0) return 0;
-        
-        let totalPoints = 0;
-        let earnedPoints = 0;
-        
-        daysInMonth.forEach(dateStr => {
-            const lookupKey = `${employeeId}_${dateStr}`;
-            const attendance = allAttendance[lookupKey];
-            
-            if (attendance) {
-                const status = attendance.status;
-                if (status === 'Present') {
-                    earnedPoints += 1;
-                    totalPoints += 1;
-                } else if (status === 'Half Day') {
-                    earnedPoints += 0.5;
-                    totalPoints += 1;
-                } else if (status === 'Leave') {
-                    // Leave is neutral - doesn't affect percentage
-                    totalPoints += 1;
-                } else if (status === 'Absent') {
-                    totalPoints += 1;
-                    // Absent gets 0 points
-                }
-            } else {
-                // No record means absent
-                totalPoints += 1;
-            }
-        });
-        
-        return totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
     }
     
     // --- FIREBASE AUTH STATE CHANGE ---
@@ -614,16 +536,15 @@
         destroy: true,
         deferRender: true,
         "columns": [
-          { "width": "22%", "className": "text-start" },  // Name
-          { "width": "18%", "className": "text-start" },  // Designation  
-          { "width": "12%", "className": "text-end" },    // Salary
-          { "width": "13%", "className": "text-end" },    // Total LRs Generated
-          { "width": "13%", "className": "text-end" },    // Total Weight
-          { "width": "12%", "className": "text-center" }, // Attendance %
+          { "width": "25%", "className": "text-start" },  // Name
+          { "width": "20%", "className": "text-start" },  // Designation  
+          { "width": "15%", "className": "text-end" },    // Salary
+          { "width": "15%", "className": "text-end" },    // Total LRs Generated
+          { "width": "15%", "className": "text-end" },    // Total Weight
           { "width": "10%", "className": "text-center", "orderable": false }  // Actions
         ],
         "columnDefs": [
-          { "orderable": false, "targets": [6] }
+          { "orderable": false, "targets": [5] }
         ],
         scrollX: true,
         scrollY: false,
@@ -829,19 +750,12 @@
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteEmployee('${emp.id}')" title="Delete"><i class="fas fa-trash"></i></button>
                 </div>`;
 
-            // Calculate attendance percentage
-            const attendancePercentage = calculateAttendancePercentage(emp.id);
-            const attendanceDisplay = `${attendancePercentage}%`;
-            const attendanceColor = attendancePercentage >= 90 ? 'text-success' : 
-                                  attendancePercentage >= 75 ? 'text-warning' : 'text-danger';
-
             return [
                 `${rankIcon} ${emp.name || ''}`,
                 emp.designation || '',
                 formatCurrency(emp.salary),
                 emp.lrCount.toLocaleString('en-IN'),
                 emp.totalWeight.toFixed(2),
-                `<span class="${attendanceColor} fw-bold">${attendanceDisplay}</span>`,
                 actions
             ];
         });

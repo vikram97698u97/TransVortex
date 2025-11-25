@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Activate Your Subscription - Transvortex</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Load secure configuration first -->
-  <script src="evm.js"></script>
-  <script src="config-loader.js"></script>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -328,25 +324,16 @@
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     // Firebase configuration
-    // Load Firebase configuration securely from EVM
-    let firebaseConfig;
-    
-    try {
-      // Get Firebase configuration from secure EVM system
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-      
-      // Check if we're using fallback values
-      if (ConfigManager.isUsingFallbackValues()) {
-        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
-      } else {
-        console.log('✅ Firebase configuration loaded securely from EVM');
-      }
-    } catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-    }
+    const firebaseConfig = {
+        apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+        authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+        databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "transport-dashboard-ad69a",
+        storageBucket: "transport-dashboard-ad69a.appspot.com",
+        messagingSenderId: "526889676196",
+        appId: "1:526889676196:web:66032c80a4aede690ae531",
+        measurementId: "G-7F9R7HJYDH"
+    };
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);

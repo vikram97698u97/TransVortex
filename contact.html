@@ -246,10 +246,6 @@
   </footer>
 
   <!-- Firebase SDK -->
-    <!-- Load secure configuration first -->
-  <script src="evm.js"></script>
-  <script src="config-loader.js"></script>
-
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
@@ -287,25 +283,16 @@
           try {
             // Initialize Firebase if not already initialized
             if (!firebase.apps.length) {
-              // Load Firebase configuration securely from EVM
-    let firebaseConfig;
-    
-    try {
-      // Get Firebase configuration from secure EVM system
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-      
-      // Check if we're using fallback values
-      if (ConfigManager.isUsingFallbackValues()) {
-        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
-      } else {
-        console.log('✅ Firebase configuration loaded securely from EVM');
-      }
-    } catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-    }
+              const firebaseConfig = {
+                apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+                authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+                databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "transport-dashboard-ad69a",
+                storageBucket: "transport-dashboard-ad69a.appspot.com",
+                messagingSenderId: "526889676196",
+                appId: "1:526889676196:web:66032c80a4aede690ae531",
+                measurementId: "G-7F9R7HJYDH"
+              };
               firebase.initializeApp(firebaseConfig);
             }
             

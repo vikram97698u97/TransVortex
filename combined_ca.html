@@ -6,10 +6,6 @@
   <title>Monthly Trip Reports</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Load secure configuration first -->
-  <script src="evm.js"></script>
-  <script src="config-loader.js"></script>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -586,25 +582,16 @@
     let previewExpenseChartInstance = null;
 
 
-    // Load Firebase configuration securely from EVM
-    let firebaseConfig;
-    
-    try {
-      // Get Firebase configuration from secure EVM system
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-      
-      // Check if we're using fallback values
-      if (ConfigManager.isUsingFallbackValues()) {
-        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
-      } else {
-        console.log('✅ Firebase configuration loaded securely from EVM');
-      }
-    } catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = ConfigManager.getFirebaseConfig();
-    }
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -1388,11 +1375,11 @@
             startY: y + 5,
             head: [['Metric', 'Value', 'Details']],
             body: [
-                ['Total Revenue', `₹${(totalRevenue || 0).toFixed(2)}`, 'Billing Amount from all LR\'s'],
-                ['Total Expenses', `₹${(totalExpenses || 0).toFixed(2)}`, 'Trip Costs + Fuel + Shortage'],
-                ['Net Profit', `₹${(netProfit || 0).toFixed(2)}`, `Margin: ${profitMargin}%`],
-                ['Total Trips', (totalTrips || 0).toString(), 'Trips Completed in Period'],
-                ['Total Distance', `${(totalKM || 0).toFixed(0)} KM`, `Total Tonne Carried: ${(totalTonnes || 0).toFixed(2)} MT`]
+                ['Total Revenue', `₹${cleanNumber(totalRevenue)}`, 'Billing Amount from all LR\'s'],
+                ['Total Expenses', `₹${cleanNumber(totalExpenses)}`, 'Trip Costs + Fuel + Shortage'],
+                ['Net Profit', `₹${cleanNumber(netProfit)}`, `Margin: ${profitMargin}%`],
+                ['Total Trips', `${totalTrips}`, 'Trips Completed in Period'],
+                ['Total Distance', `${totalKM.toFixed(0)} KM`, `Total Tonne Carried: ${totalTonnes.toFixed(2)} MT`],
             ],
             theme: 'striped',
             headStyles: { fillColor: [46, 139, 87], textColor: 255, fontStyle: 'bold' },
@@ -1432,11 +1419,11 @@
             startY: y,
             head: [['Cost Component', 'Total for Period (₹)', 'Per Trip Cost (₹)', 'Details']],
             body: [
-                ['Monthly EMI Installment', `₹${(totalEmiPaid || 0).toFixed(2)}`, '-', `Monthly: ₹${(monthlyInstallment || 0).toFixed(2)}`],
-                ['Driver Salary Cost', `₹${(totalSalaryPaid || 0).toFixed(2)}`, `₹${(totalSalaryPaid / totalTrips || 0).toFixed(2)}`, `Monthly: ₹${(driverSalary || 0).toFixed(2)}`],
-                ['Vehicle Work/Repairs', `₹${(totalWork || 0).toFixed(2)}`, `₹${(totalWork / totalTrips || 0).toFixed(2)}`, 'Maintenance expenses from LRs'],
-                ['Fuel (Diesel) Expenses', `₹${(totalDiesel || 0).toFixed(2)}`, `₹${(totalDiesel / totalTrips || 0).toFixed(2)}`, `Total KM: ${(totalKM || 0).toFixed(0)} KM`],
-                ['**Overall Total TCO**', `₹${((totalEmiPaid || 0) + (totalSalaryPaid || 0) + (totalWork || 0) + (totalDiesel || 0)).toFixed(2)}`, '-', 'Fixed + Variable Cost Drivers']
+                ['Monthly EMI Installment', `₹${cleanNumber(totalEmiPaid)}`, '-', `Monthly: ₹${cleanNumber(monthlyInstallment)}`],
+                ['Driver Salary Cost', `₹${cleanNumber(totalSalaryPaid)}`, `₹${cleanNumber(totalSalaryPaid / totalTrips)}`, `Monthly: ₹${cleanNumber(driverSalary)}`],
+                ['Vehicle Work/Repairs', `₹${cleanNumber(totalWork)}`, `₹${cleanNumber(totalWork / totalTrips)}`, 'Maintenance expenses from LRs'],
+                ['Fuel (Diesel) Expenses', `₹${cleanNumber(totalDiesel)}`, `₹${cleanNumber(totalDiesel / totalTrips)}`, `Total KM: ${totalKM.toFixed(0)} KM`],
+                ['**Overall Total TCO**', `₹${cleanNumber(totalEmiPaid + totalSalaryPaid + totalWork + totalDiesel)}`, '-', 'Fixed + Variable Cost Drivers'],
             ],
             theme: 'grid',
             headStyles: { fillColor: [67, 97, 238], textColor: 255, fontStyle: 'bold' },
@@ -1457,12 +1444,7 @@
         
         const tripLogData = trips.map(trip => {
             const tripKm = (trip.endKm || 0) - (trip.startKm || 0);
-            
-            // --- START FIX ---
-            const profitValue = (trip.profit || 0).toFixed(2); // Get the raw fixed value
-            const profitText = `₹${profitValue}`.toString().replace(/[\u2212]/g, '-'); // FIX: Replace Unicode Minus (U+2212) with ASCII Hyphen (-)
-            const profitClass = parseFloat(profitValue) >= 0 ? { textColor: [40, 167, 69] } : { textColor: [220, 53, 69] };
-            // --- END FIX ---
+            const profitClass = trip.profit >= 0 ? { textColor: [40, 167, 69] } : { textColor: [220, 53, 69] };
             
             return [
                 formatDateForFile(new Date(trip.date)),
@@ -1472,9 +1454,9 @@
                 (trip.endKm || 0).toFixed(0),
                 tripKm.toFixed(0),
                 (trip.weight || 0).toFixed(2),
-                `₹${(trip.gain || 0).toFixed(2)}`.toString(),
-                `₹${(trip.total || 0).toFixed(2)}`.toString(),
-                { content: profitText, styles: profitClass } // Use the cleaned profitText
+                `₹${cleanNumber(trip.gain)}`,
+                `₹${cleanNumber(trip.total)}`,
+                { content: `₹${cleanNumber(trip.profit)}`, styles: profitClass }
             ];
         });
         
