@@ -1464,6 +1464,39 @@
   <script src="navbar-loader.js"></script>
   
 <script>
+          // Add missing toggle functions
+          function toggleVehicleInput(isOwnVehicle) {
+            const vehicleSelectContainer = document.getElementById('vehicleSelectContainer');
+            const vehicleNumberContainer = document.getElementById('vehicleNumberContainer');
+            if (vehicleSelectContainer && vehicleNumberContainer) {
+              if (isOwnVehicle) {
+                vehicleSelectContainer.style.display = 'block';
+                vehicleNumberContainer.style.display = 'none';
+              } else {
+                vehicleSelectContainer.style.display = 'none';
+                vehicleNumberContainer.style.display = 'block';
+              }
+            }
+          }
+
+          function toggleEditVehicleInput(isOwnVehicle) {
+            const editVehicleSelectContainer = document.getElementById('editVehicleSelectContainer');
+            const editVehicleNumberContainer = document.getElementById('editVehicleNumberContainer');
+            if (editVehicleSelectContainer && editVehicleNumberContainer) {
+              if (isOwnVehicle) {
+                editVehicleSelectContainer.style.display = 'block';
+                editVehicleNumberContainer.style.display = 'none';
+              } else {
+                editVehicleSelectContainer.style.display = 'none';
+                editVehicleNumberContainer.style.display = 'block';
+              }
+            }
+          }
+
+          // Make functions globally available
+          window.toggleVehicleInput = toggleVehicleInput;
+          window.toggleEditVehicleInput = toggleEditVehicleInput;
+
           document.addEventListener('DOMContentLoaded', function() {
             // Initial call to set the correct state based on the checkbox
             const vehicleTypeToggle = document.getElementById('vehicleTypeToggle');
