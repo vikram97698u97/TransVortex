@@ -131,7 +131,6 @@
     @keyframes slideIn {
       from { transform: translateX(100%); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
-    }
     
     /* Loading animation */
     .loading {
@@ -145,7 +144,6 @@
     }
     @keyframes spin {
       to { transform: rotate(360deg); }
-    }
     
     /* Custom button styles */
     .download-btn {
@@ -188,7 +186,6 @@
         right: 20px;
         max-width: none;
       }
-    }
 
     /* Extra styles for the detail view */
     .detail-view-card {
@@ -515,7 +512,6 @@
       .card-view-container {
         grid-template-columns: 1fr;
       }
-    }
   </style>
 </head>
 <body>
@@ -1053,11 +1049,12 @@
          initTabInterface();
        } catch (e) {
          console.warn('initTabInterface() not ready yet:', e);
-       }
-     });
+       });
      
      // Resize image before upload
      async function resizeImage(file, maxWidth, quality = 0.8) {
+    // Function implementation
+}
        return new Promise((resolve) => {
          const reader = new FileReader();
          reader.onload = (event) => {
@@ -1068,6 +1065,8 @@
              let height = img.height;
 
              if (width > maxWidth) {
+    // If block
+}
                height = Math.round((height * maxWidth) / width);
                width = maxWidth;
              }
@@ -1079,8 +1078,8 @@
              
              // Convert to Blob with specified quality
              canvas.toBlob(
-               (blob) => resolve(blob),
-               'image/jpeg',
+               (blob) => resolve(blob)
+               'image/jpeg'
                quality
              );
            };
@@ -1093,17 +1092,23 @@
      // Upload to Cloudinary
      // Safety check for Cloudinary configuration
     if (!window.CLOUDINARY_CONFIG) {
+    // If block
+}
         console.error('❌ Cloudinary configuration not loaded!');
         return;
     }
     
-    if (!(window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.cloudName) || !(window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.uploadPreset)) {
+    if (!(window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.cloudName) || !(window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.uploadPreset) {
         console.error('❌ Cloudinary configuration incomplete!');
         return;
     }
     
     async function uploadToCloudinary(blob, fileName = 'document.jpg') {
+    // Function implementation
+}
        if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    // If block
+}
          throw new Error('Cloudinary configuration is missing');
        }
        
@@ -1112,14 +1117,16 @@
        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
        
        const response = await fetch(
-         (window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.apiUrl),
+         (window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.apiUrl)
          {
-           method: 'POST',
-           body: formData,
+           method: 'POST'
+           body: formData
          }
        );
        
        if (!response.ok) {
+    // If block
+}
          const error = await response.text();
          throw new Error(`Cloudinary upload failed: ${error}`);
        }
@@ -1132,13 +1139,14 @@
     // Show preview
     const previewContainer = document.getElementById('licenseImagePreview');
     if (previewContainer) {
+    // If block
+}
         previewContainer.innerHTML = `
             <img src="${imageUrl}" alt="License Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 10px;">
             <br>
             <small class="text-success">Image uploaded successfully!</small>
         `;
     }
-     }
      
      // Set up PDF.js worker
      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
@@ -1153,11 +1161,12 @@
       
       // Check if we're using fallback values
       if (false) {
+    // If block
+}
         console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
       } else {
         console.log('✅ Firebase configuration loaded securely from EVM');
-      }
-    } catch (error) {
+      } catch (error) {
       console.error('❌ Failed to load Firebase configuration:', error);
       
       // Use fallback configuration to prevent complete failure
@@ -1224,7 +1233,11 @@
 
      // Show branch information
      function showBranchInfo() {
+    // Function implementation
+}
        if (accountType === 'branch') {
+    // If block
+}
          branchInfoText.innerHTML = `
            You are viewing shared data from <strong>${branchType}</strong> branch. 
            Your changes will sync across all branches in real-time.
@@ -1232,10 +1245,11 @@
          `;
          branchInfo.style.display = 'block';
        }
-     }
      
      // Setup real-time listeners for multi-branch sync
      function setupRealtimeListeners() {
+    // Function implementation
+}
        // Listen for vehicle data changes
        const vehiclesRef = ref(database, `users/${coreAccountId}/vehicles`);
        onValue(vehiclesRef, (snapshot) => {
@@ -1267,14 +1281,17 @@
        const clientsRef = ref(database, `users/${coreAccountId}/clients`);
        onValue(clientsRef, (snapshot) => {
          allClients = {};
-         if (snapshot.exists()) {
+         if (snapshot.exists() {
+    // If block
+}
            snapshot.forEach(child => { allClients[child.key] = child.val(); });
-         }
-       });
+         });
      }
 
      // **NEW**: Function to check and enforce vehicle limit
      function checkVehicleLimit() {
+    // Function implementation
+}
         if (!coreAccountId) return;
 
         const limitContainer = document.getElementById('limitReachedContainer');
@@ -1287,28 +1304,32 @@
             const sub = userData?.subscription || userData?.profile?.subscription;
 
             if (sub) {
+    // If block
+}
               vehicleLimit = sub.vehicleLimit || 0;
               currentVehicleCount = Object.keys(allVehiclesData).length;
 
               // -1 means unlimited
               if (vehicleLimit !== -1 && currentVehicleCount >= vehicleLimit) {
+    // If block
+}
                   limitMessage.textContent = `You have reached your plan limit of ${vehicleLimit} vehicles.`;
                   limitContainer.style.display = 'block';
                   saveVehicleBtn.disabled = true;
               } else {
                   limitContainer.style.display = 'none';
                   saveVehicleBtn.disabled = false;
-              }
-            } else {
+              } else {
                 limitMessage.textContent = 'Could not verify your subscription plan. Please contact support.';
                 limitContainer.style.display = 'block';
                 saveVehicleBtn.disabled = true;
-            }
-        });
+            });
      }
      
      // Initialize the tab interface
      function initTabInterface() {
+    // Function implementation
+}
        // Vehicle List listeners (NEW)
        vehicleEntriesPerPageSelect.addEventListener('change', function() {
          itemsPerPage = parseInt(this.value);
@@ -1318,17 +1339,19 @@
        
        vehiclePrevPageBtn.addEventListener('click', function() {
          if (currentPage > 1) {
+    // If block
+}
            currentPage--;
            renderVehicleListWithPagination();
-         }
-       });
+         });
        
        vehicleNextPageBtn.addEventListener('click', function() {
          if (currentPage < totalPages) {
+    // If block
+}
            currentPage++;
            renderVehicleListWithPagination();
-         }
-       });
+         });
        
        // Initial render
        renderVehicleListWithPagination();
@@ -1336,6 +1359,8 @@
      
      // Calculate pagination and render vehicle list
      function renderVehicleListWithPagination() {
+    // Function implementation
+}
        // Get filtered data
        filterVehicleData();
        
@@ -1363,6 +1388,8 @@
      
      // Filter data based on search and filter inputs (Vehicle)
      function filterVehicleData() {
+    // Function implementation
+}
        const searchText = vehicleSearchInput.value ? vehicleSearchInput.value.toLowerCase() : '';
        const filterValue = vehicleTypeFilter.value || '';
        
@@ -1375,6 +1402,8 @@
          const matchesFilter = filterValue === '' || vehicleType === filterValue;
          
          if (matchesSearch && matchesFilter) {
+    // If block
+}
            result[key] = vehicle;
          }
          
@@ -1384,6 +1413,8 @@
 
      // Get driver's salary status for the current month (STUB)
      function getDriverSalaryStatus(driverName) {
+    // Function implementation
+}
        // This function requires a full implementation to check driver payments against monthly salary
        // For now, it will return a default status to prevent errors.
        if (!driverName || Object.keys(allDriverPayments).length === 0) {
@@ -1394,11 +1425,15 @@
      
      // Sort data based on salary status (STUB)
      function sortDataBySalaryStatus(order = 'asc') {
+    // Function implementation
+}
        // Stubbed out as this logic is no longer strictly necessary with separate lists.
      }
      
      // Update pagination controls (Vehicle List)
      function updatePaginationControls(totalItems) {
+    // Function implementation
+}
        vehiclePrevPageBtn.disabled = currentPage === 1;
        vehicleNextPageBtn.disabled = currentPage === totalPages;
        
@@ -1411,6 +1446,8 @@
      
      // Generate page tabs (Vehicle List)
      function generatePageTabs() {
+    // Function implementation
+}
        vehicleTabNavigation.innerHTML = '';
        addVehicleTab(1);
        
@@ -1424,10 +1461,11 @@
        if (endPage < totalPages - 1) { addVehicleEllipsis(); }
        
        if (totalPages > 1) { addVehicleTab(totalPages); }
-     }
      
      // Add a tab for a specific page (Vehicle List)
      function addVehicleTab(pageNumber) {
+    // Function implementation
+}
        const tab = document.createElement('button');
        tab.className = `btn btn-sm ${pageNumber === currentPage ? 'btn-primary' : 'btn-outline-primary'}`;
        tab.textContent = pageNumber;
@@ -1440,6 +1478,8 @@
      
      // Add ellipsis to tab navigation (Vehicle List)
      function addVehicleEllipsis() {
+    // Function implementation
+}
        const ellipsis = document.createElement('span');
        ellipsis.className = 'px-2';
        ellipsis.textContent = '...';
@@ -1448,6 +1488,8 @@
      
      // Render the Vehicle table with given data (NEW)
      function renderVehicleTable(data) {
+    // Function implementation
+}
        vehicleTableBody.innerHTML = '';
        
        if (Object.keys(data).length === 0) {
@@ -1502,13 +1544,17 @@
      
      // Initialize Driver List DataTable (NEW)
      function renderDriverListTable() {
+    // Function implementation
+}
          if (!driverTable) {
+    // If block
+}
              driverTable = $('#driverTable').DataTable({
-                 searching: true,
-                 paging: true,
-                 info: true,
-                 autoWidth: false,
-                 order: [[0, 'asc']],
+                 searching: true
+                 paging: true
+                 info: true
+                 autoWidth: false
+                 order: [[0, 'asc']]
                  columnDefs: [
                    { targets: [4, 6], orderable: false }
                  ]
@@ -1527,17 +1573,17 @@
             
             // **CHANGE**: Added View button to driver table
             driverTable.row.add([
-                driver.driverName || 'N/A',
-                driver.driverFatherName || '-',
-                driver.contactNumber || '-',
-                `${driver.driverLicense || '-'} ${licenseStatus ? `<div class="expiry-status ${licenseStatus.class}">${licenseStatus.text}</div>` : ''}`,
+                driver.driverName || 'N/A'
+                driver.driverFatherName || '-'
+                driver.contactNumber || '-'
+                `${driver.driverLicense || '-'} ${licenseStatus ? `<div class="expiry-status ${licenseStatus.class}">${licenseStatus.text}</div>` : ''}`
                 driver.licenseImageUrl ? 
                     `<a href="${driver.licenseImageUrl}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
                        <i class="fas fa-image"></i> View
                      </a>
                      <img src="${driver.licenseImageUrl}" alt="License" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; cursor: pointer;" onclick="window.open('${driver.licenseImageUrl}', '_blank')">` : 
-                    '<span class="text-muted">No image</span>',
-                `₹${(driver.monthlySalary || 0).toFixed(2)}`, 
+                    '<span class="text-muted">No image</span>'
+                `₹${(driver.monthlySalary || 0).toFixed(2)}`
                 `<button class="btn btn-sm btn-outline-info me-1" onclick="viewDriverDetails('${key}')" title="View Payroll & Details">
                    <i class="fas fa-eye"></i> View
                  </button>
@@ -1554,6 +1600,8 @@
      
      // Edit Driver Entry (NEW)
      function editDriverEntry(key) {
+    // Function implementation
+}
         const driver = allDriversData[key];
         if (!driver) return;
 
@@ -1571,6 +1619,8 @@
         // Show existing license image info
         const licensePreview = document.getElementById('licensePreview');
         if (driver.licenseImageUrl) {
+    // If block
+}
             licensePreview.src = driver.licenseImageUrl;
             licensePreview.style.display = 'block';
             document.getElementById('licenseFileInfo').textContent = 'An image is already uploaded. Choose a new file to replace it.';
@@ -1591,7 +1641,11 @@
 
     // Delete Driver Entry (NEW)
     function deleteDriverEntry(key) {
-        if (confirm('Are you sure you want to delete this driver entry? This will also unassign them from any vehicle.')) {
+    // Function implementation
+}
+        if (confirm('Are you sure you want to delete this driver entry? This will also unassign them from any vehicle.') {
+    // If block
+}
             // Delete the driver
             Promise.resolve()
                 .then(() => { 
@@ -1604,10 +1658,11 @@
                     showError('Error deleting driver entry: ' + error.message);
                 });
         }
-    }
      
      // **NEW**: View Driver Details (including payment history)
      function viewDriverDetails(driverKey) {
+    // Function implementation
+}
         const driver = allDriversData[driverKey];
         if (!driver) return;
         
@@ -1618,12 +1673,14 @@
 
         // Initialize DataTable inside modal if not already
         if (!modalDriverPaymentTable) {
+    // If block
+}
             modalDriverPaymentTable = $('#modalPaymentHistoryTable').DataTable({
-                searching: false,
-                paging: true,
-                info: true,
-                autoWidth: false,
-                order: [[0, 'desc']],
+                searching: false
+                paging: true
+                info: true
+                autoWidth: false
+                order: [[0, 'desc']]
                 columnDefs: [
                    { targets: [3], orderable: false }
                  ]
@@ -1635,16 +1692,17 @@
         // Filter and add payment history rows
         Object.entries(allPayrollPayments).forEach(([key, payment]) => {
             if (payment.driverKey === driverKey) {
+    // If block
+}
                  modalDriverPaymentTable.row.add([
-                    payment.date || '-',
-                    `₹${(payment.amount || 0).toFixed(2)}`,
-                    payment.remarks || '-',
+                    payment.date || '-'
+                    `₹${(payment.amount || 0).toFixed(2)}`
+                    payment.remarks || '-'
                     `<button class="btn btn-sm btn-outline-danger" onclick="deletePayrollEntry('${key}')" title="Delete Payment">
                        <i class="fas fa-trash"></i>
                      </button>`
                 ]);
-            }
-        });
+            });
         modalDriverPaymentTable.draw();
 
         // Show the modal
@@ -1658,6 +1716,8 @@
      
      // Render the card view
      function renderVehicleCardView() {
+    // Function implementation
+}
        filterVehicleData();
        
        if (Object.keys(filteredVehiclesData).length === 0) {
@@ -1681,6 +1741,8 @@
 
      // Create a vehicle card
      function createVehicleCard(key, vehicle) {
+    // Function implementation
+}
        const card = document.createElement('div');
        card.className = 'vehicle-card';
        
@@ -1761,25 +1823,30 @@
      
      // Convert expiry status class to card status class
      function getStatusClass(expiryClass) {
+    // Function implementation
+}
        switch(expiryClass) {
          case 'expiry-valid': return 'status-valid';
          case 'expiry-warning': return 'status-warning';
          case 'expiry-expired': return 'status-expired';
          default: return 'status-warning';
        }
-     }
      
      // Format date for display
      function formatDate(date) {
+    // Function implementation
+}
        return date.toLocaleDateString('en-IN', {
-         day: '2-digit',
-         month: 'short',
+         day: '2-digit'
+         month: 'short'
          year: 'numeric'
        });
      }
      
      // Set up view toggle functionality (Vehicle List)
      function setupViewToggle() {
+    // Function implementation
+}
        // Clear old listeners by replacing elements
        const cardBtn = document.getElementById('vehicleCardViewBtn');
        const tableBtn = document.getElementById('vehicleTableViewBtn');
@@ -1807,6 +1874,8 @@
      
      // Get expiry status for a date
      function getExpiryStatus(expiryDate) {
+    // Function implementation
+}
        if (!expiryDate) return null;
        
        const today = new Date();
@@ -1818,16 +1887,21 @@
        const daysUntilExpiry = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
        
        if (daysUntilExpiry < 0) {
+    // If block
+}
          return { class: 'expiry-expired', text: 'Expired' };
        } else if (daysUntilExpiry <= 30) {
+    // If block
+}
          return { class: 'expiry-warning', text: `${daysUntilExpiry}d left` };
        } else {
          return { class: 'expiry-valid', text: 'Valid' };
        }
-     }
      
      // View details in detail view
      async function viewDetails(key) {
+    // Function implementation
+}
        const vehicle = allVehiclesData[key];
        if (!vehicle) return;
 
@@ -1861,6 +1935,8 @@
 
        // Initialize DataTables if they don't exist
        if (!detailDriverPaymentsTable) {
+    // If block
+}
            detailDriverPaymentsTable = $('#detailDriverPaymentsTable').DataTable({ "pageLength": 5, "searching": false, "info": false, "lengthChange": false, "order": [[0, "desc"]] });
        }
        if (!vehicleWorkTable) { // This is the table for the detail view
@@ -1881,33 +1957,38 @@
        // 1. Load Vehicle Work data for this vehicle
        const lrQuery = query(ref(database, `users/${coreAccountId}/lrReports`), orderByChild('truckNumber'), equalTo(vehicle.vehicleNumber));
         get(lrQuery).then(snapshot => {
-            if (snapshot.exists()) {
+            if (snapshot.exists() {
+    // If block
+}
                 snapshot.forEach(child => {
                     const lr = child.val();
                     const vehicleWorkAmount = parseFloat(lr.vehicleWorkAmount) || parseFloat(lr.vehicleWork) || 0;
                     if (vehicleWorkAmount > 0) {
+    // If block
+}
                         totalWorkExpenses += vehicleWorkAmount; 
                         vehicleWorkTable.row.add([
-                            lr.date || '-',
-                            `${lr.lrNumber || '-'} <a href="#" onclick="event.preventDefault(); viewLRDetails('${child.key}')" class="ms-2 text-primary" title="View LR Details"><i class="fas fa-eye"></i></a>`,
-                            lr.fromLocation || '-',
-                            lr.toLocation || '-',
+                            lr.date || '-'
+                            `${lr.lrNumber || '-'} <a href="#" onclick="event.preventDefault(); viewLRDetails('${child.key}')" class="ms-2 text-primary" title="View LR Details"><i class="fas fa-eye"></i></a>`
+                            lr.fromLocation || '-'
+                            lr.toLocation || '-'
                             `₹${vehicleWorkAmount.toFixed(2)}`
                         ]);
                     }
 
                     const emptyWorkAmount = lr.emptyTripData ? (parseFloat(lr.emptyTripData.vehicleWorkAmount) || parseFloat(lr.emptyTripData.vehicleWork) || 0) : 0;
                     if (emptyWorkAmount > 0) {
+    // If block
+}
                         totalWorkExpenses += emptyWorkAmount; 
                         vehicleWorkTable.row.add([
-                            lr.date || '-',
-                            `${lr.lrNumber || '-'} (Return) <a href="#" onclick="event.preventDefault(); viewLRDetails('${child.key}')" class="ms-2 text-primary" title="View LR Details"><i class="fas fa-eye"></i></a>`, 
-                            lr.toLocation || '-', 
-                            lr.fromLocation || '-', 
+                            lr.date || '-'
+                            `${lr.lrNumber || '-'} (Return) <a href="#" onclick="event.preventDefault(); viewLRDetails('${child.key}')" class="ms-2 text-primary" title="View LR Details"><i class="fas fa-eye"></i></a>`
+                            lr.toLocation || '-'
+                            lr.fromLocation || '-'
                             `₹${emptyWorkAmount.toFixed(2)}`
                         ]);
-                    }
-                });
+                    });
             }
             document.getElementById('tcoWork').textContent = `₹${totalWorkExpenses.toFixed(2)}`; 
             vehicleWorkTable.draw();
@@ -1917,7 +1998,9 @@
        // 2. Load Driver Payments for this vehicle
        const paymentQuery = query(ref(database, `users/${coreAccountId}/driverSalaryPayments`), orderByChild('vehicleNumber'), equalTo(vehicle.vehicleNumber));
         get(paymentQuery).then(snapshot => {
-            if (snapshot.exists()) {
+            if (snapshot.exists() {
+    // If block
+}
                 snapshot.forEach(child => {
                     const p = child.val();
                     totalDriverSalary += parseFloat(p.amount) || 0;
@@ -1930,19 +2013,24 @@
         });
 
         function updateTCOSummary(work, salary, emi) {
+    // Function implementation
+}
              const total = work + salary + emi;
              document.getElementById('tcoTotal').textContent = `₹${total.toFixed(2)}`;
         }
-     }
      
      // Hide detail view
      function hideDetailView() {
+    // Function implementation
+}
        document.getElementById('vehicleDetailView').classList.add('hidden');
        document.getElementById('mainView').classList.remove('hidden');
      }
      
      // Edit Vehicle entry (NEW)
      function editVehicleEntry(key) {
+    // Function implementation
+}
        const vehicle = allVehiclesData[key];
        if (!vehicle) return;
        
@@ -1956,12 +2044,12 @@
        document.getElementById('monthlyInstallment').value = vehicle.monthlyInstallment || '';
        
        document.getElementById('pucExpiryDate').value = vehicle.pucExpiry || null;
-       document.getElementById('insuranceExpiryDate').value = vehicle.insuranceExpiry,
+       document.getElementById('insuranceExpiryDate').value = vehicle.insuranceExpiry
                 vehicle.vehicleDocument ? 
                     `<a href="${vehicle.vehicleDocument}" target="_blank" class="btn btn-sm btn-outline-info me-1">
                        <i class="fas fa-file-pdf"></i> View
                      </a>` : 
-                    '<span class="text-muted">No document</span>',
+                    '<span class="text-muted">No document</span>'
                 `users/${coreAccountId}/vehicles/${key}`));
          }).then(() => {
              showSuccess('Vehicle entry deleted and driver unassigned successfully');
@@ -1969,22 +2057,27 @@
              showError('Error deleting vehicle entry: ' + error.message);
          });
        }
-     }
      
      // Download Vehicle Excel (NEW)
      function downloadVehicleExcel() {
+    // Function implementation
+}
        // ... (Implementation to export vehicle list) ...
        showError('Excel download for Vehicles is not fully implemented in this restructured version.');
      }
 
      // Download Driver Excel (NEW)
      function downloadDriverExcel() {
+    // Function implementation
+}
        // ... (Implementation to export driver list) ...
        showError('Excel download for Drivers is not fully implemented in this restructured version.');
      }
 
      // Update Driver Salary Summary (STUB)
      function updateDriverSalarySummary() {
+    // Function implementation
+}
          document.getElementById('summaryTotalDrivers').textContent = Object.keys(allDriversData).length;
          document.getElementById('summaryTotalPaid').textContent = '₹0.00';
          document.getElementById('summaryTotalPending').textContent = '₹0.00';
@@ -1993,6 +2086,8 @@
      
      // Show success message
      function showSuccess(message) {
+    // Function implementation
+}
        const successMessage = document.getElementById('successMessage');
        const successText = document.getElementById('successText');
        successText.textContent = message;
@@ -2005,6 +2100,8 @@
      
      // Show error message
      function showError(message) {
+    // Function implementation
+}
        const errorMessage = document.getElementById('errorMessage');
        const errorText = document.getElementById('errorText');
        errorText.textContent = message;
@@ -2013,16 +2110,22 @@
      
      // Initialize the application
      function initApp() {
+    // Function implementation
+}
        try { setupViewToggle(); } catch (e) {}
        try { initTabInterface(); } catch (e) {}
 
        onAuthStateChanged(auth, (user) => {
          if (user) {
+    // If block
+}
            currentUser = user;
            
            get(ref(database, 'users/' + user.uid)).then((snapshot) => {
              const userData = snapshot.val();
              if (userData) {
+    // If block
+}
                accountType = userData.accountType || 'core';
                coreAccountId = userData.coreAccountId || user.uid;
                branchType = userData.branchType || 'main';
@@ -2031,12 +2134,10 @@
                checkVehicleLimit();
                initTabInterface();
                renderDriverListTable(); // Initialize driver table
-             }
-           });
+             });
          } else {
            window.location.href = 'login.html';
-         }
-       });
+         });
      }
      
      // Initialize when DOM is loaded
@@ -2070,12 +2171,16 @@
      
      // Set up file info display
      function setupFileInfo(fileInputId, fileInfoId, previewId) {
+    // Function implementation
+}
        // ... (The original implementation is correct and remains here) ...
        document.getElementById(fileInputId).addEventListener('change', function(e) {
          const file = e.target.files[0];
          const fileInfo = document.getElementById(fileInfoId);
          
          if (file) {
+    // If block
+}
            fileInfo.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
          } else {
            fileInfo.textContent = '';
@@ -2083,20 +2188,27 @@
 
          // Handle image preview
          const preview = document.getElementById(previewId);
-         if (preview && file && file.type.startsWith('image/')) {
+         if (preview && file && file.type.startsWith('image/') {
+    // If block
+}
             const reader = new FileReader();
             reader.onload = (e) => { preview.src = e.target.result; preview.style.display = 'block'; };
             reader.readAsDataURL(file);
          } else if (preview) {
+    // If block
+}
             preview.style.display = 'none';
-         }
-       });
+         });
      }
      
      // Debounce function for search
      function debounce(func, wait) {
+    // Function implementation
+}
        let timeout;
        return function executedFunction(...args) {
+    // Function implementation
+}
          const later = () => {
            clearTimeout(timeout);
            func(...args);
@@ -2108,6 +2220,8 @@
      
      // Handle Vehicle form submission (NEW)
      async function handleVehicleFormSubmit(e) {
+    // Function implementation
+}
        e.preventDefault();
        
        const saveBtn = document.getElementById('saveVehicleBtn');
@@ -2118,10 +2232,13 @@
          saveBtn.innerHTML = '<span class="loading"></span> Processing...';
          
          if (!isEditingVehicle) {
+    // If block
+}
             if (vehicleLimit !== -1 && currentVehicleCount >= vehicleLimit) {
+    // If block
+}
                 throw new Error("Vehicle limit reached. Please upgrade your plan to add more vehicles.");
             }
-         }
 
          const newVehicleNumber = document.getElementById('vehicleNumber').value.trim().toUpperCase();
          const isDuplicate = Object.entries(allVehiclesData).some(
@@ -2131,24 +2248,28 @@
              key !== editingVehicleKey 
          );
          if (isDuplicate) {
+    // If block
+}
            throw new Error(`A vehicle with the number "${newVehicleNumber}" already exists.`);
          }
          
          // **FIX**: Validation change to only require vehicleNumber
          if (!newVehicleNumber) {
+    // If block
+}
            throw new Error('Vehicle number is required');
          }
 
 
          // Vehicle data only
          const formData = {
-           vehicleNumber: newVehicleNumber,
+           vehicleNumber: newVehicleNumber
            vehicleType: document.getElementById('vehicleType').value.trim(), // Corrected typo from vehicleType
-           vehicleModel: document.getElementById('vehicleModel').value.trim(),
-           monthlyInstallment: parseFloat(document.getElementById('monthlyInstallment').value) || 0,
+           vehicleModel: document.getElementById('vehicleModel').value.trim()
+           monthlyInstallment: parseFloat(document.getElementById('monthlyInstallment').value) || 0
            lastEndingKm: 0, // **NEW**: Initialize lastEndingKm for new vehicles
-           lastUpdated: new Date().toISOString(),
-           lastUpdatedBy: currentUser.uid,
+           lastUpdated: new Date().toISOString()
+           lastUpdatedBy: currentUser.uid
            lastUpdatedByName: currentUser.displayName || currentUser.email
          };
 
@@ -2161,6 +2282,8 @@
          
          const pucFile = document.getElementById('pucFile').files[0];
          if (pucFile) {
+    // If block
+}
            uploadPromises.push(
              uploadFileWithProgress(pucFile, 'pucFileUrl', 'pucProgress', 'PUC')
            );
@@ -2168,6 +2291,8 @@
          
          const insuranceFile = document.getElementById('insuranceFile').files[0];
          if (insuranceFile) {
+    // If block
+}
            uploadPromises.push(
              uploadFileWithProgress(insuranceFile, 'insuranceFileUrl', 'insuranceProgress', 'Insurance')
            );
@@ -2175,12 +2300,16 @@
          
          const fitnessFile = document.getElementById('fitnessFile').files[0];
          if (fitnessFile) {
+    // If block
+}
            uploadPromises.push(
              uploadFileWithProgress(fitnessFile, 'fitnessFileUrl', 'fitnessProgress', 'Fitness')
            );
          }
          
          if (uploadPromises.length > 0) {
+    // If block
+}
            const uploadResults = await Promise.all(uploadPromises);
            uploadResults.forEach(result => {
              formData[result.field] = result.url;
@@ -2192,6 +2321,8 @@
 
          let savePromise;
          if (isEditingVehicle && editingVehicleKey) {
+    // If block
+}
            savePromise = update(ref(database, `users/${coreAccountId}/vehicles/${editingVehicleKey}`), finalData);
          } else {
            savePromise = push(ref(database, `users/${coreAccountId}/vehicles`), finalData);
@@ -2210,21 +2341,22 @@
          saveBtn.disabled = false;
          saveBtn.innerHTML = originalText;
        }
-     }
 
      // Handle Driver form submission (NEW)
      // Handle driver form submission
     async function handleDriverFormSubmit(e) {
+    // Function implementation
+}
         e.preventDefault();
         
         try {
             const formData = {
-                driverName: document.getElementById('driverName').value,
-                driverFatherName: document.getElementById('driverFatherName').value,
-                contactNumber: document.getElementById('contactNumber').value,
-                driverLicense: document.getElementById('driverLicense').value,
-                licenseExpiry: document.getElementById('licenseExpiry').value,
-                monthlySalary: parseFloat(document.getElementById('monthlySalary').value) || 0,
+                driverName: document.getElementById('driverName').value
+                driverFatherName: document.getElementById('driverFatherName').value
+                contactNumber: document.getElementById('contactNumber').value
+                driverLicense: document.getElementById('driverLicense').value
+                licenseExpiry: document.getElementById('licenseExpiry').value
+                monthlySalary: parseFloat(document.getElementById('monthlySalary').value) || 0
                 licenseImageUrl: window.currentDriverLicenseUrl || null, // Store uploaded image URL
                 createdAt: new Date().toISOString()
             };
@@ -2246,29 +2378,32 @@
         } catch (error) {
             console.error('Error saving driver:', error);
             showNotification('Error saving driver: ' + error.message, 'error');
-        }
-    }" already exists.`);
+        }" already exists.`);
             }
 
             const formData = {
-                driverName: document.getElementById('driverName').value.trim(),
-                driverFatherName: document.getElementById('driverFatherName').value.trim(),
-                contactNumber: document.getElementById('driverContactNumber').value.trim(),
-                driverLicense: newDriverLicense,
-                licenseExpiry: document.getElementById('licenseExpiryDate').value || null,
-                monthlySalary: parseFloat(document.getElementById('monthlySalary').value) || 0,
-                lastUpdated: new Date().toISOString(),
-                lastUpdatedBy: currentUser.uid,
+                driverName: document.getElementById('driverName').value.trim()
+                driverFatherName: document.getElementById('driverFatherName').value.trim()
+                contactNumber: document.getElementById('driverContactNumber').value.trim()
+                driverLicense: newDriverLicense
+                licenseExpiry: document.getElementById('licenseExpiryDate').value || null
+                monthlySalary: parseFloat(document.getElementById('monthlySalary').value) || 0
+                lastUpdated: new Date().toISOString()
+                lastUpdatedBy: currentUser.uid
                 lastUpdatedByName: currentUser.displayName || currentUser.email
             };
 
             if (!formData.driverName || !formData.contactNumber || !formData.driverLicense || !formData.monthlySalary) {
+    // If block
+}
                 throw new Error('Driver name, contact, license, and monthly salary are required');
             }
 
             // Upload license image
             const licenseFile = document.getElementById('licenseImage').files[0];
             if (licenseFile) {
+    // If block
+}
                 const result = await uploadFileWithProgress(licenseFile, 'licenseImageUrl', 'licenseProgress', 'License Image');
                 formData.licenseImageUrl = result.url;
             }
@@ -2277,6 +2412,8 @@
             let savePromise;
             let driverKey = editingDriverKey;
             if (isEditingDriver && editingDriverKey) {
+    // If block
+}
                 // Update existing entry
                 savePromise = update(ref(database, `users/${coreAccountId}/drivers/${editingDriverKey}`), formData);
             } else {
@@ -2299,10 +2436,11 @@
             saveBtn.disabled = false;
             saveBtn.innerHTML = originalText;
         }
-    }
     
     // NEW: Handle Payroll form submission
     async function handlePayrollFormSubmit(e) {
+    // Function implementation
+}
         e.preventDefault();
 
         const saveBtn = document.getElementById('savePayrollBtn');
@@ -2322,17 +2460,19 @@
                 throw new Error('Please fill out all required fields with valid data.');
             }
             if (!driver) {
+    // If block
+}
                 throw new Error('Selected driver not found in the database.');
             }
 
             const paymentData = {
-                driverKey: driverKey,
+                driverKey: driverKey
                 driverName: driver.driverName, // Denormalize for easier querying/display
-                date: date,
-                amount: amount,
-                remarks: remarks,
-                recordedAt: new Date().toISOString(),
-                recordedBy: currentUser.uid,
+                date: date
+                amount: amount
+                remarks: remarks
+                recordedAt: new Date().toISOString()
+                recordedBy: currentUser.uid
                 recordedByName: currentUser.displayName || currentUser.email
             };
 
@@ -2348,17 +2488,22 @@
             saveBtn.disabled = false;
             saveBtn.innerHTML = originalText;
         }
-    }
     
     // NEW: Delete Payroll Entry
     function deletePayrollEntry(key) {
-        if (confirm('Are you sure you want to delete this payment record? This action cannot be undone.')) {
+    // Function implementation
+}
+        if (confirm('Are you sure you want to delete this payment record? This action cannot be undone.') {
+    // If block
+}
             remove(ref(database, `users/${coreAccountId}/driverPayments/${key}`))
                 .then(() => {
                     showSuccess('Payment record deleted successfully.');
                     // Re-render the driver details modal if it's open (or close it)
                     const modalEl = document.getElementById('driverDetailModal');
-                    if (modalEl.classList.contains('show')) {
+                    if (modalEl.classList.contains('show') {
+    // If block
+}
                         // Find the driver key associated with this deleted payment (if possible) 
                         // For simplicity, we just reload the table if modal is open, or rely on realtime listener
                         // Since allPayrollPayments updates via onValue, the modal's table can be repopulated.
@@ -2366,22 +2511,24 @@
                         // Find the key of the driver currently in the modal
                         const driverKey = Object.keys(allDriversData).find(key => allDriversData[key].driverName === currentDriverName);
                         if(driverKey) {
+    // If block
+}
                            viewDriverDetails(driverKey); // Re-render the table content
                         } else {
                            // If we can't find the key, close the modal to prevent errors
                            bootstrap.Modal.getInstance(modalEl).hide();
                         }
-                    }
                 })
                 .catch((error) => {
                     showError('Error deleting payment record: ' + error.message);
                 });
         }
-    }
 
 
      // Cancel Driver edit (NEW)
      function cancelDriverEdit() {
+    // Function implementation
+}
        isEditingDriver = false;
        editingDriverKey = null;
 
@@ -2398,6 +2545,8 @@
      
      // Upload file with progress tracking
      async function uploadFileWithProgress(file, fieldName, progressElementId, fileType) {
+    // Function implementation
+}
        const progressElement = document.getElementById(progressElementId);
        
        try {
@@ -2420,10 +2569,11 @@
          progressElement.innerHTML = `Error uploading ${fileType}: ${error.message}`;
          throw error;
        }
-     }
      
      // **NEW**: Logic for the "Add More Vehicles" modal
      function setupAddVehiclesModal() {
+    // Function implementation
+}
         const addVehiclesModal = new bootstrap.Modal(document.getElementById('addVehiclesModal'));
         const addMoreBtn = document.getElementById('addMoreVehiclesBtn');
         const addOnCostEl = document.getElementById('addOnCost');
@@ -2438,6 +2588,8 @@
         vehiclesToAddSelect.addEventListener('change', calculateAddOnCost);
 
         function calculateAddOnCost() {
+    // Function implementation
+}
             const vehicles = parseInt(vehiclesToAddSelect.value, 10);
             const cost = vehicles * 80; // Your pricing: ₹80 per vehicle
             addOnCostEl.textContent = `₹${cost}`;
@@ -2453,7 +2605,9 @@
 
                 const subRef = ref(database, `users/${coreAccountId}/subscription`);
                 const snapshot = await get(subRef);
-                if (!snapshot.exists()) {
+                if (!snapshot.exists() {
+    // If block
+}
                     throw new Error("Subscription data not found.");
                 }
 
@@ -2465,7 +2619,7 @@
                 const newRate = currentRate + additionalCost;
 
                 await update(subRef, {
-                    vehicleLimit: newLimit,
+                    vehicleLimit: newLimit
                     monthlyRate: newRate
                 });
 
@@ -2478,12 +2632,13 @@
             } finally {
                 confirmUpgradeBtn.disabled = false;
                 confirmUpgradeBtn.innerHTML = 'Confirm Upgrade';
-            }
-        });
+            });
      }
      
      // NEW: Populate the Driver Select dropdown in the Payroll form
      function populateDriverSelects() {
+    // Function implementation
+}
         const select = document.getElementById('paymentDriverSelect');
         if (!select) return;
 
@@ -2498,11 +2653,15 @@
 
      // View LR Details (Copied from booking.html, adapted for add.html)
      async function viewLRDetails(lrId) {
+    // Function implementation
+}
        const dataRoot = coreAccountId || currentUser.uid;
        const lrRef = ref(database, `users/${dataRoot}/lrReports/${lrId}`);
        const lrSnap = await get(lrRef);
 
-       if (!lrSnap.exists()) {
+       if (!lrSnap.exists() {
+    // If block
+}
          alert('LR report not found.');
          return;
        }
