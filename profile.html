@@ -587,7 +587,7 @@
         async function uploadToCloudinary(file) {
             const CLOUDINARY_CLOUD_NAME = window.CLOUDINARY_CONFIG.cloudName;
             const CLOUDINARY_UPLOAD_PRESET = window.CLOUDINARY_CONFIG.uploadPreset;
-            const url = `window.CLOUDINARY_CONFIG.apiUrl`;
+            const url = window.CLOUDINARY_CONFIG.apiUrl;
 
             const formData = new FormData();
             formData.append('file', file);

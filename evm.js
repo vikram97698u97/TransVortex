@@ -1,3 +1,7 @@
+if (typeof window.FIREBASE_CONFIG !== 'undefined') {
+    console.log('✅ FIREBASE_CONFIG already loaded, skipping...');
+} else {
+
 /**
  * 🔐 Netlify Free Plan Configuration
  * 
@@ -8,7 +12,7 @@
 // ========================================
 // 🔥 FIREBASE CONFIGURATION (Public)
 // ========================================
-const FIREBASE_CONFIG = {
+let FIREBASE_CONFIG = {
     apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
     authDomain: "transport-dashboard-ad69a.firebaseapp.com",
     databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -22,7 +26,7 @@ const FIREBASE_CONFIG = {
 // ========================================
 // ☁️ CLOUDINARY CONFIGURATION (Public)
 // ========================================
-const CLOUDINARY_CONFIG = {
+let CLOUDINARY_CONFIG = {
     cloudName: "doqapn15f",
     uploadPreset: "vehicle-driver",
     folders: {
@@ -40,14 +44,14 @@ const CLOUDINARY_CONFIG = {
 // ========================================
 // 🤖 AI CONFIGURATION (Public)
 // ========================================
-const AI_CONFIG = {
+let AI_CONFIG = {
     geminiApiKey: "YOUR_GEMINI_API_KEY_HERE" // Add if you have one
 };
 
 // ========================================
 // 🌍 ENVIRONMENT CONFIGURATION
 // ========================================
-const ENVIRONMENT = {
+let ENVIRONMENT = {
     name: "netlify-free",
     debug: false,
     apiBaseUrl: window.location.origin,
@@ -59,7 +63,7 @@ const ENVIRONMENT = {
 // ========================================
 // 📊 APPLICATION CONFIGURATION
 // ========================================
-const APP_CONFIG = {
+let APP_CONFIG = {
     name: "TransVortex Transport Management",
     description: "AI-Powered Transport Management System",
     version: "2.0.0",
@@ -79,7 +83,7 @@ const APP_CONFIG = {
 // ========================================
 // 🔐 SECURITY CONFIGURATION
 // ========================================
-const SECURITY_CONFIG = {
+let SECURITY_CONFIG = {
     sessionTimeout: 24 * 60 * 60 * 1000,
     maxLoginAttempts: 5,
     lockoutDuration: 15 * 60 * 1000,
@@ -91,7 +95,7 @@ const SECURITY_CONFIG = {
 // ========================================
 // 📱 NOTIFICATION CONFIGURATION
 // ========================================
-const NOTIFICATION_CONFIG = {
+let NOTIFICATION_CONFIG = {
     enableNotifications: true,
     defaultSound: true,
     vibration: true,

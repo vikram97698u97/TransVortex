@@ -1101,7 +1101,7 @@
        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
        
        const response = await fetch(
-         `window.CLOUDINARY_CONFIG.apiUrl`,
+         window.CLOUDINARY_CONFIG.apiUrl,
          {
            method: 'POST',
            body: formData,
