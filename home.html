@@ -11,7 +11,7 @@
             
             // Firebase configuration from .env
             if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
+                apiKey: (window.SECURE_FIREBASE_CONFIG && window.SECURE_FIREBASE_CONFIG.apiKey) || "";
             }
             
             // Cloudinary configuration from .env
@@ -77,7 +77,7 @@
                 window.API_CONFIG = {
                     email: {
                         provider: "sendgrid",
-                        apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "",
+                        apiKey: (window.SECURE_FIREBASE_CONFIG && window.SECURE_FIREBASE_CONFIG.apiKey) || "",
                         from: "noreply@transvortex.online",
                         fromName: "TransVortex Transport"
                     },
