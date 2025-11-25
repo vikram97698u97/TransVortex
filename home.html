@@ -869,50 +869,6 @@
   
   
     <script>
-    // Initialize Firebase with configuration from .env
-    document.addEventListener('DOMContentLoaded', function() {
-      try {
-        // Wait a moment for Firebase to be fully loaded
-        setTimeout(function() {
-          if (typeof firebase === 'undefined') {
-            console.error('❌ Firebase not loaded - check script order');
-            return;
-          }
-          
-          if (!window.FIREBASE_CONFIG) {
-            console.error('❌ Firebase configuration not loaded');
-            return;
-          }
-          
-          // Initialize Firebase if not already initialized
-          if (!firebase.apps.length) {
-            firebase.initializeApp(window.FIREBASE_CONFIG);
-            console.log('✅ Firebase initialized successfully');
-            console.log('🔥 Database URL:', window.FIREBASE_CONFIG.databaseURL);
-            console.log('🔥 Project ID:', window.FIREBASE_CONFIG.projectId);
-          } else {
-            console.log('✅ Firebase already initialized');
-            firebase.app(); // Use existing app
-          }
-          
-          // Initialize database and auth
-          const db = firebase.database();
-          const auth = firebase.auth();
-          
-          console.log('✅ Database and auth initialized');
-          
-          // Trigger data fetching
-          if (typeof startDataFetching === 'function') {
-            startDataFetching();
-          }
-          
-        }, 500); // Wait 500ms for Firebase to be ready
-        
-      } catch (error) {
-        console.error('❌ Firebase initialization error:', error);
-      }
-    });
-  </script><script>
     // Data fetching functionality
     (function() {
       // Wait for Firebase to be ready
@@ -1135,5 +1091,57 @@
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   
   
+
+  <!-- Firebase Initialization Script -->
+  <script>
+    // Initialize Firebase with configuration from .env
+    (function() {
+      try {
+        // Check if Firebase is loaded
+        if (typeof firebase === 'undefined') {
+          console.error('❌ Firebase SDK not loaded');
+          return;
+        }
+        
+        // Check if configuration is loaded
+        if (!window.FIREBASE_CONFIG) {
+          console.error('❌ Firebase configuration not loaded');
+          return;
+        }
+        
+        console.log('🔧 Initializing Firebase...');
+        console.log('🔥 Database URL:', window.FIREBASE_CONFIG.databaseURL);
+        console.log('🔥 Project ID:', window.FIREBASE_CONFIG.projectId);
+        
+        // Initialize Firebase if not already initialized
+        if (!firebase.apps.length) {
+          firebase.initializeApp(window.FIREBASE_CONFIG);
+          console.log('✅ Firebase initialized successfully');
+        } else {
+          console.log('✅ Firebase already initialized');
+          firebase.app(); // Use existing app
+        }
+        
+        // Initialize database and auth
+        const db = firebase.database();
+        const auth = firebase.auth();
+        
+        console.log('✅ Database and auth initialized');
+        
+        // Make available globally
+        window.db = db;
+        window.auth = auth;
+        
+        // Trigger data fetching if function exists
+        if (typeof startDataFetching === 'function') {
+          console.log('🚀 Starting data fetching...');
+          startDataFetching();
+        }
+        
+      } catch (error) {
+        console.error('❌ Firebase initialization error:', error);
+      }
+    })();
+  </script>
 </body>
 </html>
