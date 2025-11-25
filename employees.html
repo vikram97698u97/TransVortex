@@ -78,7 +78,7 @@
                 window.API_CONFIG = {
                     email: {
                         provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
+                        apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "",
                         from: "noreply@transvortex.online",
                         fromName: "TransVortex Transport"
                     },
