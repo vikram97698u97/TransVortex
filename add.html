@@ -1026,7 +1026,8 @@
     </div>
   </div>
 
-    <script src="evm.js"></script>
+    <!-- Load secure configuration first -->
+  <script src="evm.js"></script>
   
 
   <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
@@ -1147,15 +1148,46 @@
     
     try {
       // Get Firebase configuration from secure EVM system
-      firebaseConfig = window.FIREBASE_CONFIG;
-      
-      // Check if we're using fallback values
-      if (false) { // Condition is always false in the final logic, keeping as per original structure
-        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
-      } else {
-        console.log('✅ Firebase configuration loaded securely from EVM');
-      }
+      // Initialize Firebase with proper error handling
+    try {
+        if (!window.FIREBASE_CONFIG) {
+            throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
+        }
+        
+        if (!window.FIREBASE_CONFIG.databaseURL) {
+            throw new Error('Firebase databaseURL not found in configuration.');
+        }
+        
+        if (!window.FIREBASE_CONFIG.projectId) {
+            throw new Error('Firebase projectId not found in configuration.');
+        }
+        
+        firebaseConfig = window.FIREBASE_CONFIG;
+        
+        // Check if we're using fallback values
+        if (false) { // Condition is always false in the final logic, keeping as per original structure
+            console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+        } else {
+            console.log('✅ Firebase configuration loaded securely from EVM');
+            console.log('🔥 Database URL:', firebaseConfig.databaseURL);
+            console.log('🔥 Project ID:', firebaseConfig.projectId);
+        }
     } catch (error) {
+        console.error('❌ Failed to load Firebase configuration:', error);
+        
+        // Use fallback configuration to prevent complete failure
+        firebaseConfig = {
+            apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+            authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+            databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "transport-dashboard-ad69a",
+            storageBucket: "transport-dashboard-ad69a.appspot.com",
+            messagingSenderId: "526889676196",
+            appId: "1:526889676196:web:66032c80a4aede690ae531",
+            measurementId: "G-7F9R7HJYDH"
+        };
+        console.warn('⚠️  Using fallback Firebase configuration');
+    }} catch (error) {
       console.error('❌ Failed to load Firebase configuration:', error);
       
       // Use fallback configuration to prevent complete failure

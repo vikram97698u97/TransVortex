@@ -60,3 +60,12 @@ console.log('✅ EVM Loaded Successfully');
 console.log('🔥 Firebase Project:', window.FIREBASE_CONFIG.projectId);
 console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
 console.log('🌍 Environment:', window.ENVIRONMENT.name);
+
+// Export for Node.js environments (if needed)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        ENVIRONMENT: window.ENVIRONMENT,
+        FIREBASE_CONFIG: window.FIREBASE_CONFIG,
+        CLOUDINARY_CONFIG: window.CLOUDINARY_CONFIG
+    };
+}

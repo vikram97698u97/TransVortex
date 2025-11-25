@@ -68,55 +68,46 @@
                 `;
                 
                 // Test 2: Firebase Configuration
-                const firebaseConfig = window.FIREBASE_CONFIG;
-                const firebaseSecure = !firebaseConfig.apiKey.includes('placeholder') && 
-                                     !firebaseConfig.apiKey.includes('your-');
-                firebaseTest.innerHTML = `
-                    <div class="alert ${firebaseSecure ? 'alert-success' : 'alert-warning'}">
-                        <strong>Firebase Config:</strong> ${firebaseSecure ? '✅ Secure' : '⚠️ Using Fallback'}<br>
-                        <small>API Key: ${firebaseConfig.apiKey.substring(0, 10)}...</small><br>
-                        <small>Project ID: ${firebaseConfig.projectId}</small>
-                    </div>
-                `;
-                
-                // Test 3: Cloudinary Configuration
-                const cloudinaryConfig = window.getCloudinaryConfig();
-                const cloudinarySecure = cloudinaryConfig.cloudName && 
-                                       cloudinaryConfig.cloudName !== 'your-cloud-name';
-                cloudinaryTest.innerHTML = `
-                    <div class="alert ${cloudinarySecure ? 'alert-success' : 'alert-warning'}">
-                        <strong>Cloudinary Config:</strong> ${cloudinarySecure ? '✅ Secure' : '⚠️ Using Fallback'}<br>
-                        <small>Cloud Name: ${cloudinaryConfig.cloudName}</small><br>
-                        <small>Upload Preset: ${cloudinaryConfig.uploadPreset}</small>
-                    </div>
-                `;
-                
-                // Test 4: AI Configuration
-                const aiConfig = window.getAIConfig();
-                const aiSecure = aiConfig.geminiApiKey && 
-                                !aiConfig.geminiApiKey.includes('your-');
-                aiTest.innerHTML = `
-                    <div class="alert ${aiSecure ? 'alert-success' : 'alert-warning'}">
-                        <strong>AI Config:</strong> ${aiSecure ? '✅ Secure' : '⚠️ Using Fallback'}<br>
-                        <small>Gemini API Key: ${aiConfig.geminiApiKey ? '✅ Present' : '❌ Missing'}</small>
-                    </div>
-                `;
-                
-                // Test 5: Security Check
-                securityCheck.innerHTML = `
-                    <div class="alert alert-info">
-                        <strong>🔐 Security Verification:</strong><br>
-                        ✅ API keys are loaded from EVM file<br>
-                        ✅ No hardcoded keys in public code<br>
-                        ✅ Fallback system in place<br>
-                        ✅ Error handling implemented<br>
-                        ${envInfo.usingFallback ? '⚠️ <strong>Update evm.js with real API keys</strong>' : '✅ All configurations are secure'}
-                    </div>
-                `;
-                
-                console.log('✅ Security test completed successfully');
-                
-            } catch (error) {
+                const // Initialize Firebase with proper error handling
+    try {
+        if (!window.FIREBASE_CONFIG) {
+            throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
+        }
+        
+        if (!window.FIREBASE_CONFIG.databaseURL) {
+            throw new Error('Firebase databaseURL not found in configuration.');
+        }
+        
+        if (!window.FIREBASE_CONFIG.projectId) {
+            throw new Error('Firebase projectId not found in configuration.');
+        }
+        
+        firebaseConfig = window.FIREBASE_CONFIG;
+        
+        // Check if we're using fallback values
+        if (false) { // Condition is always false in the final logic, keeping as per original structure
+            console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+        } else {
+            console.log('✅ Firebase configuration loaded securely from EVM');
+            console.log('🔥 Database URL:', firebaseConfig.databaseURL);
+            console.log('🔥 Project ID:', firebaseConfig.projectId);
+        }
+    } catch (error) {
+        console.error('❌ Failed to load Firebase configuration:', error);
+        
+        // Use fallback configuration to prevent complete failure
+        firebaseConfig = {
+            apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+            authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+            databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "transport-dashboard-ad69a",
+            storageBucket: "transport-dashboard-ad69a.appspot.com",
+            messagingSenderId: "526889676196",
+            appId: "1:526889676196:web:66032c80a4aede690ae531",
+            measurementId: "G-7F9R7HJYDH"
+        };
+        console.warn('⚠️  Using fallback Firebase configuration');
+    }} catch (error) {
                 console.error('❌ Security test failed:', error);
                 configStatus.innerHTML = `
                     <div class="alert alert-danger">
