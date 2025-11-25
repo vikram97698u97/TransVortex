@@ -204,7 +204,56 @@
 
   <!-- Firebase Configuration -->
   <!-- Load secure configuration first -->
-  <script src="evm.js"></script>
+  <!-- Inline Configuration (replaces evm.js) -->
+    <script>
+        // ========================================
+        // 🔥 FIREBASE CONFIGURATION
+        // ========================================
+        if (!window.FIREBASE_CONFIG) {
+            window.FIREBASE_CONFIG = {
+                apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+                authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+                databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "transport-dashboard-ad69a",
+                storageBucket: "transport-dashboard-ad69a.appspot.com",
+                messagingSenderId: "526889676196",
+                appId: "1:526889676196:web:66032c80a4aede690ae531",
+                measurementId: "G-7F9R7HJYDH"
+            };
+        }
+
+        // ========================================
+        // ☁️ CLOUDINARY CONFIGURATION
+        // ========================================
+        if (!window.CLOUDINARY_CONFIG) {
+            window.CLOUDINARY_CONFIG = {
+                cloudName: "doqapn15f",
+                uploadPreset: "vehicle-driver",
+                folders: {
+                    vehicles: "transport/vehicles",
+                    drivers: "transport/drivers", 
+                    documents: "transport/documents",
+                    profiles: "transport/profiles",
+                    receipts: "transport/receipts",
+                    expenses: "transport/expenses"
+                },
+                apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
+                baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
+            };
+        }
+
+        // ========================================
+        // 🌍 ENVIRONMENT CONFIGURATION
+        // ========================================
+        if (!window.ENVIRONMENT) {
+            window.ENVIRONMENT = {
+                name: "production",
+                debug: false,
+                apiBaseUrl: window.location.origin,
+                version: "1.0.0"
+            };
+        }
+    </script>
 
   <script>
   document.addEventListener('DOMContentLoaded', function() {
