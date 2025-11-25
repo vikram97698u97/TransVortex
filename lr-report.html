@@ -4,10 +4,10 @@
     
 
     <!-- 🔥 Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    
+    
+    
     
     <!-- 🔐 Configuration Loading -->
     <script src="evm.js"></script>
@@ -1348,9 +1348,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
   
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script><script>
+  
+  
+  <script>
     // Initialize Firebase with configuration from .env
     (function() {
       try {
@@ -1656,5 +1656,26 @@
             }
           });
         </script>
-      </body>
+      
+<script>
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const rowCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+    
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+}
+
+function initializeLRReport() {
+    // Initialize any LR report specific functionality
+    console.log('🚀 LR Report initialized');
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeLRReport();
+});
+</script>
+</body>
     </html>
