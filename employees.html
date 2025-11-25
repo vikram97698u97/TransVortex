@@ -1,9 +1,9 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head><!-- 🔐 Secure Configuration Loader -->
+<head><!-- 🔐 Comprehensive Secure Configuration Loader -->
     <script>
-        // Load configuration from .env (server-side in production)
+        // Load complete configuration from .env (server-side in production)
         (function() {
             'use strict';
             
@@ -21,18 +21,36 @@
                 };
             }
             
-            // Cloudinary configuration from .env
+            // Comprehensive Cloudinary configuration from .env
             if (!window.CLOUDINARY_CONFIG) {
                 window.CLOUDINARY_CONFIG = {
                     cloudName: "doqapn15f",
                     uploadPreset: "vehicle-driver",
+                    presets: {
+                        vehicleDriver: "vehicle-driver",
+                        paymentBilling: "payment-billing",
+                        profilePic: "profile-pic",
+                        documents: "documents",
+                        receipts: "receipts",
+                        expenses: "expenses",
+                        tyres: "tyres",
+                        vehicles: "vehicles",
+                        drivers: "drivers",
+                        invoices: "invoices",
+                        lrReports: "lr-reports",
+                        tripExpenses: "trip-expenses"
+                    },
                     folders: {
                         vehicles: "transport/vehicles",
                         drivers: "transport/drivers", 
                         documents: "transport/documents",
                         profiles: "transport/profiles",
                         receipts: "transport/receipts",
-                        expenses: "transport/expenses"
+                        expenses: "transport/expenses",
+                        tyres: "transport/tyres",
+                        invoices: "transport/invoices",
+                        lrReports: "transport/lr-reports",
+                        tripExpenses: "transport/trip-expenses"
                     },
                     apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
                     baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
@@ -45,19 +63,66 @@
                     name: "production",
                     debug: false,
                     apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0"
+                    version: "1.0.0",
+                    corsOrigin: "https://transvortex.online",
+                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
+                    apiRateLimit: 100
+                };
+            }
+            
+            // Security configuration from .env
+            if (!window.SECURITY_CONFIG) {
+                window.SECURITY_CONFIG = {
+                    sessionSecret: "transvortex-session-secret-2024",
+                    jwtSecret: "transvortex-jwt-secret-2024",
+                    encryptionKey: "transvortex-encryption-key-2024"
+                };
+            }
+            
+            // Optional API configurations
+            if (!window.API_CONFIG) {
+                window.API_CONFIG = {
+                    email: {
+                        provider: "sendgrid",
+                        apiKey: "your-sendgrid-api-key-here",
+                        from: "noreply@transvortex.online",
+                        fromName: "TransVortex Transport"
+                    },
+                    payment: {
+                        provider: "stripe",
+                        publicKey: "your-stripe-public-key-here"
+                    },
+                    sms: {
+                        provider: "twilio",
+                        accountSid: "your-twilio-account-sid-here",
+                        phoneNumber: "your-twilio-phone-number-here"
+                    },
+                    maps: {
+                        googleMapsApiKey: "your-google-maps-api-key-here",
+                        googlePlacesApiKey: "your-google-places-api-key-here"
+                    },
+                    analytics: {
+                        googleAnalyticsId: "GA-XXXXXXXXX",
+                        facebookPixelId: "your-facebook-pixel-id-here",
+                        hotjarId: "your-hotjar-id-here"
+                    }
                 };
             }
             
             // Log successful loading (only in debug mode)
             if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
+                console.log('✅ Comprehensive configuration loaded from .env');
                 console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
                 console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
                 console.log('🌍 Environment:', window.ENVIRONMENT.name);
+                console.log('🔐 Security: Loaded');
+                console.log('📧 Email:', window.API_CONFIG.email.provider);
+                console.log('💳 Payment:', window.API_CONFIG.payment.provider);
+                console.log('📱 SMS:', window.API_CONFIG.sms.provider);
             }
         })();
     </script>
+
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
