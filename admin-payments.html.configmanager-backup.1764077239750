@@ -1,0 +1,2350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Payment Management</title>
+    <link 
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" 
+      integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" 
+      crossorigin="anonymous" 
+      referrerpolicy="no-referrer" 
+    />
+    <style>
+        :root {
+            --primary-color: #4a6bff;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --light-gray: #f8f9fa;
+            --dark-gray: #343a40;
+            --border-color: #dee2e6;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Dark Mode Toggle */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .theme-switch-wrapper i {
+            color: var(--dark-gray);
+            transition: color 0.3s ease;
+        }
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 26px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        html[data-theme="dark"] .theme-switch-wrapper .fa-sun { color: #6c757d; }
+        html[data-theme="dark"] .theme-switch-wrapper .fa-moon { color: var(--warning-color); }
+
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: var(--dark-gray);
+            margin: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 16px;
+            cursor: pointer;
+            color: var(--dark-gray);
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background-color: var(--light-gray);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn i {
+            margin-right: 6px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: #212529;
+        }
+        
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 13px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-verified, .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-failed, .status-expired {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-n-a, .status-default {
+            background-color: #e2e6ea;
+            color: #383d41;
+        }
+        
+        .search-box {
+            position: relative;
+            max-width: 300px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            font-weight: 600;
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            white-space: nowrap;
+        }
+        
+        tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .loading i {
+            font-size: 24px;
+            margin-bottom: 10px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-btn.active, .filter-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        
+        .pagination button {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .pagination button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .search-box {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+                padding-bottom: 5px;
+            }
+            
+            .tab-btn {
+                padding: 10px 15px;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .payment-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .payment-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .payment-info {
+            flex: 1;
+        }
+        .payment-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-verify {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-reject {
+            background-color: #f44336;
+            color: white;
+        }
+        .status-pending {
+            color: #FFA000;
+            font-weight: 600;
+        }
+        .status-verified {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+        .status-failed {
+            color: #f44336;
+            font-weight: 600;
+        }
+        .search-box {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .filter-btn.active {
+            background: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn:hover {
+            color: #2196F3;
+        }
+        
+        .tab-btn.active {
+            color: #2196F3;
+            border-bottom-color: #2196F3;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Message Card */
+        .message-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .message-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .message-card.unread {
+            background-color: #f0f8ff;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .message-sender {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .message-date {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .message-preview {
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .message-details {
+            margin-top: 20px;
+        }
+        
+        .message-details p {
+            margin: 10px 0;
+        }
+        
+        .message-body {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .message-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* User Card Grid Styles */
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .user-card {
+            background: var(--light-gray);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.2s ease;
+        }
+        html[data-theme="dark"] .user-card {
+            background: #374151;
+        }
+        .user-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        .user-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .user-card-header h5 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .user-card-body p {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+        }
+        .user-card-body p strong {
+            color: var(--dark-gray);
+        }
+        .core-account-group {
+            grid-column: 1 / -1; /* Make group span all columns */
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--light-gray);
+        }
+        html[data-theme="dark"] .core-account-group {
+            background: #111827;
+        }
+        .core-account-group .user-card {
+            background: var(--container-bg); /* Match container background */
+        }
+        .branch-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            padding-left: 20px;
+            border-left: 2px solid var(--primary-color);
+        }
+        .branch-cards-container .user-card {
+            border-left: 4px solid var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
+            <div class="header-actions">
+                <div class="theme-switch-wrapper">
+                    <i class="fas fa-sun"></i>
+                    <label class="theme-switch">
+                        <input type="checkbox" id="theme-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <i class="fas fa-moon"></i>
+                </div>
+                <button id="logoutBtn" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button id="paymentsTab" class="tab-btn active">
+                <i class="fas fa-money-bill-wave"></i> Payment Management
+            </button>
+            <button id="branchPaymentsTab" class="tab-btn">
+                <i class="fas fa-code-branch"></i> Branch Payments
+            </button>
+            <button id="usersTab" class="tab-btn">
+                <i class="fas fa-users"></i> User Management
+            </button>
+            <button id="demoRequestsTab" class="tab-btn">
+                <i class="fas fa-user-plus"></i> Demo Requests
+            </button>
+        </div>
+        
+        <div id="paymentsSection" class="tab-content active">
+            <h1><i class="fas fa-money-bill-wave"></i> Payment Management</h1>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search by payment ID, user ID, amount, or status...">
+            <i class="fas fa-search"></i>
+        </div>
+        
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">All Payments</button>
+            <button class="filter-btn" data-filter="pending">Pending</button>
+            <button class="filter-btn" data-filter="verified">Verified</button>
+            <button class="filter-btn" data-filter="failed">Failed</button>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>Payment ID</th>
+                        <th>User ID</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                        <th></th> </tr>
+                </thead>
+                <tbody id="paymentsBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
+                            <p>Loading payments...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination" style="justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span id="entriesInfo">Showing 0 to 0 of 0 entries</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <button id="prevPage">Prev</button>
+                <div id="pageTabs" style="display:flex; gap:4px;"></div>
+                <button id="nextPage">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="branchPaymentsSection" class="tab-content">
+        <h1><i class="fas fa-code-branch"></i> Branch Creation Payments</h1>
+        <div class="search-box">
+            <input type="text" id="branchSearchInput" placeholder="Search by payment ID, user ID, or status...">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="pending">Pending</button>
+            <button class="filter-btn" data-filter="verified">Verified</button>
+        </div>
+        <div class="table-responsive">
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>Payment ID</th>
+                        <th>User ID</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                        <th></th> </tr>
+                </thead>
+                <tbody id="branchPaymentsBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
+                            <p>Loading branch payments...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="usersSection" class="tab-content">
+        <h1><i class="fas fa-users"></i> User Management</h1>
+        <div class="search-box">
+            <input type="text" id="userSearchInput" placeholder="Search by email, user ID, or account type...">
+            <i class="fas fa-search"></i>
+        </div>
+        <div id="userCardsContainer" class="user-grid"></div>
+        <div class="pagination" style="justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span id="entriesInfoUsers">Showing 0 to 0 of 0 entries</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <button id="prevPageUsers">Prev</button>
+                <div id="pageTabsUsers" style="display:flex; gap:4px;"></div>
+                <button id="nextPageUsers">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="demoRequestsSection" class="tab-content">
+        <h1><i class="fas fa-user-plus"></i> Demo Account Requests</h1>
+        <div class="search-box">
+            <input type="text" id="demoSearchInput" placeholder="Search by name, email, or phone...">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="table-responsive">
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="demoRequestsBody">
+                    <tr>
+                        <td colspan="6" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading demo requests...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="userDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">User Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="userDetailContent">
+                        <p class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading details...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-warning" id="editSubscriptionBtn">Edit Subscription</button>
+                    <button type="button" class="btn btn-success" id="saveSubscriptionBtn" style="display:none;">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    // ... (omitted HTML structure and CSS) ...
+      <!-- Load secure configuration first -->
+  <script src="evm.js"></script>
+  <script src="config-loader.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+        import {
+            getDatabase,
+            ref,
+            set,
+            get,
+            onValue,
+            push,
+            update,
+            remove
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        // Your Firebase configuration
+        // Load Firebase configuration securely from EVM
+    let firebaseConfig;
+    
+    try {
+      // Get Firebase configuration from secure EVM system
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+      
+      // Check if we're using fallback values
+      if (ConfigManager.isUsingFallbackValues()) {
+        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+      } else {
+        console.log('✅ Firebase configuration loaded securely from EVM');
+      }
+    } catch (error) {
+      console.error('❌ Failed to load Firebase configuration:', error);
+      
+      // Use fallback configuration to prevent complete failure
+      firebaseConfig = {
+        apiKey: "placeholder-key",
+        authDomain: "placeholder.firebaseapp.com", 
+        databaseURL: "https://placeholder.firebaseio.com",
+        projectId: "placeholder-project",
+        storageBucket: "placeholder.appspot.com",
+        messagingSenderId: "000000000000",
+        appId: "1:000000000000:web:placeholder",
+        measurementId: "G-XXXXXXXXX"
+      };
+    }
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+        const functions = getFunctions(app, 'asia-south1'); // Use your function's region
+
+        // DOM Elements
+        const paymentsList = document.getElementById('paymentsList');
+        let searchInput = document.getElementById('searchInput');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        // New elements for branch payments
+        const branchPaymentsTab = document.getElementById('branchPaymentsTab');
+        const branchPaymentsSection = document.getElementById('branchPaymentsSection');
+
+        // New elements for user management
+        const usersTab = document.getElementById('usersTab');
+        const usersSection = document.getElementById('usersSection');
+        
+        // New elements for demo requests
+        const demoRequestsTab = document.getElementById('demoRequestsTab');
+        const demoRequestsSection = document.getElementById('demoRequestsSection');
+
+        let currentFilter = 'all';
+        let allPayments = [];
+        let filteredPayments = [];
+        let searchTimeout;
+
+        // User Management state
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentPageUsers = 1;
+        const itemsPerPageUsers = 10;
+        let totalPagesUsers = 1;
+        const userSearchInput = document.getElementById('userSearchInput');
+
+
+        // Pagination state
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let totalPages = 1;
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageTabs = document.getElementById('pageTabs');
+        const entriesInfo = document.getElementById('entriesInfo');
+
+        // --- TAB SWITCHING LOGIC ---
+        const paymentsTab = document.getElementById('paymentsTab');
+        const paymentsSection = document.getElementById('paymentsSection');
+
+        function switchTab(activeTab, activeSection) {
+            paymentsTab.classList.remove('active');
+            branchPaymentsTab.classList.remove('active');
+            usersTab.classList.remove('active');
+            demoRequestsTab.classList.remove('active');
+            paymentsSection.classList.remove('active');
+            branchPaymentsSection.classList.remove('active');
+            usersSection.classList.remove('active');
+            demoRequestsSection.classList.remove('active');
+            
+            activeTab.classList.add('active');
+            activeSection.classList.add('active');
+        }
+
+        paymentsTab.addEventListener('click', () => {
+            switchTab(paymentsTab, paymentsSection);
+            loadPayments(); // Reload subscription payments
+        });
+
+        branchPaymentsTab.addEventListener('click', () => {
+            switchTab(branchPaymentsTab, branchPaymentsSection);
+            loadBranchPayments(); // Load branch payments
+        });
+
+        usersTab.addEventListener('click', () => {
+            switchTab(usersTab, usersSection);
+            loadUsers(); // Load users
+        });
+
+        demoRequestsTab.addEventListener('click', () => {
+            switchTab(demoRequestsTab, demoRequestsSection);
+            loadDemoRequests();
+        });
+
+        // Initial load based on which tab is active
+        // This is now moved into the auth handler for proper sequencing.
+
+        // Check if user is admin (FIXED FOR RESILIENCE)
+        async function checkAdmin(user) {
+            if (!user) return false;
+            
+            try {
+                // Read the user's profile and check the role property
+                const userRef = ref(database, `users/${user.uid}`);
+                const snapshot = await get(userRef);
+                
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    const email = user.email || '';
+                    
+                    const isAdminByRole = (userData.role === 'admin') ||
+                                         (userData.profile && userData.profile.role === 'admin');
+                                         
+                    const isAdminByHardcode = (email === 'transvortex@gmail.com');
+
+                    return isAdminByRole || isAdminByHardcode;
+                }
+                return false;
+            } catch (error) {
+                console.error("Error checking admin role:", error);
+                // On failure (e.g., connection issue), assume false to be safe.
+                return false;
+            }
+        }
+
+        // Format date
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        // Function to determine the display text and class for subscription time (FIX and Refinement)
+        function getSubscriptionTimeDetails(subscription = {}) {
+            const endDateStr = subscription.endDate;
+            const status = subscription.status;
+            
+            if (status === 'active' && endDateStr) {
+                const endDate = new Date(endDateStr);
+                const now = new Date();
+                const diffMilliseconds = endDate - now;
+                let diffDays = Math.ceil(diffMilliseconds / (1000 * 60 * 60 * 24));
+
+                if (diffDays > 7) {
+                    return { class: 'status-verified', text: `${diffDays} days left` };
+                } else if (diffDays > 0) {
+                    return { class: 'status-pending', text: `Expiring soon (${diffDays} days left)` };
+                } else {
+                    // Check if the current time is past the end date (but status is still 'active')
+                    const timePassedMilliseconds = now - endDate;
+                    const daysExpired = Math.ceil(timePassedMilliseconds / (1000 * 60 * 60 * 24));
+                    
+                    if (daysExpired > 0) {
+                        return { class: 'status-failed', text: `Expired ${daysExpired} days ago` };
+                    }
+                    return { class: 'status-pending', text: 'Expires Today' };
+                }
+            } else if (status === 'expired' && endDateStr) {
+                const endDate = new Date(endDateStr);
+                const now = new Date();
+                // Calculate days expired (always positive since status is 'expired')
+                const daysExpired = Math.ceil((now - endDate) / (1000 * 60 * 60 * 24));
+                if (daysExpired > 0) {
+                    return { class: 'status-failed', text: `Expired ${daysExpired} days ago` };
+                }
+                return { class: 'status-failed', text: 'Expired' };
+            } else if (status === 'trial') {
+                return { class: 'status-pending', text: 'On Trial' };
+            }
+            
+            return { class: 'status-n-a', text: 'N/A' };
+        }
+
+        // Update payment status
+        async function updatePaymentStatus(paymentId, status) {
+            try {
+                const paymentRef = ref(database, `subscriptionPayments/${paymentId}`);
+                await update(paymentRef, {
+                    status: status,
+                    updatedAt: new Date().toISOString()
+                });
+                
+                // If verified, update user's subscription
+                if (status === 'verified') {
+                    const paymentSnap = await get(paymentRef);
+                    const payment = paymentSnap.val();
+                    
+                    if (payment && payment.userId) {
+                        const now = new Date();
+                        const endDate = new Date();
+                        endDate.setDate(now.getDate() + 30);
+                        
+                        const subscriptionData = {
+                            status: 'active',
+                            startDate: now.toISOString(),
+                            endDate: endDate.toISOString(),
+                            paymentRef: paymentId,
+                            plan: payment.plan || 'monthly',
+                            updatedAt: now.toISOString(),
+                            isActive: true
+                        };
+                        
+                        // Update both root and profile subscription for consistency
+                        const updates = {
+                            subscription: subscriptionData,
+                            lastPayment: now.toISOString()
+                        };
+                        
+                        // Update root subscription
+                        const userRef = ref(database, `users/${payment.userId}`);
+                        await update(userRef, updates);
+                        
+                        // Also update profile subscription
+                        const profileRef = ref(database, `users/${payment.userId}/profile`);
+                        await update(profileRef, {
+                            subscription: subscriptionData,
+                            lastLogin: now.toISOString()
+                        });
+                        
+                        console.log('Subscription updated successfully for user:', payment.userId);
+                    }
+                }
+                
+                loadPayments();
+            } catch (error) {
+                console.error('Error updating payment:', error);
+                showNotification('Error updating payment: ' + error.message, 'error');
+            }
+        }
+
+        // Approve payment
+        async function approvePayment(paymentId) {
+            if (!paymentId) {
+                showNotification('Error: Payment ID is required', 'error');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to approve this payment?')) {
+                return;
+            }
+            
+            try {
+                // Get payment details first
+                const paymentRef = ref(database, `subscriptionPayments/${paymentId}`);
+                const paymentSnapshot = await get(paymentRef);
+                const payment = paymentSnapshot.val();
+                
+                if (!payment) {
+                    throw new Error('Payment not found');
+                }
+                
+                const user = auth.currentUser;
+                if (!user) {
+                    throw new Error('User not authenticated');
+                }
+                
+                const now = new Date();
+                const endDate = new Date();
+                endDate.setDate(now.getDate() + 30); // 30 days from now
+                
+                // Update payment status in the database
+                await update(paymentRef, {
+                    status: 'verified',
+                    verifiedAt: now.toISOString(),
+                    verifiedBy: user.uid
+                });
+                
+                if (payment.userId) {
+                    // Update user's subscription status
+                    const userSubscriptionRef = ref(database, `users/${payment.userId}/subscription`);
+                    await update(userSubscriptionRef, {
+                        status: 'active',
+                        plan: payment.plan || 'premium',
+                        startDate: now.toISOString(),
+                        endDate: endDate.toISOString(),
+                        paymentId: paymentId,
+                        updatedAt: now.toISOString()
+                    });
+                    
+                    // Also update lastPayment in user's profile
+                    const userRef = ref(database, `users/${payment.userId}`);
+                    await update(userRef, {
+                        lastPayment: now.toISOString()
+                    });
+                }
+                
+                // Show success message
+                showNotification('Payment approved successfully! User access has been granted.', 'success');
+                
+                // Reload payments
+                loadPayments();
+                
+            } catch (error) {
+                console.error('Error approving payment:', error);
+                showNotification('Error approving payment: ' + error.message, 'error');
+            }
+        }
+        
+        // Reject payment
+        async function rejectPayment(paymentId) {
+            if (!paymentId) {
+                showNotification('Error: Payment ID is required', 'error');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to reject this payment? This will mark the payment as rejected.')) {
+                return;
+            }
+            
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    throw new Error('User not authenticated');
+                }
+                
+                const now = new Date();
+                const paymentRef = ref(database, `subscriptionPayments/${paymentId}`);
+                
+                // Update payment status in the database
+                await update(paymentRef, {
+                    status: 'rejected',
+                    rejectedAt: now.toISOString(),
+                    rejectedBy: user.uid
+                });
+                
+                // Show success message
+                showNotification('Payment has been rejected.', 'success');
+                
+                // Reload payments
+                loadPayments();
+                
+            } catch (error) {
+                console.error('Error rejecting payment:', error);
+                showNotification('Error rejecting payment: ' + error.message, 'error');
+            }
+        }
+
+        // --- NEW: Demo Request Logic ---
+        async function approveDemoRequest(requestId) {
+            if (!confirm('Are you sure you want to approve this demo request and create a new user account?')) return;
+
+            const createDemoUserFn = httpsCallable(functions, 'createDemoUser');
+            try {
+                showNotification('Creating user account...', 'info');
+                const result = await createDemoUserFn({ requestId: requestId });
+                showNotification(result.data.message, 'success');
+                loadDemoRequests(); // Refresh the list
+            } catch (error) {
+                console.error('Error approving demo request:', error);
+                showNotification(`Failed to approve request: ${error.message}`, 'error');
+            }
+        }
+
+        async function rejectDemoRequest(requestId) {
+            if (!confirm('Are you sure you want to reject this demo request?')) return;
+
+            try {
+                const requestRef = ref(database, `demoRequests/${requestId}`);
+                await update(requestRef, { status: 'rejected' });
+                showNotification('Demo request has been rejected.', 'success');
+                loadDemoRequests(); // Refresh the list
+            } catch (error) {
+                console.error('Error rejecting demo request:', error);
+                showNotification(`Failed to reject request: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadDemoRequests() {
+            const demoBody = document.getElementById('demoRequestsBody');
+            demoBody.innerHTML = '<tr><td colspan="6" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+            try {
+                const requestsRef = ref(database, 'demoRequests');
+                const snapshot = await get(requestsRef);
+                if (snapshot.exists()) {
+                    const requests = Object.entries(snapshot.val()).map(([id, data]) => ({ id, ...data }));
+                    requests.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    renderDemoRequests(requests);
+                } else {
+                    demoBody.innerHTML = '<tr><td colspan="6" class="no-data">No demo requests found.</td></tr>';
+                }
+            } catch (error) {
+                console.error("Error loading demo requests:", error);
+                demoBody.innerHTML = `<tr><td colspan="6" class="no-data text-danger">Error: Could not load demo requests.</td></tr>`;
+            }
+        }
+
+        // Update branch payment status
+        async function updateBranchPaymentStatus(paymentId, status) {
+            try {
+                const paymentRef = ref(database, `branchCreationPayments/${paymentId}`);
+                await update(paymentRef, {
+                    status: status,
+                    updatedAt: new Date().toISOString(),
+                    verifiedBy: auth.currentUser.uid
+                });
+                showNotification(`Branch payment ${paymentId} marked as ${status}.`, 'success');
+                loadBranchPayments(); // Refresh the list
+            } catch (error) {
+                console.error('Error updating branch payment:', error);
+                showNotification('Error updating payment: ' + error.message, 'error');
+            }
+        }
+
+        // --- NEW: Delete branch payment ---
+        async function deleteBranchPayment(paymentId) {
+            if (!paymentId) return showNotification('Error: Payment ID is required', 'error');
+            if (!confirm('Are you sure you want to permanently delete this branch payment record? This action cannot be undone.')) return;
+
+            try {
+                const paymentRef = ref(database, `branchCreationPayments/${paymentId}`);
+                await remove(paymentRef);
+                showNotification('Branch payment record deleted successfully.', 'success');
+                loadBranchPayments(); // Refresh the list
+            } catch (error) {
+                console.error('Error deleting branch payment:', error);
+                showNotification('Error deleting record: ' + error.message, 'error');
+            }
+        }
+
+        // Make functions globally available for onclick handlers
+        window.approveBranchPayment = (id) => {
+            if (confirm('Approve this branch payment?')) updateBranchPaymentStatus(id, 'verified');
+        };
+        window.rejectBranchPayment = (id) => {
+            if (confirm('Reject this branch payment?')) updateBranchPaymentStatus(id, 'failed');
+        };
+        window.deleteBranchPayment = deleteBranchPayment;
+
+        // Render payments
+        function renderPayments(payments) {
+            const paymentsBody = document.getElementById('paymentsBody');
+            if (!paymentsBody) {
+                console.error('Payments table body not found');
+                return;
+            }
+
+            if (!payments || payments.length === 0) {
+                paymentsBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No payments found</td></tr>';
+                return;
+            }
+
+            // Clear existing event listeners first
+            paymentsBody.innerHTML = '';
+            
+            // Create document fragment for better performance
+            const fragment = document.createDocumentFragment();
+            
+            payments.forEach(payment => {
+                const row = document.createElement('tr');
+                row.dataset.paymentId = payment.id;
+                
+                // Status badge
+                const statusBadge = document.createElement('span');
+                statusBadge.className = `status-badge status-${payment.status}`;
+                statusBadge.textContent = payment.status || 'pending';
+                
+                // Actions cell
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'actions';
+                
+                // Delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-icon btn-danger';
+                deleteBtn.title = 'Delete Payment';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deletePayment(payment.id);
+                });
+                
+                // Build row content
+                row.innerHTML = `
+                    <td>${payment.id || 'N/A'}</td>
+                    <td>${payment.userId || 'N/A'}</td>
+                    <td>${payment.amount ? '₹' + payment.amount : 'N/A'}</td>
+                    <td>${formatDate(payment.timestamp)}</td>
+                    <td></td>
+                    <td class="actions"></td>
+                    <td class="delete-action"></td>
+                `;
+                
+                // Add status badge
+                row.children[4].appendChild(statusBadge);
+                
+                // Add action buttons based on status
+                if (payment.status === 'pending') {
+                    const approveBtn = document.createElement('button');
+                    approveBtn.className = 'btn btn-success';
+                    approveBtn.innerHTML = '<i class="fas fa-check"></i> Approve';
+                    approveBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        approvePayment(payment.id);
+                    });
+                    
+                    const rejectBtn = document.createElement('button');
+                    rejectBtn.className = 'btn btn-danger';
+                    rejectBtn.innerHTML = '<i class="fas fa-times"></i> Reject';
+                    rejectBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        rejectPayment(payment.id);
+                    });
+                    
+                    row.querySelector('.actions').append(approveBtn, ' ', rejectBtn);
+                } else if (payment.status === 'verified') {
+                    const verifiedSpan = document.createElement('span');
+                    verifiedSpan.className = 'text-success';
+                    verifiedSpan.innerHTML = '<i class="fas fa-check-circle"></i> Verified';
+                    row.querySelector('.actions').appendChild(verifiedSpan);
+                } else if (payment.status === 'rejected') {
+                    const rejectedSpan = document.createElement('span');
+                    rejectedSpan.className = 'text-danger';
+                    rejectedSpan.innerHTML = '<i class="fas fa-times-circle"></i> Rejected';
+                    row.querySelector('.actions').appendChild(rejectedSpan);
+                }
+                
+                // Add delete button
+                row.querySelector('.delete-action').appendChild(deleteBtn);
+                
+                // Add row to fragment
+                fragment.appendChild(row);
+            });
+            
+            // Append all rows at once
+            paymentsBody.appendChild(fragment);
+        }
+
+        // Render branch payments
+        function renderBranchPayments(payments) {
+            const paymentsBody = document.getElementById('branchPaymentsBody');
+            if (!paymentsBody) return;
+
+            if (!payments || payments.length === 0) {
+                paymentsBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No branch payments found</td></tr>';
+                return;
+            }
+
+            paymentsBody.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+
+            payments.forEach(payment => {
+                const row = document.createElement('tr');
+                row.dataset.paymentId = payment.id;
+
+                const statusBadge = `<span class="status-badge status-${payment.status || 'pending'}">${payment.status || 'pending'}</span>`;
+
+                let actions = '';
+                if (payment.status === 'pending') {
+                    actions = `
+                        <button class="btn btn-success btn-sm" onclick="approveBranchPayment('${payment.id}')"><i class="fas fa-check"></i> Approve</button>
+                        <button class="btn btn-danger btn-sm" onclick="rejectBranchPayment('${payment.id}')"><i class="fas fa-times"></i> Reject</button>
+                    `;
+                } else if (payment.status === 'verified') {
+                    actions = `<span class="text-success"><i class="fas fa-check-circle"></i> Verified</span>`;
+                } else {
+                    actions = `<span class="text-danger"><i class="fas fa-times-circle"></i> ${payment.status}</span>`;
+                }
+
+                row.innerHTML = `
+                    <td>${payment.id || 'N/A'}</td>
+                    <td>${payment.userId || 'N/A'}</td>
+                    <td>${payment.amount ? '₹' + payment.amount : 'N/A'}</td>
+                    <td>${formatDate(payment.createdAt)}</td>
+                    <td>${statusBadge}</td>
+                    <td class="action-buttons">${actions}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteBranchPayment('${payment.id}')" title="Delete"><i class="fas fa-trash"></i></button></td>
+                `;
+                fragment.appendChild(row);
+            });
+            paymentsBody.appendChild(fragment);
+        }
+
+        // Render Demo Requests
+        function renderDemoRequests(requests) {
+            const demoBody = document.getElementById('demoRequestsBody');
+            if (!demoBody) return;
+
+            if (!requests || requests.length === 0) {
+                demoBody.innerHTML = '<tr><td colspan="6" class="no-data">No demo requests found.</td></tr>';
+                return;
+            }
+
+            demoBody.innerHTML = '';
+            requests.forEach(req => {
+                const row = document.createElement('tr');
+                const statusBadge = `<span class="status-badge status-${req.status || 'pending'}">${req.status || 'pending'}</span>`;
+
+                let actions = '';
+                if (req.status === 'pending') {
+                    actions = `
+                        <button class="btn btn-success btn-sm"><i class="fas fa-check"></i> Approve</button>
+                        <button class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</button>
+                    `;
+                } else {
+                    actions = `<span class="text-muted">${req.status}</span>`;
+                }
+
+                row.innerHTML = `
+                    <td>${req.name || 'N/A'}</td>
+                    <td>${req.email || 'N/A'}</td>
+                    <td>${req.phone || 'N/A'}</td>
+                    <td>${formatDate(req.timestamp)}</td>
+                    <td>${statusBadge}</td>
+                    <td class="action-buttons">${actions}</td>
+                `;
+
+                if (req.status === 'pending') {
+                    row.querySelector('.btn-success').addEventListener('click', () => approveDemoRequest(req.id));
+                    row.querySelector('.btn-danger').addEventListener('click', () => rejectDemoRequest(req.id));
+                }
+                demoBody.appendChild(row);
+            });
+        }
+
+        // Load branch payments from Firebase
+        async function loadBranchPayments() {
+            const paymentsBody = document.getElementById('branchPaymentsBody');
+            try {
+                paymentsBody.innerHTML = '<tr><td colspan="6" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+                const paymentsRef = ref(database, 'branchCreationPayments');
+                const snapshot = await get(paymentsRef);
+                if (snapshot.exists()) {
+                    const payments = Object.entries(snapshot.val()).map(([id, data]) => ({ id, ...data }));
+                    payments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    renderBranchPayments(payments);
+                } else {
+                paymentsBody.innerHTML = '<tr><td colspan="7" class="no-data">No branch payments found.</td></tr>';
+                }
+            } catch (error) {
+                console.error("Error loading branch payments:", error);
+            paymentsBody.innerHTML = `<tr><td colspan="7" class="no-data text-danger">Error: Could not load branch payments. Check console and database rules.</td></tr>`;
+            }
+        }
+
+        // --- NEW: User Management ---
+        async function loadUsers() {
+            const userCardsContainer = document.getElementById('userCardsContainer');
+            userCardsContainer.innerHTML = `<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading users...</div>`;
+
+            try {
+                const usersRef = ref(database, 'users');
+                const snapshot = await get(usersRef);
+
+                if (!snapshot.exists()) {
+                    userCardsContainer.innerHTML = `<p class="no-data">No users found.</p>`;
+                    return;
+                }
+
+                allUsers = Object.values(snapshot.val()).map((user, i) => ({ id: Object.keys(snapshot.val())[i], ...user }));
+                applyUserFilters();
+            } catch (error) {
+                console.error("Error loading users:", error);
+                userCardsContainer.innerHTML = `<p class="no-data text-danger">Error: Could not load users.</p>`;
+            }
+        }
+
+        function renderUsers(users) {
+            if (!users || users.length === 0) {
+                document.getElementById('userCardsContainer').innerHTML = `<p class="no-data">No users found matching your criteria.</p>`;
+                return;
+            }
+
+            const userHierarchy = {};
+            users.forEach(user => {
+                if (user.accountType === 'core') {
+                    if (!userHierarchy[user.id]) userHierarchy[user.id] = { core: null, branches: [] };
+                    userHierarchy[user.id].core = user;
+                } else if (user.coreAccountId) {
+                    if (!userHierarchy[user.coreAccountId]) userHierarchy[user.coreAccountId] = { core: null, branches: [] };
+                    const branchType = user.branchType || (user.type === 'main' ? 'main' : 'sub');
+                    user.displayBranchType = branchType;
+                    userHierarchy[user.coreAccountId].branches.push(user);
+                }
+            });
+
+            const userCardsContainer = document.getElementById('userCardsContainer');
+            userCardsContainer.innerHTML = '';
+
+            Object.values(userHierarchy).forEach(group => {
+                if (!group.core) return;
+
+                const groupContainer = document.createElement('div');
+                groupContainer.className = 'core-account-group';
+
+                // --- Compile Branch Emails List ---
+                const branchEmails = group.branches.map(branch => {
+                    const type = branch.displayBranchType === 'main' ? 'Main' : 'Sub';
+                    // Display first 5 chars of ID for brevity
+                    return `<li>${branch.email || 'N/A'} (ID: ${branch.id.substring(0, 5)}... / ${type})</li>`;
+                }).join('');
+                
+                const branchDisplay = branchEmails.length > 0 ? 
+                    `<p class="mt-2"><strong>Associated Branches (${group.branches.length}):</strong></p><ul style="list-style-type: none; padding-left: 0; font-size: 13px;">${branchEmails}</ul>` : 
+                    `<p class="mt-2" style="font-size: 13px;"><strong>Associated Branches:</strong> None</p>`;
+                // ----------------------------------------
+
+                // Render Core Account Card
+                const coreCard = document.createElement('div');
+                coreCard.className = 'user-card';
+                const coreSubscription = group.core.subscription || {};
+                const coreSubStatus = coreSubscription.status || 'N/A';
+                const coreTimeDetails = getSubscriptionTimeDetails(coreSubscription);
+                
+                const timeClass = coreTimeDetails.class;
+
+                coreCard.innerHTML = `
+                    <div class="user-card-header">
+                        <h5>${group.core.email || 'N/A'}</h5>
+                        <span class="status-badge status-core">Core Account</span>
+                    </div>
+                    <div class="user-card-body">
+                        <p><strong>User ID:</strong> ${group.core.id}</p>
+                        <p><strong>Subscription Status:</strong> <span class="status-badge status-${coreSubStatus}">${coreSubStatus}</span></p>
+                        <p><strong>Payment Due:</strong> <span class="status-badge ${timeClass}">${coreTimeDetails.text}</span></p>
+                        <hr style="margin: 10px 0;">
+                        ${branchDisplay}
+                    </div>
+                    <div class="action-buttons mt-auto">
+                        <button class="btn btn-sm btn-primary" onclick="viewUserDetails('${group.core.id}')">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                    </div>
+                `;
+                groupContainer.appendChild(coreCard);
+                
+                userCardsContainer.appendChild(groupContainer);
+            });
+        }
+
+        // --- NEW: View User Details Modal ---
+        window.viewUserDetails = async function(userId) {
+            const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
+            const saveBtn = document.getElementById('saveSubscriptionBtn');
+            const editBtn = document.getElementById('editSubscriptionBtn');
+            const modalContent = document.getElementById('userDetailContent');
+
+            modalContent.innerHTML = '<p class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading details...</p>';
+            saveBtn.style.display = 'none';
+            editBtn.style.display = 'block';
+            modal.show();
+
+            const userRef = ref(database, `users/${userId}`);
+            const snapshot = await get(userRef);
+
+            if (!snapshot.exists()) {
+                modalContent.innerHTML = '<p class="text-danger text-center">User not found.</p>';
+                editBtn.style.display = 'none';
+                return;
+            }
+
+            const user = snapshot.val();
+
+            const renderViewMode = () => {
+                const subscription = user.subscription || {};
+                modalContent.innerHTML = `
+                    <h5>${user.email || 'N/A'}</h5>
+                    <hr>
+                    <p><strong>User ID:</strong> ${userId}</p>
+                    <p><strong>Account Type:</strong> ${user.accountType || 'core'}</p>
+                    <p><strong>Phone Number:</strong> ${user.profile?.phoneNumber || '-'}</p>
+                    <p><strong>Created At:</strong> ${formatDate(user.createdAt)}</p>
+                    <h6 class="mt-4">Subscription Details</h6>
+                    <p><strong>Status:</strong> <span class="status-badge status-${subscription.status || 'n-a'}">${subscription.status || 'N/A'}</span></p>
+                    <p><strong>Plan:</strong> ${subscription.plan || 'N/A'}</p>
+                    <p><strong>Subscription End Date:</strong> ${subscription.endDate ? new Date(subscription.endDate).toLocaleDateString() : 'N/A'}</p>
+                `;
+                saveBtn.style.display = 'none';
+                editBtn.style.display = 'block';
+            };
+
+            const renderEditMode = () => {
+                const subscription = user.subscription || {};
+                const endDate = subscription.endDate ? new Date(subscription.endDate).toISOString().split('T')[0] : '';
+                modalContent.innerHTML = `
+                    <h5>${user.email || 'N/A'}</h5>
+                    <hr>
+                    <p><strong>User ID:</strong> ${userId}</p>
+                    <div class="mb-3">
+                        <label for="subStatus" class="form-label">Subscription Status</label>
+                        <select id="subStatus" class="form-select">
+                            <option value="trial" ${subscription.status === 'trial' ? 'selected' : ''}>Trial</option>
+                            <option value="active" ${subscription.status === 'active' ? 'selected' : ''}>Active</option>
+                            <option value="expired" ${subscription.status === 'expired' ? 'selected' : ''}>Expired</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subEndDate" class="form-label">Subscription End Date</label>
+                        <input type="date" id="subEndDate" class="form-control" value="${endDate}">
+                    </div>
+                `;
+                saveBtn.style.display = 'block';
+                editBtn.style.display = 'none';
+            };
+
+            renderViewMode();
+
+            editBtn.onclick = renderEditMode;
+
+            saveBtn.onclick = async () => {
+                const newStatus = document.getElementById('subStatus').value;
+                const newEndDate = document.getElementById('subEndDate').value;
+
+                if (!newStatus || !newEndDate) {
+                    alert('Please provide both a status and an end date.');
+                    return;
+                }
+
+                const updates = {
+                    'subscription/status': newStatus,
+                    'subscription/endDate': new Date(newEndDate).toISOString()
+                };
+
+                await update(userRef, updates);
+                showNotification('Subscription updated successfully!', 'success');
+                
+                // Refresh user data and re-render view mode
+                const updatedSnapshot = await get(userRef);
+                Object.assign(user, updatedSnapshot.val());
+                renderViewMode();
+                loadUsers(); // Refresh the main table
+            }
+        }
+
+        // --- NEW: Disable/Enable User Account ---
+        async function toggleUserAccount(uid, shouldDisable) {
+            const action = shouldDisable ? 'disable' : 'enable';
+            if (!confirm(`Are you sure you want to ${action} this user's account?`)) {
+                return;
+            }
+
+            const toggleStatusFn = httpsCallable(functions, 'toggleUserStatus');
+            
+            try {
+                showNotification(`Attempting to ${action} user...`, 'info');
+                const result = await toggleStatusFn({ uid: uid, disable: shouldDisable });
+                showNotification(result.data.message, 'success');
+                loadUsers(); // Refresh the user list to show the new status
+            } catch (error) {
+                console.error(`Error trying to ${action} user:`, error);
+                showNotification(`Failed to ${action} user: ${error.message}`, 'error');
+            }
+        }
+
+        // Make it globally accessible for the onclick handler
+        window.toggleUserAccount = toggleUserAccount;
+
+        function applyUserFilters() {
+            const searchTerm = userSearchInput.value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                filteredUsers = [...allUsers];
+            } else {
+                const coreAccountIdsToShow = new Set();
+
+                // Find all core accounts whose branches match the search
+                allUsers.forEach(u => {
+                    if (u.accountType === 'branch' && u.coreAccountId) {
+                        const matches = (u.email && u.email.toLowerCase().includes(searchTerm)) ||
+                                        (u.profile?.phoneNumber && u.profile.phoneNumber.includes(searchTerm));
+                        if (matches) coreAccountIdsToShow.add(u.coreAccountId);
+                    }
+                    // Also find core accounts that match directly
+                    if (u.accountType === 'core') {
+                        const coreMatches = (u.email && u.email.toLowerCase().includes(searchTerm)) || 
+                                            (u.profile?.phoneNumber && u.profile.phoneNumber.includes(searchTerm));
+                        if (coreMatches) coreAccountIdsToShow.add(u.id);
+                    }
+                });
+
+                // Filter the final list
+                filteredUsers = allUsers.filter(user => {
+                    // Include the user if it's a core account that should be shown
+                    if (user.accountType === 'core') return coreAccountIdsToShow.has(user.id);
+                    // Include the user if it's a branch whose parent core account is being shown
+                    return user.coreAccountId && coreAccountIdsToShow.has(user.coreAccountId);
+                });
+            }
+
+            filteredUsers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            currentPageUsers = 1;
+            renderUsersWithPagination();
+        }
+
+        function renderUsersWithPagination() {
+            const totalItems = filteredUsers.length;
+            totalPagesUsers = Math.max(1, Math.ceil(totalItems / itemsPerPageUsers));
+            if (currentPageUsers > totalPagesUsers) currentPageUsers = totalPagesUsers;
+
+            updateUserPaginationControls(totalItems);
+
+            const startIndex = (currentPageUsers - 1) * itemsPerPageUsers;
+            const endIndex = Math.min(startIndex + itemsPerPageUsers, totalItems);
+            const pageData = filteredUsers.slice(startIndex, endIndex);
+            renderUsers(pageData);
+        }
+
+        function updateUserPaginationControls(totalItems) {
+            const prevPageBtnUsers = document.getElementById('prevPageUsers');
+            const nextPageBtnUsers = document.getElementById('nextPageUsers');
+            const entriesInfoUsers = document.getElementById('entriesInfoUsers');
+
+            prevPageBtnUsers.disabled = currentPageUsers === 1;
+            nextPageBtnUsers.disabled = currentPageUsers === totalPagesUsers;
+
+            const startIndex = Math.min((currentPageUsers - 1) * itemsPerPageUsers + 1, totalItems);
+            const endIndex = Math.min(currentPageUsers * itemsPerPageUsers, totalItems);
+            entriesInfoUsers.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+            
+            generateUserPageTabs();
+        }
+
+        function generateUserPageTabs() {
+            const pageTabsUsers = document.getElementById('pageTabsUsers');
+            pageTabsUsers.innerHTML = '';
+            const maxTabs = 7;
+
+            const addBtn = (num) => {
+                const b = document.createElement('button');
+                b.textContent = num;
+                if (num === currentPageUsers) b.classList.add('active');
+                b.addEventListener('click', () => {
+                    currentPageUsers = num;
+                    renderUsersWithPagination();
+                });
+                pageTabsUsers.appendChild(b);
+            };
+
+            if (totalPagesUsers <= maxTabs) {
+                for (let i = 1; i <= totalPagesUsers; i++) addBtn(i);
+            } else {
+                const pages = new Set([1, 2, totalPagesUsers - 1, totalPagesUsers, currentPageUsers - 1, currentPageUsers, currentPageUsers + 1]);
+                const sorted = [...pages].filter(p => p >= 1 && p <= totalPagesUsers).sort((a, b) => a - b);
+                let prev = 0;
+                for (const p of sorted) {
+                    if (p - prev > 1) {
+                        const ell = document.createElement('span');
+                        ell.textContent = '…';
+                        pageTabsUsers.appendChild(ell);
+                    }
+                    addBtn(p);
+                    prev = p;
+                }
+            }
+        }
+
+        // Search functionality for users
+        if (userSearchInput) {
+            userSearchInput.addEventListener('keyup', debounce(applyUserFilters, 300));
+        }
+        document.getElementById('prevPageUsers').addEventListener('click', () => { if (currentPageUsers > 1) { currentPageUsers--; renderUsersWithPagination(); } });
+        document.getElementById('nextPageUsers').addEventListener('click', () => { if (currentPageUsers < totalPagesUsers) { currentPageUsers++; renderUsersWithPagination(); } });
+
+        function generatePageTabs() {
+            if (!pageTabs) return;
+            pageTabs.innerHTML = '';
+            // For many pages, show first, last, and around current
+            const maxTabs = 7;
+            const addBtn = (num) => {
+                const b = document.createElement('button');
+                b.textContent = num;
+                if (num === currentPage) b.classList.add('active');
+                b.addEventListener('click', () => {
+                    currentPage = num;
+                    renderTableWithPagination();
+                });
+                pageTabs.appendChild(b);
+            };
+            if (totalPages <= maxTabs) {
+                for (let i = 1; i <= totalPages; i++) addBtn(i);
+            } else {
+                const pages = new Set([1, 2, totalPages-1, totalPages, currentPage-1, currentPage, currentPage+1]);
+                const sorted = [...pages].filter(p => p >= 1 && p <= totalPages).sort((a,b)=>a-b);
+                let prev = 0;
+                for (const p of sorted) {
+                    if (p - prev > 1) {
+                        const ell = document.createElement('span');
+                        ell.textContent = '…';
+                        pageTabs.appendChild(ell);
+                    }
+                    addBtn(p);
+                    prev = p;
+                }
+            }
+        }
+
+        function updatePaginationControls(totalItems) {
+            if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
+            if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
+            const startIndex = Math.min((currentPage - 1) * itemsPerPage + 1, totalItems);
+            const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+            if (entriesInfo) entriesInfo.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+            generatePageTabs();
+        }
+
+        function renderTableWithPagination() {
+            const totalItems = filteredPayments.length;
+            totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+            if (currentPage > totalPages) currentPage = totalPages;
+            updatePaginationControls(totalItems);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            const pageData = filteredPayments.slice(startIndex, endIndex);
+            renderPayments(pageData);
+        }
+
+        // Load payments from Firebase
+        async function loadPayments() {
+            // Re-initialize event listeners in case DOM was recreated
+            initEventListeners();
+            
+            const paymentsBody = document.getElementById('paymentsBody');
+            if (!paymentsBody) return console.error('Payments table body not found');
+
+            paymentsBody.innerHTML = `<tr><td colspan="7" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading payment data...</td></tr>`;
+
+            const paymentsRef = ref(database, 'subscriptionPayments');
+            const snapshot = await get(paymentsRef);
+
+            if (!snapshot.exists()) {
+                paymentsBody.innerHTML = `<tr><td colspan="7" class="no-data">No payment records found.</td></tr>`;
+                allPayments = [];
+                return;
+            }
+
+            const payments = [];
+            snapshot.forEach((childSnapshot) => {
+                const paymentData = childSnapshot.val();
+                if (paymentData) {
+                    payments.push({ id: childSnapshot.key, ...paymentData });
+                }
+            });
+
+            payments.sort((a, b) => (new Date(b.timestamp) || 0) - (new Date(a.timestamp) || 0));
+            allPayments = payments;
+            applyFilters();
+        }
+
+        // Debounce helper function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Initialize event listeners
+        function initEventListeners() {
+            console.log('Initializing event listeners...');
+            
+            // Get references to DOM elements
+            const searchInput = document.getElementById('searchInput');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const searchBox = document.querySelector('.search-box');
+            
+            // Clear existing event listeners by cloning elements
+            filterButtons.forEach(btn => {
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+            });
+            
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active state
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update current filter and apply
+                    currentFilter = this.getAttribute('data-filter');
+                    console.log('Filter changed to:', currentFilter);
+                    applyFilters();
+                });
+            });
+            
+            // Initialize search with debounce
+            if (searchInput) {
+                // Clear any existing search input
+                const newSearchInput = searchInput.cloneNode(true);
+                searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+                
+                // Create clear button
+                let clearBtn = null;
+                if (searchBox) {
+                    // Remove existing clear button if any
+                    const existingClearBtn = searchBox.querySelector('.clear-search');
+                    if (existingClearBtn) {
+                        existingClearBtn.remove();
+                    }
+                    
+                    // Create new clear button
+                    clearBtn = document.createElement('span');
+                    clearBtn.className = 'clear-search';
+                    clearBtn.innerHTML = '&times;';
+                    clearBtn.style.cssText = 'cursor: pointer; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #666; display: none;';
+                    
+                    clearBtn.addEventListener('click', () => {
+                        newSearchInput.value = '';
+                        clearBtn.style.display = 'none';
+                        applyFilters();
+                    });
+                    
+                    searchBox.style.position = 'relative';
+                    searchBox.appendChild(clearBtn);
+                }
+                
+                // Debounced search handler
+                const handleSearch = debounce(() => {
+                    console.log('Searching for:', newSearchInput.value);
+                    if (clearBtn) {
+                        clearBtn.style.display = newSearchInput.value ? 'block' : 'none';
+                    }
+                    applyFilters();
+                }, 300);
+                
+                // Add event listeners
+                newSearchInput.addEventListener('input', handleSearch);
+                
+                // Handle clear button visibility
+                newSearchInput.addEventListener('input', () => {
+                    if (clearBtn) {
+                        clearBtn.style.display = newSearchInput.value ? 'block' : 'none';
+                    }
+                });
+            }
+        }
+        
+        // Apply all active filters and search
+        function applyFilters() {
+            console.log('Applying filters...', { currentFilter, allPaymentsLength: allPayments ? allPayments.length : 0 });
+            
+            if (!allPayments || allPayments.length === 0) {
+                console.log('No payments to filter');
+                return;
+            }
+            
+            const searchEl = document.getElementById('searchInput');
+            const searchTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
+            console.log('Search term:', searchTerm);
+            
+            // Filter by status
+            let filtered = [...allPayments];
+            if (currentFilter && currentFilter !== 'all') {
+                filtered = filtered.filter(payment => 
+                    payment && payment.status && payment.status.toLowerCase() === currentFilter
+                );
+                console.log(`Filtered by status '${currentFilter}':`, filtered.length);
+            }
+            
+            // Filter by search term if provided
+            if (searchTerm) {
+                filtered = filtered.filter(payment => {
+                    if (!payment) return false;
+                    
+                    // Check various fields for search term match
+                    const matches = (
+                        (payment.id && payment.id.toLowerCase().includes(searchTerm)) ||
+                        (payment.userId && payment.userId.toLowerCase().includes(searchTerm)) ||
+                        (payment.paymentRef && payment.paymentRef.toLowerCase().includes(searchTerm)) ||
+                        (payment.amount && payment.amount.toString().includes(searchTerm)) ||
+                        (payment.timestamp && new Date(payment.timestamp).toLocaleString().toLowerCase().includes(searchTerm)) ||
+                        (payment.status && payment.status.toLowerCase().includes(searchTerm))
+                    );
+                    
+                    return matches;
+                });
+                console.log('Filtered by search term:', filtered.length);
+            }
+            
+            // If no results after filtering
+            if (filtered.length === 0) {
+                console.log('No matching payments found');
+                const paymentsBody = document.getElementById('paymentsBody');
+                if (paymentsBody) {
+                    paymentsBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px;">
+                                <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                                <p>No matching payments found</p>
+                                <button class="btn btn-primary" id="clearSearchBtn">
+                                    <i class="fas fa-times"></i> Clear search
+                                </button>
+                            </td>
+                        </tr>`;
+                    
+                    // Add event listener to clear search button
+                    const clearSearchBtn = document.getElementById('clearSearchBtn');
+                    if (clearSearchBtn) {
+                        clearSearchBtn.addEventListener('click', () => {
+                            const input = document.getElementById('searchInput');
+                            if (input) input.value = '';
+                            document.querySelectorAll('.filter-btn').forEach(btn => {
+                                if (btn.getAttribute('data-filter') === 'all') {
+                                    btn.click();
+                                } else {
+                                    btn.classList.remove('active');
+                                }
+                            });
+                            currentFilter = 'all';
+                            applyFilters();
+                        });
+                    }
+                }
+                return;
+            }
+            // Results exist: update filtered list and render current page
+            filteredPayments = filtered;
+            // Ensure currentPage is valid relative to total pages
+            const newTotalPages = Math.max(1, Math.ceil(filteredPayments.length / itemsPerPage));
+            if (!currentPage || currentPage < 1) currentPage = 1;
+            if (currentPage > newTotalPages) currentPage = newTotalPages;
+            renderTableWithPagination();
+        }
+        
+        // Filter payments based on search and filter
+        function filterAndRenderPayments() {
+            applyFilters();
+        }
+
+        // Delete payment
+        async function deletePayment(paymentId) {
+            if (!paymentId) {
+                showNotification('Error: Payment ID is required', 'error');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to delete this payment record? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                // First check if user is admin
+                const isAdmin = await checkAdmin();
+                if (!isAdmin) {
+                    throw new Error('Access denied. Admin privileges required.');
+                }
+                
+                // Delete the payment
+                const paymentRef = ref(database, `subscriptionPayments/${paymentId}`);
+                await remove(paymentRef);
+                
+                // Remove from UI
+                const row = document.querySelector(`tr[data-payment-id="${paymentId}"]`);
+                if (row) {
+                    row.style.opacity = '0.5';
+                    setTimeout(() => row.remove(), 300);
+                }
+                
+                // Update the allPayments array
+                allPayments = allPayments.filter(payment => payment.id !== paymentId);
+                
+                // Show success notification
+                showNotification('Payment record deleted successfully', 'success');
+                
+                // If no payments left, show empty state
+                if (allPayments.length === 0) {
+                    const paymentsBody = document.getElementById('paymentsBody');
+                    if (paymentsBody) {
+                        paymentsBody.innerHTML = `
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 20px;">
+                                    <i class="fas fa-inbox" style="font-size: 24px;"></i>
+                                    <p>No payments found</p>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error deleting payment:', error);
+                const errorMessage = error.code === 'PERMISSION_DENIED' ? 
+                    'You do not have permission to delete payments' : 
+                    `Error: ${error.message}`;
+                showNotification(errorMessage, 'error');
+                
+                // Reload payments to ensure UI is in sync
+                loadPayments();
+            }
+        }
+        
+        // Set up filter buttons
+        document.querySelectorAll('.filters .filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filters .filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                filterAndRenderPayments();
+            });
+        });
+
+        // Show notification to user
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            // Add to DOM
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+        
+        // Add styles for notifications
+        const style = document.createElement('style');
+        style.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                border-radius: 4px;
+                color: white;
+                font-weight: 500;
+                opacity: 0;
+                transform: translateY(-20px);
+                transition: opacity 0.3s, transform 0.3s;
+                z-index: 1000;
+            }
+            
+            .notification.show {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            
+            .notification.fade-out {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            
+            .notification.success {
+                background-color: #28a745;
+            }
+            
+            .notification.error {
+                background-color: #dc3545;
+            }
+            
+            .notification.info {
+                background-color: #17a2b8;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Initialize auth state (FIXED FOR RESILIENCE)
+        let authCheckAttempts = 0;
+        const maxAuthCheckAttempts = 5;
+
+        onAuthStateChanged(auth, async (user) => { 
+            if (!user) {
+                // No user is signed in. Redirect to login.
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Check if the user is an admin
+            let isAdmin = await checkAdmin(user);
+            
+            while (!isAdmin && authCheckAttempts < maxAuthCheckAttempts) {
+                // Wait briefly for data to propagate in the database
+                await new Promise(resolve => setTimeout(resolve, 500));
+                isAdmin = await checkAdmin(user);
+                authCheckAttempts++;
+            }
+
+            if (isAdmin) {
+                // If verified, proceed with loading data for the active tab.
+                if (paymentsTab.classList.contains('active')) loadPayments();
+                else if (branchPaymentsTab.classList.contains('active')) loadBranchPayments();
+                else if (usersTab.classList.contains('active')) loadUsers();
+                else if (demoRequestsTab.classList.contains('active')) loadDemoRequests();
+            } else {
+                // If still not admin after retry, deny access.
+                showNotification('Access Denied: Admin privileges required.', 'error');
+                // Redirect to login instead of index for better flow control
+                setTimeout(() => { window.location.href = 'login.html'; }, 1500); 
+            }
+        });
+
+        // Make functions available globally for inline event handlers
+        window.updatePaymentStatus = updatePaymentStatus;
+        window.approveBranchPayment = approveBranchPayment;
+        window.rejectBranchPayment = rejectBranchPayment;
+        window.deleteBranchPayment = deleteBranchPayment;
+        window.viewUserDetails = viewUserDetails;
+
+        // --- Logout Functionality ---
+        function logout() {
+            signOut(auth).then(() => {
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                console.error('Logout Error:', error);
+                alert('Failed to log out. Please try again.');
+            });
+        }
+
+        // Attach logout event listener
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        // --- Dark Mode Functionality ---
+        const themeToggle = document.getElementById('theme-toggle');
+        const currentTheme = localStorage.getItem('theme');
+
+        // Apply the saved theme on page load
+        if (currentTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            if (currentTheme === 'dark') {
+                themeToggle.checked = true;
+            }
+        }
+
+        function switchTheme(e) {
+            if (e.target.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        themeToggle.addEventListener('change', switchTheme, false);
+
+        // Add dark mode styles dynamically
+        const darkModeStyles = `
+            html[data-theme="dark"] { --light-gray: #1f2937; --dark-gray: #f9fafb; --border-color: #374151; --body-bg: #111827; --container-bg: #1f2937; --text-color: #d1d5db; --hover-bg: rgba(255, 255, 255, 0.05); }
+            html[data-theme="dark"] body { background-color: var(--body-bg); color: var(--text-color); }
+            html[data-theme="dark"] .container { background: var(--container-bg); box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+            html[data-theme="dark"] th { background-color: #111827; color: var(--text-color); }
+            html[data-theme="dark"] tr:hover { background-color: var(--hover-bg); }
+            html[data-theme="dark"] .tab-btn { color: #9ca3af; }
+            html[data-theme="dark"] .tab-btn.active { color: var(--primary-color); }
+            html[data-theme="dark"] .search-box input { background-color: #374151; color: var(--text-color); border-color: #4b5563; }
+        `;
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = darkModeStyles;
+        document.head.appendChild(styleSheet);
+    </script>
+</body>
+</html>

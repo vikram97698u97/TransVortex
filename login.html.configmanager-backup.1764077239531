@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Transport Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    /* Color Variables */
+    :root {
+      --primary-color: #2E8B57; /* Sea Green */
+      --secondary-color: #43B97F; /* Lighter Green */
+      --accent-color: #3CB371; /* Medium Green */
+      --text-color: #1F1F1F;
+      --light-bg: #f8f9fa;
+      --white: #FFFFFF;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.08); /* Stronger shadow for professionalism */
+      --radius: 12px;
+      --input-border: #ced4da;
+    }
+
+    * { box-sizing: border-box; }
+
+    /* Base Body Styling */
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      /* Faint gradient background */
+      background: linear-gradient(135deg, var(--white) 0%, #f0f8f4 100%);
+      overflow: hidden;
+      display: flex;
+    }
+
+    .split-screen {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    /* Left Pane - Animation/Visuals */
+    .left-pane {
+      width: 50%;
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 3rem;
+      color: var(--white);
+      /* Add entry animation */
+      animation: fadeInFromLeft 0.8s ease-out forwards;
+    }
+
+    /* Custom Title for Left Pane (Inspired by Fleetx screenshot) */
+    .left-content {
+      position: relative;
+      z-index: 10;
+      max-width: 80%;
+    }
+    .left-content h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .left-content p {
+      font-size: 1.2rem;
+      font-weight: 300;
+      opacity: 0.9;
+    }
+
+    /* Road Animation Styles */
+    .road-animation {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 300px;
+      /* Road color (dark grey) */
+      background: #3c3c3c;
+      border-top: 10px solid #5c5c5c;
+      z-index: 5;
+    }
+
+    /* Dashed Road Line */
+    .road-line {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: transparent;
+      overflow: hidden;
+      transform: translateY(-50%);
+    }
+    .road-line::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200%;
+      height: 100%;
+      /* Creates the animated dashed line effect */
+      background: repeating-linear-gradient(to right, #fff 0, #fff 50px, transparent 50px, transparent 100px);
+      animation: move-line 2s linear infinite;
+    }
+
+    /* Vehicle Styles */
+    .vehicle {
+      position: absolute;
+      bottom: 10px;
+      animation: drive 10s linear infinite;
+      z-index: 6;
+      border-radius: 4px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .truck {
+      width: 120px;
+      height: 60px;
+      background: var(--secondary-color);
+      border-radius: 10px 10px 0 0;
+      left: -150px;
+      animation-duration: 12s;
+    }
+    /* Truck Cab */
+    .truck::before {
+      content: '';
+      position: absolute;
+      right: -30px;
+      top: 10px;
+      width: 40px;
+      height: 40px;
+      background: var(--accent-color);
+      border-radius: 5px;
+    }
+    /* Truck Wheels (simplified) */
+    .truck::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 5px;
+      right: 5px;
+      height: 10px;
+      background: #111;
+      border-radius: 5px;
+    }
+
+    .car {
+      width: 80px;
+      height: 40px;
+      background: var(--accent-color);
+      border-radius: 20px 20px 0 0;
+      left: -100px;
+      animation-duration: 8s;
+      animation-delay: -4s;
+    }
+    /* Car Wheels (simplified) */
+    .car::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 5px;
+      right: 5px;
+      height: 10px;
+      background: #111;
+      border-radius: 5px;
+    }
+
+    /* Keyframe Animations */
+    @keyframes move-line {
+      from { background-position: 0 0; }
+      to { background-position: -100px 0; }
+    }
+
+    @keyframes drive {
+      from { transform: translateX(-150px); }
+      to { transform: translateX(110vw); }
+    }
+    
+    @keyframes fadeInFromLeft {
+        from { opacity: 0; transform: translateX(-50px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Right Pane - Form Container */
+    .right-pane {
+      width: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      /* Entry animation for the form */
+      animation: fadeInFromRight 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeInFromRight {
+      from { opacity: 0; transform: translateX(50px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 420px;
+      background: var(--white);
+      padding: 2.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    /* Logo and Header */
+    .logo-placeholder {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .logo-placeholder img {
+      max-width: 180px;
+      height: auto;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .auth-header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 0.5rem;
+    }
+    .auth-header p {
+      margin: 0;
+      color: #6c757d;
+      font-size: 1rem;
+    }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-control {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      font-size: 1rem;
+      /* Subtle inset shadow */
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.2);
+    }
+
+    /* Forgot Password Link */
+    .forgot-password {
+      display: block;
+      margin-top: -0.75rem;
+      margin-bottom: 1.5rem; /* Increased spacing */
+      font-size: 0.9rem;
+      color: #6c757d;
+      text-decoration: none;
+      text-align: right;
+      font-weight: 500;
+    }
+    .forgot-password:hover { color: var(--primary-color); text-decoration: underline; }
+
+    /* Primary Button */
+    .btn {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 6px 15px rgba(46, 139, 87, 0.2);
+    }
+    .btn-primary {
+      background: var(--primary-color);
+      color: var(--white);
+    }
+    .btn-primary:hover { 
+      background-color: var(--accent-color); 
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(46, 139, 87, 0.3);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* Separator */
+    .separator {
+      text-align: center;
+      margin: 1.5rem 0;
+      color: #adb5bd;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+    .separator::before, .separator::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #dee2e6;
+    }
+    .separator:not(:empty)::before { margin-right: .75em; }
+    .separator:not(:empty)::after { margin-left: .75em; }
+
+    /* Google Button */
+    .btn-google {
+      background-color: #fff;
+      color: var(--text-color);
+      border: 1px solid var(--input-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    }
+    .btn-google:hover { background-color: #f8f9fa; }
+    .btn-google img { width: 20px; height: 20px; }
+
+    /* Footer */
+    .auth-footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.95rem;
+      color: #6c757d;
+    }
+    .auth-footer a { color: var(--primary-color); font-weight: 600; text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+
+    /* Status Messages */
+    #user-status { margin-top: 1rem; text-align: center; font-size: 0.9rem; min-height: 1.2rem; }
+    .error-message { color: #dc3545; }
+    .success-message { color: #198754; }
+    
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .left-pane { display: none; }
+      .right-pane { width: 100%; animation: none; }
+      .auth-container { max-width: 380px; }
+      body { background: var(--white); }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="split-screen">
+    <div class="left-pane">
+      <div class="left-content">
+        <h1>An integrated platform</h1>
+        <p>to improve sustainability, effectiveness, and safety.</p>
+      </div>
+      <div class="road-animation">
+        <div class="road-line"></div>
+        <div class="vehicle truck"></div>
+        <div class="vehicle car"></div>
+      </div>
+    </div>
+    <div class="right-pane">
+      <div class="auth-container">
+        <div class="logo-placeholder">
+          <img src="logo1.jpg" alt="TransVortex Logo">
+        </div>
+        <div class="auth-header">
+          <h1>Sign in</h1>
+          <p>to access your transport dashboard</p>
+        </div>
+        <form id="login-form">
+          <div class="form-group">
+            <input type="email" id="login-email" class="form-control" placeholder="Email address" autocomplete="email" required>
+          </div>
+          <div class="form-group">
+            <input type="password" id="login-password" class="form-control" placeholder="Password" autocomplete="current-password" required>
+          </div>
+          <a href="#" class="forgot-password" onclick="resetPassword(); return false;">Forgot password?</a>
+          <button type="submit" class="btn btn-primary" id="login-button">Login</button>
+          <div id="user-status"></div>
+        </form>
+        <div class="auth-footer">
+          Don't have an account? <a href="signup.html">Sign up</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Load secure configuration first -->
+  <script src="evm.js"></script>
+  <script src="config-loader.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      sendPasswordResetEmail,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      get,
+      update,
+      query,
+      orderByChild,
+      equalTo
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // Load Firebase configuration securely from EVM
+    let firebaseConfig;
+    
+    try {
+      // Get Firebase configuration from secure EVM system
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+      
+      // Check if we're using fallback values
+      if (ConfigManager.isUsingFallbackValues()) {
+        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+      } else {
+        console.log('✅ Firebase configuration loaded securely from EVM');
+      }
+    } catch (error) {
+      console.error('❌ Failed to load Firebase configuration:', error);
+      
+      // Use fallback configuration to prevent complete failure
+      firebaseConfig = {
+        apiKey: "placeholder-key",
+        authDomain: "placeholder.firebaseapp.com", 
+        databaseURL: "https://placeholder.firebaseio.com",
+        projectId: "placeholder-project",
+        storageBucket: "placeholder.appspot.com",
+        messagingSenderId: "000000000000",
+        appId: "1:000000000000:web:placeholder",
+        measurementId: "G-XXXXXXXXX"
+      };
+    }
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // Show success message if redirected from signup
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('signup') === 'success') {
+      const successMessage = document.createElement('div');
+      successMessage.className = 'success-message';
+      successMessage.textContent = 'Account created successfully! Please log in to continue.';
+      successMessage.style.textAlign = 'center'; // Keep this style
+      successMessage.style.marginBottom = '20px';
+      document.querySelector('.auth-container').insertBefore(successMessage, document.querySelector('.auth-header'));
+      
+      // Remove the signup success parameter from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Function to show the subscription expired message
+    function showSubscriptionExpiredCard() {
+      const authContainer = document.querySelector('.auth-container');
+      authContainer.innerHTML = `
+        <div class="auth-header">
+          <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: #ffc107; margin-bottom: 1rem;"></i>
+          <h2>Subscription Expired</h2>
+          <p>Your subscription is over. To continue accessing your dashboard, please subscribe to an active plan.</p>
+        </div>
+        <button class="btn btn-primary" onclick="window.location.href = 'subscribe.html'" style="margin-top: 20px;">
+          Go to Subscription Page
+        </button>
+      `;
+    }
+
+    // Login function
+    window.login = async function() {
+      console.log('Login function called');
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value.trim();
+      const loginButton = document.getElementById("login-button");
+      
+      // Store original button HTML at the beginning
+      const originalButtonHTML = loginButton.innerHTML;
+      
+      // Store email and password in session (This is needed for auto-login features, even if the branch logic is gone)
+      sessionStorage.setItem('coreEmail', email);
+      sessionStorage.setItem('corePassword', password);
+      const statusElement = document.getElementById("user-status");
+      
+      if (!loginButton) {
+        console.error('Login button not found');
+        return;
+      }
+      
+      // Basic validation (omitted for brevity, assume valid)
+      if (!email || !password || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showError('Please enter a valid email and password');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        loginButton.disabled = true;
+        loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+        
+        // 1. Sign in with email and password
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // 2. Get user data from database
+        const userRef = ref(db, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        
+        if (!snapshot.exists()) {
+          // If no profile data exists, allow access anyway but update the last login timestamp
+          await update(ref(db, `users/${user.uid}`), { lastLogin: new Date().toISOString() });
+          window.location.href = 'home.html';
+          return;
+        }
+
+        const userData = snapshot.val();
+        console.log('User data from database:', userData);
+
+        // **3. Check Admin Role**
+        const isAdmin = (userData.role === 'admin') ||
+                       (userData.profile && userData.profile.role === 'admin') ||
+                       (email === 'transvortex@gmail.com');
+
+        if (isAdmin) {
+          await update(ref(db, `users/${user.uid}`), { 
+            role: 'admin',
+            lastLogin: new Date().toISOString()
+          });
+          console.log('Admin user detected, redirecting to admin dashboard.');
+          window.location.href = 'admin-payments.html';
+          return;
+        }
+
+        // **4. Check Subscription Status (Simplified)**
+        const subscription = userData.subscription;
+        const now = new Date();
+        let isSubscriptionActive = false;
+
+        if (subscription) {
+          const trialEnd = subscription.trialEnd ? new Date(subscription.trialEnd) : null;
+          const endDate = subscription.endDate ? new Date(subscription.endDate) : null;
+          
+          const isTrialActive = subscription.status === 'trial' && trialEnd && trialEnd > now;
+          const isPaidActive = subscription.status === 'active' && endDate && endDate > now;
+          
+          isSubscriptionActive = isTrialActive || isPaidActive;
+        }
+
+        if (isSubscriptionActive) {
+          // Grant Access
+          await update(ref(db, `users/${user.uid}`), { lastLogin: now.toISOString() });
+          console.log('Active subscription/trial found. Redirecting to dashboard.');
+          
+          // Redirect the user to the main dashboard
+          window.location.href = 'home.html';
+          return;
+        } else {
+          // Subscription Expired/Missing
+          console.log('Subscription expired or not found. Showing expired card.');
+          showSubscriptionExpiredCard();
+          return;
+        }
+
+      } catch (error) {
+        console.error("Login error:", error);
+        let errorMessage = "An error occurred. Please try again.";
+        
+        // Handle specific error cases
+        if (error && error.code) {
+          switch (error.code) {
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+              errorMessage = "Incorrect email or password.";
+              document.getElementById("login-email").focus();
+              break;
+            case 'auth/too-many-requests':
+              errorMessage = "Too many failed attempts. Please try again later or reset your password.";
+              break;
+            case 'auth/invalid-email':
+              errorMessage = "Please enter a valid email address.";
+              document.getElementById("login-email").focus();
+              break;
+            case 'auth/user-disabled':
+              errorMessage = "This account has been disabled. Please contact support.";
+              break;
+            case 'auth/network-request-failed':
+              errorMessage = "Network error. Please check your connection and try again.";
+              break;
+          }
+        }
+        
+        showError(errorMessage);
+      } finally {
+        // Reset button state
+        if (loginButton) {
+          loginButton.disabled = false;
+          loginButton.innerHTML = originalButtonHTML;
+        }
+      }
+    };
+    
+    // Password reset function
+    window.resetPassword = async function() {
+      const email = document.getElementById("login-email").value.trim();
+      const statusElement = document.getElementById("user-status");
+      
+      if (!email) {
+        showError("Please enter your email address to reset your password.");
+        return;
+      }
+      
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showError("Password reset email sent. Please check your inbox.", 'success');
+      } catch (error) {
+        console.error("Password reset error:", error);
+        showError("Error sending password reset email. Please try again.");
+      }
+    };
+    
+    // Helper function to show error/success messages
+    function showError(message, type = 'error') {
+      const statusElement = document.getElementById("user-status");
+      if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.className = type === 'error' ? 'error-message' : 'success-message';
+        statusElement.style.display = 'block';
+        
+        // Hide the message after 5 seconds
+        setTimeout(() => {
+          statusElement.style.display = 'none';
+        }, 5000);
+      }
+    }
+    
+    // Attach event listener to the form for submission
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      window.login();
+    });
+
+    // Expose login function to the global scope so inline onsubmit can find it if needed elsewhere.
+    document.addEventListener('DOMContentLoaded', function() {
+      window.login = login;
+    });
+    
+    // Focus and prefill email field on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const emailField = document.getElementById('login-email');
+      const params = new URLSearchParams(window.location.search);
+      const prefill = params.get('email');
+      if (emailField) {
+        if (prefill) {
+          emailField.value = prefill;
+        }
+        emailField.focus();
+      }
+    });
+
+    // Removed Auto-login for branch switching logic since the structure is eliminated.
+    document.addEventListener('DOMContentLoaded', function() {
+      const params = new URLSearchParams(window.location.search);
+      // Remove obsolete branch autologin check
+      if (params.get('autologin') === 'branch') {
+        sessionStorage.removeItem('targetBranchEmail');
+      }
+    });
+  </script>
+</body>
+</html>

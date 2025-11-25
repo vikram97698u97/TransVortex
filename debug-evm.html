@@ -21,7 +21,7 @@
 
     <!-- Load secure configuration first -->
     <script src="evm.js"></script>
-    <script src="config-loader.js"></script>
+    
     
     <script>
         function runDebug() {
@@ -48,12 +48,12 @@
                 html += '❌ Window object missing<br>';
             }
             
-            // Check 2: ConfigManager
-            html += '<br><strong>2. ConfigManager:</strong><br>';
-            if (typeof ConfigManager !== 'undefined') {
-                html += '✅ ConfigManager exists<br>';
+            // Check 2: window
+            html += '<br><strong>2. window:</strong><br>';
+            if (typeof window !== 'undefined') {
+                html += '✅ window exists<br>';
                 try {
-                    const envInfo = ConfigManager.getEnvironmentInfo();
+                    const envInfo = window.getEnvironmentInfo();
                     html += '✅ getEnvironmentInfo() works<br>';
                     html += 'Has EVM: ' + envInfo.hasEVM + '<br>';
                     html += 'Using Fallback: ' + envInfo.usingFallback + '<br>';
@@ -62,7 +62,7 @@
                 }
                 
                 try {
-                    const firebaseConfig = ConfigManager.getFirebaseConfig();
+                    const firebaseConfig = window.FIREBASE_CONFIG;
                     html += '✅ getFirebaseConfig() works<br>';
                     html += 'Project ID: ' + firebaseConfig.projectId + '<br>';
                     html += 'API Key: ' + (firebaseConfig.apiKey.includes('AIza') ? '✅ Valid' : '❌ Invalid') + '<br>';
@@ -70,7 +70,7 @@
                     html += '❌ getFirebaseConfig() failed: ' + e.message + '<br>';
                 }
             } else {
-                html += '❌ ConfigManager missing<br>';
+                html += '❌ window missing<br>';
             }
             
             // Check 3: Console logs
@@ -85,10 +85,10 @@
             console.log('Window object:', typeof window);
             console.log('ENV_CONFIG:', window.ENV_CONFIG);
             console.log('FIREBASE_CONFIG:', window.FIREBASE_CONFIG);
-            console.log('ConfigManager:', typeof ConfigManager);
-            if (typeof ConfigManager !== 'undefined') {
-                console.log('Environment Info:', ConfigManager.getEnvironmentInfo());
-                console.log('Firebase Config:', ConfigManager.getFirebaseConfig());
+            console.log('window:', typeof window);
+            if (typeof window !== 'undefined') {
+                console.log('Environment Info:', window.getEnvironmentInfo());
+                console.log('Firebase Config:', window.FIREBASE_CONFIG);
             }
         }
         

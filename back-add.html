@@ -1080,7 +1080,7 @@
   <!-- Firebase compat SDKs -->
     <!-- Load secure configuration first -->
   <script src="evm.js"></script>
-  <script src="config-loader.js"></script>
+  
 
   <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
@@ -1105,7 +1105,7 @@
 
      // Cloudinary Configuration
      // Load Cloudinary configuration securely from EVM
-    const cloudinaryConfig = ConfigManager.getCloudinaryConfig();
+    const cloudinaryConfig = window.CLOUDINARY_CONFIG;
     const CLOUDINARY_CLOUD_NAME = cloudinaryConfig.cloudName;
     const CLOUDINARY_UPLOAD_PRESET = cloudinaryConfig.uploadPreset;
 
@@ -1194,10 +1194,10 @@
     
     try {
       // Get Firebase configuration from secure EVM system
-      firebaseConfig = ConfigManager.getFirebaseConfig();
+      firebaseConfig = window.FIREBASE_CONFIG;
       
       // Check if we're using fallback values
-      if (ConfigManager.isUsingFallbackValues()) {
+      if (false) {
         console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
       } else {
         console.log('✅ Firebase configuration loaded securely from EVM');
@@ -1206,11 +1206,11 @@
       console.error('❌ Failed to load Firebase configuration:', error);
       
       // Use fallback configuration to prevent complete failure
-      firebaseConfig = ConfigManager.getFirebaseConfig();
+      firebaseConfig = window.FIREBASE_CONFIG;
     }
      
      // Initialize Firebase
-     const app = initializeApp(firebaseConfig);
+     const app = initializeApp(window.FIREBASE_CONFIG);
      const auth = getAuth(app);
      const database = getDatabase(app);
 

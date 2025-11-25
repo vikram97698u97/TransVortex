@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Choose Your Plan - Transport Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    :root {
+      --primary: #2E8B57;
+      --primary-dark: #1f6b43;
+      --accent: #f4c430;
+      --text-dark: #1a1a1a;
+      --text-light: #6b6b6b;
+      --bg-light: #f7f9f8;
+      --card-bg: #fff;
+      --shadow: 0 10px 35px rgba(0, 0, 0, 0.07);
+      --radius: 16px;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #f5faf7 0%, #ffffff 100%);
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 15px;
+    }
+
+    .plan-container {
+      max-width: 1250px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 70px;
+    }
+
+    .header h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .header p {
+      color: var(--text-light);
+      font-size: 1.1rem;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    /* Plan Grid */
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 30px;
+      justify-items: center;
+    }
+
+    .plan-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 40px 25px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+      border: 1px solid #e6e9e8;
+      position: relative;
+    }
+
+    .plan-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 45px rgba(46, 139, 87, 0.15);
+    }
+
+    .plan-card.recommended {
+      background: linear-gradient(160deg, #2E8B57, #43b97f);
+      color: #fff;
+      transform: scale(1.05);
+      border: none;
+    }
+
+    .recommended-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #000;
+      padding: 6px 20px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .plan-name {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .plan-price {
+      font-size: 3rem;
+      font-weight: 800;
+      margin: 15px 0;
+      color: var(--primary);
+    }
+
+    .plan-card.recommended .plan-price {
+      color: #fff;
+    }
+
+    .plan-price span {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #888;
+    }
+
+    .plan-card.recommended .plan-price span {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .plan-features {
+      list-style: none;
+      padding: 0;
+      margin: 25px 0 35px;
+      text-align: left;
+      flex-grow: 1;
+    }
+
+    .plan-features li {
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      font-size: 0.95rem;
+      color: var(--text-light);
+    }
+
+    .plan-features i {
+      color: var(--primary);
+      margin-right: 10px;
+    }
+
+    .plan-card.recommended .plan-features li {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .plan-card.recommended .plan-features i {
+      color: #fff;
+    }
+
+    .btn-select-plan {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: auto;
+    }
+
+    .btn-select-plan:hover {
+      background: var(--primary-dark);
+      transform: translateY(-3px);
+    }
+
+    .plan-card.recommended .btn-select-plan {
+      background: #fff;
+      color: var(--primary-dark);
+    }
+
+    .plan-card.recommended .btn-select-plan:hover {
+      background: var(--accent);
+      color: #000;
+    }
+
+    /* Extra Trust Section */
+    .extra-info {
+      margin-top: 70px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 40px 25px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .extra-info h2 {
+      font-size: 1.8rem;
+      color: var(--primary-dark);
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .extra-info p {
+      color: #555;
+      line-height: 1.7;
+      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+
+    .extra-info i {
+      color: var(--primary);
+      margin-right: 8px;
+    }
+
+    /* Animation */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .plan-card {
+      opacity: 0;
+      animation: fadeInUp 0.8s forwards;
+    }
+
+    .plan-card:nth-child(1) { animation-delay: 0.2s; }
+    .plan-card:nth-child(2) { animation-delay: 0.4s; }
+    .plan-card:nth-child(3) { animation-delay: 0.6s; }
+    .plan-card:nth-child(4) { animation-delay: 0.8s; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2.2rem;
+      }
+      .plan-price {
+        font-size: 2.4rem;
+      }
+      .plan-card {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="plan-container">
+    <div class="header">
+      <h1>Choose Your Perfect Plan</h1>
+      <p>Start your free 14-day trial — no credit card required. Upgrade or downgrade anytime as your business grows.</p>
+    </div>
+
+    <div class="plan-grid">
+      <div class="plan-card">
+        <h3 class="plan-name">Starter</h3>
+        <div class="plan-price">₹1,999<span>/month</span></div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check-circle"></i>Up to 25 Vehicles</li>
+          <li><i class="fas fa-check-circle"></i>Full LR & Invoice Management</li>
+          <li><i class="fas fa-check-circle"></i>Tyre & Expense Tracking</li>
+          <li><i class="fas fa-check-circle"></i>Basic Analytics Dashboard</li>
+        </ul>
+        <button class="btn-select-plan" data-plan-id="starter" data-plan-name="Starter" data-vehicle-limit="25" data-price="1999">Start 14-Day Trial</button>
+      </div>
+
+      <div class="plan-card recommended">
+        <div class="recommended-badge">Most Popular</div>
+        <h3 class="plan-name">Business</h3>
+        <div class="plan-price">₹3,999<span>/month</span></div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check-circle"></i>Up to 50 Vehicles</li>
+          <li><i class="fas fa-check-circle"></i>All Starter Features</li>
+          <li><i class="fas fa-check-circle"></i>Branch Account Management</li>
+          <li><i class="fas fa-check-circle"></i>Advanced Analytics + Reports</li>
+        </ul>
+        <button class="btn-select-plan" data-plan-id="business" data-plan-name="Business" data-vehicle-limit="50" data-price="3999">Start 14-Day Trial</button>
+      </div>
+
+      <div class="plan-card">
+        <h3 class="plan-name">Enterprise</h3>
+        <div class="plan-price">₹6,999<span>/month</span></div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check-circle"></i>Up to 100 Vehicles</li>
+          <li><i class="fas fa-check-circle"></i>All Business Features</li>
+          <li><i class="fas fa-check-circle"></i>Priority 24/7 Support</li>
+          <li><i class="fas fa-check-circle"></i>Custom Integrations</li>
+        </ul>
+        <button class="btn-select-plan" data-plan-id="enterprise" data-plan-name="Enterprise" data-vehicle-limit="100" data-price="6999">Start 14-Day Trial</button>
+      </div>
+
+      <div class="plan-card">
+        <h3 class="plan-name">Ultimate</h3>
+        <div class="plan-price">₹14,999<span>/month</span></div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check-circle"></i>Up to 200 Vehicles</li>
+          <li><i class="fas fa-check-circle"></i>All Enterprise Features</li>
+          <li><i class="fas fa-check-circle"></i>Dedicated Account Manager</li>
+          <li><i class="fas fa-check-circle"></i>Full API & Automation Access</li>
+        </ul>
+        <button class="btn-select-plan" data-plan-id="ultimate" data-plan-name="Ultimate" data-vehicle-limit="200" data-price="14999">Start 14-Day Trial</button>
+      </div>
+    </div>
+
+    <div class="extra-info">
+      <h2>Why Choose TransVortex Dashboard?</h2>
+      <p><i class="fas fa-truck-moving"></i> Add more vehicles anytime — if you exceed your current plan limit, you can easily upgrade within the dashboard.</p>
+      <p><i class="fas fa-sync-alt"></i> Switch or cancel plans anytime without losing your data or setup.</p>
+      <p><i class="fas fa-chart-line"></i> Monitor all operations, expenses, and analytics from one secure, trusted dashboard.</p>
+      <p><i class="fas fa-lock"></i> Your data is encrypted and safe — trusted by transport companies nationwide.</p>
+    </div>
+  </div>
+
+    <!-- Load secure configuration first -->
+  <script src="evm.js"></script>
+  <script src="config-loader.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // Load Firebase configuration securely from EVM
+    let firebaseConfig;
+    
+    try {
+      // Get Firebase configuration from secure EVM system
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+      
+      // Check if we're using fallback values
+      if (ConfigManager.isUsingFallbackValues()) {
+        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+      } else {
+        console.log('✅ Firebase configuration loaded securely from EVM');
+      }
+    } catch (error) {
+      console.error('❌ Failed to load Firebase configuration:', error);
+      
+      // Use fallback configuration to prevent complete failure
+      firebaseConfig = {
+        apiKey: "placeholder-key",
+        authDomain: "placeholder.firebaseapp.com", 
+        databaseURL: "https://placeholder.firebaseio.com",
+        projectId: "placeholder-project",
+        storageBucket: "placeholder.appspot.com",
+        messagingSenderId: "000000000000",
+        appId: "1:000000000000:web:placeholder",
+        measurementId: "G-XXXXXXXXX"
+      };
+    }
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // If no user is logged in, redirect to the login page.
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const planButtons = document.querySelectorAll('.btn-select-plan');
+      planButtons.forEach(button => {
+        button.addEventListener('click', async (event) => {
+          const planId = event.target.dataset.planId;
+          const planName = event.target.dataset.planName;
+          const vehicleLimit = parseInt(event.target.dataset.vehicleLimit, 10);
+          const price = parseInt(event.target.dataset.price, 10);
+
+          // Disable all buttons to prevent multiple clicks
+          planButtons.forEach(btn => btn.disabled = true);
+          event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting up...';
+
+          try {
+            // The signup process already creates a 14-day trial.
+            // Here, we update the plan details based on the user's selection.
+            const trialStart = new Date();
+            const trialEnd = new Date();
+            trialEnd.setDate(trialStart.getDate() + 14);
+
+            const subscriptionData = {
+              status: 'trial',
+              planId: planId,
+              planName: planName,
+              vehicleLimit: vehicleLimit,
+              monthlyRate: price,
+              trialStart: trialStart.toISOString(),
+              trialEnd: trialEnd.toISOString(),
+              createdAt: new Date().toISOString(),
+              subscribedAt: new Date().getTime()
+            };
+
+            // Update the subscription data in the user's profile in Firebase.
+            const userSubscriptionRef = ref(db, `users/${user.uid}/subscription`);
+            await update(userSubscriptionRef, subscriptionData);
+
+            alert(`Your ${planName} plan 14-day trial has started!`);
+            
+            // Redirect to the home dashboard after successful plan selection (NEW FLOW).
+            window.location.href = 'home.html';
+
+          } catch (error) {
+            console.error("Error updating plan:", error);
+            alert("Failed to start your trial. Please try again or contact support.");
+            // Re-enable buttons on error
+            planButtons.forEach(btn => btn.disabled = false);
+            event.target.textContent = 'Start 14-Day Trial';
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

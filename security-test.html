@@ -45,7 +45,7 @@
 
     <!-- Load secure configuration first -->
     <script src="evm.js"></script>
-    <script src="config-loader.js"></script>
+    
     
     <script>
         function runSecurityTest() {
@@ -57,7 +57,7 @@
             
             try {
                 // Test 1: Environment Status
-                const envInfo = ConfigManager.getEnvironmentInfo();
+                const envInfo = window.getEnvironmentInfo();
                 configStatus.innerHTML = `
                     <div class="alert ${envInfo.hasEVM ? 'alert-success' : 'alert-danger'}">
                         <strong>EVM Status:</strong> ${envInfo.hasEVM ? '✅ Loaded' : '❌ Not Found'}<br>
@@ -68,7 +68,7 @@
                 `;
                 
                 // Test 2: Firebase Configuration
-                const firebaseConfig = ConfigManager.getFirebaseConfig();
+                const firebaseConfig = window.FIREBASE_CONFIG;
                 const firebaseSecure = !firebaseConfig.apiKey.includes('placeholder') && 
                                      !firebaseConfig.apiKey.includes('your-');
                 firebaseTest.innerHTML = `
@@ -80,7 +80,7 @@
                 `;
                 
                 // Test 3: Cloudinary Configuration
-                const cloudinaryConfig = ConfigManager.getCloudinaryConfig();
+                const cloudinaryConfig = window.getCloudinaryConfig();
                 const cloudinarySecure = cloudinaryConfig.cloudName && 
                                        cloudinaryConfig.cloudName !== 'your-cloud-name';
                 cloudinaryTest.innerHTML = `
@@ -92,7 +92,7 @@
                 `;
                 
                 // Test 4: AI Configuration
-                const aiConfig = ConfigManager.getAIConfig();
+                const aiConfig = window.getAIConfig();
                 const aiSecure = aiConfig.geminiApiKey && 
                                 !aiConfig.geminiApiKey.includes('your-');
                 aiTest.innerHTML = `

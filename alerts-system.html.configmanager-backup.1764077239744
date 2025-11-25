@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Expiry Alerts</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #F5F5F5;
+      color: #111111;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .alert-card {
+      border-left: 4px solid #dc3545;
+      background: #f8f9fa;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+    .alert-card.warning {
+      border-left-color: #ffc107;
+    }
+    .alert-card.info {
+      border-left-color: #17a2b8;
+    }
+    .alert-card h4 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    .alert-card p {
+      margin: 0;
+      font-weight: 600;
+    }
+    .alert-card .alert-details {
+      flex-grow: 1;
+    }
+    .alert-card .alert-actions {
+      flex-shrink: 0;
+    }
+    button {
+      cursor: pointer;
+    }
+    .btn-small {
+      margin-top: 5px;
+      margin-right: 5px;
+      background: #43b97f;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+    <!-- Load secure configuration first -->
+  <script src="evm.js"></script>
+  <script src="config-loader.js"></script>
+
+  <script src="navbar-loader.js"></script>
+
+  <div class="container">
+    <h1><i class="fas fa-bell"></i> Document Expiry Alerts</h1>
+    <p>This page automatically shows documents from your vehicle list that are expired or will expire in the next 30 days.</p>
+    
+    <!-- Active Alerts -->
+    <div id="alertsList">
+      <h3 style="margin-top: 2rem;">Active Alerts</h3>
+      <!-- Alerts will be populated here -->
+    </div>
+
+    <!-- Pagination Controls (Tab System) for Alerts -->
+    <div style="margin-top: 16px;">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+        <label for="entriesPerPageAlerts" style="font-weight:600;">Entries per page:</label>
+        <select id="entriesPerPageAlerts" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+        <div id="entriesInfoAlerts" style="color:#666; font-size:14px;"></div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+        <button class="tab-nav-control" id="prevAlerts" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="tab-navigation" id="tabNavigationAlerts" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+        <button class="tab-nav-control" id="nextAlerts" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    
+    // Initialize Firebase
+    // Load Firebase configuration securely from EVM
+    let firebaseConfig;
+    
+    try {
+      // Get Firebase configuration from secure EVM system
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+      
+      // Check if we're using fallback values
+      if (ConfigManager.isUsingFallbackValues()) {
+        console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
+      } else {
+        console.log('✅ Firebase configuration loaded securely from EVM');
+      }
+    } catch (error) {
+      console.error('❌ Failed to load Firebase configuration:', error);
+      
+      // Use fallback configuration to prevent complete failure
+      firebaseConfig = ConfigManager.getFirebaseConfig();
+    }
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    let currentUser = null;
+    let allAlerts = [];
+    // Pagination state
+    const entriesPerPageSelect = document.getElementById('entriesPerPageAlerts');
+    const entriesInfo = document.getElementById('entriesInfoAlerts');
+    const tabNavigation = document.getElementById('tabNavigationAlerts');
+    const prevBtn = document.getElementById('prevAlerts');
+    const nextBtn = document.getElementById('nextAlerts');
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let totalPages = 1;
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+      currentUser = user;
+      loadAlerts();
+    });
+
+    async function loadAlerts() {
+      try {
+        const userProfileSnap = await get(ref(db, `users/${currentUser.uid}/profile`));
+        const profileData = userProfileSnap.exists() ? userProfileSnap.val() : {};
+        const coreAccountId = profileData.coreAccountId || currentUser.uid;
+
+        const vehiclesRef = ref(db, `users/${coreAccountId}/vehicles`);
+        const snapshot = await get(vehiclesRef);
+        if (!snapshot.exists()) {
+          document.getElementById('alertsList').innerHTML = '<p>No vehicles found. Add vehicles and their documents in the "Vehicle Info" page to see alerts here.</p>';
+          return;
+        }
+
+        const vehiclesData = snapshot.val();
+        allAlerts = [];
+        const today = new Date();
+
+        for (const key in vehiclesData) {
+          const vehicle = vehiclesData[key];
+          const docTypes = [
+            { key: 'licenseExpiry', name: 'Driver License' },
+            { key: 'pucExpiry', name: 'PUC Certificate' },
+            { key: 'insuranceExpiry', name: 'Insurance' },
+            { key: 'fitnessExpiry', name: 'Fitness Certificate' }
+          ];
+          
+          // In alerts-system.html - ensure this part is correct
+          docTypes.forEach(doc => {
+            const expiryDateStr = vehicle[doc.key];
+            if (expiryDateStr) {
+              const expiryDate = new Date(expiryDateStr);
+              const daysUntilDue = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+              
+              console.log(`Vehicle: ${vehicle.vehicleNumber}, ${doc.name}: ${expiryDateStr}, Days: ${daysUntilDue}`); // Debug log
+              
+              if (daysUntilDue <= 30) {
+                allAlerts.push({
+                  vehicleId: key,
+                  vehicleNumber: vehicle.vehicleNumber,
+                  docType: doc.name,
+                  dueDate: expiryDateStr,
+                  daysUntilDue: daysUntilDue
+                });
+              }
+            }
+          });
+        }
+
+        // Sort by most urgent (fewest days left)
+        allAlerts.sort((a, b) => a.daysUntilDue - b.daysUntilDue);
+        renderAlertsWithPagination();
+      } catch (error) {
+        console.error("Error loading alerts:", error);
+        document.getElementById('alertsList').innerHTML = '<p class="text-danger">Could not load alerts. Please try again.</p>';
+      }
+    }
+
+    function renderAlertsWithPagination() {
+      const alertsList = document.getElementById('alertsList');
+      const totalItems = allAlerts.length;
+      totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+      updatePaginationControls(totalItems);
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = Math.min(start + itemsPerPage, totalItems);
+      const pageData = allAlerts.slice(start, end);
+      const alertsHtml = pageData.map(alert => {
+        const { vehicleId, vehicleNumber, docType, dueDate, daysUntilDue } = alert;
+        let alertClass = 'alert-card info';
+        let alertText = '';
+        if (daysUntilDue < 0) { alertClass = 'alert-card'; alertText = `OVERDUE: ${Math.abs(daysUntilDue)} days ago`; }
+        else if (daysUntilDue <= 7) { alertClass = 'alert-card warning'; alertText = `DUE SOON: ${daysUntilDue} days remaining`; }
+        else { alertClass = 'alert-card info'; alertText = `${daysUntilDue} days remaining`; }
+        return `
+          <div class="${alertClass}">
+            <div class="alert-details">
+              <h4>${docType} - ${vehicleNumber}</h4>
+              <p>${alertText}</p>
+              <small>Due Date: ${dueDate}</small>
+            </div>
+            <div class="alert-actions">
+              <a href="add.html" onclick="navigateToVehicle('${vehicleId}')" class="btn-small">Update Document</a>
+            </div>
+          </div>`;
+      });
+      alertsList.innerHTML = '<h3>Active Alerts</h3>' + (alertsHtml.length > 0 ? alertsHtml.join('') : '<p>No active alerts</p>');
+    }
+
+    function updatePaginationControls(totalItems) {
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = currentPage === totalPages;
+      const startIndex = Math.min((currentPage - 1) * itemsPerPage + 1, totalItems);
+      const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+      entriesInfo.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+      generatePageTabs();
+    }
+
+    function generatePageTabs() {
+      tabNavigation.innerHTML = '';
+      if (totalPages <= 1) return;
+      addTab(1);
+      let startPage = Math.max(2, currentPage - 2);
+      let endPage = Math.min(totalPages - 1, currentPage + 2);
+      if (startPage > 2) addEllipsis();
+      for (let i = startPage; i <= endPage; i++) addTab(i);
+      if (endPage < totalPages - 1) addEllipsis();
+      addTab(totalPages);
+    }
+
+    function addTab(pageNumber) {
+      const tab = document.createElement('div');
+      tab.className = `tab ${pageNumber === currentPage ? 'active' : ''}`;
+      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
+      tab.textContent = pageNumber;
+      tab.addEventListener('click', () => {
+        currentPage = pageNumber;
+        renderAlertsWithPagination();
+      });
+      tabNavigation.appendChild(tab);
+    }
+
+    function addEllipsis() {
+      const ellipsis = document.createElement('div');
+      ellipsis.textContent = '...';
+      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
+      tabNavigation.appendChild(ellipsis);
+    }
+
+    // Hook up pagination controls
+    entriesPerPageSelect.addEventListener('change', function () {
+      itemsPerPage = parseInt(this.value, 10) || 10;
+      currentPage = 1;
+      renderAlertsWithPagination();
+    });
+    prevBtn.addEventListener('click', function () {
+      if (currentPage > 1) {
+        currentPage--;
+        renderAlertsWithPagination();
+      }
+    });
+    nextBtn.addEventListener('click', function () {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderAlertsWithPagination();
+      }
+    });
+
+    // Navigate to the add.html page and scroll to the specific vehicle
+    window.navigateToVehicle = function(vehicleId) {
+      // For simplicity, we just navigate. A more advanced implementation could use localStorage to pass the ID.
+      window.location.href = 'add.html';
+    }
+
+    // Make logout function available globally
+    window.logout = async function() {
+      try {
+        await signOut(auth);
+        window.location.href = "index.html";
+      } catch (e) {
+        alert("Logout error: " + e.message);
+      }
+  };
+</script>
+</body>
+</html>

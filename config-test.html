@@ -30,7 +30,7 @@
 
     <!-- Load secure configuration first -->
     <script src="evm.js"></script>
-    <script src="config-loader.js"></script>
+    
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -41,9 +41,9 @@
             
             try {
                 // Test EVM loading
-                const envInfo = ConfigManager.getEnvironmentInfo();
-                const firebaseConfig = ConfigManager.getFirebaseConfig();
-                const cloudinaryConfig = ConfigManager.getCloudinaryConfig();
+                const envInfo = window.getEnvironmentInfo();
+                const firebaseConfig = window.FIREBASE_CONFIG;
+                const cloudinaryConfig = window.getCloudinaryConfig();
                 
                 let html = '<div class="alert alert-info">';
                 html += '<h5>🔍 Configuration Test Results:</h5>';
@@ -72,8 +72,8 @@
             
             try {
                 // Initialize Firebase
-                const firebaseConfig = ConfigManager.getFirebaseConfig();
-                firebase.initializeApp(firebaseConfig);
+                const firebaseConfig = window.FIREBASE_CONFIG;
+                firebase.initializeApp(window.FIREBASE_CONFIG);
                 
                 results.innerHTML = '<div class="alert alert-warning"><strong>🔄 Testing Firebase...</strong> Please wait...</div>';
                 

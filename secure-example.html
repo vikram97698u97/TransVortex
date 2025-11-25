@@ -13,17 +13,17 @@
     <script src="evm.js"></script>
     
     <!-- Load configuration loader -->
-    <script src="config-loader.js"></script>
+    
     
     <!-- Example of using secure configuration -->
     <script>
         // Example: Initialize Firebase securely
         function initializeFirebase() {
             try {
-                const firebaseConfig = ConfigManager.getFirebaseConfig();
+                const firebaseConfig = window.FIREBASE_CONFIG;
                 
                 // Check if we're using fallback values
-                if (ConfigManager.isUsingFallbackValues()) {
+                if (window.isUsingFallbackValues()) {
                     console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
                     document.getElementById('status').innerHTML = 
                         '<div style="color: orange;">⚠️ Using fallback configuration. Please configure evm.js file.</div>';
@@ -33,7 +33,7 @@
                 // Initialize Firebase with secure config
                 if (typeof firebase !== 'undefined') {
                     if (!firebase.apps.length) {
-                        firebase.initializeApp(firebaseConfig);
+                        firebase.initializeApp(window.FIREBASE_CONFIG);
                     }
                     console.log('✅ Firebase initialized successfully');
                     document.getElementById('status').innerHTML = 
@@ -48,8 +48,8 @@
         
         // Example: Use Cloudinary configuration
         function uploadToCloudinarySecure(file) {
-            const cloudinaryConfig = ConfigManager.getCloudinaryConfig();
-            const folder = ConfigManager.getCloudinaryFolder('vehicles');
+            const cloudinaryConfig = window.getCloudinaryConfig();
+            const folder = window.getCloudinaryFolder('vehicles');
             
             console.log('Uploading to Cloudinary:', {
                 cloudName: cloudinaryConfig.cloudName,
@@ -71,7 +71,7 @@
         
         // Example: Use AI configuration
         function useAIConfig() {
-            const aiConfig = ConfigManager.getAIConfig();
+            const aiConfig = window.getAIConfig();
             console.log('AI Configuration loaded:', {
                 hasGeminiKey: !!aiConfig.geminiApiKey,
                 keyLength: aiConfig.geminiApiKey ? aiConfig.geminiApiKey.length : 0
@@ -83,7 +83,7 @@
             console.log('🚀 Initializing secure configuration...');
             
             // Show environment info
-            const envInfo = ConfigManager.getEnvironmentInfo();
+            const envInfo = window.getEnvironmentInfo();
             console.log('Environment Info:', envInfo);
             
             // Initialize services

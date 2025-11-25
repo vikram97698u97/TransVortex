@@ -74,13 +74,13 @@
 
     <!-- Load secure configuration first -->
     <script src="evm.js"></script>
-    <script src="config-loader.js"></script>
+    
     
     <script>
         // Show configuration status
         function showConfigStatus() {
             const statusDiv = document.getElementById('configStatus');
-            const envInfo = ConfigManager.getEnvironmentInfo();
+            const envInfo = window.getEnvironmentInfo();
             
             let html = '<div class="row">';
             html += '<div class="col-md-6"><strong>EVM Status:</strong> ';
@@ -113,8 +113,8 @@
         async function uploadToCloudinarySecure(file, folderType) {
             try {
                 // Get Cloudinary configuration securely from EVM
-                const cloudinaryConfig = ConfigManager.getCloudinaryConfig();
-                const folder = ConfigManager.getCloudinaryFolder(folderType);
+                const cloudinaryConfig = window.getCloudinaryConfig();
+                const folder = window.getCloudinaryFolder(folderType);
                 
                 console.log('🔐 Using secure Cloudinary configuration:', {
                     cloudName: cloudinaryConfig.cloudName,
@@ -221,7 +221,7 @@
             showConfigStatus();
             
             // Check if EVM is properly loaded
-            if (ConfigManager.isUsingFallbackValues()) {
+            if (window.isUsingFallbackValues()) {
                 const warningDiv = document.createElement('div');
                 warningDiv.className = 'alert alert-warning alert-dismissible fade show mt-3';
                 warningDiv.innerHTML = `

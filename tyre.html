@@ -667,7 +667,7 @@
 <body>
     <!-- Load secure configuration first -->
   <script src="evm.js"></script>
-  <script src="config-loader.js"></script>
+  
 
   <script src="navbar-loader.js"></script>
   <script src="table-pager.js"></script>
@@ -879,10 +879,10 @@
     
     try {
       // Get Firebase configuration from secure EVM system
-      firebaseConfig = ConfigManager.getFirebaseConfig();
+      firebaseConfig = window.FIREBASE_CONFIG;
       
       // Check if we're using fallback values
-      if (ConfigManager.isUsingFallbackValues()) {
+      if (false) {
         console.warn('⚠️  Using fallback Firebase configuration. Please update evm.js with real values.');
       } else {
         console.log('✅ Firebase configuration loaded securely from EVM');
@@ -891,19 +891,10 @@
       console.error('❌ Failed to load Firebase configuration:', error);
       
       // Use fallback configuration to prevent complete failure
-      firebaseConfig = {
-        apiKey: "placeholder-key",
-        authDomain: "placeholder.firebaseapp.com", 
-        databaseURL: "https://placeholder.firebaseio.com",
-        projectId: "placeholder-project",
-        storageBucket: "placeholder.appspot.com",
-        messagingSenderId: "000000000000",
-        appId: "1:000000000000:web:placeholder",
-        measurementId: "G-XXXXXXXXX"
-      };
+      firebaseConfig = window.FIREBASE_CONFIG;
     }
 
-    const app = initializeApp(firebaseConfig);
+    const app = initializeApp(window.FIREBASE_CONFIG);
     const auth = getAuth(app);
     const db = getDatabase(app);
     let currentUser = null;
