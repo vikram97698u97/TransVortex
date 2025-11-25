@@ -42,6 +42,12 @@ Thumbs.db
 *.old
 *.orig
 *.temp
+*.bak
+*-backup
+*-old
+*-orig
+*-temp
+*.final-backup
 
 # Test files
 *-test.*
@@ -50,3 +56,13 @@ debug.*
 config-test.*
 security-test.*
 secure-example.*
+
+# Cleanup scripts
+*-cleanup.*
+fix-*.js
+*.cleanup.js
+
+# Performance optimization
+.nyc_output
+coverage/
+*.lcov
