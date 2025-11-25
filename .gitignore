@@ -41,6 +41,7 @@ Thumbs.db
 *.backup-*
 *.old
 *.orig
+*.temp
 
 # Test files
 *-test.*
