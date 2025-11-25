@@ -3,447 +3,429 @@
 <head>
     
 
-    <!-- 🔥 Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-    
-    <!-- 🔐 Configuration Loading -->
     <script src="evm.js"></script>
     
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transport Dashboard - Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+      :root {
+        /* Saved Theme */
+        --primary: #2E8B57;         /* Sea Green */
+        --charcoal: #1F1F1F;        /* Dark Charcoal */
+        --bg: #F5F5F5;              /* Light Gray */
+        --text: #111111;            /* Almost Black */
+        --mint: #43B97F;            /* Bright Mint Green */
 
-
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Transport Dashboard - Home</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-  <style>
-    :root {
-      /* Saved Theme */
-      --primary: #2E8B57;         /* Sea Green */
-      --charcoal: #1F1F1F;        /* Dark Charcoal */
-      --bg: #F5F5F5;              /* Light Gray */
-      --text: #111111;            /* Almost Black */
-      --mint: #43B97F;            /* Bright Mint Green */
-
-      --card: #ffffff;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --shadow: 0 6px 18px rgba(0,0,0,.08);
-      --radius: 14px;
-    }
-
-    /* Dark mode (if you add a theme toggle in navbar.html that toggles data-theme="dark" on <html>) */
-    html[data-theme="dark"] {
-      --bg: #0f172a;
-      --card: #111827;
-      --text: #e5e7eb;
-      --border: #1f2937;
-      --muted: #9ca3af;
-      --shadow: 0 6px 18px rgba(0,0,0,.45);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      line-height: 1.6;
-    }
-
-    /* Container */
-    .main-content {
-      padding: 0; /* Remove padding as it's now handled by the inner containers */
-    }
-    
-    .container {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-
-    /* Welcome */
-    .welcome-section { margin-bottom: 24px; }
-    
-    /* Business Summary */
-    .business-summary {
-      margin-bottom: 30px;
-    }
-    
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-    
-    .summary-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      border: 1px solid var(--border);
-      /* **FIX**: Make cards clickable */
-      cursor: pointer;
-    }
-    
-    .summary-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    }
-    
-    .summary-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 15px;
-      font-size: 1.5rem;
-    }
-    
-    .summary-details h3 {
-      font-size: 0.9rem;
-      color: var(--muted);
-      margin: 0 0 4px 0;
-      font-weight: 500;
-    }
-    
-    .summary-details p {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin: 0;
-      color: var(--text);
-    }
-    
-    .section-title {
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: var(--text);
-    }
-    .welcome-title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--charcoal);
-      letter-spacing: .2px;
-    }
-    .welcome-subtitle { color: var(--muted); margin-top: 6px; }
-
-    /* Quick Actions */
-    .quick-actions {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
-      gap: 16px;
-      margin: 20px 0 32px;
-    }
-    .action-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: var(--shadow);
-      cursor: pointer;
-      transition: transform .15s ease, box-shadow .15s ease, border-color .2s ease;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .action-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.12); border-color: rgba(46,139,87,.25); }
-    .action-card i { font-size: 1.6rem; color: var(--primary); }
-    .action-card h3 { font-size: 1.05rem; font-weight: 700; }
-    .action-card p { color: var(--muted); font-size: .9rem; }
-
-    /* Summary */
-    .business-summary {
-      background: linear-gradient(135deg, var(--primary), var(--mint));
-      color: #fff;
-      border-radius: var(--radius);
-      padding: 22px;
-      margin-bottom: 28px;
-      box-shadow: var(--shadow);
-    }
-    .summary-header {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
-    }
-    .summary-title { font-size: 1.4rem; font-weight: 700; letter-spacing: .3px; }
-    .summary-period {
-      background: rgba(255,255,255,.2);
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: .9rem;
-      font-weight: 600;
-    }
-    .summary-grid {
-      display: grid; gap: 14px;
-      grid-template-columns: repeat(auto-fit, minmax(190px,1fr));
-    }
-    .summary-item {
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.25);
-      border-radius: 12px;
-      padding: 14px;
-    }
-    .summary-value { font-size: 1.9rem; font-weight: 800; }
-    .summary-label { opacity: .95; margin-top: 6px; font-weight: 600; }
-
-    /* Recent Activity */
-    .recent-activity {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: var(--shadow);
-      margin-bottom: 28px;
-    }
-    .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 14px; color: var(--charcoal); }
-    .activity-grid {
-      display: grid; gap: 16px;
-      grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
-    }
-    .activity-column h4 { font-size: 1rem; font-weight: 800; margin-bottom: 10px; color: var(--charcoal); }
-    .activity-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 0; border-bottom: 1px dashed var(--border);
-      font-weight: 600;
-    }
-    .activity-item:last-child { border-bottom: none; }
-    .activity-sub { color: var(--muted); font-weight: 500; font-size: .9rem; }
-
-    /* Reminders */
-    .reminders-section {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: var(--shadow);
-      margin-bottom: 32px;
-    }
-    .reminders-grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; margin-top: 8px; }
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; }
-    .form-control {
-      width: 100%; padding: 10px 12px; border: 1px solid var(--border); background: var(--card);
-      border-radius: 10px; color: var(--text);
-      outline: none; transition: border-color .2s, box-shadow .2s;
-    }
-    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(46,139,87,.12); }
-    .btn {
-      background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 10px;
-      font-weight: 700; cursor: pointer; transition: transform .15s ease, opacity .2s;
-    }
-    .btn:hover { transform: translateY(-1px); opacity: .95; }
-    .btn-full { width: 100%; }
-    .reminder-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px; background: var(--bg); border: 1px dashed var(--border); border-radius: 10px;
-      margin-bottom: 8px;
-    }
-    .reminder-item i { color: var(--mint); }
-    .no-reminders { text-align: center; color: var(--muted); padding: 14px; }
-
-    /* Error message styling */
-    .error-container {
-      background: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeaa7;
-      border-radius: var(--radius);
-      padding: 20px;
-      margin: 20px 0;
-      text-align: center;
-    }
-    .error-container h3 {
-      color: #856404;
-      margin-bottom: 10px;
-    }
-    .error-container p {
-      margin-bottom: 15px;
-    }
-    .error-icon {
-      font-size: 2.5rem;
-      margin-bottom: 15px;
-      color: #ffc107;
-    }
-
-    /* Dashboard specific styles */
-    .profit-positive { color: #198754; font-weight: bold; }
-    .profit-negative { color: #dc3545; font-weight: bold; }
-    .payment-type-badge {
-      font-size: 0.7em;
-      padding: 4px 8px;
-      border-radius: 12px;
-    }
-    .table-responsive { border-radius: 8px; }
-
-    /* Business Card Generator Styles (Minimized for space, keeping core) */
-    .business-card-preview {
-      display: flex;
-      justify-content: center;
-      padding: 20px;
-      background: var(--bg);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      min-height: 300px;
-    }
-    
-    .business-card {
-      width: 350px;
-      height: 200px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      transition: all 0.3s ease;
-    }
-    
-    .business-card.green-modern {
-      background: linear-gradient(135deg, var(--primary), var(--mint));
-      color: white;
-      background-image:
-        repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 8px),
-        linear-gradient(135deg, var(--primary), var(--mint));
-      background-blend-mode: overlay, normal;
-    }
-    .business-card.dark-minimal {
-      background: #111827;
-      color: #e5e7eb;
-      border: 1px solid #374151;
-    }
-    .business-card.dark-minimal .company-name { color: #fff; }
-    .business-card.dark-minimal .contact-info { color: #9ca3af; }
-    .business-card.dark-minimal .contact-item i { color: #9ca3af; }
-
-    .business-card.classic-white {
-      background: #fff;
-      color: #374151;
-      border: 1px solid #e5e7eb;
-    }
-    .business-card.classic-white .company-name { color: #111827; }
-    .business-card.classic-white .contact-info { color: #6b7280; }
-    .business-card.classic-white .contact-item i { color: #6b7280; }
-
-    .business-card.blue-professional {
-      background: linear-gradient(135deg, #3b82f6, #60a5fa);
-      color: white;
-    }
-
-    .business-card.elegant-gold {
-      background: #1c1917;
-      color: #fde68a;
-      background-image: linear-gradient(45deg, rgba(250, 204, 21, 0.05) 25%, transparent 25%), linear-gradient(-45deg, rgba(250, 204, 21, 0.05) 25%, transparent 25%);
-      background-size: 20px 20px;
-    }
-    .business-card.elegant-gold .company-name { color: #fefce8; }
-    .business-card.elegant-gold .contact-item i { color: #fde68a; }
-
-    .business-card.vibrant-gradient {
-      background: linear-gradient(135deg, #ec4899, #8b5cf6);
-      color: white;
-    }
-
-    /* 1. Add CSS for your new template here */
-    .business-card.purple-creative {
-      background: #5b21b6;
-      color: #f5f3ff;
-      border: 2px dashed #a78bfa;
-    }
-    .business-card.purple-creative .company-name {
-      color: #ffffff;
-      text-shadow: 0 0 5px rgba(255,255,255,0.5);
-    }
-    .business-card.purple-creative .contact-item i {
-      color: #c4b5fd;
-    }
-    /* Styles for other templates omitted for brevity, logic remains */
-    .card-content {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      height: 100%;
-    }
-    .logo-img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background: rgba(255, 255, 255, 0.2); padding: 5px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
-    .company-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; line-height: 1.2; }
-    .contact-info { font-size: 0.8rem; }
-    .contact-item { margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
-    .contact-item i { width: 14px; text-align: center; }
-
-    /* Rolling Gallery Styles (Minimized for space, keeping core) */
-    .rolling-gallery-container { position: relative; height: 250px; width: 100%; overflow: hidden; margin-top: 20px; }
-    .rolling-gallery-track { display: flex; height: 100%; align-items: center; gap: 16px; position: relative; width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 8px 70px; }
-    .rolling-gallery-item { position: relative; backface-visibility: hidden; transform-origin: center; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1); flex: 0 0 auto; scroll-snap-align: center; }
-
-    /* Expense Modal Styles (NEW) */
-    .expense-modal-item {
-        padding: 10px 0;
-        border-bottom: 1px solid #eee;
-    }
-    .expense-modal-item:last-child {
-        border-bottom: none;
-    }
-    .expense-modal-category {
-        font-weight: 600;
-        color: var(--primary);
-        margin-top: 10px;
-        padding-bottom: 5px;
-        border-bottom: 2px solid #2E8B57;
-    }
-    
-    @media (max-width: 768px) {
-      .main-content { padding: 1rem; }
-      .welcome-section .welcome-header,
-      .payment-card-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
+        --card: #ffffff;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --shadow: 0 6px 18px rgba(0,0,0,.08);
+        --radius: 14px;
       }
-      .welcome-title { font-size: 1.6rem; }
-      .welcome-subtitle { font-size: 0.95rem; }
-      .reminders-grid,
-      .summary-grid,
-      .activity-grid,
-      .quick-actions,
-      .template-options {
-        grid-template-columns: 1fr;
+
+      /* Dark mode (if you add a theme toggle in navbar.html that toggles data-theme="dark" on <html>) */
+      html[data-theme="dark"] {
+        --bg: #0f172a;
+        --card: #111827;
+        --text: #e5e7eb;
+        --border: #1f2937;
+        --muted: #9ca3af;
+        --shadow: 0 6px 18px rgba(0,0,0,.45);
       }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Inter', sans-serif;
+        line-height: 1.6;
+      }
+
+      /* Container */
+      .main-content {
+        padding: 0; /* Remove padding as it's now handled by the inner containers */
+      }
+      
+      .container {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      /* Welcome */
+      .welcome-section { margin-bottom: 24px; }
+      
+      /* Business Summary */
+      .business-summary {
+        margin-bottom: 30px;
+      }
+      
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+      
+      .summary-card {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: 1px solid var(--border);
+        /* **FIX**: Make cards clickable */
+        cursor: pointer;
+      }
+      
+      .summary-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+      
+      .summary-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 1.5rem;
+      }
+      
+      .summary-details h3 {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin: 0 0 4px 0;
+        font-weight: 500;
+      }
+      
       .summary-details p {
-        font-size: 1.3rem; /* Reduce font size for summary values */
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text);
       }
-      .payment-card h4 { 
-        font-size: 1.6rem; /* Reduce font size for payment card values */
+      
+      .section-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--text);
       }
-      .business-card {
-        width: 100%;
-        max-width: 320px;
+      .welcome-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--charcoal);
+        letter-spacing: .2px;
       }
-      .card-content {
-        flex-direction: column;
+      .welcome-subtitle { color: var(--muted); margin-top: 6px; }
+
+      /* Quick Actions */
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+        gap: 16px;
+        margin: 20px 0 32px;
+      }
+      .action-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+        transition: transform .15s ease, box-shadow .15s ease, border-color .2s ease;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .action-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.12); border-color: rgba(46,139,87,.25); }
+      .action-card i { font-size: 1.6rem; color: var(--primary); }
+      .action-card h3 { font-size: 1.05rem; font-weight: 700; }
+      .action-card p { color: var(--muted); font-size: .9rem; }
+
+      /* Summary */
+      .business-summary {
+        background: linear-gradient(135deg, var(--primary), var(--mint));
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 22px;
+        margin-bottom: 28px;
+        box-shadow: var(--shadow);
+      }
+      .summary-header {
+        display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+      }
+      .summary-title { font-size: 1.4rem; font-weight: 700; letter-spacing: .3px; }
+      .summary-period {
+        background: rgba(255,255,255,.2);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: .9rem;
+        font-weight: 600;
+      }
+      .summary-grid {
+        display: grid; gap: 14px;
+        grid-template-columns: repeat(auto-fit, minmax(190px,1fr));
+      }
+      .summary-item {
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.25);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .summary-value { font-size: 1.9rem; font-weight: 800; }
+      .summary-label { opacity: .95; margin-top: 6px; font-weight: 600; }
+
+      /* Recent Activity */
+      .recent-activity {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: var(--shadow);
+        margin-bottom: 28px;
+      }
+      .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 14px; color: var(--charcoal); }
+      .activity-grid {
+        display: grid; gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+      }
+      .activity-column h4 { font-size: 1rem; font-weight: 800; margin-bottom: 10px; color: var(--charcoal); }
+      .activity-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 0; border-bottom: 1px dashed var(--border);
+        font-weight: 600;
+      }
+      .activity-item:last-child { border-bottom: none; }
+      .activity-sub { color: var(--muted); font-weight: 500; font-size: .9rem; }
+
+      /* Reminders */
+      .reminders-section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: var(--shadow);
+        margin-bottom: 32px;
+      }
+      .reminders-grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; margin-top: 8px; }
+      .form-group { margin-bottom: 10px; }
+      .form-group label { display: block; margin-bottom: 6px; font-weight: 600; }
+      .form-control {
+        width: 100%; padding: 10px 12px; border: 1px solid var(--border); background: var(--card);
+        border-radius: 10px; color: var(--text);
+        outline: none; transition: border-color .2s, box-shadow .2s;
+      }
+      .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(46,139,87,.12); }
+      .btn {
+        background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 10px;
+        font-weight: 700; cursor: pointer; transition: transform .15s ease, opacity .2s;
+      }
+      .btn:hover { transform: translateY(-1px); opacity: .95; }
+      .btn-full { width: 100%; }
+      .reminder-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px; background: var(--bg); border: 1px dashed var(--border); border-radius: 10px;
+        margin-bottom: 8px;
+      }
+      .reminder-item i { color: var(--mint); }
+      .no-reminders { text-align: center; color: var(--muted); padding: 14px; }
+
+      /* Error message styling */
+      .error-container {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+        border-radius: var(--radius);
+        padding: 20px;
+        margin: 20px 0;
         text-align: center;
-        gap: 10px;
       }
-    }
+      .error-container h3 {
+        color: #856404;
+        margin-bottom: 10px;
+      }
+      .error-container p {
+        margin-bottom: 15px;
+      }
+      .error-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        color: #ffc107;
+      }
 
-  </style>
+      /* Dashboard specific styles */
+      .profit-positive { color: #198754; font-weight: bold; }
+      .profit-negative { color: #dc3545; font-weight: bold; }
+      .payment-type-badge {
+        font-size: 0.7em;
+        padding: 4px 8px;
+        border-radius: 12px;
+      }
+      .table-responsive { border-radius: 8px; }
 
-    
-    
-    
-    
-    
-    <script src="evm.js"></script>
-    
+      /* Business Card Generator Styles (Minimized for space, keeping core) */
+      .business-card-preview {
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+        background: var(--bg);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        min-height: 300px;
+      }
+      
+      .business-card {
+        width: 350px;
+        height: 200px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+      
+      .business-card.green-modern {
+        background: linear-gradient(135deg, var(--primary), var(--mint));
+        color: white;
+        background-image:
+          repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 8px),
+          linear-gradient(135deg, var(--primary), var(--mint));
+        background-blend-mode: overlay, normal;
+      }
+      .business-card.dark-minimal {
+        background: #111827;
+        color: #e5e7eb;
+        border: 1px solid #374151;
+      }
+      .business-card.dark-minimal .company-name { color: #fff; }
+      .business-card.dark-minimal .contact-info { color: #9ca3af; }
+      .business-card.dark-minimal .contact-item i { color: #9ca3af; }
+
+      .business-card.classic-white {
+        background: #fff;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+      }
+      .business-card.classic-white .company-name { color: #111827; }
+      .business-card.classic-white .contact-info { color: #6b7280; }
+      .business-card.classic-white .contact-item i { color: #6b7280; }
+
+      .business-card.blue-professional {
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        color: white;
+      }
+
+      .business-card.elegant-gold {
+        background: #1c1917;
+        color: #fde68a;
+        background-image: linear-gradient(45deg, rgba(250, 204, 21, 0.05) 25%, transparent 25%), linear-gradient(-45deg, rgba(250, 204, 21, 0.05) 25%, transparent 25%);
+        background-size: 20px 20px;
+      }
+      .business-card.elegant-gold .company-name { color: #fefce8; }
+      .business-card.elegant-gold .contact-item i { color: #fde68a; }
+
+      .business-card.vibrant-gradient {
+        background: linear-gradient(135deg, #ec4899, #8b5cf6);
+        color: white;
+      }
+
+      /* 1. Add CSS for your new template here */
+      .business-card.purple-creative {
+        background: #5b21b6;
+        color: #f5f3ff;
+        border: 2px dashed #a78bfa;
+      }
+      .business-card.purple-creative .company-name {
+        color: #ffffff;
+        text-shadow: 0 0 5px rgba(255,255,255,0.5);
+      }
+      .business-card.purple-creative .contact-item i {
+        color: #c4b5fd;
+      }
+      /* Styles for other templates omitted for brevity, logic remains */
+      .card-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        height: 100%;
+      }
+      .logo-img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background: rgba(255, 255, 255, 0.2); padding: 5px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
+      .company-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; line-height: 1.2; }
+      .contact-info { font-size: 0.8rem; }
+      .contact-item { margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+      .contact-item i { width: 14px; text-align: center; }
+
+      /* Rolling Gallery Styles (Minimized for space, keeping core) */
+      .rolling-gallery-container { position: relative; height: 250px; width: 100%; overflow: hidden; margin-top: 20px; }
+      .rolling-gallery-track { display: flex; height: 100%; align-items: center; gap: 16px; position: relative; width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 8px 70px; }
+      .rolling-gallery-item { position: relative; backface-visibility: hidden; transform-origin: center; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1); flex: 0 0 auto; scroll-snap-align: center; }
+
+      /* Expense Modal Styles (NEW) */
+      .expense-modal-item {
+          padding: 10px 0;
+          border-bottom: 1px solid #eee;
+      }
+      .expense-modal-item:last-child {
+          border-bottom: none;
+      }
+      .expense-modal-category {
+          font-weight: 600;
+          color: var(--primary);
+          margin-top: 10px;
+          padding-bottom: 5px;
+          border-bottom: 2px solid #2E8B57;
+      }
+      
+      @media (max-width: 768px) {
+        .main-content { padding: 1rem; }
+        .welcome-section .welcome-header,
+        .payment-card-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 1rem;
+        }
+        .welcome-title { font-size: 1.6rem; }
+        .welcome-subtitle { font-size: 0.95rem; }
+        .reminders-grid,
+        .summary-grid,
+        .activity-grid,
+        .quick-actions,
+        .template-options {
+          grid-template-columns: 1fr;
+        }
+        .summary-details p {
+          font-size: 1.3rem; /* Reduce font size for summary values */
+        }
+        .payment-card h4 { 
+          font-size: 1.6rem; /* Reduce font size for payment card values */
+        }
+        .business-card {
+          width: 100%;
+          max-width: 320px;
+        }
+        .card-content {
+          flex-direction: column;
+          text-align: center;
+          gap: 10px;
+        }
+      }
+
+    </style>
 </head>
 <body>
   <div id="navbar-placeholder"></div>
@@ -861,306 +843,261 @@
 
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="navbar-loader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="navbar-loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   
   
-  
-    <script>
-    // Data fetching functionality
-    (function() {
-      // Wait for Firebase to be ready
-      function waitForFirebase() {
-        return new Promise((resolve) => {
-          if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
-            resolve();
-          } else {
-            setTimeout(() => waitForFirebase().then(resolve), 100);
-          }
-        });
-      }
+  <script type="module">
+    // Modular Imports - essential for modern Firebase usage
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue, get, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    
+    let currentUser = null;
+    let coreAccountId = null;
+    let db, auth;
 
-      // Initialize data fetching
-      waitForFirebase().then(() => {
-        console.log('🚀 Starting data fetching...');
-        
-        // Check authentication first
-        firebase.auth().onAuthStateChanged((user) => {
-          if (user) {
-            console.log('✅ User authenticated:', user.uid);
-            console.log('📊 Starting to fetch data...');
-            fetchDataForUser(user);
-          } else {
-            console.log('❌ User not authenticated');
-            window.location.href = 'login.html';
-          }
-        });
-      });
+    // --- Core Initialization ---
+    if (!window.FIREBASE_CONFIG) {
+        console.error('❌ Firebase configuration not loaded. Cannot initialize app.');
+        document.getElementById('accountErrorContainer').style.display = 'block';
+    } else {
+        const app = initializeApp(window.FIREBASE_CONFIG);
+        db = getDatabase(app);
+        auth = getAuth(app);
+        console.log('✅ Firebase initialized.');
+    }
 
-      // Fetch data for the authenticated user
-      function fetchDataForUser(user) {
-        const database = firebase.database();
-        const userId = user.uid;
-        
-        console.log('🔍 Fetching data for user:', userId);
+    // --- Utility Functions ---
 
-        // Fetch user profile
-        database.ref('users/' + userId + '/profile').once('value')
-          .then((snapshot) => {
-            const profile = snapshot.val();
-            console.log('👤 User profile:', profile);
-            if (profile) {
-              updateUserInfo(profile);
-            }
-          })
-          .catch((error) => {
-            console.error('❌ Error fetching profile:', error);
-          });
-
-        // Fetch vehicles
-        database.ref('users/' + userId + '/vehicles').once('value')
-          .then((snapshot) => {
-            const vehicles = snapshot.val();
-            console.log('🚚 Vehicles data:', vehicles);
-            if (vehicles) {
-              updateVehiclesData(vehicles);
-            }
-          })
-          .catch((error) => {
-            console.error('❌ Error fetching vehicles:', error);
-          });
-
-        // Fetch drivers
-        database.ref('users/' + userId + '/drivers').once('value')
-          .then((snapshot) => {
-            const drivers = snapshot.val();
-            console.log('👷 Drivers data:', drivers);
-            if (drivers) {
-              updateDriversData(drivers);
-            }
-          })
-          .catch((error) => {
-            console.error('❌ Error fetching drivers:', error);
-          });
-
-        // Fetch LR reports
-        database.ref('users/' + userId + '/lrReports').once('value')
-          .then((snapshot) => {
-            const lrReports = snapshot.val();
-            console.log('📋 LR Reports data:', lrReports);
-            if (lrReports) {
-              updateLRReportsData(lrReports);
-            }
-          })
-          .catch((error) => {
-            console.error('❌ Error fetching LR reports:', error);
-          });
-
-        // Fetch clients
-        database.ref('users/' + userId + '/clients').once('value')
-          .then((snapshot) => {
-            const clients = snapshot.val();
-            console.log('🤝 Clients data:', clients);
-            if (clients) {
-              updateClientsData(clients);
-            }
-          })
-          .catch((error) => {
-            console.error('❌ Error fetching clients:', error);
-          });
-      }
-
-      // Update UI with user info
-      function updateUserInfo(profile) {
-        const userNameElement = document.getElementById('userName');
-        const userEmailElement = document.getElementById('userEmail');
-        const companyNameElement = document.getElementById('companyName');
-        
-        if (userNameElement) userNameElement.textContent = profile.name || profile.companyName || 'User';
-        if (userEmailElement) userEmailElement.textContent = profile.email || '';
-        if (companyNameElement) companyNameElement.textContent = profile.companyName || 'Transport Company';
-      }
-
-      // Update vehicles data
-      function updateVehiclesData(vehicles) {
-        const vehicleCountElement = document.getElementById('vehicleCount');
-        const vehicleListElement = document.getElementById('vehicleList');
-        
-        if (vehicleCountElement) {
-          vehicleCountElement.textContent = Object.keys(vehicles).length;
-        }
-        
-        if (vehicleListElement) {
-          vehicleListElement.innerHTML = '';
-          Object.values(vehicles).forEach(vehicle => {
-            const vehicleItem = document.createElement('div');
-            vehicleItem.className = 'vehicle-item';
-            vehicleItem.innerHTML = `
-              <div class="vehicle-info">
-                <strong>${vehicle.vehicleNumber}</strong>
-                <span>${vehicle.vehicleType || 'N/A'}</span>
-              </div>
-            `;
-            vehicleListElement.appendChild(vehicleItem);
-          });
-        }
-      }
-
-      // Update drivers data
-      function updateDriversData(drivers) {
-        const driverCountElement = document.getElementById('driverCount');
-        const driverListElement = document.getElementById('driverList');
-        
-        if (driverCountElement) {
-          driverCountElement.textContent = Object.keys(drivers).length;
-        }
-        
-        if (driverListElement) {
-          driverListElement.innerHTML = '';
-          Object.values(drivers).forEach(driver => {
-            const driverItem = document.createElement('div');
-            driverItem.className = 'driver-item';
-            driverItem.innerHTML = `
-              <div class="driver-info">
-                <strong>${driver.name}</strong>
-                <span>${driver.contact || 'N/A'}</span>
-              </div>
-            `;
-            driverListElement.appendChild(driverItem);
-          });
-        }
-      }
-
-      // Update LR reports data
-      function updateLRReportsData(lrReports) {
-        const lrCountElement = document.getElementById('lrCount');
-        const lrListElement = document.getElementById('lrList');
-        
-        if (lrCountElement) {
-          lrCountElement.textContent = Object.keys(lrReports).length;
-        }
-        
-        if (lrListElement) {
-          lrListElement.innerHTML = '';
-          Object.values(lrReports).forEach(lr => {
-            const lrItem = document.createElement('div');
-            lrItem.className = 'lr-item';
-            lrItem.innerHTML = `
-              <div class="lr-info">
-                <strong>LR: ${lr.lrNumber || 'N/A'}</strong>
-                <span>${lr.consigneeName || 'N/A'}</span>
-                <small>${lr.date || 'N/A'}</small>
-              </div>
-            `;
-            lrListElement.appendChild(lrItem);
-          });
-        }
-      }
-
-      // Update clients data
-      function updateClientsData(clients) {
-        const clientCountElement = document.getElementById('clientCount');
-        const clientListElement = document.getElementById('clientList');
-        
-        if (clientCountElement) {
-          clientCountElement.textContent = Object.keys(clients).length;
-        }
-        
-        if (clientListElement) {
-          clientListElement.innerHTML = '';
-          Object.values(clients).forEach(client => {
-            const clientItem = document.createElement('div');
-            clientItem.className = 'client-item';
-            clientItem.innerHTML = `
-              <div class="client-info">
-                <strong>${client.name}</strong>
-                <span>${client.mobile || 'N/A'}</span>
-              </div>
-            `;
-            clientListElement.appendChild(clientItem);
-          });
-        }
-      }
-
-      console.log('✅ Data fetching functions ready');
-    })();
-  </script>
-  
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-  
-  
-
-  <!-- Firebase Initialization Script -->
-  <script>
-    // Initialize Firebase with configuration from .env
-    (function() {
-      try {
-        // Check if Firebase is loaded
-        if (typeof firebase === 'undefined') {
-          console.error('❌ Firebase SDK not loaded');
-          return;
-        }
-        
-        // Check if configuration is loaded
-        if (!window.FIREBASE_CONFIG) {
-          console.error('❌ Firebase configuration not loaded');
-          return;
-        }
-        
-        console.log('🔧 Initializing Firebase...');
-        console.log('🔥 Database URL:', window.FIREBASE_CONFIG.databaseURL);
-        console.log('🔥 Project ID:', window.FIREBASE_CONFIG.projectId);
-        
-        // Initialize Firebase if not already initialized
-        if (!firebase.apps.length) {
-          firebase.initializeApp(window.FIREBASE_CONFIG);
-          console.log('✅ Firebase initialized successfully');
-        } else {
-          console.log('✅ Firebase already initialized');
-          firebase.app(); // Use existing app
-        }
-        
-        // Initialize database and auth
-        const db = firebase.database();
-        const auth = firebase.auth();
-        
-        console.log('✅ Database and auth initialized');
-        
-        // Make available globally
-        window.db = db;
-        window.auth = auth;
-        
-                // Trigger data fetching using the existing logic
-        if (typeof waitForFirebase === 'function') {
-          console.log('🚀 Starting data fetching with existing logic...');
-          waitForFirebase().then(() => {
-            console.log('✅ Firebase ready, checking authentication...');
-            
-            // Check authentication first
-            firebase.auth().onAuthStateChanged((user) => {
-              if (user) {
-                console.log('✅ User authenticated:', user.uid);
-                console.log('📊 Starting to fetch data...');
-                fetchDataForUser(user);
-              } else {
-                console.log('❌ User not authenticated');
-                // For home page, don't redirect - show public content
-                console.log('🏠 Showing public home page content');
-              }
+    // Function to calculate Total Revenue (billing amount from LRs)
+    function calculateTotalRevenue(lrReports) {
+        let total = 0;
+        if (lrReports) {
+            Object.values(lrReports).forEach(lr => {
+                // Ensure only client LRs are counted, not market/transporter LRs
+                if (lr.lrType !== 'market' && lr.lrType !== 'market_company') {
+                    total += lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0;
+                }
             });
-          }).catch(error => {
-            console.error('❌ Error waiting for Firebase:', error);
-          });
-        } else {
-          console.log('⚠️ waitForFirebase function not found');
+        }
+        return total;
+    }
+
+    // Function to calculate Total Expenses (sum of all payment types)
+    function calculateTotalExpenses(payments, works, fuels, expenses, trips) {
+        let total = 0;
+        if (payments) Object.values(payments).forEach(p => total += p.amount || 0); // Driver payments/salaries
+        if (works) Object.values(works).forEach(w => total += w.totalAmount || 0); // Vehicle work payments
+        if (fuels) Object.values(fuels).forEach(f => total += f.totalCost || 0); // Fuel payments
+        if (expenses) Object.values(expenses).forEach(e => total += e.amount || 0); // General expenses
+        if (trips) Object.values(trips).forEach(t => total += t.tripExpenses || 0); // Trip expenses from LR
+
+        return total;
+    }
+
+    // --- Data Update Functions ---
+
+    function updateUserInfo(profile) {
+        document.getElementById('ownerName').textContent = profile?.name || profile?.companyName || 'User';
+        // You can add more profile-related updates here if needed, like subscription status
+    }
+
+    function updateDashboardSummary(data) {
+        const vehiclesCount = data.vehicles ? Object.keys(data.vehicles).length : 0;
+        const lrReportsCount = data.lrReports ? Object.values(data.lrReports).filter(lr => lr.lrType !== 'market' && lr.lrType !== 'market_company').length : 0;
+        const totalRevenue = calculateTotalRevenue(data.lrReports);
+        // Note: Total Expenses calculation below is a placeholder, you'd need the actual payments/works data from the fetch.
+        const totalExpenses = data.totalExpenses || 0; // Assume totalExpenses is calculated in fetchDataForUser
+        
+        document.getElementById('vehiclesCount').textContent = vehiclesCount;
+        document.getElementById('activeLRCount').textContent = lrReportsCount;
+        document.getElementById('totalRevenue').textContent = `₹${(totalRevenue).toLocaleString('en-IN')}`;
+        document.getElementById('totalExpenses').textContent = `₹${(totalExpenses).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    }
+
+    function updateLatestVehicles(vehicles) {
+      const container = document.getElementById('latestVehicles');
+      container.innerHTML = '';
+      if (!vehicles) { container.innerHTML = '<div class="no-reminders">No vehicles found</div>'; return; }
+      const list = Object.values(vehicles).map((v, key) => ({ key: key, ...v })).slice(0, 5); // Limit to 5
+      list.forEach(v => {
+        container.innerHTML += `
+            <div class="activity-item">
+                <span class="activity-main">${v.vehicleNumber}</span>
+                <span class="activity-sub">${v.vehicleType || 'Truck'}</span>
+            </div>`;
+      });
+    }
+    
+    function updateLatestLRs(lrReports) {
+      const container = document.getElementById('latestLRs');
+      container.innerHTML = '';
+      if (!lrReports) { container.innerHTML = '<div class="no-reminders">No LRs found</div>'; return; }
+      
+      const list = Object.values(lrReports)
+          .filter(lr => lr.lrType !== 'market' && lr.lrType !== 'market_company')
+          .map((lr, key) => ({ key: key, ...lr }))
+          .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt))
+          .slice(0, 5); // Limit to 5
+      
+      list.forEach(lr => {
+        const date = lr.date ? new Date(lr.date).toLocaleDateString('en-IN') : 'N/A';
+        const fromTo = `${lr.from || 'Source'} to ${lr.to || 'Destination'}`;
+        container.innerHTML += `
+            <div class="activity-item">
+                <span class="activity-main">${lr.lrNumber || lr.key}</span>
+                <span class="activity-sub">${fromTo} (${date})</span>
+            </div>`;
+      });
+    }
+
+    // This function needs to be bound to a real table init (like Datatables)
+    function updateRecentPaymentsTable(payments) {
+      const tbody = document.getElementById('paymentsTableBody');
+      if (!tbody) return;
+      
+      // Clear existing data
+      // For a DataTable, you should use DataTable API (e.g., paymentTable.clear().rows.add(data).draw())
+      tbody.innerHTML = ''; 
+      
+      if (!payments) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No recent payments found.</td></tr>';
+          return;
+      }
+      
+      const list = Object.values(payments)
+          .map((p, key) => ({ key: key, ...p }))
+          .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt))
+          .slice(0, 10); // Limit to 10
+      
+      list.forEach(p => {
+        const date = p.date || 'N/A';
+        let type = 'Payment';
+        let description = p.notes || 'General Payment';
+        let recipient = p.companyName || 'N/A';
+        
+        // This logic needs to be fully implemented based on your payments structure
+        if (p.paymentType === 'driver') {
+            type = 'Driver Salary';
+            recipient = p.driverName || 'Driver';
+            description = p.notes || 'Monthly Salary';
+        } else if (p.paymentType === 'fuel') {
+            type = 'Fuel Purchase';
+            recipient = p.vehicleNumber || 'Vehicle';
+            description = p.notes || 'Diesel/Petrol Fill';
+        } else if (p.paymentType === 'expense') {
+            type = 'General Expense';
+            recipient = 'Vendor';
         }
         
-      } catch (error) {
-        console.error('❌ Firebase initialization error:', error);
-      }
-    })();
+        const typeBadge = `<span class="badge payment-type-badge bg-secondary">${type}</span>`;
+        const statusBadge = p.status === 'completed' ? `<span class="badge bg-success">Completed</span>` : `<span class="badge bg-warning">Pending</span>`;
+
+        tbody.innerHTML += `
+            <tr>
+              <td>${date}</td>
+              <td>${typeBadge}</td>
+              <td>${description}</td>
+              <td>${recipient}</td>
+              <td class="text-end fw-bold">₹${(p.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+              <td>${statusBadge}</td>
+            </tr>`;
+      });
+      // You should re-initialize Datatables here if you want it to work dynamically
+    }
+    
+    // Placeholder for showExpenseDetailsModal (needs full implementation for modal logic)
+    window.showExpenseDetailsModal = () => {
+        alert('Expense breakdown details would appear here! Data fetching/UI needs completion.');
+        // const modal = new bootstrap.Modal(document.getElementById('expenseDetailsModal'));
+        // modal.show();
+    };
+
+
+    // --- Main Data Fetcher (Modular Firebase using 'get') ---
+    async function fetchDataForUser(dataRoot) {
+        if (!dataRoot) return;
+        
+        const paths = {
+            profile: `users/${dataRoot}/profile`,
+            vehicles: `users/${dataRoot}/vehicles`,
+            lrReports: `users/${dataRoot}/lrReports`,
+            payments: 'payments', // Global scope for payments
+            works: `users/${dataRoot}/vehicleWork`,
+            fuels: `users/${dataRoot}/fuelEntries`,
+            expenses: `users/${dataRoot}/expenses`,
+            reminders: `users/${dataRoot}/reminders`
+        };
+
+        try {
+            const snapshots = await Promise.all(Object.entries(paths).map(([key, path]) => get(ref(db, path))));
+            
+            const data = {};
+            snapshots.forEach((snap, index) => {
+                const key = Object.keys(paths)[index];
+                data[key] = snap.val();
+            });
+            
+            // Filter payments specific to the current user's core account
+            const filteredPayments = {};
+            if (data.payments) {
+                Object.entries(data.payments).forEach(([key, p]) => {
+                    // Assuming payment entries should belong to the current core account
+                    if (p.userId === currentUser.uid || p.coreAccountId === dataRoot) { 
+                        filteredPayments[key] = p;
+                    }
+                });
+            }
+            data.payments = filteredPayments;
+            
+            // Calculate Total Expenses for the Summary Bar
+            data.totalExpenses = calculateTotalExpenses(data.payments, data.works, data.fuels, data.expenses, data.lrReports);
+            
+            // Update UI elements
+            updateUserInfo(data.profile);
+            updateDashboardSummary(data);
+            updateLatestVehicles(data.vehicles);
+            updateLatestLRs(data.lrReports);
+            updateRecentPaymentsTable(data.payments); 
+            // Implement and call other update functions here (e.g., reminders, profit charts)
+
+        } catch (error) {
+            console.error('❌ Error fetching dashboard data:', error);
+            document.getElementById('errorMessage').textContent = 'Error fetching data: ' + error.message;
+            document.getElementById('accountErrorContainer').style.display = 'block';
+        }
+    }
+
+    // --- Auth Listener (Entry Point) ---
+    onAuthStateChanged(auth, user => {
+        if (!user) {
+            console.log('❌ User not authenticated, redirecting to login...');
+            window.location.href = 'index.html'; // Assuming index.html is your login/landing page
+        } else {
+            currentUser = user;
+            console.log('✅ User authenticated:', user.uid);
+            
+            // 1. Determine the core account ID (Crucial step)
+            get(ref(db, `users/${user.uid}/profile`)).then(snapshot => {
+                const profile = snapshot.val();
+                coreAccountId = profile?.coreAccountId || user.uid;
+                console.log('🔗 Determined Core Account ID:', coreAccountId);
+                
+                // 2. Load all necessary dashboard data
+                fetchDataForUser(coreAccountId);
+            }).catch(e => {
+                console.error('❌ Error determining Core Account ID:', e);
+                coreAccountId = user.uid; // Fallback
+                fetchDataForUser(coreAccountId);
+            });
+        }
+    });
+
   </script>
 </body>
 </html>
