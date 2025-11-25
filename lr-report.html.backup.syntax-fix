@@ -2825,7 +2825,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
                 
                 // Check if the current fuel is enough for the deduction
                 if (before < fuelUsedLiters) {
-                    console.warn(`Attempted to deduct ${fuelUsedLiters.toFixed(2)}L but only ${before.toFixed(2)}L available in tank. Setting tank to 0L `);
+                    console.warn(`Attempted to deduct ${fuelUsedLiters.toFixed(2)}L but only ${before.toFixed(2)}L available in tank. Setting tank to 0L.`);
                 }
 
                 const after = Math.max(before - fuelUsedLiters, 0);
@@ -2851,7 +2851,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
                 });
 
                 await vehicleUpdateRef.update(updates);
-                console.log(`Fuel Tank level: ${before.toFixed(2)}L -> ${after.toFixed(2)}L`);
+                }L. Tank level: ${before.toFixed(2)}L -> ${after.toFixed(2)}L`);
             }
         } else if (fuelAlreadyDeducted) {
             
@@ -2942,27 +2942,7 @@ const lrRef = db.ref(`users/${currentCoreAccountId}/lrReports/${lrId}`);
     });
 
     // --- QUICK ADD FUNCTIONS ---
-    
-    // Toggle vehicle input based on vehicle type
-    function toggleVehicleInput(isOwnVehicle) {
-        const vehicleSelectContainer = document.getElementById('vehicleSelectContainer');
-        const vehicleNumberContainer = document.getElementById('vehicleNumberContainer');
-        
-        if (vehicleSelectContainer && vehicleNumberContainer) {
-            if (isOwnVehicle) {
-                vehicleSelectContainer.style.display = 'block';
-                vehicleNumberContainer.style.display = 'none';
-            } else {
-                vehicleSelectContainer.style.display = 'none';
-                vehicleNumberContainer.style.display = 'block';
-            }
-        }
-    }
-    
-    // Make function global
-    window.toggleVehicleInput = toggleVehicleInput;
-
-document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
       // 1. Client/Consignee Quick Add Button Fix
       const quickAddClientBtn = document.getElementById('quickAddClientBtn');
       if (quickAddClientBtn) {
