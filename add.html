@@ -1114,7 +1114,19 @@
        }
        
        const data = await response.json();
-       return data.secure_url;
+       const imageUrl = data.secure_url;
+            // After successful upload, store the URL
+    window.currentDriverLicenseUrl = imageUrl; // Store for form submission
+    
+    // Show preview
+    const previewContainer = document.getElementById('licenseImagePreview');
+    if (previewContainer) {
+        previewContainer.innerHTML = `
+            <img src="${imageUrl}" alt="License Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 10px;">
+            <br>
+            <small class="text-success">Image uploaded successfully!</small>
+        `;
+    }
      }
      
      // Set up PDF.js worker
@@ -1509,7 +1521,10 @@
                 driver.contactNumber || '-',
                 `${driver.driverLicense || '-'} ${licenseStatus ? `<div class="expiry-status ${licenseStatus.class}">${licenseStatus.text}</div>` : ''}`,
                 driver.licenseImageUrl ? 
-                    `<a href="${driver.licenseImageUrl}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View</a>` : 
+                    `<a href="${driver.licenseImageUrl}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                       <i class="fas fa-image"></i> View
+                     </a>
+                     <img src="${driver.licenseImageUrl}" alt="License" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; cursor: pointer;" onclick="window.open('${driver.licenseImageUrl}', '_blank')">` : 
                     '<span class="text-muted">No image</span>',
                 `₹${(driver.monthlySalary || 0).toFixed(2)}`, 
                 `<button class="btn btn-sm btn-outline-info me-1" onclick="viewDriverDetails('${key}')" title="View Payroll & Details">
@@ -1930,54 +1945,13 @@
        document.getElementById('monthlyInstallment').value = vehicle.monthlyInstallment || '';
        
        document.getElementById('pucExpiryDate').value = vehicle.pucExpiry || null;
-       document.getElementById('insuranceExpiryDate').value = vehicle.insuranceExpiry || null;
-       document.getElementById('fitnessExpiryDate').value = vehicle.fitnessExpiry || null;
-       
-       const pucPreview = document.getElementById('pucPreview');
-       if (vehicle.pucFileUrl && vehicle.pucFileUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) { pucPreview.src = vehicle.pucFileUrl; pucPreview.style.display = 'block'; }
-       if (vehicle.pucFileUrl) { document.getElementById('pucFileInfo').textContent = 'A file is already uploaded. Choose a new file to replace it.'; }
-       
-       // ... (Similar logic for insurance and fitness previews/info) ...
-
-       // Show cancel button
-       document.getElementById('cancelVehicleEdit').style.display = 'inline-block';
-       document.getElementById('saveVehicleBtn').innerHTML = '<i class="fas fa-save me-2"></i> Update Vehicle';
-       
-       const vehicleTabBtn = document.getElementById('vehicle-entry-tab');
-       new bootstrap.Tab(vehicleTabBtn).show();
-       document.getElementById('vehicleForm').scrollIntoView({ behavior: 'smooth' });
-     }
-     
-     // Cancel Vehicle edit (NEW)
-     function cancelVehicleEdit() {
-       isEditingVehicle = false;
-       editingVehicleKey = null;
-       
-       document.getElementById('vehicleForm').reset();
-       document.getElementById('cancelVehicleEdit').style.display = 'none';
-       document.getElementById('saveVehicleBtn').innerHTML = '<i class="fas fa-save me-2"></i> Save Vehicle';
-
-       document.getElementById('pucExpiryDate').value = '';
-       document.getElementById('insuranceExpiryDate').value = '';
-       document.getElementById('fitnessExpiryDate').value = '';
-
-       document.getElementById('pucPreview').style.display = 'none';
-       document.getElementById('pucPreview').src = '';
-       document.getElementById('insurancePreview').style.display = 'none';
-       document.getElementById('insurancePreview').src = '';
-       document.getElementById('fitnessPreview').style.display = 'none';
-       document.getElementById('fitnessPreview').src = '';
-       document.getElementById('pucFileInfo').textContent = '';
-       document.getElementById('insuranceFileInfo').textContent = '';
-       document.getElementById('fitnessFileInfo').textContent = '';
-     }
-     
-     // Delete Vehicle entry (NEW)
-     function deleteVehicleEntry(key) {
-       if (confirm('Are you sure you want to delete this vehicle entry?')) {
-         Promise.resolve().then(() => {
-             // Then delete the vehicle
-             return remove(ref(database, `users/${coreAccountId}/vehicles/${key}`));
+       document.getElementById('insuranceExpiryDate').value = vehicle.insuranceExpiry,
+                vehicle.vehicleDocument ? 
+                    `<a href="${vehicle.vehicleDocument}" target="_blank" class="btn btn-sm btn-outline-info me-1">
+                       <i class="fas fa-file-pdf"></i> View
+                     </a>` : 
+                    '<span class="text-muted">No document</span>',
+                `users/${coreAccountId}/vehicles/${key}`));
          }).then(() => {
              showSuccess('Vehicle entry deleted and driver unassigned successfully');
          }).catch((error) => {
@@ -2228,27 +2202,41 @@
      }
 
      // Handle Driver form submission (NEW)
-     async function handleDriverFormSubmit(e) {
+     // Handle driver form submission
+    async function handleDriverFormSubmit(e) {
         e.preventDefault();
-
-        const saveBtn = document.getElementById('saveDriverBtn');
-        const originalText = saveBtn.innerHTML;
-
+        
         try {
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<span class="loading"></span> Processing...';
-
-            const newDriverLicense = document.getElementById('driverLicense').value.trim().toUpperCase();
+            const formData = {
+                driverName: document.getElementById('driverName').value,
+                driverFatherName: document.getElementById('driverFatherName').value,
+                contactNumber: document.getElementById('contactNumber').value,
+                driverLicense: document.getElementById('driverLicense').value,
+                licenseExpiry: document.getElementById('licenseExpiry').value,
+                monthlySalary: parseFloat(document.getElementById('monthlySalary').value) || 0,
+                licenseImageUrl: window.currentDriverLicenseUrl || null, // Store uploaded image URL
+                createdAt: new Date().toISOString()
+            };
             
-            // Check for duplicate license number
-            const isDuplicate = Object.entries(allDriversData).some(
-                ([key, driver]) =>
-                    driver.driverLicense &&
-                    driver.driverLicense.trim().toUpperCase() === newDriverLicense &&
-                    key !== editingDriverKey
-            );
-            if (isDuplicate) {
-                throw new Error(`A driver with the license number "${newDriverLicense}" already exists.`);
+            // Save to Firebase
+            const newDriverRef = db.ref('drivers').push();
+            await newDriverRef.set(formData);
+            
+            // Reset form
+            document.getElementById('driverForm').reset();
+            window.currentDriverLicenseUrl = null; // Clear uploaded image URL
+            
+            // Show success message
+            showNotification('Driver added successfully!', 'success');
+            
+            // Refresh table
+            loadDrivers();
+            
+        } catch (error) {
+            console.error('Error saving driver:', error);
+            showNotification('Error saving driver: ' + error.message, 'error');
+        }
+    }" already exists.`);
             }
 
             const formData = {
