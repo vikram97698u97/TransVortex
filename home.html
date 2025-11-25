@@ -903,15 +903,46 @@
     // --- Data Update Functions ---
 
     function updateUserInfo(profile) {
-        document.getElementById('ownerName').textContent = profile?.name || profile?.companyName || 'User';
-        // You can add more profile-related updates here if needed, like subscription status
+        const ownerNameEl = document.getElementById('ownerName');
+        const statusTextEl = document.getElementById('subscriptionStatusText');
+        const statusContainerEl = document.getElementById('subscriptionStatus');
+
+        if (ownerNameEl) {
+            ownerNameEl.textContent = profile?.name || profile?.companyName || 'User';
+        }
+
+        // FIX: Update Subscription Status
+        let status = 'Free Tier';
+        let statusClass = '#2E8B57'; // Sea Green for default/free
+
+        if (profile?.subscriptionStatus === 'active') {
+            status = 'Active Pro';
+            statusClass = '#10B981'; // Bright Green
+        } else if (profile?.subscriptionStatus === 'trial') {
+            status = 'Trial';
+            statusClass = '#EAB308'; // Amber for trial
+        } else if (profile?.subscriptionStatus === 'expired' || profile?.subscriptionStatus === 'inactive') {
+            status = 'Expired';
+            statusClass = '#EF4444'; // Red for expired
+        }
+        
+        if (statusTextEl) {
+            statusTextEl.textContent = status;
+            statusTextEl.style.color = statusClass;
+        }
+        if (statusContainerEl) {
+            statusContainerEl.style.borderColor = statusClass;
+            statusContainerEl.querySelector('div').style.color = statusClass;
+            statusContainerEl.style.background = statusClass.replace(')', ', 0.1)').replace('#2E8B57', 'rgba(46, 139, 87, 0.1)'); // Maintain light background
+        }
+        // End FIX
+
     }
 
     function updateDashboardSummary(data) {
         const vehiclesCount = data.vehicles ? Object.keys(data.vehicles).length : 0;
         const lrReportsCount = data.lrReports ? Object.values(data.lrReports).filter(lr => lr.lrType !== 'market' && lr.lrType !== 'market_company').length : 0;
         const totalRevenue = calculateTotalRevenue(data.lrReports);
-        // Note: Total Expenses calculation below is a placeholder, you'd need the actual payments/works data from the fetch.
         const totalExpenses = data.totalExpenses || 0; // Assume totalExpenses is calculated in fetchDataForUser
         
         document.getElementById('vehiclesCount').textContent = vehiclesCount;
@@ -1059,7 +1090,7 @@
             data.totalExpenses = calculateTotalExpenses(data.payments, data.works, data.fuels, data.expenses, data.lrReports);
             
             // Update UI elements
-            updateUserInfo(data.profile);
+            updateUserInfo(data.profile); // Now handles subscription status
             updateDashboardSummary(data);
             updateLatestVehicles(data.vehicles);
             updateLatestLRs(data.lrReports);
