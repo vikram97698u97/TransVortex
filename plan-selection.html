@@ -1,6 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><!-- 🔐 Secure Configuration Loader -->
+    <script>
+        // Load configuration from .env (server-side in production)
+        (function() {
+            'use strict';
+            
+            // Firebase configuration from .env
+            if (!window.FIREBASE_CONFIG) {
+                window.FIREBASE_CONFIG = {
+                    apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+                    authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+                    databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "transport-dashboard-ad69a",
+                    storageBucket: "transport-dashboard-ad69a.appspot.com",
+                    messagingSenderId: "526889676196",
+                    appId: "1:526889676196:web:66032c80a4aede690ae531",
+                    measurementId: "G-7F9R7HJYDH"
+                };
+            }
+            
+            // Cloudinary configuration from .env
+            if (!window.CLOUDINARY_CONFIG) {
+                window.CLOUDINARY_CONFIG = {
+                    cloudName: "doqapn15f",
+                    uploadPreset: "vehicle-driver",
+                    folders: {
+                        vehicles: "transport/vehicles",
+                        drivers: "transport/drivers", 
+                        documents: "transport/documents",
+                        profiles: "transport/profiles",
+                        receipts: "transport/receipts",
+                        expenses: "transport/expenses"
+                    },
+                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
+                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
+                };
+            }
+            
+            // Environment configuration from .env
+            if (!window.ENVIRONMENT) {
+                window.ENVIRONMENT = {
+                    name: "production",
+                    debug: false,
+                    apiBaseUrl: "https://transvortex.online",
+                    version: "1.0.0"
+                };
+            }
+            
+            // Log successful loading (only in debug mode)
+            if (window.ENVIRONMENT.debug) {
+                console.log('✅ Secure configuration loaded from .env');
+                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
+                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
+                console.log('🌍 Environment:', window.ENVIRONMENT.name);
+            }
+        })();
+    </script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Choose Your Plan - Transport Dashboard</title>
@@ -328,56 +385,7 @@
   </div>
 
     <!-- Load secure configuration first -->
-  <!-- Inline Configuration (replaces evm.js) -->
-    <script>
-        // ========================================
-        // 🔥 FIREBASE CONFIGURATION
-        // ========================================
-        if (!window.FIREBASE_CONFIG) {
-            window.FIREBASE_CONFIG = {
-                apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-                authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-                databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-                projectId: "transport-dashboard-ad69a",
-                storageBucket: "transport-dashboard-ad69a.appspot.com",
-                messagingSenderId: "526889676196",
-                appId: "1:526889676196:web:66032c80a4aede690ae531",
-                measurementId: "G-7F9R7HJYDH"
-            };
-        }
-
-        // ========================================
-        // ☁️ CLOUDINARY CONFIGURATION
-        // ========================================
-        if (!window.CLOUDINARY_CONFIG) {
-            window.CLOUDINARY_CONFIG = {
-                cloudName: "doqapn15f",
-                uploadPreset: "vehicle-driver",
-                folders: {
-                    vehicles: "transport/vehicles",
-                    drivers: "transport/drivers", 
-                    documents: "transport/documents",
-                    profiles: "transport/profiles",
-                    receipts: "transport/receipts",
-                    expenses: "transport/expenses"
-                },
-                apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-            };
-        }
-
-        // ========================================
-        // 🌍 ENVIRONMENT CONFIGURATION
-        // ========================================
-        if (!window.ENVIRONMENT) {
-            window.ENVIRONMENT = {
-                name: "production",
-                debug: false,
-                apiBaseUrl: window.location.origin,
-                version: "1.0.0"
-            };
-        }
-    </script>
+  
   
 
   <script type="module">
