@@ -1132,10 +1132,29 @@
         window.db = db;
         window.auth = auth;
         
-        // Trigger data fetching if function exists
-        if (typeof startDataFetching === 'function') {
-          console.log('🚀 Starting data fetching...');
-          startDataFetching();
+                // Trigger data fetching using the existing logic
+        if (typeof waitForFirebase === 'function') {
+          console.log('🚀 Starting data fetching with existing logic...');
+          waitForFirebase().then(() => {
+            console.log('✅ Firebase ready, checking authentication...');
+            
+            // Check authentication first
+            firebase.auth().onAuthStateChanged((user) => {
+              if (user) {
+                console.log('✅ User authenticated:', user.uid);
+                console.log('📊 Starting to fetch data...');
+                fetchDataForUser(user);
+              } else {
+                console.log('❌ User not authenticated');
+                // For home page, don't redirect - show public content
+                console.log('🏠 Showing public home page content');
+              }
+            });
+          }).catch(error => {
+            console.error('❌ Error waiting for Firebase:', error);
+          });
+        } else {
+          console.log('⚠️ waitForFirebase function not found');
         }
         
       } catch (error) {
