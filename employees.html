@@ -528,7 +528,42 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script><script>
+    // Initialize Firebase with configuration from .env
+    try {
+      if (!window.FIREBASE_CONFIG) {
+        console.error('❌ Firebase configuration not loaded');
+        return;
+      }
+      
+      // Initialize Firebase if not already initialized
+      if (!firebase.apps.length) {
+        firebase.initializeApp(window.FIREBASE_CONFIG);
+        console.log('✅ Firebase initialized successfully');
+        console.log('🔥 Database URL:', window.FIREBASE_CONFIG.databaseURL);
+        console.log('🔥 Project ID:', window.FIREBASE_CONFIG.projectId);
+      } else {
+        console.log('✅ Firebase already initialized');
+      }
+      
+      // Make database available globally
+      window.database = firebase.database();
+      window.db = firebase.database();
+      
+      // Test database connection
+      const testRef = firebase.database().ref('.info/connected');
+      testRef.on('value', (snapshot) => {
+        if (snapshot.val() === true) {
+          console.log('✅ Firebase database connected successfully');
+        } else {
+          console.log('⚠️ Firebase database connection lost');
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Firebase initialization error:', error);
+    }
+  </script>
 
   
 </body>
