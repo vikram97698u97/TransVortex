@@ -1,0 +1,495 @@
+    body {
+      padding: 0;
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+
+    .tab-content {
+      background: white;
+      padding: 20px;
+      border-radius: 0 0 8px 8px;
+    }
+
+    /* --- INVOICE MODAL & PRINT STYLES (Copied from invoice.html) --- */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #invoiceDetailModal .modal-content {
+        visibility: hidden;
+      }
+
+      #printableInvoiceDetail,
+      #printableInvoiceDetail * {
+        visibility: visible;
+      }
+
+      #printableInvoiceDetail {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        min-height: 100vh;
+        page-break-before: always;
+        page-break-after: always;
+        overflow: visible;
+      }
+
+      .modal-footer,
+      .style-panel-section {
+        display: none !important;
+      }
+
+      .invoice-theme-color {
+        color: #000 !important;
+      }
+
+      .invoice-theme-bg {
+        background-color: #f0f0f0 !important;
+        border-color: #000 !important;
+        color: #000 !important;
+      }
+
+      .table-zebra-stripe {
+        background-color: #f0f0f0 !important;
+      }
+
+      .table-responsive {
+        overflow: visible !important;
+      }
+    }
+
+    .hidden-print {
+      display: none !important;
+    }
+
+    .paid-stamp,
+    .partial-stamp,
+    .pending-stamp {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-25deg);
+      font-weight: 700;
+      border: 8px solid;
+      padding: 10px 25px;
+      border-radius: 15px;
+      opacity: 0.2;
+      text-transform: uppercase;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .paid-stamp {
+      font-size: 6rem;
+      color: red;
+      border-color: red;
+    }
+
+    .partial-stamp {
+      font-size: 4rem;
+      color: #ff8c00;
+      border-color: #ff8c00;
+      opacity: 0.35;
+    }
+
+    .pending-stamp {
+      font-size: 6rem;
+      color: #6c757d;
+      border-color: #6c757d;
+    }
+
+    .invoice-header-box {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 25px;
+    }
+
+    .company-details-left {
+      width: 45%;
+    }
+
+    .invoice-details-right {
+      width: 45%;
+      text-align: right;
+    }
+
+    .invoice-title {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .logo-placeholder {
+      width: 100px;
+      height: 100px;
+      background-color: #ccc;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #666;
+      margin-left: auto;
+      margin-bottom: 15px;
+    }
+
+    .logo-on-print {
+      max-width: 100px;
+      max-height: 100px;
+      margin-left: auto;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .billing-shipping-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+
+    .bill-to-box {
+      width: 45%;
+      border: 1px solid #ccc;
+      padding: 15px;
+    }
+
+    .ship-to-box {
+      width: 45%;
+      border: 1px solid #ccc;
+      padding: 15px;
+    }
+
+    .company-seal {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .invoice-theme-color {
+      transition: color 0.3s;
+    }
+
+    .invoice-theme-bg {
+      transition: background-color 0.3s, border-color 0.3s;
+      color: #fff !important;
+    }
+
+    .table-zebra-stripe {
+      background-color: rgba(0, 0, 0, 0.03);
+    }
+
+    .invoice-preview-container {
+      max-height: 80vh;
+      overflow: auto;
+      /* Combined scroll for both axes */
+    }
+
+    /* Responsive adjustments for the invoice modal */
+    @media (min-width: 992px) {
+      .invoice-preview-container {
+        padding-right: 15px;
+        border-right: 1px solid #ccc;
+      }
+    }
+
+    @media (max-width: 991.98px) {
+      .style-panel-section {
+        margin-bottom: 2rem;
+      }
+    }
+
+    #styleSettingsPanel {
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+
+    /* --- END INVOICE STYLES --- */
+
+    /* Vehicle Validation Styles */
+    .vehicle-suggestions {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      width: calc(100% - 30px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .lr-copy-container {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      color: #333;
+      padding: 20px;
+      background: #ffffff;
+      max-width: 800px;
+      /* Max-width for screen view */
+      margin: 0 auto;
+    }
+
+    .lr-header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .lr-header h4 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .lr-header p {
+      margin: 5px 0 0 0;
+    }
+
+    .lr-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      /* IMPROVED RESPONSIVENESS FOR SMALL SCREENS */
+      flex-wrap: wrap;
+    }
+
+    .lr-info-left,
+    .lr-info-right {
+      width: 48%;
+      /* IMPROVED RESPONSIVENESS FOR SMALL SCREENS */
+      min-width: 300px;
+      margin-bottom: 10px;
+    }
+
+    .lr-row {
+      margin-bottom: 10px;
+    }
+
+    .lr-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    .lr-table th,
+    .lr-table td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .lr-table th {
+      background-color: #f2f2f2;
+    }
+
+    .safety-section {
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+
+    .receipt-section {
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+
+    .lr-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      /* IMPROVED RESPONSIVENESS FOR SMALL SCREENS */
+      flex-wrap: wrap;
+    }
+
+    .signature-box {
+      width: 45%;
+      text-align: center;
+      /* IMPROVED RESPONSIVENESS FOR SMALL SCREENS */
+      min-width: 250px;
+    }
+
+    .signature-line {
+      margin-top: 50px;
+      border-top: 1px solid #000;
+    }
+
+    .terms-conditions {
+      margin-top: 25px;
+      padding: 15px;
+      font-size: 12px;
+    }
+
+    @media print {
+      body {
+        background-color: #ffffd9;
+        padding: 0;
+      }
+
+      .lr-copy-container {
+        box-shadow: none;
+        max-width: 100%;
+        /* FIX: Ensure full width for print/PDF on all devices */
+      }
+
+      .no-print {
+        display: none;
+      }
+
+      /* **NEW**: Hide elements based on print settings */
+      .printable-area .logo-on-print.hidden-print {
+        display: none !important;
+      }
+
+      .printable-area .stamp-on-print.hidden-print {
+        display: none !important;
+      }
+    }
+
+    /* **FIX**: Add rule for live view toggling */
+    .hidden-print {
+      display: none !important;
+    }
+
+    .lr-header-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      /* IMPROVED RESPONSIVENESS FOR SMALL SCREENS */
+      /* MODIFIED: Changed from center to space-between for better logo placement */
+      justify-content: space-between;
+      text-align: left;
+      /* Align text to the left within the details block */
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .terms-conditions h6 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+
+    .lr-barcode {
+      text-align: center;
+      margin: 20px 0;
+      padding: 10px;
+      border-top: 1px dashed #ccc;
+      border-bottom: 1px dashed #ccc;
+    }
+
+    .vehicle-suggestion {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+
+    .vehicle-suggestion:hover {
+      background-color: #f8f9fa;
+    }
+
+    .vehicle-suggestion:last-child {
+      border-bottom: none;
+    }
+
+    .vehicle-not-found {
+      color: #dc3545;
+      font-size: 0.875em;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .vehicle-input-container {
+      position: relative;
+    }
+
+    .vehicle-valid {
+      border-color: #28a745 !important;
+    }
+
+    .vehicle-invalid {
+      border-color: #dc3545 !important;
+    }
+
+    /* Custom style for the client dropdown */
+    #clientId {
+      color: #2E8B57;
+      font-weight: 500;
+    }
+
+    .lr-copy-container {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      color: #333;
+      padding: 20px;
+      background: #ffffff;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* Expense Entry Styling */
+    .expense-entry-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e9ecef;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    /* New Tab Styles for Trip Details Modal */
+    .trip-details-nav .nav-link {
+      color: #495057;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      border-top-left-radius: .5rem;
+      border-top-right-radius: .5rem;
+    }
+
+    .trip-details-nav .nav-link.active {
+      color: #0d6efd;
+      background-color: #e9ecef;
+      border-color: #0d6efd;
+    }
+
+    .trip-details-tab-content {
+      background-color: #f8f9fa;
+      padding: 1.5rem;
+      border: 1px solid #dee2e6;
+      border-top: none;
+      border-radius: 0 0 .5rem .5rem;
+    }
+
+    .expense-row {
+      transition: all 0.3s ease-in-out;
+    }
+
+    /* --- FIX: CSS/Layout Changes for 'Add New LR' Form --- */
+    /* Add spacing for input groups */
+    .input-group {
+      margin-bottom: 15px;
+      /* Add margin below input-group elements */
+    }
+
+    /* Target form-select elements for uniform height with text inputs */
+    .form-select,
+    .form-control {
+      height: calc(1.5em + 0.75rem + 2px);
+      /* Standard Bootstrap height */
+    }
+
+    /* Improve form label alignment for better readability */
+    .form-label {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    /* --- END FIX --- */
