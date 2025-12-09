@@ -571,6 +571,16 @@ function validateLRFormCustom() {
     const routeSelect = document.getElementById('routeSelect').value;
     if (!routeSelect) errors.push('- Route is required');
     
+    // Validate From and To locations from selected route
+    const routeSelectElement = document.getElementById('routeSelect');
+    const selectedRoute = routeSelectElement.options[routeSelectElement.selectedIndex];
+    const fromLoc = selectedRoute ? (selectedRoute.dataset.from || '') : '';
+    const toLoc = selectedRoute ? (selectedRoute.dataset.to || '') : '';
+    
+    if (!fromLoc || !toLoc) {
+        errors.push('- Both From and To locations are required. Please select a valid route.');
+    }
+    
     const clientId = document.getElementById('clientId').value;
     if (!clientId) errors.push('- Client is required');
     
@@ -622,6 +632,16 @@ function validateEditLRFormCustom() {
     
     const routeSelect = document.getElementById('editRouteSelect').value;
     if (!routeSelect) errors.push('- Route is required');
+    
+    // Validate From and To locations from selected route
+    const routeSelectElement = document.getElementById('editRouteSelect');
+    const selectedRoute = routeSelectElement ? routeSelectElement.options[routeSelectElement.selectedIndex] : null;
+    const fromLoc = selectedRoute ? (selectedRoute.dataset.from || '') : '';
+    const toLoc = selectedRoute ? (selectedRoute.dataset.to || '') : '';
+    
+    if (!fromLoc || !toLoc) {
+        errors.push('- Both From and To locations are required. Please select a valid route.');
+    }
     
     const clientId = document.getElementById('editClientId').value;
     if (!clientId) errors.push('- Client is required');
