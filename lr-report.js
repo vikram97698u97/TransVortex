@@ -566,7 +566,7 @@ function validateLRFormCustom() {
     if (!truckNumber) errors.push('- Truck Number is required');
     
     const driverName = isMarketVehicle ? document.getElementById('marketDriverName').value.trim() : document.getElementById('driverSelect').value;
-    if (!driverName) errors.push('- Driver Name is required');
+    // Driver name is now optional
     
     const routeSelect = document.getElementById('routeSelect').value;
     if (!routeSelect) errors.push('- Route is required');
@@ -587,12 +587,12 @@ function validateLRFormCustom() {
     const item = document.getElementById('item').value;
     if (!item) errors.push('- Item is required');
     
-    // Check numeric fields
+    // Check numeric fields (now optional)
     const numPackages = document.getElementById('numPackages').value;
-    if (!numPackages || parseFloat(numPackages) <= 0) errors.push('- Number of packages must be greater than 0');
+    // Number of packages is now optional
     
     const weight = document.getElementById('weight').value;
-    if (!weight || parseFloat(weight) <= 0) errors.push('- Weight must be greater than 0');
+    // Weight is now optional
     
     if (errors.length > 0) {
         alert('Please fix the following errors:\n' + errors.join('\n'));
@@ -628,7 +628,7 @@ function validateEditLRFormCustom() {
     if (!truckNumber) errors.push('- Truck Number is required');
     
     const driverName = isMarketVehicle ? document.getElementById('editMarketDriverName').value.trim() : document.getElementById('editDriverSelect').value;
-    if (!driverName) errors.push('- Driver Name is required');
+    // Driver name is now optional
     
     const routeSelect = document.getElementById('editRouteSelect').value;
     if (!routeSelect) errors.push('- Route is required');
