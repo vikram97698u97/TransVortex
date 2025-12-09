@@ -613,7 +613,8 @@ async function saveLR() {
         form.reset();
         document.getElementById('lrDate').value = new Date().toISOString().split('T')[0];
         applyAutoGenerationSettings();
-        // Refresh data (will trigger listener)
+        // Explicitly refresh the data
+        setTimeout(() => loadLRData('initial'), 500);
     } catch (error) {
         console.error('Error saving LR:', error);
         alert('Error saving LR.');
@@ -705,7 +706,8 @@ async function updateLR() {
 
         alert('LR updated successfully!');
         bootstrap.Modal.getInstance(document.getElementById('editLRModal')).hide();
-        // Refresh happens via listener
+        // Explicitly refresh the data
+        setTimeout(() => loadLRData('initial'), 500);
     } catch (error) {
         console.error('Error updating LR:', error);
         alert('Error updating LR.');
@@ -743,8 +745,51 @@ window.editLR = function (lrId) {
             document.getElementById('editMarketTruckNumber').value = lr.truckNumber;
             document.getElementById('editMarketDriverName').value = lr.driverName || '';
         } else {
-            document.getElementById('editTruckNumber').value = lr.truckNumber;
-            setTimeout(() => { document.getElementById('editDriverSelect').value = lr.driverName || ''; }, 100);
+            // Set truck number with proper matching
+            const editTruckSelect = document.getElementById('editTruckNumber');
+            if (editTruckSelect) {
+                // Try to find exact match first
+                let found = false;
+                for (let i = 0; i < editTruckSelect.options.length; i++) {
+                    if (editTruckSelect.options[i].value.toUpperCase() === lr.truckNumber.toUpperCase()) {
+                        editTruckSelect.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                // If not found, add it as an option
+                if (!found && lr.truckNumber) {
+                    const opt = document.createElement('option');
+                    opt.value = lr.truckNumber;
+                    opt.textContent = lr.truckNumber;
+                    editTruckSelect.appendChild(opt);
+                    editTruckSelect.value = lr.truckNumber;
+                }
+            }
+            
+            // Set driver with proper matching
+            setTimeout(() => { 
+                const editDriverSelect = document.getElementById('editDriverSelect');
+                if (editDriverSelect && lr.driverName) {
+                    let driverFound = false;
+                    for (let i = 0; i < editDriverSelect.options.length; i++) {
+                        if (editDriverSelect.options[i].text.toLowerCase().includes(lr.driverName.toLowerCase()) ||
+                            editDriverSelect.options[i].value === lr.driverName) {
+                            editDriverSelect.selectedIndex = i;
+                            driverFound = true;
+                            break;
+                        }
+                    }
+                    // If not found, add it as an option
+                    if (!driverFound) {
+                        const opt = document.createElement('option');
+                        opt.value = lr.driverName;
+                        opt.textContent = lr.driverName;
+                        editDriverSelect.appendChild(opt);
+                        editDriverSelect.value = lr.driverName;
+                    }
+                }
+            }, 100);
         }
 
         document.getElementById('editTransporterSelect').value = lr.transporterId || '';
