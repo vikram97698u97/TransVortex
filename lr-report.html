@@ -1078,30 +1078,6 @@
   </script>
   <script src="js/shared-invoice.js"></script>
   <script src="js/lr-report.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      // Initial call to set the correct state based on the checkbox
-      const vehicleTypeToggle = document.getElementById('vehicleTypeToggle');
-      if (vehicleTypeToggle) {
-        toggleVehicleInput(vehicleTypeToggle.checked);
-      }
-
-      const editVehicleTypeToggle = document.getElementById('editVehicleTypeToggle');
-      if (editVehicleTypeToggle) {
-        toggleEditVehicleInput(editVehicleTypeToggle.checked);
-      }
-
-      // Initialize Select2 for searchable dropdowns
-      // This makes the truck selection dropdowns searchable.
-      $('#truckFilter, #truckNumber, #editTruckNumber').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Select or search for a truck',
-        width: '100%',
-        // Allow dynamically added options for "quick add" functionality
-        tags: true 
-      });
-    });
-  </script>
 </body>
 
 </html>
