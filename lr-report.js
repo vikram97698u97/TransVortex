@@ -5,27 +5,6 @@
  */
 
 // --- GLOBAL VARIABLES ---
-let db; // Firebase database reference
-let auth; // Firebase auth reference
-// Initialize database and auth references when available
-if (window.db) {
-    db = window.db;
-} else {
-    // Fallback: try to get it later
-    Object.defineProperty(window, 'db', {
-        set: function(value) { db = value; },
-        get: function() { return db; }
-    });
-}
-if (window.auth) {
-    auth = window.auth;
-} else {
-    // Fallback: try to get it later
-    Object.defineProperty(window, 'auth', {
-        set: function(value) { auth = value; },
-        get: function() { return auth; }
-    });
-}
 window.currentCoreAccountId = null;
 window.allVehicles = [];
 window.allClients = [];
@@ -82,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
     addLoadMoreButton();
 
     // Auth Listener
-    auth.onAuthStateChanged(async (user) => {
+    window.auth.onAuthStateChanged(async (user) => {
         if (user) {
             window.currentCoreAccountId = user.uid; // Initial assumption, updated in loadAllVehicles
             await loadAllData();
@@ -102,6 +81,60 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const applyFilterBtn = document.getElementById('applyFiltersBtn');
             if (applyFilterBtn) applyFilterBtn.addEventListener('click', () => loadLRData('initial'));
+
+            // Quick Add Button Event Listeners
+            const quickAddVehicleBtn = document.getElementById('quickAddVehicleBtn');
+            if (quickAddVehicleBtn) quickAddVehicleBtn.addEventListener('click', () => showQuickAddModal('vehicle'));
+
+            const quickAddDriverBtn = document.getElementById('quickAddDriverBtn');
+            if (quickAddDriverBtn) quickAddDriverBtn.addEventListener('click', () => showQuickAddModal('driver'));
+
+            const quickAddClientBtn = document.getElementById('quickAddClientBtn');
+            if (quickAddClientBtn) quickAddClientBtn.addEventListener('click', () => showQuickAddModal('client'));
+
+            const quickAddTransporterBtn = document.getElementById('quickAddTransporterBtn');
+            if (quickAddTransporterBtn) quickAddTransporterBtn.addEventListener('click', () => showQuickAddModal('transporter'));
+
+            const quickAddRouteBtn = document.getElementById('quickAddRouteBtn');
+            if (quickAddRouteBtn) quickAddRouteBtn.addEventListener('click', () => showQuickAddModal('route'));
+
+            const quickAddConsigneeBtn = document.getElementById('quickAddConsigneeBtn');
+            if (quickAddConsigneeBtn) quickAddConsigneeBtn.addEventListener('click', () => showQuickAddModal('consignee'));
+
+            // Edit Quick Add Button Event Listeners
+            const editQuickAddVehicleBtn = document.getElementById('editQuickAddVehicleBtn');
+            if (editQuickAddVehicleBtn) editQuickAddVehicleBtn.addEventListener('click', () => showQuickAddModal('vehicle'));
+
+            const editQuickAddDriverBtn = document.getElementById('editQuickAddDriverBtn');
+            if (editQuickAddDriverBtn) editQuickAddDriverBtn.addEventListener('click', () => showQuickAddModal('driver'));
+
+            const editQuickAddClientBtn = document.getElementById('editQuickAddClientBtn');
+            if (editQuickAddClientBtn) editQuickAddClientBtn.addEventListener('click', () => showQuickAddModal('client'));
+
+            const editQuickAddTransporterBtn = document.getElementById('editQuickAddTransporterBtn');
+            if (editQuickAddTransporterBtn) editQuickAddTransporterBtn.addEventListener('click', () => showQuickAddModal('transporter'));
+
+            const editQuickAddRouteBtn = document.getElementById('editQuickAddRouteBtn');
+            if (editQuickAddRouteBtn) editQuickAddRouteBtn.addEventListener('click', () => showQuickAddModal('route'));
+
+            const editQuickAddConsigneeBtn = document.getElementById('editQuickAddConsigneeBtn');
+            if (editQuickAddConsigneeBtn) editQuickAddConsigneeBtn.addEventListener('click', () => showQuickAddModal('consignee'));
+
+            // Quick Add Save Button Event Listeners
+            const saveQuickAddClientBtn = document.getElementById('saveQuickAddClientBtn');
+            if (saveQuickAddClientBtn) saveQuickAddClientBtn.addEventListener('click', saveQuickAddClient);
+
+            const saveQuickAddRouteBtn = document.getElementById('saveQuickAddRouteBtn');
+            if (saveQuickAddRouteBtn) saveQuickAddRouteBtn.addEventListener('click', saveQuickAddRoute);
+
+            const saveQuickAddTransporterBtn = document.getElementById('saveQuickAddTransporterBtn');
+            if (saveQuickAddTransporterBtn) saveQuickAddTransporterBtn.addEventListener('click', saveQuickAddTransporter);
+
+            const saveQuickAddVehicleBtn = document.getElementById('saveQuickAddVehicleBtn');
+            if (saveQuickAddVehicleBtn) saveQuickAddVehicleBtn.addEventListener('click', saveQuickAddVehicle);
+
+            const saveQuickAddDriverBtn = document.getElementById('saveQuickAddDriverBtn');
+            if (saveQuickAddDriverBtn) saveQuickAddDriverBtn.addEventListener('click', saveQuickAddDriver);
 
             // Check URL for invoice view
             try {
@@ -206,7 +239,7 @@ window.loadLRData = function (mode = 'initial') {
     const tableBody = document.getElementById('lrTable').querySelector('tbody');
     // Show loading indicator if needed (DataTables handles empty state, but we can add a spinner overlay)
 
-    let query = db.ref(`users/${window.currentCoreAccountId}/lrReports`).orderByKey();
+    let query = window.db.ref(`users/${window.currentCoreAccountId}/lrReports`).orderByKey();
 
     if (mode === 'next' && lastLoadedKey) {
         query = query.endAt(lastLoadedKey).limitToLast(pageSize + 1);
@@ -234,7 +267,7 @@ window.loadLRData = function (mode = 'initial') {
         }
 
         // Fetch clients for name resolution
-        const clientsSnap = await db.ref(`users/${window.currentCoreAccountId}/clients`).once('value');
+        const clientsSnap = await window.db.ref(`users/${window.currentCoreAccountId}/clients`).once('value');
         const clients = clientsSnap.val() || {};
         const getClientName = (id) => clients[id]?.clientName || 'N/A';
 
@@ -356,14 +389,14 @@ function addLRToTable(lr, getClientName) {
 // --- MASTER DATA LOADING ---
 
 async function loadAllData() {
-    const user = auth.currentUser;
+    const user = window.auth.currentUser;
     if (!user) return;
     await loadAllVehicles(user.uid);
 
     if (!window.currentCoreAccountId) return;
 
     // Load Clients
-    db.ref(`users/${window.currentCoreAccountId}/clients`).on('value', (snapshot) => {
+    window.db.ref(`users/${window.currentCoreAccountId}/clients`).on('value', (snapshot) => {
         window.allClients = [];
         const clientSelect = document.getElementById('clientId');
         const consigneeSelect = document.getElementById('consigneeId');
@@ -389,7 +422,7 @@ async function loadAllData() {
     });
 
     // Load Routes
-    db.ref(`users/${window.currentCoreAccountId}/routes`).on('value', (snapshot) => {
+    window.db.ref(`users/${window.currentCoreAccountId}/routes`).on('value', (snapshot) => {
         window.allRoutes = [];
         const routeSelect = document.getElementById('routeSelect');
         const editRouteSelect = document.getElementById('editRouteSelect');
@@ -413,7 +446,7 @@ async function loadAllData() {
     });
 
     // Load Transporters
-    db.ref(`users/${window.currentCoreAccountId}/transporters`).on('value', (snapshot) => {
+    window.db.ref(`users/${window.currentCoreAccountId}/transporters`).on('value', (snapshot) => {
         window.allTransporters = [];
         const addSelect = document.getElementById('transporterSelect');
         const editSelect = document.getElementById('editTransporterSelect');
@@ -430,7 +463,7 @@ async function loadAllData() {
     });
 
     // Load Employees
-    db.ref(`users/${window.currentCoreAccountId}/employees`).on('value', (snapshot) => {
+    window.db.ref(`users/${window.currentCoreAccountId}/employees`).on('value', (snapshot) => {
         const employeeSelect = document.getElementById('employeeSelect');
         const editEmployeeSelect = document.getElementById('editEmployeeSelect');
         if (employeeSelect) employeeSelect.innerHTML = '<option value="">Select Employee</option>';
@@ -448,7 +481,7 @@ async function loadAllData() {
     });
 
     // Load Work Vendors
-    db.ref(`users/${window.currentCoreAccountId}/workVendors`).on('value', (snapshot) => {
+    window.db.ref(`users/${window.currentCoreAccountId}/workVendors`).on('value', (snapshot) => {
         window.allWorkVendors = [];
         if (snapshot.exists()) {
             snapshot.forEach(child => window.allWorkVendors.push({ id: child.key, ...child.val() }));
@@ -456,7 +489,7 @@ async function loadAllData() {
     });
 
     // Load Pumps (User specific)
-    db.ref(`users/${user.uid}/petrolPumps`).on('value', (snapshot) => {
+    window.db.ref(`users/${user.uid}/petrolPumps`).on('value', (snapshot) => {
         window.allPumps = [];
         if (snapshot.exists()) {
             snapshot.forEach(child => window.allPumps.push({ id: child.key, ...child.val() }));
@@ -468,17 +501,17 @@ async function loadAllData() {
 }
 
 async function loadAllVehicles(userId) {
-    const userProfileRef = db.ref(`users/${userId}`);
+    const userProfileRef = window.db.ref(`users/${userId}`);
     const userSnapshot = await userProfileRef.once('value');
     const userData = userSnapshot.val();
 
     // Store profile for invoice
-    const profileSnap = await db.ref(`users/${userId}/profile`).once('value');
+    const profileSnap = await window.db.ref(`users/${userId}/profile`).once('value');
     window.currentUserProfile = profileSnap.val() || {};
 
     window.currentCoreAccountId = (userData && userData.coreAccountId) || userId;
 
-    db.ref(`users/${window.currentCoreAccountId}/vehicles`).on('value', (snapshot) => {
+    window.db.ref(`users/${window.currentCoreAccountId}/vehicles`).on('value', (snapshot) => {
         window.allVehicles = [];
         const truckSelect = document.getElementById('truckNumber');
         const editTruckSelect = document.getElementById('editTruckNumber');
@@ -499,7 +532,7 @@ async function loadAllVehicles(userId) {
         updateTruckFilterDropdown();
     });
 
-    db.ref(`users/${window.currentCoreAccountId}/drivers`).on('value', (snapshot) => {
+    window.db.ref(`users/${window.currentCoreAccountId}/drivers`).on('value', (snapshot) => {
         window.allDrivers = [];
         populateDriverDropdowns(snapshot, 'driverSelect', 'editDriverSelect');
     });
@@ -575,7 +608,7 @@ async function saveLR() {
     if (!window.currentCoreAccountId) { alert('Error: Core account ID not found.'); return; }
 
     try {
-        await db.ref(`users/${window.currentCoreAccountId}/lrReports`).push(lrData);
+        await window.db.ref(`users/${window.currentCoreAccountId}/lrReports`).push(lrData);
         alert('LR saved successfully!');
         form.reset();
         document.getElementById('lrDate').value = new Date().toISOString().split('T')[0];
@@ -636,7 +669,7 @@ async function updateLR() {
 
     if (!window.currentCoreAccountId || !window.currentEditingLRId) return;
 
-    const lrRef = db.ref(`users/${window.currentCoreAccountId}/lrReports/${window.currentEditingLRId}`);
+    const lrRef = window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${window.currentEditingLRId}`);
 
     try {
         const snapshot = await lrRef.once('value');
@@ -682,7 +715,7 @@ async function updateLR() {
 window.deleteLR = function (lrId) {
     if (!window.currentCoreAccountId) return;
     if (confirm('Are you sure you want to delete this LR record?')) {
-        db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).remove()
+        window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).remove()
             .then(() => alert('LR deleted successfully!'))
             .catch(e => alert('Error deleting LR.'));
     }
@@ -692,7 +725,7 @@ window.editLR = function (lrId) {
     window.currentEditingLRId = lrId;
     if (!window.currentCoreAccountId) return;
 
-    db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value').then((snapshot) => {
+    window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value').then((snapshot) => {
         const lr = snapshot.val();
         const isMarketVehicle = lr.lrType === 'market';
 
@@ -751,14 +784,14 @@ window.showTripDetailsModal = async function (lrId, lrNumber, weight, truckNumbe
     // Fetch Last KM
     let lastKm = 0;
     if (truckNumber && window.currentCoreAccountId) {
-        const vSnap = await db.ref(`users/${window.currentCoreAccountId}/vehicles`).orderByChild('vehicleNumber').equalTo(truckNumber).once('value');
+        const vSnap = await window.db.ref(`users/${window.currentCoreAccountId}/vehicles`).orderByChild('vehicleNumber').equalTo(truckNumber).once('value');
         if (vSnap.exists()) {
             const vData = Object.values(vSnap.val())[0];
             lastKm = vData.lastEndingKm || 0;
         }
     }
 
-    const snapshot = await db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value');
+    const snapshot = await window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value');
     const lr = snapshot.val();
     const details = lr.tripDetails || {};
     const isMarketVehicle = lr.lrType === 'market';
@@ -812,7 +845,7 @@ if (saveTripBtn) {
     saveTripBtn.addEventListener('click', async () => {
         if (!window.currentTripLRId || !window.currentCoreAccountId) return;
 
-        const lrSnap = await db.ref(`users/${window.currentCoreAccountId}/lrReports/${window.currentTripLRId}`).once('value');
+        const lrSnap = await window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${window.currentTripLRId}`).once('value');
         const lr = lrSnap.val();
         const isMarketVehicle = lr.lrType === 'market';
 
@@ -908,7 +941,7 @@ if (saveTripBtn) {
         };
 
         try {
-            const lrRef = db.ref(`users/${window.currentCoreAccountId}/lrReports/${window.currentTripLRId}`);
+            const lrRef = window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${window.currentTripLRId}`);
             const currentTripDetails = lr.tripDetails || {};
             const fuelAlreadyDeducted = currentTripDetails.fuelAlreadyDeducted || false;
 
@@ -916,17 +949,17 @@ if (saveTripBtn) {
 
             // Fuel Deduction
             if (!isMarketVehicle && endingKm > 0 && fuelUsedLiters > 0 && !fuelAlreadyDeducted) {
-                const vSnap = await db.ref(`users/${window.currentCoreAccountId}/vehicles`).orderByChild('vehicleNumber').equalTo(window.currentTripTruckNumber).once('value');
+                const vSnap = await window.db.ref(`users/${window.currentCoreAccountId}/vehicles`).orderByChild('vehicleNumber').equalTo(window.currentTripTruckNumber).once('value');
                 if (vSnap.exists()) {
                     const vId = Object.keys(vSnap.val())[0];
-                    const vRef = db.ref(`users/${window.currentCoreAccountId}/vehicles/${vId}`);
+                    const vRef = window.db.ref(`users/${window.currentCoreAccountId}/vehicles/${vId}`);
                     const curFuel = parseFloat((await vRef.child('currentFuel').once('value')).val()) || 0;
                     const after = Math.max(curFuel - fuelUsedLiters, 0);
 
                     await vRef.update({ currentFuel: after, lastEndingKm: endingKm });
                     await lrRef.child('tripDetails/fuelAlreadyDeducted').set(true);
 
-                    await db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).push({
+                    await window.db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).push({
                         timestamp: new Date().toISOString(),
                         source: 'lr-detail-usage',
                         lrNumber: document.getElementById('modalLrNumber').textContent,
@@ -934,7 +967,7 @@ if (saveTripBtn) {
                         beforeLiters: curFuel,
                         afterLiters: after,
                         truckNumber: window.currentTripTruckNumber,
-                        userId: auth.currentUser.uid,
+                        userId: window.auth.currentUser.uid,
                         coreAccountId: window.currentCoreAccountId,
                         fuelAlreadyDeducted: true
                     });
@@ -942,7 +975,7 @@ if (saveTripBtn) {
             }
 
             // Vehicle Work Payment
-            const wpRef = db.ref(`users/${window.currentCoreAccountId}/workPayments`);
+            const wpRef = window.db.ref(`users/${window.currentCoreAccountId}/workPayments`);
             const existingWpSnap = await wpRef.orderByChild('lrId').equalTo(window.currentTripLRId).once('value');
 
             if (existingWpSnap.exists()) {
@@ -957,7 +990,7 @@ if (saveTripBtn) {
                     amount: tripDetails.vehicleWorkAmount,
                     date: lr.date,
                     notes: `Work for LR No: ${lr.lrNumber} (Trip Expense)`,
-                    userId: auth.currentUser.uid,
+                    userId: window.auth.currentUser.uid,
                     createdAt: new Date().toISOString(),
                     lrId: window.currentTripLRId,
                     lrNumber: lr.lrNumber,
@@ -1133,7 +1166,7 @@ async function loadCurrentFuelLevel(truckNumber) {
     el.textContent = '...';
     const v = window.allVehicles.find(v => (v.vehicleNo || '').toUpperCase() === truckNumber.toUpperCase());
     if (v && window.currentCoreAccountId) {
-        const cur = parseFloat((await db.ref(`users/${window.currentCoreAccountId}/vehicles/${v.id}/currentFuel`).once('value')).val()) || 0;
+        const cur = parseFloat((await window.db.ref(`users/${window.currentCoreAccountId}/vehicles/${v.id}/currentFuel`).once('value')).val()) || 0;
         el.textContent = `${cur.toFixed(2)} Liters`;
     } else el.textContent = 'N/A';
 }
@@ -1141,7 +1174,7 @@ async function loadCurrentFuelLevel(truckNumber) {
 async function loadRecentFuelEntries(truckNumber) {
     const body = document.getElementById('recentFuelEntriesBody');
     body.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
-    const snap = await db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).orderByChild('truckNumber').equalTo(truckNumber).once('value');
+    const snap = await window.db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).orderByChild('truckNumber').equalTo(truckNumber).once('value');
     body.innerHTML = '';
     const entries = [];
     snap.forEach(c => entries.push(c.val()));
@@ -1171,24 +1204,24 @@ if (fuelForm) {
         if (!v) return alert('Vehicle not found');
 
         try {
-            const vRef = db.ref(`users/${window.currentCoreAccountId}/vehicles/${v.id}`);
+            const vRef = window.db.ref(`users/${window.currentCoreAccountId}/vehicles/${v.id}`);
             const before = parseFloat((await vRef.child('currentFuel').once('value')).val()) || 0;
             const after = before + liters;
 
-            const logKey = db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).push().key;
+            const logKey = window.db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).push().key;
             const updates = {};
             updates[`users/${window.currentCoreAccountId}/vehicles/${v.id}/currentFuel`] = after;
             updates[`users/${window.currentCoreAccountId}/fuelLogs/${logKey}`] = {
                 timestamp: new Date().toISOString(), date: fillDate, source: 'pump-fillup',
                 truckNumber: window.currentTripTruckNumber, vehicleId: v.id, filledLiters: liters,
                 perLiter: rate, totalAmount: amount, pumpId, kmReading, remarks,
-                userId: auth.currentUser.uid, coreAccountId: window.currentCoreAccountId,
+                userId: window.auth.currentUser.uid, coreAccountId: window.currentCoreAccountId,
                 lrNumber: document.getElementById('modalLrNumber').textContent,
                 beforeLiters: before, afterLiters: after
             };
-            updates[`users/${auth.currentUser.uid}/petrolPumps/${pumpId}/transactions/${logKey}`] = true;
+            updates[`users/${window.auth.currentUser.uid}/petrolPumps/${pumpId}/transactions/${logKey}`] = true;
 
-            await db.ref().update(updates);
+            await window.db.ref().update(updates);
             alert('Fuel recorded.');
             e.target.reset();
             loadCurrentFuelLevel(window.currentTripTruckNumber);
@@ -1314,7 +1347,7 @@ function generateSequentialNumber(el, prefix) {
     if (!window.currentCoreAccountId) return;
     const now = new Date();
     const datePrefix = `${prefix}${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    db.ref(`users/${window.currentCoreAccountId}/counters/${prefix.toLowerCase()}_${datePrefix.slice(prefix.length)}`).transaction(c => (c || 0) + 1)
+    window.db.ref(`users/${window.currentCoreAccountId}/counters/${prefix.toLowerCase()}_${datePrefix.slice(prefix.length)}`).transaction(c => (c || 0) + 1)
         .then(res => { if (res.committed) el.value = `${datePrefix}${String(res.snapshot.val()).padStart(4, '0')}`; });
 }
 
@@ -1391,10 +1424,10 @@ window.handleManualWeightInput = function () {
 };
 
 window.showLRCopy = async function (lrId) {
-    const user = auth.currentUser;
+    const user = window.auth.currentUser;
     if (!user) return;
-    const lr = (await db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value')).val();
-    const profile = (await db.ref(`users/${user.uid}/profile`).once('value')).val() || {};
+    const lr = (await window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value')).val();
+    const profile = (await window.db.ref(`users/${user.uid}/profile`).once('value')).val() || {};
     const client = window.allClients.find(c => c.id === lr.clientId) || {};
     const vehicle = window.allVehicles.find(v => (v.vehicleNo || v.vehicleNumber) === lr.truckNumber);
     const tripDetails = lr.tripDetails || {};
@@ -1465,4 +1498,181 @@ window.downloadLRCopyPDF = async function () {
     pdf.addImage(imgData, 'PNG', 10, 10, pdf.internal.pageSize.getWidth() - 20, h);
     pdf.save('LR_Copy.pdf');
 };
+
+// --- QUICK ADD FUNCTIONS ---
+
+function showQuickAddModal(type) {
+    const modalMap = {
+        'vehicle': 'quickAddVehicleModal',
+        'driver': 'quickAddDriverModal',
+        'client': 'quickAddClientModal',
+        'transporter': 'quickAddTransporterModal',
+        'route': 'quickAddRouteModal',
+        'consignee': 'quickAddClientModal' // Consignee uses same modal as client
+    };
+    
+    const modalId = modalMap[type];
+    if (modalId) {
+        const modal = new bootstrap.Modal(document.getElementById(modalId));
+        modal.show();
+    }
+}
+
+async function saveQuickAddClient() {
+    const name = document.getElementById('quickAddClientName')?.value?.trim();
+    const address = document.getElementById('quickAddClientAddress')?.value?.trim();
+    const phone = document.getElementById('quickAddClientPhone')?.value?.trim();
+    const gstin = document.getElementById('quickAddClientGstin')?.value?.trim();
+    
+    if (!name) {
+        alert('Client name is required');
+        return;
+    }
+    
+    try {
+        const clientData = {
+            name: name,
+            address: address,
+            phone: phone,
+            gstin: gstin,
+            createdAt: new Date().toISOString()
+        };
+        
+        await window.db.ref(`users/${window.currentCoreAccountId}/clients`).push(clientData);
+        alert('Client added successfully!');
+        
+        // Close modal and reset form
+        bootstrap.Modal.getInstance(document.getElementById('quickAddClientModal')).hide();
+        document.querySelector('#quickAddClientModal form').reset();
+        
+    } catch (error) {
+        console.error('Error adding client:', error);
+        alert('Error adding client');
+    }
+}
+
+async function saveQuickAddRoute() {
+    const from = document.getElementById('quickAddRouteFrom')?.value?.trim();
+    const to = document.getElementById('quickAddRouteTo')?.value?.trim();
+    const distance = document.getElementById('quickAddRouteDistance')?.value?.trim();
+    
+    if (!from || !to) {
+        alert('Both From and To locations are required');
+        return;
+    }
+    
+    try {
+        const routeData = {
+            from: from,
+            to: to,
+            distance: parseFloat(distance) || 0,
+            createdAt: new Date().toISOString()
+        };
+        
+        await window.db.ref(`users/${window.currentCoreAccountId}/routes`).push(routeData);
+        alert('Route added successfully!');
+        
+        // Close modal and reset form
+        bootstrap.Modal.getInstance(document.getElementById('quickAddRouteModal')).hide();
+        document.querySelector('#quickAddRouteModal form').reset();
+        
+    } catch (error) {
+        console.error('Error adding route:', error);
+        alert('Error adding route');
+    }
+}
+
+async function saveQuickAddTransporter() {
+    const name = document.getElementById('quickAddTransporterName')?.value?.trim();
+    const phone = document.getElementById('quickAddTransporterPhone')?.value?.trim();
+    const address = document.getElementById('quickAddTransporterAddress')?.value?.trim();
+    
+    if (!name) {
+        alert('Transporter name is required');
+        return;
+    }
+    
+    try {
+        const transporterData = {
+            name: name,
+            phone: phone,
+            address: address,
+            createdAt: new Date().toISOString()
+        };
+        
+        await window.db.ref(`users/${window.currentCoreAccountId}/transporters`).push(transporterData);
+        alert('Transporter added successfully!');
+        
+        // Close modal and reset form
+        bootstrap.Modal.getInstance(document.getElementById('quickAddTransporterModal')).hide();
+        document.querySelector('#quickAddTransporterModal form').reset();
+        
+    } catch (error) {
+        console.error('Error adding transporter:', error);
+        alert('Error adding transporter');
+    }
+}
+
+async function saveQuickAddVehicle() {
+    const vehicleNumber = document.getElementById('quickAddVehicleNumber')?.value?.trim();
+    const vehicleType = document.getElementById('quickAddVehicleType')?.value?.trim();
+    const capacity = document.getElementById('quickAddVehicleCapacity')?.value?.trim();
+    
+    if (!vehicleNumber) {
+        alert('Vehicle number is required');
+        return;
+    }
+    
+    try {
+        const vehicleData = {
+            vehicleNumber: vehicleNumber.toUpperCase(),
+            vehicleType: vehicleType,
+            capacity: parseFloat(capacity) || 0,
+            currentFuel: 0,
+            createdAt: new Date().toISOString()
+        };
+        
+        await window.db.ref(`users/${window.currentCoreAccountId}/vehicles`).push(vehicleData);
+        alert('Vehicle added successfully!');
+        
+        // Close modal and reset form
+        bootstrap.Modal.getInstance(document.getElementById('quickAddVehicleModal')).hide();
+        document.querySelector('#quickAddVehicleModal form').reset();
+        
+    } catch (error) {
+        console.error('Error adding vehicle:', error);
+        alert('Error adding vehicle');
+    }
+}
+
+async function saveQuickAddDriver() {
+    const name = document.getElementById('quickAddDriverName')?.value?.trim();
+    const licenseNumber = document.getElementById('quickAddDriverLicense')?.value?.trim();
+    const phone = document.getElementById('quickAddDriverPhone')?.value?.trim();
+    
+    if (!name) {
+        alert('Driver name is required');
+        return;
+    }
+    
+    try {
+        const driverData = {
+            name: name,
+            licenseNumber: licenseNumber,
+            phone: phone,
+            createdAt: new Date().toISOString()
+        };
+        
+        await window.db.ref(`users/${window.currentCoreAccountId}/drivers`).push(driverData);
+        alert('Driver added successfully!');
+        
+        // Close modal and reset form
+        bootstrap.Modal.getInstance(document.getElementById('quickAddDriverModal')).hide();
+        document.querySelector('#quickAddDriverModal form').reset();
+        
+    } catch (error) {
+        console.error('Error adding driver:', error);
+        alert('Error adding driver');
+    }
+}
 
