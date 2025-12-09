@@ -13,7 +13,9 @@ window.allTransporters = [];
 window.allRoutes = [];
 window.allPumps = [];
 window.allWorkVendors = [];
+window.allWorkVendors = [];
 window.currentUserProfile = null;
+window.allEmployees = [];
 
 // LR Data & Pagination
 window.allLRs = []; // Stores LRs for the CURRENT PAGE
@@ -49,12 +51,12 @@ document.addEventListener('DOMContentLoaded', function () {
     window.lrTable = $('#lrTable').DataTable({
         pageLength: 10,
         order: [[1, 'desc']], // Sort by date descending
-        columnDefs: [{ orderable: false, targets: [0, 10, 12, 13] }] // Disable sorting on checkbox and action columns
+        columnDefs: [{ orderable: false, targets: [0, 10, 13, 14] }] // Disable sorting on checkbox and action columns
     });
     window.marketLrTable = $('#marketLrTable').DataTable({
         pageLength: 10,
         order: [[1, 'desc']],
-        columnDefs: [{ orderable: false, targets: [0, 9, 11, 12] }]
+        columnDefs: [{ orderable: false, targets: [0, 9, 12, 13] }]
     });
 
     // Add "Load More" button to the UI if not exists
@@ -205,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
             placeholder: 'Select or search for a truck',
             width: '100%',
             // Allow dynamically added options for "quick add" functionality
-            tags: true 
+            tags: true
         });
     } catch (e) {
         console.warn('Select2 initialization failed:', e);
@@ -326,6 +328,10 @@ function addLRToTable(lr, getClientName) {
     const displayStatus = detailsExist ? 'Completed' : 'Active';
     const displayStatusClass = detailsExist ? 'bg-success' : 'bg-info';
 
+    // Get Employee Name
+    const employee = window.allEmployees.find(e => e.id === lr.employeeId);
+    const employeeName = employee ? employee.name : 'N/A';
+
     const rowData = [
         `<div class=\"form-check\">\n <input class=\"form-check-input ${lr.lrType === 'market_company' ? 'market-lr-checkbox' : 'lr-checkbox'}\" type=\"checkbox\" value=\"${lrId}\" onchange=\"toggleLRSelection('${lrId}', this.checked, ${lr.lrType === 'market_company'})\">\n </div>`,
         lr.date,
@@ -363,6 +369,7 @@ function addLRToTable(lr, getClientName) {
             lr.weight,
             `<button class="btn btn-sm ${detailButtonClass}" onclick="showTripDetailsModal('${lrId}', '${lr.lrNumber}', ${lr.weight}, '${lr.truckNumber}', '${lr.driverName || 'N/A'}')" title="${detailButtonTitle}"><i class="${detailButtonIcon}"></i></button>`,
             `<span class="badge ${displayStatusClass}">${displayStatus}</span>`,
+            employeeName,
             `<button class="btn btn-sm btn-outline-info" onclick="showLRCopy('${lrId}')" title="View LR Copy"><i class="fas fa-print"></i></button>`,
             `<button class="btn btn-sm btn-outline-primary" onclick="editLR('${lrId}')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="deleteLR('${lrId}')"><i class="fas fa-trash"></i></button>`
         ]);
@@ -380,6 +387,7 @@ function addLRToTable(lr, getClientName) {
             lr.weight,
             `<button class="btn btn-sm ${detailButtonClass}" onclick="showTripDetailsModal('${lrId}', '${lr.lrNumber}', ${lr.weight}, '${lr.truckNumber}', '${lr.driverName || 'N/A'}')" title="${detailButtonTitle}"><i class="${detailButtonIcon}"></i></button>`,
             `<span class="badge ${displayStatusClass}">${displayStatus}</span>`,
+            employeeName,
             `<button class="btn btn-sm btn-outline-info" onclick="showLRCopy('${lrId}')" title="View LR Copy"><i class="fas fa-print"></i></button>`,
             `<button class="btn btn-sm btn-outline-primary" onclick="editLR('${lrId}')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="deleteLR('${lrId}')"><i class="fas fa-trash"></i></button>`
         ]);
@@ -468,9 +476,11 @@ async function loadAllData() {
         const editEmployeeSelect = document.getElementById('editEmployeeSelect');
         if (employeeSelect) employeeSelect.innerHTML = '<option value="">Select Employee</option>';
         if (editEmployeeSelect) editEmployeeSelect.innerHTML = '<option value="">Select Employee</option>';
+        window.allEmployees = [];
         if (snapshot.exists()) {
             snapshot.forEach(child => {
                 const e = { id: child.key, ...child.val() };
+                window.allEmployees.push(e);
                 const opt = document.createElement('option');
                 opt.value = e.id;
                 opt.textContent = `${e.name} (${e.designation || 'N/A'})`;
@@ -543,14 +553,14 @@ async function loadAllVehicles(userId) {
 // Custom validation function for LR form
 function validateLRFormCustom() {
     const errors = [];
-    
+
     // Ensure auto-generation is applied before validation
     applyAutoGenerationSettings();
-    
+
     // Check required fields
     const lrDate = document.getElementById('lrDate').value;
     if (!lrDate) errors.push('- Date is required');
-    
+
     const lrNumber = document.getElementById('lrNumber').value;
     if (!lrNumber || lrNumber === 'Auto-generated') {
         // Try to generate LR number if it's missing and auto-generation is enabled
@@ -560,59 +570,59 @@ function validateLRFormCustom() {
             errors.push('- LR Number is required');
         }
     }
-    
+
     const isMarketVehicle = document.getElementById('vehicleTypeToggle').checked;
     const truckNumber = isMarketVehicle ? document.getElementById('marketTruckNumber').value : document.getElementById('truckNumber').value;
     if (!truckNumber) errors.push('- Truck Number is required');
-    
+
     const driverName = isMarketVehicle ? document.getElementById('marketDriverName').value.trim() : document.getElementById('driverSelect').value;
     // Driver name is now optional
-    
+
     const routeSelect = document.getElementById('routeSelect').value;
     if (!routeSelect) errors.push('- Route is required');
-    
+
     // Validate From and To locations from selected route
     const routeSelectElement = document.getElementById('routeSelect');
     const selectedRoute = routeSelectElement.options[routeSelectElement.selectedIndex];
     const fromLoc = selectedRoute ? (selectedRoute.dataset.from || '') : '';
     const toLoc = selectedRoute ? (selectedRoute.dataset.to || '') : '';
-    
+
     if (!fromLoc || !toLoc) {
         errors.push('- Both From and To locations are required. Please select a valid route.');
     }
-    
+
     const clientId = document.getElementById('clientId').value;
     if (!clientId) errors.push('- Client is required');
-    
+
     const item = document.getElementById('item').value;
     if (!item) errors.push('- Item is required');
-    
+
     // Check numeric fields (now optional)
     const numPackages = document.getElementById('numPackages').value;
     // Number of packages is now optional
-    
+
     const weight = document.getElementById('weight').value;
     // Weight is now optional
-    
+
     if (errors.length > 0) {
         alert('Please fix the following errors:\n' + errors.join('\n'));
         return false;
     }
-    
+
     return true;
 }
 
 // Custom validation function for Edit LR form
 function validateEditLRFormCustom() {
     const errors = [];
-    
+
     // Ensure auto-generation is applied before validation
     applyEditAutoGenerationSettings();
-    
+
     // Check required fields
     const lrDate = document.getElementById('editLrDate').value;
     if (!lrDate) errors.push('- Date is required');
-    
+
     const lrNumber = document.getElementById('editLrNumber').value;
     if (!lrNumber || lrNumber === 'Auto-generated') {
         // Try to generate LR number if it's missing and auto-generation is enabled
@@ -622,51 +632,51 @@ function validateEditLRFormCustom() {
             errors.push('- LR Number is required');
         }
     }
-    
+
     const isMarketVehicle = document.getElementById('editVehicleTypeToggle').checked;
     const truckNumber = isMarketVehicle ? document.getElementById('editMarketTruckNumber').value : document.getElementById('editTruckNumber').value;
     if (!truckNumber) errors.push('- Truck Number is required');
-    
+
     const driverName = isMarketVehicle ? document.getElementById('editMarketDriverName').value.trim() : document.getElementById('editDriverSelect').value;
     // Driver name is now optional
-    
+
     const routeSelect = document.getElementById('editRouteSelect').value;
     if (!routeSelect) errors.push('- Route is required');
-    
+
     // Validate From and To locations from selected route
     const routeSelectElement = document.getElementById('editRouteSelect');
     const selectedRoute = routeSelectElement ? routeSelectElement.options[routeSelectElement.selectedIndex] : null;
     const fromLoc = selectedRoute ? (selectedRoute.dataset.from || '') : '';
     const toLoc = selectedRoute ? (selectedRoute.dataset.to || '') : '';
-    
+
     if (!fromLoc || !toLoc) {
         errors.push('- Both From and To locations are required. Please select a valid route.');
     }
-    
+
     const clientId = document.getElementById('editClientId').value;
     if (!clientId) errors.push('- Client is required');
-    
+
     const item = document.getElementById('editItem').value;
     if (!item) errors.push('- Item is required');
-    
+
     // Check numeric fields (now optional)
     const numPackages = document.getElementById('editNumPackages').value;
     // Number of packages is now optional
-    
+
     const weight = document.getElementById('editWeight').value;
     // Weight is now optional
-    
+
     if (errors.length > 0) {
         alert('Please fix the following errors:\n' + errors.join('\n'));
         return false;
     }
-    
+
     return true;
 }
 
 async function saveLR() {
     const form = document.getElementById('lrForm');
-    
+
     // Custom validation to handle auto-generated fields
     if (!validateLRFormCustom()) {
         return;
@@ -748,7 +758,7 @@ async function saveLR() {
 
 async function updateLR() {
     const form = document.getElementById('editLrForm');
-    
+
     // Custom validation to handle auto-generated fields
     if (!validateEditLRFormCustom()) {
         return;
@@ -895,9 +905,9 @@ window.editLR = function (lrId) {
                     editTruckSelect.value = lr.truckNumber;
                 }
             }
-            
+
             // Set driver with proper matching
-            setTimeout(() => { 
+            setTimeout(() => {
                 const editDriverSelect = document.getElementById('editDriverSelect');
                 if (editDriverSelect && lr.driverName) {
                     let driverFound = false;
@@ -1503,10 +1513,10 @@ function saveAutoGenerationSettings() {
     window.autoSettings.shipmentNo = document.getElementById('autoGenerateShipmentNo').checked;
     window.autoSettings.orderNo = document.getElementById('autoGenerateOrderNo').checked;
     window.autoSettings.deliveryNo = document.getElementById('autoGenerateDeliveryNo').checked;
-    
+
     // Save to localStorage
     localStorage.setItem('lrAutoGenerateSettings', JSON.stringify(window.autoSettings));
-    
+
     // Apply the settings to update form fields
     applyAutoGenerationSettings();
     applyEditAutoGenerationSettings();
@@ -1603,60 +1613,188 @@ window.showLRCopy = async function (lrId) {
     const lr = (await window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value')).val();
     const profile = (await window.db.ref(`users/${user.uid}/profile`).once('value')).val() || {};
     const client = window.allClients.find(c => c.id === lr.clientId) || {};
+    const consignee = window.allClients.find(c => c.id === lr.consigneeId) || {};
     const vehicle = window.allVehicles.find(v => (v.vehicleNo || v.vehicleNumber) === lr.truckNumber);
     const tripDetails = lr.tripDetails || {};
+    const settings = window.autoSettings || {};
+
+    // Print Settings Toggles
+    const showLogo = document.getElementById('printLogoToggle')?.checked ?? true;
+    const showStamp = document.getElementById('printStampToggle')?.checked ?? true;
+
+    // Helper for safe dates
+    const safeDate = (d) => d ? new Date(d).toLocaleDateString('en-GB') : '';
+    const themeColor = 'purple'; // Standard stamp color
+
+    // Profile Owner Name fallback
+    const ownerName = profile.ownerName || user.displayName || 'Authorized Signatory';
+
+    const stampSvg = `
+        <svg class="company-seal" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" style="display: block; width: 100px; height: 100px; transform: rotate(-20deg); opacity: 0.8;">
+            <defs>
+                <path id="topTextPath" fill="none" d="M 30,100 a 70,70 0 1,1 140,0" />
+                <path id="bottomTextPath" fill="none" d="M 30,100 a 70,70 0 1,0 140,0" />
+            </defs>
+            <g fill="${themeColor}" stroke="${themeColor}">
+                <circle cx="100" cy="100" r="95" stroke-width="3" fill="none"/>
+                <circle cx="100" cy="100" r="88" stroke-width="1.5" fill="none"/>
+                <text font-family="'Arial Black', 'Impact', sans-serif" font-size="15" letter-spacing="1.5">
+                    <textPath xlink:href="#topTextPath" startOffset="50%" text-anchor="middle">${(profile.transportName || 'OFFICIAL').toUpperCase().substring(0, 20)}</textPath>
+                </text>
+                <text font-family="'Arial Black', 'Impact', sans-serif" font-size="12" letter-spacing="1">
+                    <textPath xlink:href="#bottomTextPath" startOffset="50%" text-anchor="middle">OFFICIAL SEAL</textPath>
+                </text>
+                <text x="100" y="125" font-family="'Arial', sans-serif" font-size="14" font-weight="bold" text-anchor="middle" letter-spacing="1">TRANSPORT</text>
+                <text x="100" y="145" font-family="'Arial', sans-serif" font-size="9" font-weight="normal" text-anchor="middle">GSTIN: ${profile.gstin || 'N/A'}</text>
+            </g>
+        </svg>
+    `;
 
     const html = `
-      <div class="lr-copy-container printable-area" id="lr-pdf-content">
-        <div class="lr-header lr-header-content" style="display:flex; justify-content:space-between; align-items:center;">
-          ${profile.companyLogoUrl ? `<img src="${profile.companyLogoUrl}" style="max-height:60px; max-width:150px;">` : ''}
-          <div style="text-align:center;">
-            <h4>${profile.transportName || 'Transvortex Logistics'}</h4>
-            <p>Authorized transport contractor of ${client.clientName || client.name || 'To be billed'}</p>
-            <p>${profile.address || ''}, ${profile.city || ''} - ${profile.pincode || ''}</p>
-            <p>GSTIN: ${profile.gstin || 'N/A'} | Phone: ${profile.phoneNumber || 'N/A'}</p>
-          </div>
-          <div style="width:150px;"></div>
+      <div id="lr-pdf-content" style="font-family: Arial, sans-serif; background: #ffffff; color: #000; padding: 20px; max-width: 900px; margin: 0 auto; border: 1px solid #ccc; font-size: 11px; line-height: 1.3;">
+        
+        <!-- Header Section -->
+        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
+             <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 10px; margin-bottom: 5px;">
+                <span>Subject to ${profile.city || 'Jurisdiction'} Jurisdiction</span>
+                <span>Goods Receipt</span>
+            </div>
+            
+            <div style="display: flex; align-items: center; justify-content: center; position: relative;">
+                ${showLogo && profile.companyLogoUrl ? `<img src="${profile.companyLogoUrl}" style="max-height: 60px; position: absolute; left: 0;">` : ''}
+                <div>
+                     <h1 style="font-size: 24px; font-weight: 800; text-transform: uppercase; margin: 5px 0;">${profile.transportName || 'TRANSPORT NAME'}</h1>
+                     <div style="font-size: 12px;">Authorized Transporter: ${client.clientName || 'N/A'}</div>
+                     <div style="font-size: 11px; font-weight: 700;">${profile.address || ''}, ${profile.city || ''} - ${profile.pincode || ''}</div>
+                     <div style="font-size: 11px; margin-top: 2px;">Phone: ${profile.phoneNumber || profile.phone || 'N/A'}, GSTIN: ${profile.gstin || 'N/A'}</div>
+                     <div style="font-size: 11px;">Email: ${user.email || 'N/A'}</div>
+                </div>
+            </div>
         </div>
-        <div class="lr-info" style="display:flex; justify-content:space-between;">
-          <div class="lr-info-left">
-            <div>From: <strong>${lr.fromLocation || 'N/A'}</strong></div>
-            <div>To: <strong>${lr.toLocation || 'N/A'}</strong></div>
-            <div>Consignor: <strong>${client.clientName || client.name || 'To be billed'}</strong></div>
-            <div>Consignee: <strong>${(window.allClients.find(c => c.id === lr.consigneeId) || {}).clientName || client.clientName || 'N/A'}</strong></div>
-            <div>GSTIN: <strong>${client.gstin || 'N/A'}</strong></div>
-            <div>Order No: <strong>${lr.orderNo || 'N/A'}</strong></div>
-            <div>Delivery No: <strong>${lr.deliveryNo || 'N/A'}</strong></div>
-          </div>
-          <div class="lr-info-right">
-            <div>LR No: <strong>${lr.lrNumber || 'N/A'}</strong></div>
-            <div>Date: <strong>${lr.date || 'N/A'}</strong></div>
-            <div>Vehicle No: <strong>${lr.truckNumber || 'N/A'}</strong></div>
-            <div>Driver Name: <strong>${lr.driverName || 'N/A'}</strong></div>
-            <div>Vehicle Type: <strong>${vehicle ? vehicle.vehicleType || 'N/A' : 'N/A'}</strong></div>
-            <div>Vehicle Owner: <strong>${vehicle ? vehicle.ownerName || vehicle.vehicleOwner || 'Self' : 'N/A'}</strong></div>
-            <div>Invoice No: <strong>${lr.invoiceNumber || 'N/A'}</strong></div>
-            <div>Shipment No: <strong>${lr.shipmentNo || 'N/A'}</strong></div>
-          </div>
+
+        <!-- Upper Info Row -->
+        <div style="font-weight: bold; margin-bottom: 15px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
+            From: ${lr.fromLocation || 'N/A'} To ${lr.toLocation || 'N/A'}
         </div>
-        <table class="lr-table" style="width:100%; border-collapse:collapse; margin-top:20px;">
-          <thead><tr><th>Type</th><th>Description</th><th>Weight (MT)</th><th>Rate</th><th>Freight</th><th>Value</th></tr></thead>
-          <tbody>
-            <tr>
-              <td>${lr.numPackages > 0 ? lr.numPackages : 'Loose'}</td>
-              <td>${lr.item || 'N/A'}</td>
-              <td>${lr.weight || 'N/A'}</td>
-              <td>${tripDetails.freightRate > 0 ? '₹' + tripDetails.freightRate : 'To be billed'}</td>
-              <td>${tripDetails.freightAmount > 0 ? '₹' + tripDetails.freightAmount : 'To be billed'}</td>
-              <td>₹${(lr.goodsValue || 0).toFixed(2)}</td>
-            </tr>
-          </tbody>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 10px;">
+            <!-- Left Column: Consignor & Consignee -->
+            <div style="flex: 1;">
+                <div style="margin-bottom: 10px; border-bottom: 1px dotted #ccc; padding-bottom: 5px;">
+                    <strong>Consignor:</strong><br>
+                    <span style="font-weight: 600; font-size: 12px;">${client.clientName || 'N/A'}</span><br>
+                    ${client.billingAddress ? `Billing Addr: ${client.billingAddress}<br>` : ''}
+                    ${client.dispatchAddress ? `Dispatch Addr: ${client.dispatchAddress}<br>` : ''}
+                    ${!client.billingAddress && !client.dispatchAddress ? (client.address || '') + '<br>' : ''}
+                    ${client.city || ''}, ${client.state || ''}<br>
+                    Phone: ${client.mobile || 'N/A'} | Email: ${client.email || 'N/A'}<br>
+                    GSTIN: ${client.gstin || 'N/A'}
+                </div>
+                 <div style="margin-bottom: 10px;">
+                    <strong>Consignee:</strong><br>
+                    <span style="font-weight: 600; font-size: 12px;">${consignee.clientName || 'N/A'}</span><br>
+                    ${consignee.billingAddress ? `Billing Addr: ${consignee.billingAddress}<br>` : ''}
+                    ${consignee.dispatchAddress ? `Dispatch Addr: ${consignee.dispatchAddress}<br>` : ''}
+                    ${!consignee.billingAddress && !consignee.dispatchAddress ? (consignee.address || '') + '<br>' : ''}
+                    ${consignee.city || ''}, ${consignee.state || ''}<br>
+                     Phone: ${consignee.mobile || 'N/A'} | Email: ${consignee.email || 'N/A'}<br>
+                    GSTIN: ${consignee.gstin || 'N/A'}
+                </div>
+            </div>
+
+            <!-- Right Column: LR Details -->
+            <div style="flex: 1;">
+                <div style="display: grid; grid-template-columns: 140px 1fr; row-gap: 2px;">
+                    <strong>LR No:</strong> <span>${lr.lrNumber || 'N/A'}</span>
+                    <strong>Date:</strong> <span>${safeDate(lr.date)}</span>
+                    <strong>Delivery No:</strong> <span>${lr.deliveryNo || '-'}</span>
+                    <strong>Order No:</strong> <span>${lr.orderNo || '-'}</span>
+                    <strong>Shipment No:</strong> <span>${lr.shipmentNo || '-'}</span>
+                    <strong>Invoice No:</strong> <span>${lr.invoiceNumber || '-'}</span>
+                    <strong>Truck No:</strong> <span>${lr.truckNumber || 'N/A'}</span>
+                    <strong>Truck Type:</strong> <span>${vehicle ? vehicle.vehicleType : 'N/A'}</span>
+                    <strong>E-Way Bill No:</strong> <span>${lr.ewayBillNo || '-'}</span>
+                    <strong>EWB EXP:</strong> <span>${lr.ewbExp || '-'}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px;">
+            <thead>
+                <tr style="border-bottom: 1px solid #000; background: #eee;">
+                    <th style="border-right: 1px solid #000; padding: 5px; text-align: left;">No of Package</th>
+                    <th style="border-right: 1px solid #000; padding: 5px; text-align: left;">Goods Description</th>
+                    <th style="border-right: 1px solid #000; padding: 5px; text-align: right;">Weight (MT)</th>
+                    <th style="border-right: 1px solid #000; padding: 5px; text-align: right;">Rate</th>
+                    <th style="border-right: 1px solid #000; padding: 5px; text-align: right;">Freight</th>
+                    <th style="padding: 5px; text-align: right;">Value (Rs.)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border-right: 1px solid #000; padding: 5px; height: 60px; vertical-align: top;">${lr.numPackages > 0 ? lr.numPackages : 'Loose'}</td>
+                    <td style="border-right: 1px solid #000; padding: 5px; vertical-align: top;">${lr.item || 'N/A'}</td>
+                    <td style="border-right: 1px solid #000; padding: 5px; text-align: right; vertical-align: top;">${lr.weight || '0.000'}</td>
+                    <td style="border-right: 1px solid #000; padding: 5px; text-align: right; vertical-align: top;">${tripDetails.freightRate > 0 ? tripDetails.freightRate : '-'}</td>
+                    <td style="border-right: 1px solid #000; padding: 5px; text-align: right; vertical-align: top;">${tripDetails.freightAmount > 0 ? tripDetails.freightAmount : 'To be billed'}</td>
+                    <td style="padding: 5px; text-align: right; vertical-align: top;">${(lr.goodsValue || 0).toFixed(2)}</td>
+                </tr>
+            </tbody>
         </table>
-        <div style="margin-top:20px;">Remarks: <strong>GIT TO BE PAID BY CONSIGNOR</strong></div>
-        <div class="lr-footer" style="display:flex; justify-content:space-between; margin-top:40px;">
-          <div style="text-align:center; border-top:1px solid #000; width:40%;">Signature of Consignor</div>
-          <div style="text-align:center; border-top:1px solid #000; width:40%;">Authorized Signatory</div>
+
+        <!-- Driver & Signatures -->
+        <div style="display: flex; position: relative; margin-top: 20px;">
+             <div style="flex: 1.5;">
+                <div style="margin-bottom: 10px;"><strong>Remarks:</strong> ${lr.remarks || 'GST TO BE PAID BY CONSIGNOR / GOODS TRANSPORT AGENCY'}</div>
+                
+                <div style="display: grid; grid-template-columns: 150px 1fr; margin-bottom: 5px;">
+                    <span>Truck Owner:</span> <strong>${ownerName}</strong>
+                </div>
+                <div style="display: grid; grid-template-columns: 150px 1fr; margin-bottom: 5px;">
+                    <span>Driver Name:</span> <strong>${lr.driverName || 'N/A'}</strong>
+                </div>
+                 <div style="display: grid; grid-template-columns: 150px 1fr; margin-bottom: 10px;">
+                    <span>Driver Mobile:</span> <strong>${vehicle ? (vehicle.driverMobile || 'N/A') : 'N/A'}</strong>
+                </div>
+                 <div style="margin-top: 20px;">
+                    <span style="display: inline-block; width: 200px; border-top: 1px solid #000; padding-top: 5px;">Driver Signature</span>
+                </div>
+             </div>
+
+             <div style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative;">
+                ${showStamp ? `<div style="position: absolute; top: -20px; right: 80px;">${stampSvg}</div>` : ''}
+                <div style="margin-top: 60px; border-top: 1px solid #000; padding-top: 5px; width: 80%;">
+                    <div>Authorized Signatory</div>
+                    <div style="font-weight:bold; margin-top:2px;">${ownerName}</div>
+                </div>
+             </div>
         </div>
+
+        <!-- Terms Footer -->
+        <div style="margin-top: 20px; border-top: 1px solid #000; padding-top: 5px; font-size: 10px; color: #555;">
+            <div>Note: Damaged bags are not to be returned to Truck driver.</div>
+            <div>If acknowledgement is not submitted within 15 days, freight will not be paid.</div>
+            <div>Comments: __________________________________________________________________</div>
+        </div>
+
+        <!-- Receipt Slip -->
+        <div style="border-top: 2px dashed #000; margin-top: 20px; padding-top: 10px;">
+             <div style="text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Receipt of Goods</div>
+             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                 <span><strong>Invoice No:</strong> ${lr.invoiceNumber || 'N/A'}</span>
+                 <span><strong>Truck No:</strong> ${lr.truckNumber || 'N/A'}</span>
+                 <span><strong>LR No:</strong> ${lr.lrNumber || 'N/A'}</span>
+             </div>
+             <table style="width: 100%; font-size: 11px; border-collapse: collapse; margin-bottom: 10px;">
+                 <tr><td style="padding: 5px;">Truck received at date/time: _________________</td><td style="padding: 5px;">Quantity in bags/MT: _________________</td></tr>
+                 <tr><td style="padding: 5px;">Truck released date/time: _________________</td><td style="padding: 5px;">Short/Damage Qty: _________________</td></tr>
+             </table>
+              <div style="text-align: right; margin-top: 20px;">
+                 <span style="border-top: 1px solid #000; padding-top: 5px;">Signature and Seal of Consignee</span>
+              </div>
+        </div>
+
       </div>
     `;
     document.getElementById('lrCopyContent').innerHTML = html;
@@ -1687,7 +1825,7 @@ function showQuickAddModal(type) {
         'route': 'quickAddRouteModal',
         'consignee': 'quickAddClientModal' // Consignee uses same modal as client
     };
-    
+
     const modalId = modalMap[type];
     if (modalId) {
         const modal = new bootstrap.Modal(document.getElementById(modalId));
@@ -1701,12 +1839,12 @@ async function saveQuickAddClient() {
     const phone = document.getElementById('q_phone')?.value?.trim();
     const gstin = document.getElementById('q_gstin')?.value?.trim();
     const contactPerson = document.getElementById('q_contactPerson')?.value?.trim();
-    
+
     if (!name) {
         alert('Client name is required');
         return;
     }
-    
+
     try {
         const clientData = {
             name: name,
@@ -1715,14 +1853,14 @@ async function saveQuickAddClient() {
             gstin: gstin,
             createdAt: new Date().toISOString()
         };
-        
+
         await window.db.ref(`users/${window.currentCoreAccountId}/clients`).push(clientData);
         alert('Client added successfully!');
-        
+
         // Close modal and reset form
         bootstrap.Modal.getInstance(document.getElementById('quickAddClientModal')).hide();
         document.querySelector('#quickAddClientModal form').reset();
-        
+
     } catch (error) {
         console.error('Error adding client:', error);
         alert('Error adding client');
@@ -1733,12 +1871,12 @@ async function saveQuickAddRoute() {
     const from = document.getElementById('q_fromLocation')?.value?.trim();
     const to = document.getElementById('q_toLocation')?.value?.trim();
     const distance = document.getElementById('q_distance')?.value?.trim();
-    
+
     if (!from || !to) {
         alert('Both From and To locations are required');
         return;
     }
-    
+
     try {
         const routeData = {
             from: from,
@@ -1746,14 +1884,14 @@ async function saveQuickAddRoute() {
             distance: parseFloat(distance) || 0,
             createdAt: new Date().toISOString()
         };
-        
+
         await window.db.ref(`users/${window.currentCoreAccountId}/routes`).push(routeData);
         alert('Route added successfully!');
-        
+
         // Close modal and reset form
         bootstrap.Modal.getInstance(document.getElementById('quickAddRouteModal')).hide();
         document.querySelector('#quickAddRouteModal form').reset();
-        
+
     } catch (error) {
         console.error('Error adding route:', error);
         alert('Error adding route');
@@ -1765,12 +1903,12 @@ async function saveQuickAddTransporter() {
     const phone = document.getElementById('q_transporterPhone')?.value?.trim();
     const address = document.getElementById('q_transporterAddress')?.value?.trim();
     const contactPerson = document.getElementById('q_transporterContactPerson')?.value?.trim();
-    
+
     if (!name) {
         alert('Transporter name is required');
         return;
     }
-    
+
     try {
         const transporterData = {
             name: name,
@@ -1778,14 +1916,14 @@ async function saveQuickAddTransporter() {
             address: address,
             createdAt: new Date().toISOString()
         };
-        
+
         await window.db.ref(`users/${window.currentCoreAccountId}/transporters`).push(transporterData);
         alert('Transporter added successfully!');
-        
+
         // Close modal and reset form
         bootstrap.Modal.getInstance(document.getElementById('quickAddTransporterModal')).hide();
         document.querySelector('#quickAddTransporterModal form').reset();
-        
+
     } catch (error) {
         console.error('Error adding transporter:', error);
         alert('Error adding transporter');
@@ -1796,12 +1934,12 @@ async function saveQuickAddVehicle() {
     const vehicleNumber = document.getElementById('q_vehicleNumber')?.value?.trim();
     const vehicleType = document.getElementById('q_vehicleType')?.value?.trim();
     const capacity = document.getElementById('q_vehicleCapacity')?.value?.trim();
-    
+
     if (!vehicleNumber) {
         alert('Vehicle number is required');
         return;
     }
-    
+
     try {
         const vehicleData = {
             vehicleNumber: vehicleNumber.toUpperCase(),
@@ -1810,14 +1948,14 @@ async function saveQuickAddVehicle() {
             currentFuel: 0,
             createdAt: new Date().toISOString()
         };
-        
+
         await window.db.ref(`users/${window.currentCoreAccountId}/vehicles`).push(vehicleData);
         alert('Vehicle added successfully!');
-        
+
         // Close modal and reset form
         bootstrap.Modal.getInstance(document.getElementById('quickAddVehicleModal')).hide();
         document.querySelector('#quickAddVehicleModal form').reset();
-        
+
     } catch (error) {
         console.error('Error adding vehicle:', error);
         alert('Error adding vehicle');
@@ -1828,12 +1966,12 @@ async function saveQuickAddDriver() {
     const name = document.getElementById('q_driverName')?.value?.trim();
     const licenseNumber = document.getElementById('q_driverLicense')?.value?.trim();
     const phone = document.getElementById('q_driverContact')?.value?.trim();
-    
+
     if (!name) {
         alert('Driver name is required');
         return;
     }
-    
+
     try {
         const driverData = {
             name: name,
@@ -1841,14 +1979,14 @@ async function saveQuickAddDriver() {
             phone: phone,
             createdAt: new Date().toISOString()
         };
-        
+
         await window.db.ref(`users/${window.currentCoreAccountId}/drivers`).push(driverData);
         alert('Driver added successfully!');
-        
+
         // Close modal and reset form
         bootstrap.Modal.getInstance(document.getElementById('quickAddDriverModal')).hide();
         document.querySelector('#quickAddDriverModal form').reset();
-        
+
     } catch (error) {
         console.error('Error adding driver:', error);
         alert('Error adding driver');
