@@ -1696,10 +1696,11 @@ function showQuickAddModal(type) {
 }
 
 async function saveQuickAddClient() {
-    const name = document.getElementById('quickAddClientName')?.value?.trim();
-    const address = document.getElementById('quickAddClientAddress')?.value?.trim();
-    const phone = document.getElementById('quickAddClientPhone')?.value?.trim();
-    const gstin = document.getElementById('quickAddClientGstin')?.value?.trim();
+    const name = document.getElementById('q_clientName')?.value?.trim();
+    const address = document.getElementById('q_address')?.value?.trim();
+    const phone = document.getElementById('q_phone')?.value?.trim();
+    const gstin = document.getElementById('q_gstin')?.value?.trim();
+    const contactPerson = document.getElementById('q_contactPerson')?.value?.trim();
     
     if (!name) {
         alert('Client name is required');
@@ -1729,9 +1730,9 @@ async function saveQuickAddClient() {
 }
 
 async function saveQuickAddRoute() {
-    const from = document.getElementById('quickAddRouteFrom')?.value?.trim();
-    const to = document.getElementById('quickAddRouteTo')?.value?.trim();
-    const distance = document.getElementById('quickAddRouteDistance')?.value?.trim();
+    const from = document.getElementById('q_fromLocation')?.value?.trim();
+    const to = document.getElementById('q_toLocation')?.value?.trim();
+    const distance = document.getElementById('q_distance')?.value?.trim();
     
     if (!from || !to) {
         alert('Both From and To locations are required');
@@ -1760,9 +1761,10 @@ async function saveQuickAddRoute() {
 }
 
 async function saveQuickAddTransporter() {
-    const name = document.getElementById('quickAddTransporterName')?.value?.trim();
-    const phone = document.getElementById('quickAddTransporterPhone')?.value?.trim();
-    const address = document.getElementById('quickAddTransporterAddress')?.value?.trim();
+    const name = document.getElementById('q_transporterName')?.value?.trim();
+    const phone = document.getElementById('q_transporterPhone')?.value?.trim();
+    const address = document.getElementById('q_transporterAddress')?.value?.trim();
+    const contactPerson = document.getElementById('q_transporterContactPerson')?.value?.trim();
     
     if (!name) {
         alert('Transporter name is required');
@@ -1791,9 +1793,9 @@ async function saveQuickAddTransporter() {
 }
 
 async function saveQuickAddVehicle() {
-    const vehicleNumber = document.getElementById('quickAddVehicleNumber')?.value?.trim();
-    const vehicleType = document.getElementById('quickAddVehicleType')?.value?.trim();
-    const capacity = document.getElementById('quickAddVehicleCapacity')?.value?.trim();
+    const vehicleNumber = document.getElementById('q_vehicleNumber')?.value?.trim();
+    const vehicleType = document.getElementById('q_vehicleType')?.value?.trim();
+    const capacity = document.getElementById('q_vehicleCapacity')?.value?.trim();
     
     if (!vehicleNumber) {
         alert('Vehicle number is required');
@@ -1823,9 +1825,9 @@ async function saveQuickAddVehicle() {
 }
 
 async function saveQuickAddDriver() {
-    const name = document.getElementById('quickAddDriverName')?.value?.trim();
-    const licenseNumber = document.getElementById('quickAddDriverLicense')?.value?.trim();
-    const phone = document.getElementById('quickAddDriverPhone')?.value?.trim();
+    const name = document.getElementById('q_driverName')?.value?.trim();
+    const licenseNumber = document.getElementById('q_driverLicense')?.value?.trim();
+    const phone = document.getElementById('q_driverContact')?.value?.trim();
     
     if (!name) {
         alert('Driver name is required');
