@@ -5,6 +5,27 @@
  */
 
 // --- GLOBAL VARIABLES ---
+let db; // Firebase database reference
+let auth; // Firebase auth reference
+// Initialize database and auth references when available
+if (window.db) {
+    db = window.db;
+} else {
+    // Fallback: try to get it later
+    Object.defineProperty(window, 'db', {
+        set: function(value) { db = value; },
+        get: function() { return db; }
+    });
+}
+if (window.auth) {
+    auth = window.auth;
+} else {
+    // Fallback: try to get it later
+    Object.defineProperty(window, 'auth', {
+        set: function(value) { auth = value; },
+        get: function() { return auth; }
+    });
+}
 window.currentCoreAccountId = null;
 window.allVehicles = [];
 window.allClients = [];
