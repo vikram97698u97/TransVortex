@@ -540,10 +540,97 @@ async function loadAllVehicles(userId) {
 
 // --- CRUD OPERATIONS ---
 
+// Custom validation function for LR form
+function validateLRForm() {
+    const errors = [];
+    
+    // Check required fields
+    const lrDate = document.getElementById('lrDate').value;
+    if (!lrDate) errors.push('- Date is required');
+    
+    const lrNumber = document.getElementById('lrNumber').value;
+    if (!lrNumber || lrNumber === 'Auto-generated') errors.push('- LR Number is required');
+    
+    const isMarketVehicle = document.getElementById('vehicleTypeToggle').checked;
+    const truckNumber = isMarketVehicle ? document.getElementById('marketTruckNumber').value : document.getElementById('truckNumber').value;
+    if (!truckNumber) errors.push('- Truck Number is required');
+    
+    const clientId = document.getElementById('clientId').value;
+    if (!clientId) errors.push('- Client (Billed To) is required');
+    
+    const routeSelect = document.getElementById('routeSelect').value;
+    if (!routeSelect) errors.push('- Route is required');
+    
+    const consigneeId = document.getElementById('consigneeId').value;
+    if (!consigneeId) errors.push('- Consignee is required');
+    
+    const weight = document.getElementById('weight').value;
+    if (!weight || weight <= 0) errors.push('- Weight must be greater than 0');
+    
+    // Check driver field based on vehicle type
+    if (isMarketVehicle) {
+        const driverName = document.getElementById('marketDriverName').value.trim();
+        if (!driverName) errors.push('- Driver Name is required for market vehicles');
+    } else {
+        const driverSelect = document.getElementById('driverSelect').value;
+        if (!driverSelect) errors.push('- Driver is required for own vehicles');
+    }
+    
+    if (errors.length > 0) {
+        alert('Please fix the following errors:\n\n' + errors.join('\n'));
+        return false;
+    }
+    
+    return true;
+}
+
+// Custom validation function for edit LR form
+function validateEditLRForm() {
+    const errors = [];
+    
+    // Check required fields
+    const editLrDate = document.getElementById('editLrDate').value;
+    if (!editLrDate) errors.push('- Date is required');
+    
+    const editLrNumber = document.getElementById('editLrNumber').value;
+    if (!editLrNumber) errors.push('- LR Number is required');
+    
+    const isMarketVehicle = document.getElementById('editVehicleTypeToggle').checked;
+    const truckNumber = isMarketVehicle ? document.getElementById('editMarketTruckNumber').value : document.getElementById('editTruckNumber').value;
+    if (!truckNumber) errors.push('- Truck Number is required');
+    
+    const clientId = document.getElementById('editClientId').value;
+    if (!clientId) errors.push('- Client (Billed To) is required');
+    
+    const routeSelect = document.getElementById('editRouteSelect').value;
+    if (!routeSelect) errors.push('- Route is required');
+    
+    const consigneeId = document.getElementById('editConsigneeId').value;
+    if (!consigneeId) errors.push('- Consignee is required');
+    
+    const weight = document.getElementById('editWeight').value;
+    if (!weight || weight <= 0) errors.push('- Weight must be greater than 0');
+    
+    // Check driver field based on vehicle type
+    if (isMarketVehicle) {
+        const driverName = document.getElementById('editMarketDriverName').value.trim();
+        if (!driverName) errors.push('- Driver Name is required for market vehicles');
+    } else {
+        const driverSelect = document.getElementById('editDriverSelect').value;
+        if (!driverSelect) errors.push('- Driver is required for own vehicles');
+    }
+    
+    if (errors.length > 0) {
+        alert('Please fix the following errors:\n\n' + errors.join('\n'));
+        return false;
+    }
+    
+    return true;
+}
+
 async function saveLR() {
-    const form = document.getElementById('lrForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
+    // Use custom validation instead of HTML5 validation
+    if (!validateLRForm()) {
         return;
     }
 
@@ -622,8 +709,10 @@ async function saveLR() {
 }
 
 async function updateLR() {
-    const form = document.getElementById('editLrForm');
-    if (!form.checkValidity()) { form.reportValidity(); return; }
+    // Use custom validation instead of HTML5 validation
+    if (!validateEditLRForm()) {
+        return;
+    }
 
     const editRouteSelect = document.getElementById('editRouteSelect');
     const selectedEditRoute = editRouteSelect ? editRouteSelect.options[editRouteSelect.selectedIndex] : null;
