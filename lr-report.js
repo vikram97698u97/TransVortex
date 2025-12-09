@@ -1492,6 +1492,7 @@ window.showLRCopy = async function (lrId) {
         <div class="lr-info" style="display:flex; justify-content:space-between;">
           <div class="lr-info-left">
             <div>From: <strong>${lr.fromLocation || 'N/A'}</strong></div>
+            <div>To: <strong>${lr.toLocation || 'N/A'}</strong></div>
             <div>Consignor: <strong>${client.clientName || client.name || 'To be billed'}</strong></div>
             <div>Consignee: <strong>${(window.allClients.find(c => c.id === lr.consigneeId) || {}).clientName || client.clientName || 'N/A'}</strong></div>
             <div>GSTIN: <strong>${client.gstin || 'N/A'}</strong></div>
@@ -1502,7 +1503,9 @@ window.showLRCopy = async function (lrId) {
             <div>LR No: <strong>${lr.lrNumber || 'N/A'}</strong></div>
             <div>Date: <strong>${lr.date || 'N/A'}</strong></div>
             <div>Vehicle No: <strong>${lr.truckNumber || 'N/A'}</strong></div>
-            <div>Truck Type: <strong>${vehicle ? vehicle.vehicleType || 'N/A' : 'N/A'}</strong></div>
+            <div>Driver Name: <strong>${lr.driverName || 'N/A'}</strong></div>
+            <div>Vehicle Type: <strong>${vehicle ? vehicle.vehicleType || 'N/A' : 'N/A'}</strong></div>
+            <div>Vehicle Owner: <strong>${vehicle ? vehicle.ownerName || vehicle.vehicleOwner || 'Self' : 'N/A'}</strong></div>
             <div>Invoice No: <strong>${lr.invoiceNumber || 'N/A'}</strong></div>
             <div>Shipment No: <strong>${lr.shipmentNo || 'N/A'}</strong></div>
           </div>
