@@ -1,151 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    
-<!-- 🔐 Secure .env Configuration Loader -->
-    <!-- 🔐 Secure Configuration - Loaded from .env -->
-    <script>
-        // Configuration loaded from .env file (server-side)
-        (function() {
-            'use strict';
-            
-            // Firebase configuration from .env
-            if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-            }
-            
-            // Cloudinary configuration from .env
-            if (!window.CLOUDINARY_CONFIG) {
-                window.CLOUDINARY_CONFIG = {
-                    cloudName: "doqapn15f",
-                    uploadPreset: "vehicle-driver",
-                    presets: {
-                        vehicleDriver: "vehicle-driver",
-                        paymentBilling: "payment-billing",
-                        profilePic: "profile-pic",
-                        documents: "documents",
-                        receipts: "receipts",
-                        expenses: "expenses",
-                        tyres: "tyres",
-                        vehicles: "vehicles",
-                        drivers: "drivers",
-                        invoices: "invoices",
-                        lrReports: "lr-reports",
-                        tripExpenses: "trip-expenses"
-                    },
-                    folders: {
-                        vehicles: "transport/vehicles",
-                        drivers: "transport/drivers", 
-                        documents: "transport/documents",
-                        profiles: "transport/profiles",
-                        receipts: "transport/receipts",
-                        expenses: "transport/expenses",
-                        tyres: "transport/tyres",
-                        invoices: "transport/invoices",
-                        lrReports: "transport/lr-reports",
-                        tripExpenses: "transport/trip-expenses"
-                    },
-                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-                };
-            }
-            
-            // Environment configuration from .env
-            if (!window.ENVIRONMENT) {
-                window.ENVIRONMENT = {
-                    name: "production",
-                    debug: false,
-                    apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0",
-                    corsOrigin: "https://transvortex.online",
-                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
-                    apiRateLimit: 100
-                };
-            }
-            
-            // Security configuration from .env
-            if (!window.SECURITY_CONFIG) {
-                window.SECURITY_CONFIG = {
-                    sessionSecret: "transvortex-session-secret-2024",
-                    jwtSecret: "transvortex-jwt-secret-2024",
-                    encryptionKey: "transvortex-encryption-key-2024"
-                };
-            }
-            
-            // Optional API configurations from .env
-            if (!window.API_CONFIG) {
-                window.API_CONFIG = {
-                    email: {
-                        provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-                        from: "noreply@transvortex.online",
-                        fromName: "TransVortex Transport"
-                    },
-                    payment: {
-                        provider: "stripe",
-                        publicKey: "your-stripe-public-key-here"
-                    },
-                    sms: {
-                        provider: "twilio",
-                        accountSid: "your-twilio-account-sid-here",
-                        phoneNumber: "your-twilio-phone-number-here"
-                    },
-                    maps: {
-                        googleMapsApiKey: "your-google-maps-api-key-here",
-                        googlePlacesApiKey: "your-google-places-api-key-here"
-                    },
-                    analytics: {
-                        googleAnalyticsId: "GA-XXXXXXXXX",
-                        facebookPixelId: "your-facebook-pixel-id-here",
-                        hotjarId: "your-hotjar-id-here"
-                    }
-                };
-            }
-            
-            // Log successful loading (only in debug mode)
-            if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
-                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-                console.log('🌍 Environment:', window.ENVIRONMENT.name);
-                console.log('🔐 Security: Loaded');
-            }
-            
-            // Dispatch event when configuration is ready
-            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-                detail: {
-                    firebase: window.FIREBASE_CONFIG,
-                    cloudinary: window.CLOUDINARY_CONFIG,
-                    environment: window.ENVIRONMENT,
-                    security: window.SECURITY_CONFIG,
-                    apis: window.API_CONFIG
-                }
-            }));
-        })();
-    </script>
+
+  <!-- 🔐 Secure .env Configuration Loader -->
+  <!-- 🔐 Secure Configuration - Loaded from .env -->
+  <script>
+    // Configuration loaded from .env file (server-side)
+    (function () {
+      'use strict';
+
+      // Firebase configuration from .env
+      if (!window.FIREBASE_CONFIG) {
+        apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
+      }
+
+      // Cloudinary configuration from .env
+      if (!window.CLOUDINARY_CONFIG) {
+        window.CLOUDINARY_CONFIG = {
+          cloudName: "doqapn15f",
+          uploadPreset: "vehicle-driver",
+          presets: {
+            vehicleDriver: "vehicle-driver",
+            paymentBilling: "payment-billing",
+            profilePic: "profile-pic",
+            documents: "documents",
+            receipts: "receipts",
+            expenses: "expenses",
+            tyres: "tyres",
+            vehicles: "vehicles",
+            drivers: "drivers",
+            invoices: "invoices",
+            lrReports: "lr-reports",
+            tripExpenses: "trip-expenses"
+          },
+          folders: {
+            vehicles: "transport/vehicles",
+            drivers: "transport/drivers",
+            documents: "transport/documents",
+            profiles: "transport/profiles",
+            receipts: "transport/receipts",
+            expenses: "transport/expenses",
+            tyres: "transport/tyres",
+            invoices: "transport/invoices",
+            lrReports: "transport/lr-reports",
+            tripExpenses: "transport/trip-expenses"
+          },
+          apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
+          baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
+        };
+      }
+
+      // Environment configuration from .env
+      if (!window.ENVIRONMENT) {
+        window.ENVIRONMENT = {
+          name: "production",
+          debug: false,
+          apiBaseUrl: "https://transvortex.online",
+          version: "1.0.0",
+          corsOrigin: "https://transvortex.online",
+          allowedOrigins: "https://transvortex.online,http://localhost:3000",
+          apiRateLimit: 100
+        };
+      }
+
+      // Security configuration from .env
+      if (!window.SECURITY_CONFIG) {
+        window.SECURITY_CONFIG = {
+          sessionSecret: "transvortex-session-secret-2024",
+          jwtSecret: "transvortex-jwt-secret-2024",
+          encryptionKey: "transvortex-encryption-key-2024"
+        };
+      }
+
+      // Optional API configurations from .env
+      if (!window.API_CONFIG) {
+        window.API_CONFIG = {
+          email: {
+            provider: "sendgrid",
+            apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "",
+            from: "noreply@transvortex.online",
+            fromName: "TransVortex Transport"
+          },
+          payment: {
+            provider: "stripe",
+            publicKey: "your-stripe-public-key-here"
+          },
+          sms: {
+            provider: "twilio",
+            accountSid: "your-twilio-account-sid-here",
+            phoneNumber: "your-twilio-phone-number-here"
+          },
+          maps: {
+            googleMapsApiKey: "your-google-maps-api-key-here",
+            googlePlacesApiKey: "your-google-places-api-key-here"
+          },
+          analytics: {
+            googleAnalyticsId: "GA-XXXXXXXXX",
+            facebookPixelId: "your-facebook-pixel-id-here",
+            hotjarId: "your-hotjar-id-here"
+          }
+        };
+      }
+
+      // Log successful loading (only in debug mode)
+      if (window.ENVIRONMENT.debug) {
+        console.log('✅ Secure configuration loaded from .env');
+        console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
+        console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
+        console.log('🌍 Environment:', window.ENVIRONMENT.name);
+        console.log('🔐 Security: Loaded');
+      }
+
+      // Dispatch event when configuration is ready
+      window.dispatchEvent(new CustomEvent('envConfigLoaded', {
+        detail: {
+          firebase: window.FIREBASE_CONFIG,
+          cloudinary: window.CLOUDINARY_CONFIG,
+          environment: window.ENVIRONMENT,
+          security: window.SECURITY_CONFIG,
+          apis: window.API_CONFIG
+        }
+      }));
+    })();
+  </script>
 
 
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vehicle Work Management - Transport System</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <!-- Load secure configuration first -->
-  
-  
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+  <!-- Load secure configuration first -->
+
+
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body { padding: 0; margin: 0; background-color: #f8f9fa; }
+    body {
+      padding: 0;
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+
     .main-content {
       background: white;
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
-    .hidden { display: none !important; }
+
+    .hidden {
+      display: none !important;
+    }
+
     .form-section {
       background-color: #f8f9fa;
       padding: 20px;
@@ -153,16 +167,20 @@
       margin-bottom: 20px;
       border: 1px solid #dee2e6;
     }
+
     .nav-tabs .nav-link.active {
-      background-color: #2E8B57; /* Changed color for distinction */
+      background-color: #2E8B57;
+      /* Changed color for distinction */
       color: white;
     }
+
     .table-modern {
       border-collapse: separate;
       border-spacing: 0;
       border-radius: 8px;
       overflow: hidden;
     }
+
     .table-modern thead th {
       background-color: #f8f9fa;
       border-bottom: 2px solid #dee2e6;
@@ -171,16 +189,17 @@
     }
   </style>
 
-    <!-- 🔥 Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-    
-    <!-- 🔐 Configuration Loading -->
-    <script src="evm.js"></script>
-    <script src="secure-api-loader.js"></script>
+  <!-- 🔥 Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+
+  <!-- 🔐 Configuration Loading -->
+  <script src="evm.js"></script>
+  <script src="secure-api-loader.js"></script>
 </head>
+
 <body>
   <div id="navbar-placeholder"></div>
 
@@ -188,217 +207,290 @@
     <div class="main-content" id="vendorListView">
       <h2 class="mb-4"><i class="fas fa-tools me-2"></i>Vehicle Work Management</h2>
 
-    <ul class="nav nav-tabs mb-3" id="vendorTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="vendors-tab" data-bs-toggle="tab" data-bs-target="#vendors-content" type="button" role="tab">Vendors</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments-content" type="button" role="tab">Vendor Payments</button>
-      </li>
-    </ul>
+      <ul class="nav nav-tabs mb-3" id="vendorTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="vendors-tab" data-bs-toggle="tab" data-bs-target="#vendors-content"
+            type="button" role="tab">Vendors</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments-content"
+            type="button" role="tab">Vendor Payments</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="work-tab" data-bs-toggle="tab" data-bs-target="#work-content" type="button"
+            role="tab">Add Vehicle Work</button>
+        </li>
+      </ul>
 
-    <div class="tab-content" id="vendorTabsContent">
-      <div class="tab-pane fade show active" id="vendors-content" role="tabpanel">
+      <div class="tab-content" id="vendorTabsContent">
+        <div class="tab-pane fade show active" id="vendors-content" role="tabpanel">
 
-    <form id="vendorForm" class="form-section">
-      <h4 class="mb-3">Add New Vendor</h4>
-      
-      <div class="card mb-4">
-        <div class="card-header bg-light">
-          <h5 class="mb-0"><i class="fas fa-store me-2"></i>Vendor Information</h5>
+          <form id="vendorForm" class="form-section">
+            <h4 class="mb-3">Add New Vendor</h4>
+
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-store me-2"></i>Vendor Information</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="vendorName" class="form-label"><i class="fas fa-building me-1"></i> Vendor Name /
+                      Workshop <span class="text-danger">*</span></label>
+                    <input type="text" id="vendorName" class="form-control" placeholder="e.g., Sharma Auto Works"
+                      required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="contactPerson" class="form-label"><i class="fas fa-user me-1"></i> Contact
+                      Person</label>
+                    <input type="text" id="contactPerson" class="form-control" placeholder="Contact Person Name">
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="mobile" class="form-label"><i class="fas fa-phone me-1"></i> Mobile Number</label>
+                    <input type="tel" id="mobile" class="form-control" placeholder="Mobile Number">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="gstin" class="form-label"><i class="fas fa-file-invoice me-1"></i> GSTIN</label>
+                    <input type="text" id="gstin" class="form-control" placeholder="GSTIN">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" style="background-color: #2E8B57; border-color: #2E8B57;"><i
+                  class="fas fa-plus me-2"></i>Add Vendor</button>
+              <button type="button" id="cancelVendorEditBtn" class="btn btn-secondary" style="display: none;"><i
+                  class="fas fa-times me-2"></i>Cancel Edit</button>
+            </div>
+          </form>
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>Vendor List</h4>
+            <button id="exportExcel" class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Export Excel</button>
+          </div>
+
+          <div class="table-responsive">
+            <table id="vendorTable" class="table table-striped table-bordered table-modern" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>GSTIN</th>
+                  <th>Contact</th>
+                  <th class="text-center">Work Entries</th>
+                  <th class="text-end">Total Work (₹)</th>
+                  <th class="text-end">Total Paid (₹)</th>
+                  <th class="text-end">Outstanding (₹)</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="vendorTableBody"></tbody>
+            </table>
+          </div>
         </div>
+        <div class="tab-pane fade" id="payments-content" role="tabpanel">
+          <form id="paymentForm" class="form-section">
+            <h4 class="mb-3">Add New Payment</h4>
+
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Information</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="vendorSelect"><i class="fas fa-store me-1"></i> Select Vendor:</label>
+                    <select id="vendorSelect" class="form-select" required>
+                      <option value="">Loading vendors...</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="amount"><i class="fas fa-rupee-sign me-1"></i> Amount:</label>
+                    <input type="number" id="amount" class="form-control" required step="0.01" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="date"><i class="fas fa-calendar-alt me-1"></i> Date:</label>
+                    <input type="date" id="date" class="form-control" required />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="paymentNotes"><i class="fas fa-sticky-note me-1"></i> Notes:</label>
+                    <textarea id="paymentNotes" class="form-control" placeholder="Add any notes about this payment"
+                      rows="3"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="background-color: #2E8B57; border-color: #2E8B57;"><i
+                class="fas fa-plus me-2"></i>Add Payment</button>
+          </form>
+
+          <div class="card my-4">
+            <div class="card-body text-center bg-light">
+              <h5 class="card-title text-muted">Total Amount Paid to All Vendors</h5>
+              <h3 id="totalVendorPayments" class="display-6 fw-bold text-success">₹0.00</h3>
+            </div>
+          </div>
+
+          <div class="row mb-3 mt-4">
+            <div class="col-md-4">
+              <label for="paymentFromDate" class="form-label">From Date</label>
+              <input type="date" id="paymentFromDate" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label for="paymentToDate" class="form-label">To Date</label>
+              <input type="date" id="paymentToDate" class="form-control">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button id="applyPaymentFilterBtn" class="btn btn-primary">Filter Payments</button>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+            <h4>Payment History</h4>
+            <input type="text" id="paymentSearchInput" class="form-control w-auto" placeholder="Search by vendor..." />
+          </div>
+
+          <div class="table-responsive">
+            <table id="paymentTable" class="table table-striped table-bordered table-modern" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Vendor</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Notes</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="paymentTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="work-content" role="tabpanel">
+          <form id="vehicleWorkForm" class="form-section">
+            <h4 class="mb-3">Add Vehicle Work Entry</h4>
+
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-wrench me-2"></i>Work Details</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="workVendorSelect"><i class="fas fa-store me-1"></i> Select Vendor:</label>
+                    <select id="workVendorSelect" class="form-select" required>
+                      <option value="">Loading vendors...</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="workVehicleSelect"><i class="fas fa-truck me-1"></i> Select Vehicle:</label>
+                    <select id="workVehicleSelect" class="form-select" required>
+                      <option value="">Loading vehicles...</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="workAmount"><i class="fas fa-rupee-sign me-1"></i> Amount:</label>
+                    <input type="number" id="workAmount" class="form-control" required step="0.01" />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="workDate"><i class="fas fa-calendar-alt me-1"></i> Date:</label>
+                    <input type="date" id="workDate" class="form-control" required />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12 mb-3">
+                    <label for="workNotes"><i class="fas fa-sticky-note me-1"></i> Description / Notes:</label>
+                    <textarea id="workNotes" class="form-control" placeholder="Describe the work done..."
+                      rows="3"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="background-color: #2E8B57; border-color: #2E8B57;">
+              <i class="fas fa-plus me-2"></i>Add Work Entry
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content hidden" id="vendorDetailView">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 id="vendorDetailTitle" class="mb-0">Vendor Details</h2>
+        <button class="btn btn-secondary" id="backToVendorListBtn"><i class="fas fa-arrow-left me-2"></i>Back to
+          List</button>
+      </div>
+
+      <div class="card mb-4">
         <div class="card-body">
           <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="vendorName" class="form-label"><i class="fas fa-building me-1"></i> Vendor Name / Workshop <span class="text-danger">*</span></label>
-              <input type="text" id="vendorName" class="form-control" placeholder="e.g., Sharma Auto Works" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="contactPerson" class="form-label"><i class="fas fa-user me-1"></i> Contact Person</label>
-              <input type="text" id="contactPerson" class="form-control" placeholder="Contact Person Name">
-            </div>
+            <div class="col-md-6"><strong>Contact Person:</strong> <span id="vendorDetailContactPerson"></span></div>
+            <div class="col-md-6"><strong>Mobile:</strong> <span id="vendorDetailMobile"></span></div>
           </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="mobile" class="form-label"><i class="fas fa-phone me-1"></i> Mobile Number</label>
-              <input type="tel" id="mobile" class="form-control" placeholder="Mobile Number">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="gstin" class="form-label"><i class="fas fa-file-invoice me-1"></i> GSTIN</label>
-              <input type="text" id="gstin" class="form-control" placeholder="GSTIN">
-            </div>
+          <hr>
+          <div class="row text-center">
+            <div class="col-md-4"><strong>Total Work Billed:</strong> <span id="vendorDetailTotalWork"
+                class="fw-bold text-danger"></span></div>
+            <div class="col-md-4"><strong>Total Paid:</strong> <span id="vendorDetailTotalPaid"
+                class="fw-bold text-success"></span></div>
+            <div class="col-md-4"><strong>Outstanding:</strong> <span id="vendorDetailOutstanding"
+                class="fw-bold text-warning"></span></div>
           </div>
         </div>
       </div>
-      
-      <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary" style="background-color: #2E8B57; border-color: #2E8B57;"><i class="fas fa-plus me-2"></i>Add Vendor</button>
-        <button type="button" id="cancelVendorEditBtn" class="btn btn-secondary" style="display: none;"><i class="fas fa-times me-2"></i>Cancel Edit</button>
-      </div>
-    </form>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4>Vendor List</h4>
-      <button id="exportExcel" class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Export Excel</button>
-    </div>
+      <ul class="nav nav-tabs mt-4" id="vendorDetailTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="work-history-tab" data-bs-toggle="tab"
+            data-bs-target="#work-history-content" type="button" role="tab">Work History</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="payment-history-tab" data-bs-toggle="tab"
+            data-bs-target="#payment-history-content" type="button" role="tab">Payment History</button>
+        </li>
+      </ul>
 
-    <div class="table-responsive">
-      <table id="vendorTable" class="table table-striped table-bordered table-modern" style="width:100%">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>GSTIN</th>
-            <th>Contact</th>
-            <th class="text-center">Work Entries</th>
-            <th class="text-end">Total Work (₹)</th>
-            <th class="text-end">Total Paid (₹)</th>
-            <th class="text-end">Outstanding (₹)</th>
-            <th class="text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="vendorTableBody"></tbody>
-      </table>
-    </div>
-      </div>
-      <div class="tab-pane fade" id="payments-content" role="tabpanel">
-        <form id="paymentForm" class="form-section">
-          <h4 class="mb-3">Add New Payment</h4>
-          
-          <div class="card mb-4">
-            <div class="card-header bg-light">
-              <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Information</h5>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="vendorSelect"><i class="fas fa-store me-1"></i> Select Vendor:</label>
-                  <select id="vendorSelect" class="form-select" required>
-                    <option value="">Loading vendors...</option>
-                  </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label for="amount"><i class="fas fa-rupee-sign me-1"></i> Amount:</label>
-                  <input type="number" id="amount" class="form-control" required step="0.01" />
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="date"><i class="fas fa-calendar-alt me-1"></i> Date:</label>
-                  <input type="date" id="date" class="form-control" required />
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label for="paymentNotes"><i class="fas fa-sticky-note me-1"></i> Notes:</label>
-                  <textarea id="paymentNotes" class="form-control" placeholder="Add any notes about this payment" rows="3"></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <button type="submit" class="btn btn-primary" style="background-color: #2E8B57; border-color: #2E8B57;"><i class="fas fa-plus me-2"></i>Add Payment</button>
-        </form>
-        
-        <div class="card my-4">
-          <div class="card-body text-center bg-light">
-            <h5 class="card-title text-muted">Total Amount Paid to All Vendors</h5>
-            <h3 id="totalVendorPayments" class="display-6 fw-bold text-success">₹0.00</h3>
-          </div>
-        </div>
-
-        <div class="row mb-3 mt-4">
-          <div class="col-md-4">
-            <label for="paymentFromDate" class="form-label">From Date</label>
-            <input type="date" id="paymentFromDate" class="form-control">
-          </div>
-          <div class="col-md-4">
-            <label for="paymentToDate" class="form-label">To Date</label>
-            <input type="date" id="paymentToDate" class="form-control">
-          </div>
-          <div class="col-md-4 d-flex align-items-end">
-            <button id="applyPaymentFilterBtn" class="btn btn-primary">Filter Payments</button>
-          </div>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
-          <h4>Payment History</h4>
-          <input type="text" id="paymentSearchInput" class="form-control w-auto" placeholder="Search by vendor..." />
-        </div>
-        
-        <div class="table-responsive">
-          <table id="paymentTable" class="table table-striped table-bordered table-modern" style="width:100%">
-            <thead>
-              <tr>
-                <th>Vendor</th>
-                <th>Amount</th>
-                <th>Date</th>
-                <th>Notes</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="paymentTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="main-content hidden" id="vendorDetailView">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 id="vendorDetailTitle" class="mb-0">Vendor Details</h2>
-      <button class="btn btn-secondary" id="backToVendorListBtn"><i class="fas fa-arrow-left me-2"></i>Back to List</button>
-    </div>
-
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-6"><strong>Contact Person:</strong> <span id="vendorDetailContactPerson"></span></div>
-          <div class="col-md-6"><strong>Mobile:</strong> <span id="vendorDetailMobile"></span></div>
-        </div>
-        <hr>
-        <div class="row text-center">
-          <div class="col-md-4"><strong>Total Work Billed:</strong> <span id="vendorDetailTotalWork" class="fw-bold text-danger"></span></div>
-          <div class="col-md-4"><strong>Total Paid:</strong> <span id="vendorDetailTotalPaid" class="fw-bold text-success"></span></div>
-          <div class="col-md-4"><strong>Outstanding:</strong> <span id="vendorDetailOutstanding" class="fw-bold text-warning"></span></div>
-        </div>
-      </div>
-    </div>
-
-    <ul class="nav nav-tabs mt-4" id="vendorDetailTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="work-history-tab" data-bs-toggle="tab" data-bs-target="#work-history-content" type="button" role="tab">Work History</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="payment-history-tab" data-bs-toggle="tab" data-bs-target="#payment-history-content" type="button" role="tab">Payment History</button>
-      </li>
-    </ul>
-
-    <div class="tab-content" id="vendorDetailTabsContent">
+      <div class="tab-content" id="vendorDetailTabsContent">
         <div class="tab-pane fade show active p-3" id="work-history-content" role="tabpanel">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Work History</h5>
-                <button class="btn btn-sm btn-success" onclick="downloadVendorWorkHistoryPDF()">
-                    <i class="fas fa-file-pdf me-1"></i> Download PDF
-                </button>
-            </div>
-            <div class="table-responsive">
-                <table id="vendorWorkHistoryTable" class="table table-striped table-bordered" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>Date</th><th>LR No.</th><th>Vehicle</th><th>Work Notes</th><th class="text-end">Amount (₹)</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Work History</h5>
+            <button class="btn btn-sm btn-success" onclick="downloadVendorWorkHistoryPDF()">
+              <i class="fas fa-file-pdf me-1"></i> Download PDF
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table id="vendorWorkHistoryTable" class="table table-striped table-bordered" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>LR No.</th>
+                  <th>Vehicle</th>
+                  <th>Work Notes</th>
+                  <th class="text-end">Amount (₹)</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
-      <div class="tab-pane fade p-3" id="payment-history-content" role="tabpanel">
-        <div class="table-responsive">
-          <table id="vendorPaymentHistoryTable" class="table table-striped table-bordered" style="width:100%">
-            <thead>
-              <tr>
-                <th>Date</th><th class="text-end">Amount (₹)</th><th>Notes</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
+        <div class="tab-pane fade p-3" id="payment-history-content" role="tabpanel">
+          <div class="table-responsive">
+            <table id="vendorPaymentHistoryTable" class="table table-striped table-bordered" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th class="text-end">Amount (₹)</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
           </div>
         </div>
       </div>
@@ -410,7 +502,9 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-  
+  <!-- Select2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
   <script>
     // Parse URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -423,49 +517,50 @@
   <script type="module">
     // Firebase imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, push, onValue, update, remove, get } 
+    import { getDatabase, ref, push, onValue, update, remove, get }
       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     // Config
     // Load Firebase configuration securely from EVM
     let firebaseConfig;
-    
+
     try {
       // Get Firebase configuration from secure EVM system
       // Initialize Firebase with proper error handling
-    try {
+      try {
         if (!window.FIREBASE_CONFIG) {
-            throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
+          throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
         }
-        
+
         if (!window.FIREBASE_CONFIG.databaseURL) {
-            throw new Error('Firebase databaseURL not found in configuration.');
+          throw new Error('Firebase databaseURL not found in configuration.');
         }
-        
+
         if (!window.FIREBASE_CONFIG.projectId) {
-            throw new Error('Firebase projectId not found in configuration.');
+          throw new Error('Firebase projectId not found in configuration.');
         }
-        
+
         firebaseConfig = window.FIREBASE_CONFIG;
-        
+
         // Check if we're using fallback values
         if (false) { // Condition is always false in the final logic, keeping as per original structure
-            
+
         } else {
-            
-            
-            
+
+
+
         }
-    } catch (error) {
+      } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
-        
+
         // Use fallback configuration to prevent complete failure
         window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig();
-        
-    }} catch (error) {
+
+      }
+    } catch (error) {
       console.error('❌ Failed to load Firebase configuration:', error);
-      
+
       // Use fallback configuration to prevent complete failure
       firebaseConfig = window.FIREBASE_CONFIG;
     }
@@ -483,6 +578,7 @@
     let vendorWorkHistoryTable;
     let vendorPaymentHistoryTable;
     let currentEditingPaymentId = null;
+    let allVehicles = []; // Store loaded vehicles
 
     // Auth Check
     onAuthStateChanged(auth, user => {
@@ -494,12 +590,15 @@
         get(userProfileRef).then(snapshot => {
           // Determine coreAccountId for shared data access
           coreAccountId = (snapshot.exists() && snapshot.val().coreAccountId) || user.uid;
-          
+
+
           // Load data
           loadVendors();
           loadVendorsForPaymentDropdown();
           loadVendorPayments();
-          
+          loadVehicles(); // Load vehicles for Work form
+
+
           // Check if we have parameters from LR report
           if (vendorIdParam && truckNoParam && amountParam) {
             // Pre-select the vendor in the dropdown
@@ -509,33 +608,33 @@
               document.getElementById('amount').value = amountParam;
               document.getElementById('date').valueAsDate = new Date();
               document.getElementById('paymentNotes').value = workNotesParam || `Work for ${truckNoParam}`;
-              
+
               // Switch to the payments tab
               const paymentsTab = document.getElementById('payments-tab');
               if (paymentsTab) paymentsTab.click();
             }, 500);
           }
         });
-        
+
         // Initialize DataTables
         vendorTable = $('#vendorTable').DataTable({
           "pageLength": 10,
           "columnDefs": [{ "orderable": false, "targets": 7 }]
         });
-        
+
         paymentTable = $('#paymentTable').DataTable({
           "pageLength": 10,
-          "order": [[ 2, "desc" ]],
+          "order": [[2, "desc"]],
           "columnDefs": [{ "orderable": false, "targets": 4 }]
         });
 
         vendorWorkHistoryTable = $('#vendorWorkHistoryTable').DataTable({
           "pageLength": 10,
-          "order": [[ 0, "desc" ]]
+          "order": [[0, "desc"]]
         });
         vendorPaymentHistoryTable = $('#vendorPaymentHistoryTable').DataTable({
           "pageLength": 10,
-          "order": [[ 0, "desc" ]],
+          "order": [[0, "desc"]],
           "columnDefs": [{ "orderable": false, "targets": 2 }]
         });
       }
@@ -557,7 +656,8 @@
         gstin: document.getElementById("gstin").value,
         contactPerson: document.getElementById("contactPerson").value,
         mobile: document.getElementById("mobile").value,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        userId: currentUser.uid
       };
 
       if (currentEditingVendorId) {
@@ -570,80 +670,219 @@
         alert('Vendor added successfully!');
         e.target.reset();
       }
+      e.target.reset();
     });
 
-    // Load Vendors (Corrected to use new LR structure for work amount)
-    function loadVendors() {
+    // Add Vehicle Work Form Handler
+    document.getElementById("vehicleWorkForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser || !coreAccountId) return;
+
+      const vendorId = document.getElementById("workVendorSelect").value;
+      const vehicleNumber = document.getElementById("workVehicleSelect").value;
+      const amount = parseFloat(document.getElementById("workAmount").value);
+      const date = document.getElementById("workDate").value;
+      const notes = document.getElementById("workNotes").value;
+
+      if (!vendorId || !vehicleNumber || !amount || !date) {
+        alert("Please fill all required fields.");
+        return;
+      }
+
+      const workData = {
+        vendorId,
+        vehicleNumber,
+        amount,
+        date,
+        notes,
+        userId: currentUser.uid,
+        status: 'completed',
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        await push(ref(db, `users/${coreAccountId}/vehicleWork`), workData);
+        alert('Vehicle Work Entry added successfully!');
+        e.target.reset();
+        // Reset dropdowns explicitly if needed
+        document.getElementById("workVendorSelect").value = "";
+        document.getElementById("workVehicleSelect").value = "";
+      } catch (error) {
+        console.error("Error saving work:", error);
+        alert("Error saving work entry: " + error.message);
+      }
+    });
+
+    // Load Vehicles Logic
+    function loadVehicles() {
       if (!coreAccountId) return;
-      const vendorsRef = ref(db, `users/${coreAccountId}/workVendors`);
-      const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
-      const workPaymentsRef = ref(db, `users/${coreAccountId}/workPayments`);
 
-      onValue(vendorsRef, async (vendorSnap) => {
-        if (!vendorSnap.exists()) {
-          if (vendorTable) vendorTable.clear().draw();
-          return;
-        }
+      // Try to load from vehicles node first (if it exists separate) or from LRs?
+      // Usually vehicles are under 'vehicles' or extracted. 
+      // Based on route-details, we load from 'vehicles' node if it exists, or extract from elsewhere.
+      // Let's assume standard 'vehicles' node exists as per other pages.
+      const vehiclesRef = ref(db, `users/${coreAccountId}/vehicles`);
+      onValue(vehiclesRef, (snapshot) => {
+        allVehicles = [];
+        const select = document.getElementById('workVehicleSelect');
+        if (!select) return;
+        select.innerHTML = '<option value="">Select a Vehicle</option>';
 
-        const [lrSnap, paymentSnap] = await Promise.all([get(lrReportsRef), get(workPaymentsRef)]);
-        const workByVendor = {};
-        const workCountByVendor = {};
-        const paymentsByVendor = {};
-
-        if (lrSnap.exists()) {
-            lrSnap.forEach(child => {
-                const lr = child.val();
-                const processExpenses = (expenses) => {
-                    if (Array.isArray(expenses)) {
-                        expenses.forEach(expense => {
-                            if (expense.type === 'Vehicle Work' && expense.vendorId) {
-                                const vendorId = expense.vendorId;
-                                const amount = parseFloat(expense.amount) || 0;
-                                workByVendor[vendorId] = (workByVendor[vendorId] || 0) + amount;
-                                workCountByVendor[vendorId] = (workCountByVendor[vendorId] || 0) + 1;
-                            }
-                        });
-                    }
-                };
-
-                if (lr.tripDetails) processExpenses(lr.tripDetails.genericExpenses);
-                if (lr.emptyTripData) processExpenses(lr.emptyTripData.genericExpenses);
-            });
-        }
-
-        if (paymentSnap.exists()) {
-          paymentSnap.forEach(child => {
-            const payment = child.val();
-            paymentsByVendor[payment.vendorId] = (paymentsByVendor[payment.vendorId] || 0) + (parseFloat(payment.amount) || 0);
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const val = child.val();
+            // Robust check for vehicleNumber
+            const vNo = val.vehicleNumber || val.vehicleNo || val.truckNumber;
+            if (vNo) {
+              allVehicles.push({ id: child.key, vehicleNumber: vNo, ...val });
+              const option = document.createElement('option');
+              option.value = vNo;
+              option.textContent = vNo;
+              select.appendChild(option);
+            }
           });
         }
 
-        if (vendorTable) vendorTable.clear();
-        vendorSnap.forEach(child => {
-          const vendor = child.val();
-          const vendorId = child.key;
-          
-          const totalWork = workByVendor[vendorId] || 0;
-          const totalPaid = paymentsByVendor[vendorId] || 0;
-          const workCount = workCountByVendor[vendorId] || 0;
-          const outstanding = totalWork - totalPaid;
+        // Initialize Select2 for vehicle search
+        $('#workVehicleSelect').select2({
+          theme: 'bootstrap-5',
+          placeholder: 'Select Vehicle',
+          width: '100%',
+          dropdownParent: $('#workVehicleSelect').parent() // Ensures proper positioning
+        });
+      });
+    }
 
-          if (vendorTable) vendorTable.row.add([
-            vendor.name,
-            vendor.gstin || '—',
-            vendor.mobile || '—',
-            `<span class="text-center d-block">${workCount}</span>`,
-            `<span class="text-end d-block">₹${totalWork.toFixed(2)}</span>`,
-            `<span class="text-end d-block text-success">₹${totalPaid.toFixed(2)}</span>`,
-            `<span class="fw-bold text-end d-block ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
-            `<div class="action-btns text-center">
+    // Load Vendors Logic (Updated to include vehicleWork)
+    // Global state for Vendor List
+    let vendorsData = {};
+    let lrData = {};
+    let paymentsData = {};
+    let vehicleWorkData = {};
+    let isVendorDataLoaded = false; // Flag to check initial load
+
+    function renderVendorTable() {
+      if (!vendorTable) return;
+
+      const workByVendor = {};
+      const workCountByVendor = {};
+      const paymentsByVendor = {};
+
+      // Process LR Reports
+      Object.values(lrData).forEach(lr => {
+        const processExpenses = (expenses) => {
+          if (Array.isArray(expenses)) {
+            expenses.forEach(expense => {
+              if (expense.type === 'Vehicle Work' && expense.vendorId) {
+                const vendorId = expense.vendorId;
+                const amount = parseFloat(expense.amount) || 0;
+                workByVendor[vendorId] = (workByVendor[vendorId] || 0) + amount;
+                workCountByVendor[vendorId] = (workCountByVendor[vendorId] || 0) + 1;
+              }
+            });
+          }
+        };
+        if (lr.tripDetails) processExpenses(lr.tripDetails.genericExpenses);
+        if (lr.emptyTripData) processExpenses(lr.emptyTripData.genericExpenses);
+      });
+
+      // Process Direct Vehicle Work
+      Object.values(vehicleWorkData).forEach(work => {
+        if (work.vendorId) {
+          const vId = work.vendorId;
+          const amount = parseFloat(work.amount) || 0;
+          workByVendor[vId] = (workByVendor[vId] || 0) + amount;
+          workCountByVendor[vId] = (workCountByVendor[vId] || 0) + 1;
+        }
+      });
+
+      // Process Payments
+      Object.values(paymentsData).forEach(payment => {
+        if (payment.vendorId) {
+          const vId = payment.vendorId;
+          const amount = parseFloat(payment.amount) || 0;
+          paymentsByVendor[vId] = (paymentsByVendor[vId] || 0) + amount;
+        }
+      });
+
+      vendorTable.clear();
+
+      Object.entries(vendorsData).forEach(([vendorId, vendor]) => {
+        const totalWork = workByVendor[vendorId] || 0;
+        const totalPaid = paymentsByVendor[vendorId] || 0;
+        const workCount = workCountByVendor[vendorId] || 0;
+        const outstanding = totalWork - totalPaid;
+
+        vendorTable.row.add([
+          vendor.name,
+          vendor.gstin || '—',
+          vendor.mobile || '—',
+          `<span class="text-center d-block">${workCount}</span>`,
+          `<span class="text-end d-block">₹${totalWork.toFixed(2)}</span>`,
+          `<span class="text-end d-block text-success">₹${totalPaid.toFixed(2)}</span>`,
+          `<span class="fw-bold text-end d-block ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
+          `<div class="action-btns text-center">
               <button class="btn btn-sm btn-outline-primary me-1" onclick="viewVendorHistory('${vendorId}')" title="View History"><i class="fas fa-eye"></i></button>
               <button class="btn btn-sm btn-outline-secondary me-1" onclick="editVendor('${vendorId}')" title="Edit"><i class="fas fa-edit"></i></button>
               <button class="btn btn-sm btn-outline-danger" onclick="deleteVendor('${vendorId}')" title="Delete"><i class="fas fa-trash"></i></button>
             </div>`
-          ]);
-        });
-        if (vendorTable) vendorTable.draw();
+        ]);
+      });
+      vendorTable.draw();
+    }
+
+    // Load Vendors Logic (Updated for Real-time listeners)
+    function loadVendors() {
+      if (!coreAccountId) return;
+
+      const vendorsRef = ref(db, `users/${coreAccountId}/workVendors`);
+      const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
+      const workPaymentsRef = ref(db, `users/${coreAccountId}/workPayments`);
+      const vehicleWorkRef = ref(db, `users/${coreAccountId}/vehicleWork`);
+      const workVendorSelect = document.getElementById('workVendorSelect');
+
+      // 1. Listen for Vendor List Changes
+      onValue(vendorsRef, (snapshot) => {
+        vendorsData = {};
+        if (workVendorSelect) workVendorSelect.innerHTML = '<option value="">Select a Vendor</option>';
+
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const key = child.key;
+            const val = child.val();
+            vendorsData[key] = val;
+
+            // Populate dropdown
+            if (workVendorSelect) {
+              const opt = document.createElement('option');
+              opt.value = key;
+              opt.textContent = val.name;
+              workVendorSelect.appendChild(opt);
+            }
+          });
+        }
+        renderVendorTable();
+      }, (error) => {
+        console.error("Error loading vendors:", error);
+        if (error.code === 'PERMISSION_DENIED') alert("Permission Denied: Access to vendors.");
+      });
+
+      // 2. Listen for LR Changes
+      onValue(lrReportsRef, (snapshot) => {
+        lrData = snapshot.exists() ? snapshot.val() : {};
+        if (Object.keys(vendorsData).length > 0) renderVendorTable();
+      });
+
+      // 3. Listen for Payment Changes
+      onValue(workPaymentsRef, (snapshot) => {
+        paymentsData = snapshot.exists() ? snapshot.val() : {};
+        if (Object.keys(vendorsData).length > 0) renderVendorTable();
+      });
+
+      // 4. Listen for Direct Vehicle Work Changes
+      onValue(vehicleWorkRef, (snapshot) => {
+        vehicleWorkData = snapshot.exists() ? snapshot.val() : {};
+        if (Object.keys(vendorsData).length > 0) renderVendorTable();
       });
     }
 
@@ -651,7 +890,7 @@
     window.viewVendorHistory = async (vendorId) => {
       if (!coreAccountId) return;
       document.getElementById('vendorListView').classList.add('hidden');
-      
+
       currentViewingVendorId = vendorId; // **NEW**: Store the vendor ID
 
       document.getElementById('vendorDetailView').classList.remove('hidden');
@@ -669,36 +908,58 @@
 
       const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
       const workPaymentsRef = ref(db, `users/${coreAccountId}/workPayments`);
+      const vehicleWorkRef = ref(db, `users/${coreAccountId}/vehicleWork`);
 
-      const [lrSnap, paymentSnap] = await Promise.all([get(lrReportsRef), get(workPaymentsRef)]);
+      const [lrSnap, paymentSnap, vehicleWorkSnap] = await Promise.all([get(lrReportsRef), get(workPaymentsRef), get(vehicleWorkRef)]);
       let totalWork = 0;
       let totalPaid = 0;
 
       if (vendorWorkHistoryTable) vendorWorkHistoryTable.clear();
+
+      // Process LR Reports
       if (lrSnap.exists()) {
         lrSnap.forEach(child => {
-            const lr = child.val();
-            const processExpensesForHistory = (expenses, tripType = 'Main') => {
-                if (Array.isArray(expenses)) {
-                    expenses.forEach(expense => {
-                        if (expense.type === 'Vehicle Work' && expense.vendorId === vendorId) {
-                            const workAmount = parseFloat(expense.amount) || 0;
-                            totalWork += workAmount;
-                            if (vendorWorkHistoryTable) vendorWorkHistoryTable.row.add([
-                                expense.date || lr.date || 'N/A',
-                                `<a href="lr-report.html?view=${child.key}" target="_blank">${lr.lrNumber || 'N/A'}</a> ${tripType === 'Empty' ? '(Return)' : ''}`,
-                                lr.truckNumber || 'N/A',
-                                expense.note || '—',
-                                `₹${workAmount.toFixed(2)}`
-                            ]);
-                        }
-                    });
+          const lr = child.val();
+          const processExpensesForHistory = (expenses, tripType = 'Main') => {
+            if (Array.isArray(expenses)) {
+              expenses.forEach(expense => {
+                if (expense.type === 'Vehicle Work' && expense.vendorId === vendorId) {
+                  const workAmount = parseFloat(expense.amount) || 0;
+                  totalWork += workAmount;
+                  if (vendorWorkHistoryTable) vendorWorkHistoryTable.row.add([
+                    expense.date || lr.date || 'N/A',
+                    `<a href="lr-report.html?view=${child.key}" target="_blank">${lr.lrNumber || 'N/A'}</a> ${tripType === 'Empty' ? '(Return)' : ''}`,
+                    lr.truckNumber || 'N/A',
+                    expense.note || '—',
+                    `₹${workAmount.toFixed(2)}`
+                  ]);
                 }
-            };
-            if (lr.tripDetails) processExpensesForHistory(lr.tripDetails.genericExpenses, 'Main');
-            if (lr.emptyTripData) processExpensesForHistory(lr.emptyTripData.genericExpenses, 'Empty');
+              });
+            }
+          };
+          if (lr.tripDetails) processExpensesForHistory(lr.tripDetails.genericExpenses, 'Main');
+          if (lr.emptyTripData) processExpensesForHistory(lr.emptyTripData.genericExpenses, 'Empty');
         });
       }
+
+      // Process Direct Vehicle Work
+      if (vehicleWorkSnap.exists()) {
+        vehicleWorkSnap.forEach(child => {
+          const work = child.val();
+          if (work.vendorId === vendorId) {
+            const workAmount = parseFloat(work.amount) || 0;
+            totalWork += workAmount;
+            if (vendorWorkHistoryTable) vendorWorkHistoryTable.row.add([
+              work.date || 'N/A',
+              'Direct Entry',
+              work.vehicleNumber || 'N/A',
+              work.notes || '—',
+              `₹${workAmount.toFixed(2)}`
+            ]);
+          }
+        });
+      }
+
       if (vendorWorkHistoryTable) vendorWorkHistoryTable.draw();
 
       if (vendorPaymentHistoryTable) vendorPaymentHistoryTable.clear();
@@ -719,103 +980,103 @@
     };
 
     // **NEW**: Function to download the vendor's work history as a PDF
-    window.downloadVendorWorkHistoryPDF = async function() {
-        if (!currentViewingVendorId || !currentViewingVendorName) {
-            alert('No vendor selected or vendor data is missing. Please view a vendor first.');
-            return;
-        }
+    window.downloadVendorWorkHistoryPDF = async function () {
+      if (!currentViewingVendorId || !currentViewingVendorName) {
+        alert('No vendor selected or vendor data is missing. Please view a vendor first.');
+        return;
+      }
 
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
 
-        // --- 1. Fetch Data ---
-        const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
-        const paymentRef = ref(db, `users/${coreAccountId}/workPayments`);
+      // --- 1. Fetch Data ---
+      const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
+      const paymentRef = ref(db, `users/${coreAccountId}/workPayments`);
 
-        const [lrSnap, paymentSnap] = await Promise.all([get(lrReportsRef), get(paymentRef)]);
-        
-        const workHistoryData = [];
-        let totalWork = 0;
-        let totalPaid = 0;
+      const [lrSnap, paymentSnap] = await Promise.all([get(lrReportsRef), get(paymentRef)]);
 
-        if (lrSnap.exists()) {
-            lrSnap.forEach(child => {
-                const lr = child.val();
-                const processExpensesForPDF = (expenses, tripType = 'Main') => {
-                    if (Array.isArray(expenses)) {
-                        expenses.forEach(expense => {
-                            if (expense.type === 'Vehicle Work' && expense.vendorId === currentViewingVendorId) {
-                                const workAmount = parseFloat(expense.amount) || 0;
-                                totalWork += workAmount;
-                                workHistoryData.push([
-                                    expense.date || lr.date || 'N/A',
-                                    `${lr.lrNumber || 'N/A'} ${tripType === 'Empty' ? '(Return)' : ''}`,
-                                    lr.truckNumber || 'N/A',
-                                    expense.note || '—',
-                                    workAmount.toFixed(2)
-                                ]);
-                            }
-                        });
-                    }
-                };
-                if (lr.tripDetails) processExpensesForPDF(lr.tripDetails.genericExpenses, 'Main');
-                if (lr.emptyTripData) processExpensesForPDF(lr.emptyTripData.genericExpenses, 'Empty');
-            });
-        }
+      const workHistoryData = [];
+      let totalWork = 0;
+      let totalPaid = 0;
 
-        if (paymentSnap.exists()) {
-            paymentSnap.forEach(child => {
-                const payment = child.val();
-                if (payment.vendorId === currentViewingVendorId) {
-                    totalPaid += parseFloat(payment.amount) || 0;
+      if (lrSnap.exists()) {
+        lrSnap.forEach(child => {
+          const lr = child.val();
+          const processExpensesForPDF = (expenses, tripType = 'Main') => {
+            if (Array.isArray(expenses)) {
+              expenses.forEach(expense => {
+                if (expense.type === 'Vehicle Work' && expense.vendorId === currentViewingVendorId) {
+                  const workAmount = parseFloat(expense.amount) || 0;
+                  totalWork += workAmount;
+                  workHistoryData.push([
+                    expense.date || lr.date || 'N/A',
+                    `${lr.lrNumber || 'N/A'} ${tripType === 'Empty' ? '(Return)' : ''}`,
+                    lr.truckNumber || 'N/A',
+                    expense.note || '—',
+                    workAmount.toFixed(2)
+                  ]);
                 }
-            });
-        }
-
-        // --- 2. Build PDF ---
-        doc.setFontSize(18);
-        doc.text(`Work History for: ${currentViewingVendorName}`, 14, 22);
-        doc.setFontSize(11);
-        doc.setTextColor(100);
-        doc.text(`Total Work: ₹${totalWork.toFixed(2)} | Total Paid: ₹${totalPaid.toFixed(2)} | Outstanding: ₹${(totalWork - totalPaid).toFixed(2)}`, 14, 30);
-
-        doc.autoTable({
-            head: [['Date', 'LR No.', 'Vehicle', 'Work Notes', 'Amount (₹)']],
-            body: workHistoryData,
-            startY: 40,
+              });
+            }
+          };
+          if (lr.tripDetails) processExpensesForPDF(lr.tripDetails.genericExpenses, 'Main');
+          if (lr.emptyTripData) processExpensesForPDF(lr.emptyTripData.genericExpenses, 'Empty');
         });
+      }
 
-        doc.save(`Work_History_${currentViewingVendorName.replace(/\s/g, '_')}.pdf`);
+      if (paymentSnap.exists()) {
+        paymentSnap.forEach(child => {
+          const payment = child.val();
+          if (payment.vendorId === currentViewingVendorId) {
+            totalPaid += parseFloat(payment.amount) || 0;
+          }
+        });
+      }
+
+      // --- 2. Build PDF ---
+      doc.setFontSize(18);
+      doc.text(`Work History for: ${currentViewingVendorName}`, 14, 22);
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Total Work: ₹${totalWork.toFixed(2)} | Total Paid: ₹${totalPaid.toFixed(2)} | Outstanding: ₹${(totalWork - totalPaid).toFixed(2)}`, 14, 30);
+
+      doc.autoTable({
+        head: [['Date', 'LR No.', 'Vehicle', 'Work Notes', 'Amount (₹)']],
+        body: workHistoryData,
+        startY: 40,
+      });
+
+      doc.save(`Work_History_${currentViewingVendorName.replace(/\s/g, '_')}.pdf`);
     };
 
     // Edit Vendor
     window.editVendor = (vendorId) => {
-        if (!coreAccountId) return;
-        const vendorRef = ref(db, `users/${coreAccountId}/workVendors/${vendorId}`);
-        get(vendorRef).then(snapshot => {
-          if (snapshot.exists()) {
-            const vendor = snapshot.val();
-            document.getElementById('vendorName').value = vendor.name || '';
-            document.getElementById('gstin').value = vendor.gstin || '';
-            document.getElementById('contactPerson').value = vendor.contactPerson || '';
-            document.getElementById('mobile').value = vendor.mobile || '';
-            
-            currentEditingVendorId = vendorId;
-            
-            const submitBtn = document.querySelector('#vendorForm button[type="submit"]');
-            submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Vendor';
-            
-            document.getElementById('cancelVendorEditBtn').style.display = 'inline-block';
-          }
-        });
+      if (!coreAccountId) return;
+      const vendorRef = ref(db, `users/${coreAccountId}/workVendors/${vendorId}`);
+      get(vendorRef).then(snapshot => {
+        if (snapshot.exists()) {
+          const vendor = snapshot.val();
+          document.getElementById('vendorName').value = vendor.name || '';
+          document.getElementById('gstin').value = vendor.gstin || '';
+          document.getElementById('contactPerson').value = vendor.contactPerson || '';
+          document.getElementById('mobile').value = vendor.mobile || '';
+
+          currentEditingVendorId = vendorId;
+
+          const submitBtn = document.querySelector('#vendorForm button[type="submit"]');
+          submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Vendor';
+
+          document.getElementById('cancelVendorEditBtn').style.display = 'inline-block';
+        }
+      });
     };
 
     // Delete Vendor
     window.deleteVendor = (vendorId) => {
-        if (!coreAccountId) return;
-        if (confirm("Are you sure you want to delete this vendor?")) {
-            remove(ref(db, `users/${coreAccountId}/workVendors/${vendorId}`));
-        }
+      if (!coreAccountId) return;
+      if (confirm("Are you sure you want to delete this vendor?")) {
+        remove(ref(db, `users/${coreAccountId}/workVendors/${vendorId}`));
+      }
     }
 
     function cancelVendorEdit() {
@@ -837,22 +1098,22 @@
     });
 
     function loadVendorsForPaymentDropdown() {
-        if (!coreAccountId) return;
-        const vendorsRef = ref(db, `users/${coreAccountId}/workVendors`);
-        onValue(vendorsRef, (snapshot) => {
-            const select = document.getElementById('vendorSelect');
-            if (!select) return;
-            select.innerHTML = '<option value="">Select a Vendor</option>';
-            if (snapshot.exists()) {
-                snapshot.forEach(child => {
-                    const vendor = child.val();
-                    const option = document.createElement('option');
-                    option.value = child.key;
-                    option.textContent = vendor.name;
-                    select.appendChild(option);
-                });
-            }
-        });
+      if (!coreAccountId) return;
+      const vendorsRef = ref(db, `users/${coreAccountId}/workVendors`);
+      onValue(vendorsRef, (snapshot) => {
+        const select = document.getElementById('vendorSelect');
+        if (!select) return;
+        select.innerHTML = '<option value="">Select a Vendor</option>';
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const vendor = child.val();
+            const option = document.createElement('option');
+            option.value = child.key;
+            option.textContent = vendor.name;
+            select.appendChild(option);
+          });
+        }
+      });
     }
 
     document.getElementById("paymentForm").addEventListener("submit", async (e) => {
@@ -862,23 +1123,23 @@
       const amount = parseFloat(document.getElementById("amount").value);
       const date = document.getElementById("date").value;
       const notes = document.getElementById("paymentNotes").value;
-    
+
       if (!vendorId || !amount || !date) {
-          alert("Please fill all required fields.");
-          return;
+        alert("Please fill all required fields.");
+        return;
       }
 
       const paymentData = { vendorId, amount, date, notes, userId: currentUser.uid, createdAt: new Date().toISOString() };
-      
+
       if (currentEditingPaymentId) {
-          await update(ref(db, `users/${coreAccountId}/workPayments/${currentEditingPaymentId}`), paymentData);
-          alert('Payment updated successfully!');
-          currentEditingPaymentId = null;
+        await update(ref(db, `users/${coreAccountId}/workPayments/${currentEditingPaymentId}`), paymentData);
+        alert('Payment updated successfully!');
+        currentEditingPaymentId = null;
       } else {
-          await push(ref(db, `users/${coreAccountId}/workPayments`), paymentData);
-          alert('Payment added successfully!');
+        await push(ref(db, `users/${coreAccountId}/workPayments`), paymentData);
+        alert('Payment added successfully!');
       }
-      
+
       e.target.reset();
       document.querySelector('#paymentForm button[type="submit"]').innerHTML = '<i class="fas fa-plus me-2"></i>Add Payment';
     });
@@ -914,6 +1175,9 @@
         document.getElementById('totalVendorPayments').textContent = `₹${totalPaidAmount.toFixed(2)}`;
 
         if (paymentTable) paymentTable.draw();
+        if (paymentTable) paymentTable.draw();
+      }, (error) => {
+        console.error("Error loading payments:", error);
       });
     }
 
@@ -955,7 +1219,7 @@
 
       // Use DataTables custom search function
       $.fn.dataTable.ext.search.push(
-        function(settings, data, dataIndex) {
+        function (settings, data, dataIndex) {
           if (settings.nTable.id !== 'paymentTable') {
             return true;
           }
@@ -977,13 +1241,13 @@
       if (paymentTable) paymentTable.draw();
       $.fn.dataTable.ext.search.pop();
     }
-    
+
     // Export to Excel logic (retained)
     document.getElementById('exportExcel').addEventListener('click', () => {
       const data = [];
       const headers = ['Name', 'GSTIN', 'Contact', 'Total Work', 'Total Paid', 'Outstanding'];
       data.push(headers);
-      
+
       const rows = document.querySelectorAll('#vendorTableBody tr');
       rows.forEach(row => {
         const rowData = [];
@@ -995,7 +1259,7 @@
         });
         data.push(rowData);
       });
-      
+
       const ws = XLSX.utils.aoa_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Vendors');
@@ -1003,4 +1267,5 @@
     });
   </script>
 </body>
+
 </html>
