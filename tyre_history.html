@@ -1,944 +1,642 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    
-<!-- 🔐 Secure .env Configuration Loader -->
-    <!-- 🔐 Secure Configuration - Loaded from .env -->
-    <script>
-        // Configuration loaded from .env file (server-side)
-        (function() {
-            'use strict';
-            
-            // Firebase configuration from .env
-            if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-            }
-            
-            // Cloudinary configuration from .env
-            if (!window.CLOUDINARY_CONFIG) {
-                window.CLOUDINARY_CONFIG = {
-                    cloudName: "doqapn15f",
-                    uploadPreset: "vehicle-driver",
-                    presets: {
-                        vehicleDriver: "vehicle-driver",
-                        paymentBilling: "payment-billing",
-                        profilePic: "profile-pic",
-                        documents: "documents",
-                        receipts: "receipts",
-                        expenses: "expenses",
-                        tyres: "tyres",
-                        vehicles: "vehicles",
-                        drivers: "drivers",
-                        invoices: "invoices",
-                        lrReports: "lr-reports",
-                        tripExpenses: "trip-expenses"
-                    },
-                    folders: {
-                        vehicles: "transport/vehicles",
-                        drivers: "transport/drivers", 
-                        documents: "transport/documents",
-                        profiles: "transport/profiles",
-                        receipts: "transport/receipts",
-                        expenses: "transport/expenses",
-                        tyres: "transport/tyres",
-                        invoices: "transport/invoices",
-                        lrReports: "transport/lr-reports",
-                        tripExpenses: "transport/trip-expenses"
-                    },
-                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-                };
-            }
-            
-            // Environment configuration from .env
-            if (!window.ENVIRONMENT) {
-                window.ENVIRONMENT = {
-                    name: "production",
-                    debug: false,
-                    apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0",
-                    corsOrigin: "https://transvortex.online",
-                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
-                    apiRateLimit: 100
-                };
-            }
-            
-            // Security configuration from .env
-            if (!window.SECURITY_CONFIG) {
-                window.SECURITY_CONFIG = {
-                    sessionSecret: "transvortex-session-secret-2024",
-                    jwtSecret: "transvortex-jwt-secret-2024",
-                    encryptionKey: "transvortex-encryption-key-2024"
-                };
-            }
-            
-            // Optional API configurations from .env
-            if (!window.API_CONFIG) {
-                window.API_CONFIG = {
-                    email: {
-                        provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-                        from: "noreply@transvortex.online",
-                        fromName: "TransVortex Transport"
-                    },
-                    payment: {
-                        provider: "stripe",
-                        publicKey: "your-stripe-public-key-here"
-                    },
-                    sms: {
-                        provider: "twilio",
-                        accountSid: "your-twilio-account-sid-here",
-                        phoneNumber: "your-twilio-phone-number-here"
-                    },
-                    maps: {
-                        googleMapsApiKey: "your-google-maps-api-key-here",
-                        googlePlacesApiKey: "your-google-places-api-key-here"
-                    },
-                    analytics: {
-                        googleAnalyticsId: "GA-XXXXXXXXX",
-                        facebookPixelId: "your-facebook-pixel-id-here",
-                        hotjarId: "your-hotjar-id-here"
-                    }
-                };
-            }
-            
-            // Log successful loading (only in debug mode)
-            if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
-                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-                console.log('🌍 Environment:', window.ENVIRONMENT.name);
-                console.log('🔐 Security: Loaded');
-            }
-            
-            // Dispatch event when configuration is ready
-            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-                detail: {
-                    firebase: window.FIREBASE_CONFIG,
-                    cloudinary: window.CLOUDINARY_CONFIG,
-                    environment: window.ENVIRONMENT,
-                    security: window.SECURITY_CONFIG,
-                    apis: window.API_CONFIG
-                }
-            }));
-        })();
-    </script>
-
-
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tyre Disposal History</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
 
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <script src="evm.js"></script>
+
+  <script src="secure-api-loader.js"></script>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f5f5f5;
-      color: #333;
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     .container {
-      max-width: 1200px;
-      margin: 30px auto;
-      padding: 20px;
-      background-color: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+      margin-bottom: 40px;
     }
 
-    .container h1, h2, h3 {
-      color: #2E8B57;
-      margin-bottom: 20px;
+    .card {
+      border: none;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
     }
 
-    .alert {
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 5px;
+    .status-badge {
+      font-size: 0.85em;
+      padding: 5px 10px;
+      border-radius: 20px;
       font-weight: 500;
     }
 
-    .alert-success {
-      background-color: #d4edda;
-      color: #155724;
-      border-left: 4px solid #28a745;
+    .status-sold {
+      background-color: #d1e7dd;
+      color: #0f5132;
     }
 
-    .alert-danger {
-      background-color: #f8d7da;
-      color: #721c24;
-      border-left: 4px solid #dc3545;
+    .status-unsold {
+      background-color: #fff3cd;
+      color: #664d03;
     }
 
-    .form-section {
-      background-color: #f9f9f9;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-      border: 1px solid #eee;
+    .table th {
+      font-weight: 600;
+      color: #495057;
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
     }
 
-    .search-box {
-      display: flex;
-      margin-bottom: 20px;
+    .table td {
+      vertical-align: middle;
     }
 
-    .search-box input {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px 0 0 5px;
-      font-size: 16px;
+    .search-container {
+      position: relative;
     }
 
-    .search-box button {
-      padding: 10px 15px;
-      background-color: #2E8B57;
-      color: white;
-      border: none;
-      border-radius: 0 5px 5px 0;
-      cursor: pointer;
+    .search-container i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #adb5bd;
     }
 
-    .history-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .history-table th, .history-table td {
-      border: 1px solid #ddd;
-      padding: 12px;
-      text-align: left;
-    }
-
-    .history-table th {
-      background-color: #2E8B57;
-      color: white;
-    }
-
-    .history-table tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-
-    .history-table tr:hover {
-      background-color: #e9e9e9;
-    }
-
-    .stats-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .stat-card {
-      background-color: #f9f9f9;
-      border-radius: 8px;
-      padding: 15px;
-      flex: 1;
-      min-width: 200px;
-      border-left: 4px solid #2E8B57;
-    }
-
-    .stat-value {
-      font-size: 24px;
-      font-weight: bold;
-      color: #2E8B57;
-    }
-
-    .stat-label {
-      color: #666;
-      font-size: 14px;
-    }
-
-    .filter-section {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .filter-section select {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-
-    .btn {
-      padding: 10px 15px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-    }
-
-    .btn-primary {
-      background-color: #2E8B57;
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background-color: #267349;
-    }
-
-    .btn-secondary {
-      background-color: #6c757d;
-      color: white;
-    }
-
-    .btn-secondary:hover {
-      background-color: #5a6268;
-    }
-
-    .btn-restore {
-      background-color: #17a2b8;
-      color: white;
-    }
-    @media (max-width: 768px) {
-      .stats-container {
-        flex-direction: column;
-      }
-      
-      .filter-section {
-        flex-direction: column;
-      }
+    .search-container input {
+      padding-left: 35px;
+      border-radius: 20px;
     }
   </style>
-
-    <!-- 🔥 Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-    
-    <!-- 🔐 Configuration Loading -->
-    <script src="evm.js"></script>
-    <script src="secure-api-loader.js"></script>
 </head>
+
 <body>
-    <!-- Load secure configuration first -->
-  
-  
 
-  <script src="navbar-loader.js"></script>
-  
+  <div id="navbar-placeholder"></div>
+
   <div class="container">
-    <div id="alertContainer"></div>
-    
-    <h1>Tyre Disposal History</h1>
-    
-    <div class="form-section">
-      <div class="stats-container" id="statsContainer">
-        </div>
-      
-      <div class="filter-section">
-        <select id="vehicleFilter">
-          <option value="">All Vehicles</option>
-          </select>
-        
-        <select id="reasonFilter">
-          <option value="">All Reasons</option>
-          </select>
-        
-        <select id="timeFilter">
-          <option value="all">All Time</option>
-          <option value="week">Last Week</option>
-          <option value="month">Last Month</option>
-          <option value="quarter">Last 3 Months</option>
-          <option value="year">Last Year</option>
-        </select>
-        
-        <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
-        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
-      </div>
-      
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search by tyre number, brand...">
-        <button onclick="searchHistory()">Search</button>
-      </div>
-      
-      <table class="history-table">
-        <thead>
-          <tr>
-            <th>Disposal Date</th>
-            <th>Vehicle</th>
-            <th>Tyre Number</th>
-            <th>Brand</th>
-            <th>Age at Disposal</th>
-            <th>Added Date</th>
-            <th>Position</th>
-            <th>Reason</th>
-            <th>Resell Price</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="historyTableBody">
-          </tbody>
-      </table>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0"><i class="fas fa-history me-2"></i>Tyre Disposal History</h2>
+    </div>
 
-      <div style="margin-top: 16px;">
-        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-          <label for="entriesPerPage" style="font-weight:600;">Entries per page:</label>
-          <select id="entriesPerPage" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
-            <option value="5">5</option>
-            <option value="10" selected>10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-          </select>
-          <div id="entriesInfo" style="color:#666; font-size:14px;"></div>
-        </div>
-        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
-          <button class="tab-nav-control" id="prevPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <div class="tab-navigation" id="tabNavigation" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
-          <button class="tab-nav-control" id="nextPage" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
-            <i class="fas fa-chevron-right"></i>
-          </button>
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-2">
+            <label class="form-label text-muted small">Filter by Vehicle</label>
+            <select class="form-select form-select-sm" id="vehicleFilter" onchange="runFilters()">
+              <option value="">All Vehicles</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label text-muted small">Filter by Reason</label>
+            <select class="form-select form-select-sm" id="reasonFilter" onchange="runFilters()">
+              <option value="">All Reasons</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label text-muted small">Time Period</label>
+            <select class="form-select form-select-sm" id="timeFilter" onchange="runFilters()">
+              <option value="all">All Time</option>
+              <option value="month">This Month</option>
+              <option value="quarter">Last 3 Months</option>
+              <option value="year">This Year</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label text-muted small">Search</label>
+            <div class="search-container">
+              <i class="fas fa-search"></i>
+              <input type="text" class="form-control form-select-sm" id="searchInput" placeholder="Tyre No, Brand..."
+                oninput="runFilters()">
+            </div>
+          </div>
+          <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
+            <button id="bulkSellBtn" class="btn btn-primary btn-sm" onclick="bulkSell()" disabled>
+              <i class="fas fa-tags me-1"></i> Bulk Sell
+            </button>
+            <button class="btn btn-outline-success btn-sm" onclick="exportToCSV()">
+              <i class="fas fa-file-csv me-1"></i> Export
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card bg-primary text-white h-100">
+          <div class="card-body py-3">
+            <h6 class="card-title mb-0 opacity-75">Total Disposed</h6>
+            <h3 class="fw-bold mb-0 mt-2" id="totalCount">0</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-success text-white h-100">
+          <div class="card-body py-3">
+            <h6 class="card-title mb-0 opacity-75">Total Value Recovered</h6>
+            <h3 class="fw-bold mb-0 mt-2" id="totalRecovered">₹0</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-warning text-dark h-100">
+          <div class="card-body py-3">
+            <h6 class="card-title mb-0 opacity-75">Unsold Inventory</h6>
+            <h3 class="fw-bold mb-0 mt-2" id="unsoldInventory">0</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getDatabase, ref, onValue, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button class="nav-link active" id="tab-disposed" onclick="switchTab('disposed')">
+        <i class="fas fa-trash-alt me-2"></i>Disposed / Unsold
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" id="tab-sold" onclick="switchTab('sold')">
+        <i class="fas fa-rupee-sign me-2"></i>Sold History
+      </button>
+    </li>
+  </ul>
 
-    // Load Firebase configuration securely from EVM
-    let firebaseConfig;
-    
-    try {
-      // Get Firebase configuration from secure EVM system
-      // Initialize Firebase with proper error handling
-    try {
-        if (!window.FIREBASE_CONFIG) {
-            throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
-        }
-        
-        if (!window.FIREBASE_CONFIG.databaseURL) {
-            throw new Error('Firebase databaseURL not found in configuration.');
-        }
-        
-        if (!window.FIREBASE_CONFIG.projectId) {
-            throw new Error('Firebase projectId not found in configuration.');
-        }
-        
-        firebaseConfig = window.FIREBASE_CONFIG;
-        
-        // Check if we're using fallback values
-        if (false) { // Condition is always false in the final logic, keeping as per original structure
-            
-        } else {
-            
-            
-            
-        }
-    } catch (error) {
-        console.error('❌ Failed to load Firebase configuration:', error);
-        
-        // Use fallback configuration to prevent complete failure
-        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig();
-        
-    }} catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = window.FIREBASE_CONFIG;
-    }
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0" id="historyTable">
+          <thead class="bg-light">
+            <tr>
+              <th style="width: 40px;" class="text-center">
+                <input class="form-check-input" type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+              </th>
+              <th>Disposal Date</th>
+              <th>Vehicle</th>
+              <th>Tyre No</th>
+              <th>Brand</th>
+              <th>Life Span</th>
+              <th>Added Date</th>
+              <th>Position</th>
+              <th>Reason</th>
+              <th class="text-end" id="resellPriceHeader">Resell Price</th>
+              <th class="text-center">Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer bg-white border-top-0 py-3">
+      <nav aria-label="Page navigation">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted small" id="entriesInfo">Showing 0 to 0 of 0 entries</span>
+          <ul class="pagination pagination-sm mb-0" id="paginationControls">
+          </ul>
+        </div>
+      </nav>
+    </div>
+  </div>
+  </div>
 
-    const app = initializeApp(window.FIREBASE_CONFIG);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-    let currentUser = null;
+  <script src="navbar-loader.js"></script>
+  <script>
+    // Global Variables
+    let db, auth, currentUser;
+    let ref, get, update;
     let allHistoryData = [];
-    let filteredHistoryData = [];
-
-    // Pagination state
-    const entriesPerPageSelect = document.getElementById('entriesPerPage');
-    const entriesInfo = document.getElementById('entriesInfo');
-    const tabNavigation = document.getElementById('tabNavigation');
-    const prevPageBtn = document.getElementById('prevPage');
-    const nextPageBtn = document.getElementById('nextPage');
+    let filteredData = [];
+    let currentTab = 'disposed'; // 'disposed' or 'sold'
     let currentPage = 1;
-    let itemsPerPage = 10;
-    let totalPages = 1;
+    const itemsPerPage = 15;
 
-    // Make Firebase functions available globally
-    window.db = db;
-    window.ref = ref;
-    window.get = get;
-    window.currentUser = null; // Will be updated in onAuthStateChanged
-
-    // Navbar is injected via navbar-loader.js
-
-    // Check authentication (FIXED access check)
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "index.html";
+    // Standard Initialize function
+    function initApp() {
+      // 1. Check if Firebase is loaded
+      if (!firebase.apps.length) {
+        console.error("Firebase not initialized! Check evm.js loading.");
+        alert("System Error: Firebase connection failed.");
         return;
       }
-      currentUser = user;
-      window.currentUser = user;
 
-      // Role-based access: block normal users (FIXED TO READ FROM USER ROOT)
-      try {
-        const userSnap = await get(ref(db, `users/${user.uid}`));
-        const userData = userSnap.exists() ? userSnap.val() : {};
-        const role = (userData.role || userData.profile?.role || userData.profile?.userRole || 'normal').toLowerCase();
+      const app = firebase.app();
+      db = firebase.database();
+      auth = firebase.auth();
+      db = firebase.database();
+      auth = firebase.auth();
+      // Removed incorrect function assignments
 
-        
-      } catch (e) {
-        // If the entire read fails, it defaults to restricted which is the safest path.
-        console.warn('Failed to read user role, defaulting to restricted', e);
-        showAlert('Access restricted. Redirecting to Home...', 'danger');
-        setTimeout(() => { window.location.href = 'home.html'; }, 1200);
-        return;
-      }
-      
-      loadTyreHistory();
-    });
-
-    // Show alert message
-    window.showAlert = function(message, type) {
-      const alertContainer = document.getElementById('alertContainer');
-      const alert = document.createElement('div');
-      alert.className = `alert alert-${type}`;
-      alert.textContent = message;
-      alertContainer.appendChild(alert);
-      
-      setTimeout(() => {
-        alert.remove();
-      }, 3000);
-    };
-
-    // Load tyre history - FIXED (Using currentUser.uid directly)
-    window.loadTyreHistory = function() {
-      // FIXED: Use currentUser.uid directly
-      const historyRef = ref(db, `users/${currentUser.uid}/tyre_history`);
-      
-      onValue(historyRef, (snapshot) => {
-        if (!snapshot.exists()) {
-          document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="10">No disposal history found</td></tr>';
-          updateStats([]);
-          filteredHistoryData = [];
-          renderHistoryWithPagination();
+      // 2. Auth Listener
+      auth.onAuthStateChanged((user) => {
+        if (!user) {
+          console.warn("No user logged in, redirecting...");
+          // Optional: window.location.href = "index.html"; 
+          document.getElementById('historyTableBody').innerHTML =
+            '<tr><td colspan="12" class="text-center text-danger py-4">Please log in to view history.</td></tr>';
           return;
         }
-        
-        const historyData = [];
-        snapshot.forEach((childSnapshot) => {
-          const historyItem = childSnapshot.val();
-          historyItem.id = childSnapshot.key;
-          historyData.push(historyItem);
-        });
-        
-        // Sort by disposal date (newest first)
-        historyData.sort((a, b) => (b.disposedAt || 0) - (a.disposedAt || 0));
-        
-        // Store all data for filtering
-        allHistoryData = historyData;
-        // Update UI with pagination
-        populateFilters(historyData);
-        currentPage = 1;
-        renderHistoryWithPagination();
-        updateStats(computeFilteredData());
+        currentUser = user;
+        loadTyreHistory();
       });
-    };
-
-    // Render history table
-    window.renderHistoryTable = function(historyData) {
-      const tableBody = document.getElementById('historyTableBody');
-      
-      if (historyData.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="10">No matching records found</td></tr>';
-        return;
-      }
-      
-      let tableHtml = '';
-      
-      for (const item of historyData) {
-        const disposalDate = item.disposedAt ? new Date(item.disposedAt).toLocaleDateString() : 'Unknown';
-        const resellPrice = item.resellPrice ? `₹${item.resellPrice.toFixed(2)}` : 'N/A';
-        const addedDate = item.addedAt ? new Date(item.addedAt).toLocaleDateString() : 'Unknown';
-        
-        // Calculate age at disposal
-        let ageText = 'Unknown';
-        if (item.addedAt && item.disposedAt) {
-          const ageInDays = Math.floor((item.disposedAt - item.addedAt) / (1000 * 60 * 60 * 24));
-          if (ageInDays < 30) {
-            ageText = `${ageInDays} days`;
-          } else if (ageInDays < 365) {
-            ageText = `${Math.floor(ageInDays / 30)} months`;
-          } else {
-            ageText = `${Math.floor(ageInDays / 365)} years, ${Math.floor((ageInDays % 365) / 30)} months`;
-          }
-        }
-        
-        tableHtml += `
-          <tr>
-            <td>${disposalDate}</td>
-            <td>${item.vehicleNumber} - ${item.vehicleModel}</td>
-            <td>${item.number}</td>
-            <td>${item.brand}</td>
-            <td>${ageText}</td>
-            <td>${addedDate}</td>
-            <td>${item.position || 'N/A'}</td>
-            <td>${item.disposalReason}</td>
-            <td>${resellPrice}</td>
-            <td>
-              <button class="btn btn-sm btn-restore" onclick="restoreTyre('${item.id}')" title="Restore Tyre">
-                <i class="fas fa-undo"></i> Restore
-              </button>
-            </td>
-          </tr>
-        `;
-      }
-      
-      tableBody.innerHTML = tableHtml;
-    };
-
-    // Update statistics
-    window.updateStats = function(historyData) {
-      const statsContainer = document.getElementById('statsContainer');
-      
-      // Calculate statistics
-      const totalDisposed = historyData.length;
-      const totalResaleValue = historyData.reduce((sum, item) => sum + (item.resellPrice || 0), 0);
-      
-      // Count by reason
-      const reasonCounts = {};
-      for (const item of historyData) {
-        const reason = item.disposalReason || 'Unknown';
-        reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
-      }
-      
-      // Get top 3 reasons
-      const topReasons = Object.entries(reasonCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3);
-      
-      // Count by age groups
-      let newTyres = 0; // < 30 days
-      let usedTyres = 0; // 30-180 days
-      let oldTyres = 0; // > 180 days
-      
-      for (const item of historyData) {
-        if (item.addedAt && item.disposedAt) {
-          const ageInDays = Math.floor((item.disposedAt - item.addedAt) / (1000 * 60 * 60 * 24));
-          if (ageInDays <= 30) {
-            newTyres++;
-          } else if (ageInDays <= 180) {
-            usedTyres++;
-          } else {
-            oldTyres++;
-          }
-        }
-      }
-      
-      // Build stats HTML
-      let statsHtml = `
-        <div class="stat-card">
-          <div class="stat-value">${totalDisposed}</div>
-          <div class="stat-label">Total Disposed Tyres</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-value">₹${totalResaleValue.toFixed(2)}</div>
-          <div class="stat-label">Total Resale Value</div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-value">${newTyres}</div>
-          <div class="stat-label">New Tyres (<30 days)</div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-value">${usedTyres}</div>
-          <div class="stat-label">Used Tyres (1-6 months)</div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-value">${oldTyres}</div>
-          <div class="stat-label">Old Tyres (>6 months)</div>
-        </div>
-      `;
-      
-      // Add top reasons if available
-      if (topReasons.length > 0) {
-        statsHtml += `
-          <div class="stat-card">
-            <div class="stat-value">${topReasons[0][0]}</div>
-            <div class="stat-label">Top Disposal Reason (${topReasons[0][1]} tyres)</div>
-          </div>
-        `;
-      }
-      
-      statsContainer.innerHTML = statsHtml;
-    };
-
-    // Populate filter dropdowns
-    window.populateFilters = function(historyData) {
-      const vehicleFilter = document.getElementById('vehicleFilter');
-      const reasonFilter = document.getElementById('reasonFilter');
-      
-      // Clear existing options except the first one
-      while (vehicleFilter.options.length > 1) {
-        vehicleFilter.remove(1);
-      }
-      
-      while (reasonFilter.options.length > 1) {
-        reasonFilter.remove(1);
-      }
-      
-      // Get unique vehicles and reasons
-      const vehicles = new Set();
-      const reasons = new Set();
-      
-      for (const item of historyData) {
-        if (item.vehicleNumber) {
-          vehicles.add(`${item.vehicleNumber} - ${item.vehicleModel}`);
-        }
-        
-        if (item.disposalReason) {
-          reasons.add(item.disposalReason);
-        }
-      }
-      
-      // Add vehicle options
-      for (const vehicle of Array.from(vehicles).sort()) {
-        const option = document.createElement('option');
-        option.value = vehicle;
-        option.textContent = vehicle;
-        vehicleFilter.appendChild(option);
-      }
-      
-      // Add reason options
-      for (const reason of Array.from(reasons).sort()) {
-        const option = document.createElement('option');
-        option.value = reason;
-        option.textContent = reason;
-        reasonFilter.appendChild(option);
-      }
-    };
-
-    // Apply filters
-    window.applyFilters = function() {
-      const vehicleFilter = document.getElementById('vehicleFilter').value;
-      const reasonFilter = document.getElementById('reasonFilter').value;
-      const timeFilter = document.getElementById('timeFilter').value;
-      
-      currentPage = 1;
-      renderHistoryWithPagination();
-      updateStats(computeFilteredData());
-    };
-
-    // Reset filters
-    window.resetFilters = function() {
-      document.getElementById('vehicleFilter').value = '';
-      document.getElementById('reasonFilter').value = '';
-      document.getElementById('timeFilter').value = 'all';
-      document.getElementById('searchInput').value = '';
-      currentPage = 1;
-      renderHistoryWithPagination();
-      updateStats(computeFilteredData());
-    };
-
-    // Search history
-    window.searchHistory = function() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      currentPage = 1;
-      renderHistoryWithPagination();
-      updateStats(computeFilteredData());
-    };
-
-    // Compute filtered dataset based on current UI controls
-    function computeFilteredData() {
-      const vehicleValue = document.getElementById('vehicleFilter').value;
-      const reasonValue = document.getElementById('reasonFilter').value;
-      const timeValue = document.getElementById('timeFilter').value;
-      const searchTerm = (document.getElementById('searchInput').value || '').toLowerCase();
-      let data = [...allHistoryData];
-      if (vehicleValue) {
-        data = data.filter(item => `${item.vehicleNumber} - ${item.vehicleModel}` === vehicleValue);
-      }
-      if (reasonValue) {
-        data = data.filter(item => item.disposalReason === reasonValue);
-      }
-      if (timeValue !== 'all') {
-        const now = Date.now();
-        let timeLimit = 0;
-        switch (timeValue) {
-          case 'week': timeLimit = now - 7 * 24 * 60 * 60 * 1000; break;
-          case 'month': timeLimit = now - 30 * 24 * 60 * 60 * 1000; break;
-          case 'quarter': timeLimit = now - 90 * 24 * 60 * 60 * 1000; break;
-          case 'year': timeLimit = now - 365 * 24 * 60 * 60 * 1000; break;
-        }
-        data = data.filter(item => item.disposedAt && item.disposedAt >= timeLimit);
-      }
-      if (searchTerm) {
-        data = data.filter(item =>
-          (item.number && item.number.toLowerCase().includes(searchTerm)) ||
-          (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
-          (item.vehicleNumber && item.vehicleNumber.toLowerCase().includes(searchTerm)) ||
-          (item.disposalReason && item.disposalReason.toLowerCase().includes(searchTerm))
-        );
-      }
-      return data;
     }
 
-    function updatePaginationControls(totalItems) {
-      prevPageBtn.disabled = currentPage === 1;
-      nextPageBtn.disabled = currentPage === totalPages;
-      const startIndex = Math.min((currentPage - 1) * itemsPerPage + 1, totalItems);
-      const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
-      entriesInfo.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
-      generatePageTabs();
-    }
-
-    function generatePageTabs() {
-      tabNavigation.innerHTML = '';
-      if (totalPages <= 1) return;
-      addTab(1);
-      let startPage = Math.max(2, currentPage - 2);
-      let endPage = Math.min(totalPages - 1, currentPage + 2);
-      if (startPage > 2) addEllipsis();
-      for (let i = startPage; i <= endPage; i++) addTab(i);
-      if (endPage < totalPages - 1) addEllipsis();
-      addTab(totalPages);
-    }
-
-    function addTab(pageNumber) {
-      const tab = document.createElement('div');
-      tab.className = `tab ${pageNumber === currentPage ? 'active' : ''}`;
-      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
-      tab.textContent = pageNumber;
-      tab.addEventListener('click', () => {
-        currentPage = pageNumber;
-        renderHistoryWithPagination();
-      });
-      tabNavigation.appendChild(tab);
-    }
-
-    function addEllipsis() {
-      const ellipsis = document.createElement('div');
-      ellipsis.textContent = '...';
-      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
-      tabNavigation.appendChild(ellipsis);
-    }
-
-    function renderHistoryWithPagination() {
-      filteredHistoryData = computeFilteredData();
-      const totalItems = filteredHistoryData.length;
-      totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-      if (currentPage > totalPages) currentPage = totalPages;
-      updatePaginationControls(totalItems);
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-      const pageData = filteredHistoryData.slice(startIndex, endIndex);
-      renderHistoryTable(pageData);
-    }
-
-    // Restore Tyre - FIXED (Using currentUser.uid directly)
-    window.restoreTyre = async function(historyId) {
-      if (!confirm('Are you sure you want to restore this tyre to its original vehicle?')) {
-        return;
+    // Wait for window load to ensure all scripts (evm.js) have run
+    window.addEventListener('load', () => {
+      initApp();
+      // Initial header state check
+      const priceHeader = document.getElementById('resellPriceHeader');
+      if (priceHeader) {
+        priceHeader.style.display = 'none'; // Default to disposed tab which hides it
       }
+    });
 
-      // FIXED: Use currentUser.uid directly
-      const historyItemRef = ref(db, `users/${currentUser.uid}/tyre_history/${historyId}`);
-      const historySnapshot = await get(historyItemRef);
+    async function loadTyreHistory() {
+      if (!currentUser) return;
 
-      if (!historySnapshot.exists()) {
-        showAlert('History record not found.', 'danger');
-        return;
-      }
-
-      const tyreToRestore = historySnapshot.val();
-      // Destructure to get vehicle details and the remaining tyre data
-      const { vehicleId, vehicleNumber, vehicleModel, disposedAt, disposalReason, ...originalTyreData } = tyreToRestore;
-
-      if (!vehicleId) {
-        showAlert('Cannot restore: Original vehicle ID is missing from this history record.', 'danger');
-        return;
-      }
-
-      // FIXED: Use currentUser.uid directly
-      const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
-      const vehicleSnapshot = await get(vehicleRef);
+      const historyTableBody = document.getElementById('historyTableBody');
+      historyTableBody.innerHTML = '<tr><td colspan="12" class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>Loading history...</td></tr>';
 
       try {
-        if (vehicleSnapshot.exists()) {
-          // Vehicle exists, add tyre back
-          const vehicleData = vehicleSnapshot.val();
-          const existingTyres = vehicleData.tyres || [];
-          
-          // Check if a tyre with the same number is already on the vehicle
-          if (existingTyres.some(t => t.number === originalTyreData.number)) {
-            showAlert(`Cannot restore: A tyre with number ${originalTyreData.number} already exists on vehicle ${vehicleNumber}.`, 'warning');
-            return;
-          }
+        const historyRef = db.ref(`users/${currentUser.uid}/tyre_history`);
+        const snapshot = await historyRef.get();
 
-          const updatedTyres = [...existingTyres, originalTyreData];
-          await update(vehicleRef, { tyres: updatedTyres });
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          allHistoryData = Object.entries(data).map(([key, value]) => ({
+            id: key,
+            ...value
+          })).sort((a, b) => (b.disposedAt || 0) - (a.disposedAt || 0)); // Newest first
+
+          populateFilters(allHistoryData);
+          runFilters(); // Initial render
         } else {
-          // Vehicle does not exist, recreate it with the tyre
-          const newVehicleData = {
-            vehicleNumber: vehicleNumber || 'Unknown Vehicle',
-            vehicleModel: vehicleModel || 'Unknown Model',
-            tyres: [originalTyreData],
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-          };
-          await set(vehicleRef, newVehicleData);
+          allHistoryData = [];
+          renderHistoryTable();
+          updateStats([]);
+        }
+      } catch (error) {
+        console.error("Error loading history:", error);
+        historyTableBody.innerHTML = `<tr><td colspan="12" class="text-center text-danger py-3">Error loading data: ${error.message}</td></tr>`;
+      }
+    }
+
+    function populateFilters(data) {
+      const vehicles = new Set();
+      const reasons = new Set();
+
+      data.forEach(item => {
+        if (item.vehicleNumber) {
+          vehicles.add(item.vehicleNumber);
+        }
+        if (item.disposalReason) reasons.add(item.disposalReason);
+      });
+
+      const vSelect = document.getElementById('vehicleFilter');
+      const rSelect = document.getElementById('reasonFilter');
+
+      // Keep first option
+      vSelect.innerHTML = '<option value="">All Vehicles</option>';
+      rSelect.innerHTML = '<option value="">All Reasons</option>';
+
+      [...vehicles].sort().forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        vSelect.appendChild(opt);
+      });
+
+      [...reasons].sort().forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r;
+        opt.textContent = r;
+        rSelect.appendChild(opt);
+      });
+    }
+
+    // Combined Filter Function
+    window.runFilters = function () {
+      const vVal = document.getElementById('vehicleFilter').value.toLowerCase();
+      const rVal = document.getElementById('reasonFilter').value;
+      const tVal = document.getElementById('timeFilter').value;
+      const sText = document.getElementById('searchInput').value.toLowerCase();
+
+      const now = Date.now();
+      const oneDay = 24 * 60 * 60 * 1000;
+
+
+      filteredData = allHistoryData.filter(item => {
+        // Tab Filter
+        const isSold = item.status === 'Sold';
+        if (currentTab === 'disposed' && isSold) return false;
+        if (currentTab === 'sold' && !isSold) return false;
+
+        // Vehicle Filter
+        if (vVal && !(item.vehicleNumber || '').toLowerCase().includes(vVal)) return false;
+
+        // Reason Filter
+        if (rVal && item.disposalReason !== rVal) return false;
+
+        // Time Filter
+        if (tVal !== 'all') {
+          const dispTime = item.disposedAt || 0;
+          const diff = now - dispTime;
+          if (tVal === 'month' && diff > 30 * oneDay) return false;
+          if (tVal === 'quarter' && diff > 90 * oneDay) return false;
+          if (tVal === 'year' && diff > 365 * oneDay) return false;
         }
 
-        // Remove from history
-        await remove(historyItemRef);
+        // Search Filter
+        if (sText) {
+          const searchStr = `${item.number} ${item.brand} ${item.vehicleNumber}`.toLowerCase();
+          if (!searchStr.includes(sText)) return false;
+        }
 
-        showAlert('Tyre restored successfully!', 'success');
-      } catch (error) {
-        console.error('Error restoring tyre:', error);
-        showAlert(`Error restoring tyre: ${error.message}`, 'danger');
-      }
-    };
-
-    // Hook up pagination controls
-    entriesPerPageSelect.addEventListener('change', function () {
-      itemsPerPage = parseInt(this.value, 10) || 10;
-      currentPage = 1;
-      renderHistoryWithPagination();
-    });
-    prevPageBtn.addEventListener('click', function () {
-      if (currentPage > 1) {
-        currentPage--;
-        renderHistoryWithPagination();
-      }
-    });
-    nextPageBtn.addEventListener('click', function () {
-      if (currentPage < totalPages) {
-        currentPage++;
-        renderHistoryWithPagination();
-      }
-    });
-
-    // Logout function
-    window.logout = function() {
-      signOut(auth).then(() => {
-        window.location.href = "index.html";
-      }).catch(error => {
-        alert("Error logging out: " + error.message);
+        return true;
       });
-    };
 
-    // No toggle menu here; sidebar toggle handled by navbar-loader.js
+      currentPage = 1; // Reset to page 1 on filter change
+      renderHistoryTable();
+      updateStats(filteredData);
+    }
+
+    function updateStats(data) {
+      document.getElementById('totalCount').textContent = data.length;
+      const totalVal = data.reduce((sum, item) => sum + (Number(item.resellPrice) || 0), 0);
+      document.getElementById('totalRecovered').textContent = `₹${totalVal.toLocaleString('en-IN')}`;
+
+      // Calculate strictly unsold (where status is NOT Sold and resellPrice is 0 or missing)
+      const actualUnsold = data.filter(item => {
+        const hasPrice = (item.resellPrice && Number(item.resellPrice) > 0);
+        const isMarkedSold = item.status === 'Sold';
+        return !hasPrice && !isMarkedSold;
+      }).length;
+
+      document.getElementById('unsoldInventory').textContent = actualUnsold;
+    }
+
+    function renderHistoryTable() {
+      const tableBody = document.getElementById('historyTableBody');
+      const selectAll = document.getElementById('selectAllCheckbox');
+      selectAll.checked = false;
+
+      if (filteredData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="12" class="text-center py-4 text-muted">No records found matching filters.</td></tr>';
+        document.getElementById('entriesInfo').textContent = 'Showing 0 to 0 of 0 entries';
+        document.getElementById('paginationControls').innerHTML = '';
+        updateBulkButtonState();
+        return;
+      }
+
+      // Pagination Logic
+      const totalItems = filteredData.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      const startIdx = (currentPage - 1) * itemsPerPage;
+      const endIdx = Math.min(startIdx + itemsPerPage, totalItems);
+      const pageData = filteredData.slice(startIdx, endIdx);
+
+      let html = '';
+
+      pageData.forEach(item => {
+        const disposalDate = item.disposedAt ? new Date(item.disposedAt).toLocaleDateString() : '-';
+        const addedDate = item.addedAt ? new Date(item.addedAt).toLocaleDateString() : '-';
+        const resellPrice = item.resellPrice ? Number(item.resellPrice) : 0;
+        const isSold = resellPrice > 0 || item.status === 'Sold';
+
+        const statusBadge = isSold
+          ? '<span class="status-badge status-sold">Sold</span>'
+          : '<span class="status-badge status-unsold">Unsold</span>';
+
+        // Calculate Lifespan
+        let lifeText = '-';
+        if (item.addedAt && item.disposedAt) {
+          const diffDays = Math.floor((item.disposedAt - item.addedAt) / (1000 * 60 * 60 * 24));
+          if (diffDays < 30) lifeText = `${diffDays} days`;
+          else if (diffDays < 365) lifeText = `${Math.floor(diffDays / 30)} mths`;
+          else lifeText = `${(diffDays / 365).toFixed(1)} yrs`;
+        }
+
+        html += `
+           <tr>
+             <td class="text-center">
+               <input class="form-check-input history-checkbox" type="checkbox" value="${item.id}" 
+                      ${isSold ? 'disabled' : ''} onchange="updateBulkButtonState()">
+             </td>
+             <td>${disposalDate}</td>
+             <td>${item.vehicleNumber || '-'}</td>
+             <td><strong>${item.number}</strong></td>
+             <td>${item.brand}</td>
+             <td>${lifeText}</td>
+             <td>${addedDate}</td>
+             <td>${item.position || '-'}</td>
+              <td>${item.disposalReason}</td>
+              ${currentTab === 'sold' ? `<td class="text-end fw-bold">${resellPrice > 0 ? '₹' + resellPrice.toLocaleString('en-IN') : '-'}</td>` : ''}
+              <td class="text-center">${statusBadge}</td>
+              <td>
+                 <button class="btn btn-sm btn-light border" title="Restore" onclick="restoreTyre('${item.id}')">
+                    <i class="fas fa-undo text-primary"></i>
+                 </button>
+              </td>
+           </tr>
+         `;
+      });
+
+      tableBody.innerHTML = html;
+      document.getElementById('entriesInfo').textContent = `Showing ${startIdx + 1} to ${endIdx} of ${totalItems} entries`;
+      renderPaginationControls(totalPages);
+      updateBulkButtonState();
+    }
+
+    function renderPaginationControls(totalPages) {
+      const pagination = document.getElementById('paginationControls');
+      let html = '';
+
+      // Prev
+      html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                  <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Prev</a>
+                </li>`;
+
+      // Pages
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+          html += `<li class="page-item ${currentPage === i ? 'active' : ''}">
+                         <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                       </li>`;
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+          html += `<li class="page-item disabled"><a class="page-link">...</a></li>`;
+        }
+      }
+
+      // Next
+      html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                  <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
+                </li>`;
+
+      pagination.innerHTML = html;
+    }
+
+    window.changePage = function (page) {
+      if (page < 1) return;
+      currentPage = page;
+      renderHistoryTable();
+    }
+
+    // Bulk Action Logic
+    window.toggleSelectAll = function () {
+      const check = document.getElementById('selectAllCheckbox').checked;
+      document.querySelectorAll('.history-checkbox:not(:disabled)').forEach(cb => cb.checked = check);
+      updateBulkButtonState();
+    }
+
+    window.updateBulkButtonState = function () {
+      const count = document.querySelectorAll('.history-checkbox:checked').length;
+      document.getElementById('bulkSellBtn').disabled = count === 0;
+    }
+
+    window.bulkSell = function () {
+      const checked = document.querySelectorAll('.history-checkbox:checked');
+      if (checked.length === 0) return;
+
+      const total = prompt(`Enter Total Sale Price for ${checked.length} tyres:`, "0");
+      if (total === null) return;
+
+      const pricePer = parseFloat(total) / checked.length;
+
+      const ids = Array.from(checked).map(cb => cb.value);
+      const updates = {};
+
+      ids.forEach(id => {
+        updates[`users/${currentUser.uid}/tyre_history/${id}/status`] = 'Sold';
+        updates[`users/${currentUser.uid}/tyre_history/${id}/resellPrice`] = pricePer;
+      });
+
+      db.ref().update(updates).then(() => {
+        alert("Tyres marked as sold!");
+        loadTyreHistory();
+      }).catch(err => alert("Error: " + err.message));
+    }
+
+    window.restoreTyre = async function (id) {
+      if (!confirm("Are you sure you want to restore this tyre to the vehicle inventory?")) return;
+
+      const historyRef = db.ref(`users/${currentUser.uid}/tyre_history/${id}`);
+      try {
+        const snapshot = await historyRef.get();
+        if (!snapshot.exists()) {
+          alert("Record not found.");
+          return;
+        }
+
+        const tyreData = snapshot.val();
+        const vehicleId = tyreData.vehicleId;
+
+        if (!vehicleId) {
+          alert("Vehicle information missing for this tyre. Cannot restore.");
+          return;
+        }
+
+        const vehicleRef = db.ref(`users/${currentUser.uid}/vehicles/${vehicleId}`);
+        const vehicleSnap = await vehicleRef.get();
+
+        if (!vehicleSnap.exists()) {
+          alert("The original vehicle for this tyre no longer exists. Cannot restore.");
+          return;
+        }
+
+        const vehicleData = vehicleSnap.val();
+        let tyres = vehicleData.tyres || [];
+
+        // Check if tyre number already exists in current inventory (prevent duplicates)
+        if (tyres.some(t => t.number === tyreData.number)) {
+          alert(`Tyre number ${tyreData.number} already exists in the vehicle inventory.`);
+          return;
+        }
+
+        // Reconstruct original tyre object
+        const restoredTyre = {
+          number: tyreData.number || '',
+          brand: tyreData.brand || '',
+          position: tyreData.position || '',
+          addedAt: tyreData.addedAt || Date.now(),
+          cost: Number(tyreData.cost) || 0,
+          totalRunningKm: Number(tyreData.totalRunningKm) || 0,
+          status: 'Active'
+        };
+
+        // Add to vehicle
+        tyres.push(restoredTyre);
+
+        // Update Vehicle and Remove from History
+        const updates = {};
+        updates[`users/${currentUser.uid}/vehicles/${vehicleId}/tyres`] = tyres;
+        updates[`users/${currentUser.uid}/tyre_history/${id}`] = null;
+
+        await db.ref().update(updates);
+
+        alert("Tyre successfully restored to vehicle inventory.");
+        loadTyreHistory(); // Refresh table
+
+      } catch (error) {
+        console.error("Error restoring tyre:", error);
+        alert("Failed to restore tyre: " + error.message);
+      }
+    }
+
+    window.exportToCSV = function () {
+      if (!filteredData.length) return;
+      let csv = "Date,Vehicle,Tyre No,Brand,Reason,Price,Status\n";
+      filteredData.forEach(r => {
+        csv += `${new Date(r.disposedAt).toLocaleDateString()},${r.vehicleNumber},${r.number},${r.brand},${r.disposalReason},${r.resellPrice || 0},${r.status || 'Unsold'}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tyre_history_export.csv`;
+      a.click();
+
+    }
+
+    // Tab Switching
+    window.switchTab = function (tab) {
+      currentTab = tab;
+
+      // Update UI
+      document.getElementById('tab-disposed').classList.toggle('active', tab === 'disposed');
+      document.getElementById('tab-sold').classList.toggle('active', tab === 'sold');
+
+      // Toggle Bulk Button visibility
+      const bulkBtn = document.getElementById('bulkSellBtn');
+      if (tab === 'sold') {
+        bulkBtn.style.display = 'none';
+      } else {
+        bulkBtn.style.display = 'inline-block';
+      }
+
+      // Toggle Header visibility
+      const priceHeader = document.getElementById('resellPriceHeader');
+      if (priceHeader) {
+        priceHeader.style.display = (tab === 'sold') ? 'table-cell' : 'none';
+      }
+
+      runFilters();
+    }
+
   </script>
 </body>
+
 </html>
