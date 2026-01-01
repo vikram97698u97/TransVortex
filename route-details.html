@@ -1,150 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    
-<!-- 🔐 Secure .env Configuration Loader -->
-    <!-- 🔐 Secure Configuration - Loaded from .env -->
-    <script>
-        // Configuration loaded from .env file (server-side)
-        (function() {
-            'use strict';
-            
-            // Firebase configuration from .env
-            if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-            }
-            
-            // Cloudinary configuration from .env
-            if (!window.CLOUDINARY_CONFIG) {
-                window.CLOUDINARY_CONFIG = {
-                    cloudName: "doqapn15f",
-                    uploadPreset: "vehicle-driver",
-                    presets: {
-                        vehicleDriver: "vehicle-driver",
-                        paymentBilling: "payment-billing",
-                        profilePic: "profile-pic",
-                        documents: "documents",
-                        receipts: "receipts",
-                        expenses: "expenses",
-                        tyres: "tyres",
-                        vehicles: "vehicles",
-                        drivers: "drivers",
-                        invoices: "invoices",
-                        lrReports: "lr-reports",
-                        tripExpenses: "trip-expenses"
-                    },
-                    folders: {
-                        vehicles: "transport/vehicles",
-                        drivers: "transport/drivers", 
-                        documents: "transport/documents",
-                        profiles: "transport/profiles",
-                        receipts: "transport/receipts",
-                        expenses: "transport/expenses",
-                        tyres: "transport/tyres",
-                        invoices: "transport/invoices",
-                        lrReports: "transport/lr-reports",
-                        tripExpenses: "transport/trip-expenses"
-                    },
-                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-                };
-            }
-            
-            // Environment configuration from .env
-            if (!window.ENVIRONMENT) {
-                window.ENVIRONMENT = {
-                    name: "production",
-                    debug: false,
-                    apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0",
-                    corsOrigin: "https://transvortex.online",
-                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
-                    apiRateLimit: 100
-                };
-            }
-            
-            // Security configuration from .env
-            if (!window.SECURITY_CONFIG) {
-                window.SECURITY_CONFIG = {
-                    sessionSecret: "transvortex-session-secret-2024",
-                    jwtSecret: "transvortex-jwt-secret-2024",
-                    encryptionKey: "transvortex-encryption-key-2024"
-                };
-            }
-            
-            // Optional API configurations from .env
-            if (!window.API_CONFIG) {
-                window.API_CONFIG = {
-                    email: {
-                        provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-                        from: "noreply@transvortex.online",
-                        fromName: "TransVortex Transport"
-                    },
-                    payment: {
-                        provider: "stripe",
-                        publicKey: "your-stripe-public-key-here"
-                    },
-                    sms: {
-                        provider: "twilio",
-                        accountSid: "your-twilio-account-sid-here",
-                        phoneNumber: "your-twilio-phone-number-here"
-                    },
-                    maps: {
-                        googleMapsApiKey: "your-google-maps-api-key-here",
-                        googlePlacesApiKey: "your-google-places-api-key-here"
-                    },
-                    analytics: {
-                        googleAnalyticsId: "GA-XXXXXXXXX",
-                        facebookPixelId: "your-facebook-pixel-id-here",
-                        hotjarId: "your-hotjar-id-here"
-                    }
-                };
-            }
-            
-            // Log successful loading (only in debug mode)
-            if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
-                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-                console.log('🌍 Environment:', window.ENVIRONMENT.name);
-                console.log('🔐 Security: Loaded');
-            }
-            
-            // Dispatch event when configuration is ready
-            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-                detail: {
-                    firebase: window.FIREBASE_CONFIG,
-                    cloudinary: window.CLOUDINARY_CONFIG,
-                    environment: window.ENVIRONMENT,
-                    security: window.SECURITY_CONFIG,
-                    apis: window.API_CONFIG
-                }
-            }));
-        })();
-    </script>
+
+  <!-- 🔐 Secure .env Configuration Loader -->
+  <!-- 🔐 Secure Configuration - Loaded from .env -->
+  <script>
+    // Configuration loaded from .env file (server-side)
+    (function () {
+      'use strict';
+
+      // Firebase configuration from .env
+      if (!window.FIREBASE_CONFIG) {
+        apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
+      }
+
+      // Cloudinary configuration from .env
+      if (!window.CLOUDINARY_CONFIG) {
+        window.CLOUDINARY_CONFIG = {
+          cloudName: "doqapn15f",
+          uploadPreset: "vehicle-driver",
+          presets: {
+            vehicleDriver: "vehicle-driver",
+            paymentBilling: "payment-billing",
+            profilePic: "profile-pic",
+            documents: "documents",
+            receipts: "receipts",
+            expenses: "expenses",
+            tyres: "tyres",
+            vehicles: "vehicles",
+            drivers: "drivers",
+            invoices: "invoices",
+            lrReports: "lr-reports",
+            tripExpenses: "trip-expenses"
+          },
+          folders: {
+            vehicles: "transport/vehicles",
+            drivers: "transport/drivers",
+            documents: "transport/documents",
+            profiles: "transport/profiles",
+            receipts: "transport/receipts",
+            expenses: "transport/expenses",
+            tyres: "transport/tyres",
+            invoices: "transport/invoices",
+            lrReports: "transport/lr-reports",
+            tripExpenses: "transport/trip-expenses"
+          },
+          apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
+          baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
+        };
+      }
+
+      // Environment configuration from .env
+      if (!window.ENVIRONMENT) {
+        window.ENVIRONMENT = {
+          name: "production",
+          debug: false,
+          apiBaseUrl: "https://transvortex.online",
+          version: "1.0.0",
+          corsOrigin: "https://transvortex.online",
+          allowedOrigins: "https://transvortex.online,http://localhost:3000",
+          apiRateLimit: 100
+        };
+      }
+
+      // Security configuration from .env
+      if (!window.SECURITY_CONFIG) {
+        window.SECURITY_CONFIG = {
+          sessionSecret: "transvortex-session-secret-2024",
+          jwtSecret: "transvortex-jwt-secret-2024",
+          encryptionKey: "transvortex-encryption-key-2024"
+        };
+      }
+
+      // Optional API configurations from .env
+      if (!window.API_CONFIG) {
+        window.API_CONFIG = {
+          email: {
+            provider: "sendgrid",
+            window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
+            from: "noreply@transvortex.online",
+            fromName: "TransVortex Transport"
+          },
+          payment: {
+            provider: "stripe",
+            publicKey: "your-stripe-public-key-here"
+          },
+          sms: {
+            provider: "twilio",
+            accountSid: "your-twilio-account-sid-here",
+            phoneNumber: "your-twilio-phone-number-here"
+          },
+          maps: {
+            googleMapsApiKey: "your-google-maps-api-key-here",
+            googlePlacesApiKey: "your-google-places-api-key-here"
+          },
+          analytics: {
+            googleAnalyticsId: "GA-XXXXXXXXX",
+            facebookPixelId: "your-facebook-pixel-id-here",
+            hotjarId: "your-hotjar-id-here"
+          }
+        };
+      }
+
+      // Log successful loading (only in debug mode)
+      if (window.ENVIRONMENT.debug) {
+        console.log('✅ Secure configuration loaded from .env');
+        console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
+        console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
+        console.log('🌍 Environment:', window.ENVIRONMENT.name);
+        console.log('🔐 Security: Loaded');
+      }
+
+      // Dispatch event when configuration is ready
+      window.dispatchEvent(new CustomEvent('envConfigLoaded', {
+        detail: {
+          firebase: window.FIREBASE_CONFIG,
+          cloudinary: window.CLOUDINARY_CONFIG,
+          environment: window.ENVIRONMENT,
+          security: window.SECURITY_CONFIG,
+          apis: window.API_CONFIG
+        }
+      }));
+    })();
+  </script>
 
 
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fuel Management - Transport System</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <!-- Load secure configuration first -->
-  
-  
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+  <!-- Load secure configuration first -->
+
+
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body { padding: 0; margin: 0; background-color: #f8f9fa; }
+    body {
+      padding: 0;
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+
     .main-content {
       background: white;
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
+
     .form-section {
       background-color: #f8f9fa;
       padding: 20px;
@@ -152,17 +163,21 @@
       margin-bottom: 20px;
       border: 1px solid #dee2e6;
     }
+
     .nav-tabs .nav-link.active {
       background-color: #2E8B57;
       color: white;
       border-color: #2E8B57;
     }
+
     .nav-tabs .nav-link {
       color: #2E8B57;
     }
+
     .hidden {
       display: none !important;
     }
+
     .payment-type-badge {
       display: inline-block;
       padding: .35em .65em;
@@ -175,30 +190,35 @@
       vertical-align: baseline;
       border-radius: .25rem;
     }
+
     .payment-type-cash {
       background-color: #28a745;
     }
+
     .payment-type-upi {
       background-color: #007bff;
     }
+
     .payment-type-cheque {
       background-color: #6f42c1;
     }
+
     .payment-type-other {
       background-color: #6c757d;
     }
   </style>
 
-    <!-- 🔥 Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-    
-    <!-- 🔐 Configuration Loading -->
-    <script src="evm.js"></script>
-    <script src="secure-api-loader.js"></script>
+  <!-- 🔥 Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+
+  <!-- 🔐 Configuration Loading -->
+  <script src="evm.js"></script>
+  <script src="secure-api-loader.js"></script>
 </head>
+
 <body>
   <script src="navbar-loader.js"></script>
 
@@ -207,74 +227,130 @@
       <div id="pumpListView">
         <h2 class="mb-4"><i class="fas fa-gas-pump me-2"></i>Fuel Management</h2>
 
-      <ul class="nav nav-tabs" id="fuelTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="pumps-tab" data-bs-toggle="tab" data-bs-target="#pumps" type="button" role="tab" aria-controls="pumps" aria-selected="true">
-            <i class="fas fa-gas-pump me-1"></i> Manage Pumps
-          </button>
-        </li>
-      </ul>
+        <ul class="nav nav-tabs" id="fuelTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="pumps-tab" data-bs-toggle="tab" data-bs-target="#pumps" type="button"
+              role="tab" aria-controls="pumps" aria-selected="true">
+              <i class="fas fa-gas-pump me-1"></i> Manage Pumps
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="direct-fuel-tab" data-bs-toggle="tab" data-bs-target="#direct-fuel"
+              type="button" role="tab" aria-controls="direct-fuel" aria-selected="false">
+              <i class="fas fa-fill-drip me-1"></i> Direct Fuel Entry
+            </button>
+          </li>
+        </ul>
 
-      <div class="tab-content" id="fuelTabsContent">
-        <div class="tab-pane fade show active p-3" id="pumps" role="tabpanel" aria-labelledby="pumps-tab">
-          <form id="pumpForm" class="form-section">
-            <h4 class="mb-3">Add New Pump</h4>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="pumpName" class="form-label">Pump Name <span class="text-danger">*</span></label>
-                <input type="text" id="pumpName" class="form-control" placeholder="Unique Pump Name" required>
+        <div class="tab-content" id="fuelTabsContent">
+          <div class="tab-pane fade show active p-3" id="pumps" role="tabpanel" aria-labelledby="pumps-tab">
+            <form id="pumpForm" class="form-section">
+              <h4 class="mb-3">Add New Pump</h4>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="pumpName" class="form-label">Pump Name <span class="text-danger">*</span></label>
+                  <input type="text" id="pumpName" class="form-control" placeholder="Unique Pump Name" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="pumpPlace" class="form-label">Place / Location <span class="text-danger">*</span></label>
+                  <input type="text" id="pumpPlace" class="form-control" placeholder="City, State" required>
+                </div>
               </div>
-              <div class="col-md-6 mb-3">
-                <label for="pumpPlace" class="form-label">Place / Location <span class="text-danger">*</span></label>
-                <input type="text" id="pumpPlace" class="form-control" placeholder="City, State" required>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label for="pumpContact" class="form-label">Contact Number</label>
+                  <input type="tel" id="pumpContact" class="form-control" placeholder="Mobile Number">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="pumpEmail" class="form-label">Email</label>
+                  <input type="email" id="pumpEmail" class="form-control" placeholder="Email Address">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="pumpGstin" class="form-label">GSTIN</label>
+                  <input type="text" id="pumpGstin" class="form-control" placeholder="GST Identification Number">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Pump</button>
+            </form>
+
+            <div class="d-flex justify-content-between align-items-center my-4">
+              <h4 class="mb-0">Pump List</h4>
+              <div class="d-flex gap-2 align-items-center">
+                <button id="exportExcel" class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Export</button>
               </div>
             </div>
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label for="pumpContact" class="form-label">Contact Number</label>
-                <input type="tel" id="pumpContact" class="form-control" placeholder="Mobile Number">
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="pumpEmail" class="form-label">Email</label>
-                <input type="email" id="pumpEmail" class="form-control" placeholder="Email Address">
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="pumpGstin" class="form-label">GSTIN</label>
-                <input type="text" id="pumpGstin" class="form-control" placeholder="GST Identification Number">
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add Pump</button>
-          </form>
 
-          <div class="d-flex justify-content-between align-items-center my-4">
-            <h4 class="mb-0">Pump List</h4>
-            <div class="d-flex gap-2 align-items-center">
-              <button id="exportExcel" class="btn btn-success"><i class="fas fa-file-excel me-2"></i>Export</button>
+            <div class="table-responsive">
+              <table id="pumpTable" class="table table-striped table-bordered" style="width:100%">
+                <thead>
+                  <tr>
+                    <th>Pump Name</th>
+                    <th>Place</th>
+                    <th>Contact</th>
+                    <th>GSTIN</th>
+                    <th class="text-end">Total Billed (₹)</th>
+                    <th class="text-end">Total Paid (₹)</th>
+                    <th class="text-end">Outstanding (₹)</th>
+                    <th class="text-end">Total Liters (L)</th>
+                    <th class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="pumpTableBody"></tbody>
+              </table>
             </div>
           </div>
 
-          <div class="table-responsive">
-            <table id="pumpTable" class="table table-striped table-bordered" style="width:100%">
-              <thead>
-                <tr>
-                  <th>Pump Name</th>
-                  <th>Place</th>
-                  <th>Contact</th>
-                  <th>GSTIN</th>
-                  <th class="text-end">Total Billed (₹)</th>
-                  <th class="text-end">Total Paid (₹)</th>
-                  <th class="text-end">Outstanding (₹)</th>
-                  <th class="text-end">Total Liters (L)</th>
-                  <th class="text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="pumpTableBody"></tbody>
-            </table>
+          <div class="tab-pane fade p-3" id="direct-fuel" role="tabpanel" aria-labelledby="direct-fuel-tab">
+            <form id="directFuelForm" class="form-section">
+              <h4 class="mb-3">Add Fuel Without LR</h4>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="directVehicleSelect" class="form-label">Vehicle <span class="text-danger">*</span></label>
+                  <select id="directVehicleSelect" class="form-select" required>
+                    <option value="">Select Vehicle</option>
+                    <!-- Populated by JS -->
+                  </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="directPumpSelect" class="form-label">Pump <span class="text-danger">*</span></label>
+                  <select id="directPumpSelect" class="form-select" required>
+                    <option value="">Select Pump</option>
+                    <!-- Populated by JS -->
+                  </select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-3 mb-3">
+                  <label for="directFuelLiters" class="form-label">Liters <span class="text-danger">*</span></label>
+                  <input type="number" id="directFuelLiters" class="form-control" step="0.01" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="directFuelRate" class="form-label">Price/Liter (₹)</label>
+                  <input type="number" id="directFuelRate" class="form-control" step="0.01">
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="directFuelAmount" class="form-label">Total Amount (₹) <span
+                      class="text-danger">*</span></label>
+                  <input type="number" id="directFuelAmount" class="form-control" step="0.01" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="directFuelDate" class="form-label">Date <span class="text-danger">*</span></label>
+                  <input type="date" id="directFuelDate" class="form-control" required>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-12">
+                  <label for="directFuelRemarks" class="form-label">Remarks</label>
+                  <input type="text" id="directFuelRemarks" class="form-control"
+                    placeholder="Optional remarks (e.g. Driver Name)">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Fuel Entry</button>
+            </form>
           </div>
+
         </div>
-
       </div>
-    </div>
 
       <div id="pumpDetailView" class="hidden">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -291,10 +367,14 @@
             </div>
             <hr>
             <div class="row">
-              <div class="col-md-3"><strong>Total Billed:</strong> <span id="pumpDetailTotalSpent" class="fw-bold text-danger"></span></div>
-              <div class="col-md-3"><strong>Total Liters:</strong> <span id="pumpDetailTotalLiters" class="fw-bold"></span></div>
-              <div class="col-md-3"><strong>Total Paid:</strong> <span id="pumpDetailTotalPaid" class="fw-bold text-success"></span></div>
-              <div class="col-md-3"><strong>Outstanding:</strong> <span id="pumpDetailOutstanding" class="fw-bold text-warning"></span></div>
+              <div class="col-md-3"><strong>Total Billed:</strong> <span id="pumpDetailTotalSpent"
+                  class="fw-bold text-danger"></span></div>
+              <div class="col-md-3"><strong>Total Liters:</strong> <span id="pumpDetailTotalLiters"
+                  class="fw-bold"></span></div>
+              <div class="col-md-3"><strong>Total Paid:</strong> <span id="pumpDetailTotalPaid"
+                  class="fw-bold text-success"></span></div>
+              <div class="col-md-3"><strong>Outstanding:</strong> <span id="pumpDetailOutstanding"
+                  class="fw-bold text-warning"></span></div>
             </div>
           </div>
         </div>
@@ -338,10 +418,12 @@
 
         <ul class="nav nav-tabs mt-4" id="detailTabs" role="tablist">
           <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab">Payments</button>
+            <button class="nav-link active" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments"
+              type="button" role="tab">Payments</button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions" type="button" role="tab">Transaction History</button>
+            <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions"
+              type="button" role="tab">Transaction History</button>
           </li>
         </ul>
 
@@ -366,7 +448,14 @@
             <div class="table-responsive">
               <table id="pumpTransactionTable" class="table table-striped table-bordered" style="width:100%">
                 <thead>
-                  <tr><th>Date</th><th>LR No.</th><th>Vehicle No.</th><th class="text-end">Liters</th><th class="text-end">Price/Liter</th><th class="text-end">Total Amount (₹)</th></tr>
+                  <tr>
+                    <th>Date</th>
+                    <th>LR No.</th>
+                    <th>Vehicle No.</th>
+                    <th class="text-end">Liters</th>
+                    <th class="text-end">Price/Liter</th>
+                    <th class="text-end">Total Amount (₹)</th>
+                  </tr>
                 </thead>
                 <tbody id="pumpTransactionTableBody"></tbody>
               </table>
@@ -381,6 +470,8 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+  <!-- Select2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
@@ -393,42 +484,43 @@
     // Config
     // Load Firebase configuration securely from EVM
     let firebaseConfig;
-    
+
     try {
       // Get Firebase configuration from secure EVM system
       // Initialize Firebase with proper error handling
-    try {
+      try {
         if (!window.FIREBASE_CONFIG) {
-            throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
+          throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
         }
-        
+
         if (!window.FIREBASE_CONFIG.databaseURL) {
-            throw new Error('Firebase databaseURL not found in configuration.');
+          throw new Error('Firebase databaseURL not found in configuration.');
         }
-        
+
         if (!window.FIREBASE_CONFIG.projectId) {
-            throw new Error('Firebase projectId not found in configuration.');
+          throw new Error('Firebase projectId not found in configuration.');
         }
-        
+
         firebaseConfig = window.FIREBASE_CONFIG;
-        
+
         // Check if we're using fallback values
         if (false) { // Condition is always false in the final logic, keeping as per original structure
-            
+
         } else {
-            
-            
-            
+
+
+
         }
-    } catch (error) {
+      } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
-        
+
         // Use fallback configuration to prevent complete failure
         window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig();
-        
-    }} catch (error) {
+
+      }
+    } catch (error) {
       console.error('❌ Failed to load Firebase configuration:', error);
-      
+
       // Use fallback configuration to prevent complete failure
       firebaseConfig = window.FIREBASE_CONFIG;
     }
@@ -444,9 +536,10 @@
     let currentViewingPumpId = null;
     let currentViewingPumpName = null;
     let currentEditingPumpId = null;
-    let coreAccountId = null; 
+    let coreAccountId = null;
     let allPumpTransactions = [];
     let allPumps = [];
+    let allVehicles = []; // Added for direct entry
     let allPumpPayments = [];
     let currentEditingPaymentId = null;
 
@@ -479,21 +572,23 @@
             "pageLength": 10,
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
             "columnDefs": [{ "orderable": false, "targets": 7 }, { "className": "text-end", "targets": [4, 5, 6, 7] }],
-            "order": [[ 4, "desc" ]] 
+            "order": [[4, "desc"]]
           });
 
           transactionTable = $('#pumpTransactionTable').DataTable({
             "pageLength": 10,
-            "order": [[ 0, "desc" ]] 
+            "order": [[0, "desc"]]
           });
-          
+
           paymentTable = $('#pumpPaymentTable').DataTable({
             "pageLength": 10,
-            "order": [[ 0, "desc" ]]
+            "order": [[0, "desc"]]
           });
-          
+
+          loadPumps(user.uid);
           loadPumps(user.uid);
           loadAllPumpData(coreAccountId, user.uid); // **NEW**: Load all data needed for calculations
+          loadVehicles(coreAccountId); // Load vehicles for direct entry
         });
 
         // Restore active tab
@@ -510,17 +605,24 @@
             document.getElementById('pumpDetailView').classList.add('hidden');
           });
         }
-        
+
         // Payment form handling
         document.getElementById('pumpPaymentForm').addEventListener('submit', savePumpPayment);
         document.getElementById('cancelPaymentBtn').addEventListener('click', resetPaymentForm);
         document.getElementById('paymentDate').valueAsDate = new Date();
+
+        // Direct Fuel Form
+        document.getElementById('directFuelForm').addEventListener('submit', saveDirectFuelEntry);
+        document.getElementById('directFuelDate').valueAsDate = new Date();
+
+        // Populate dropdowns when tab is switched
+        document.getElementById('direct-fuel-tab').addEventListener('shown.bs.tab', populateDirectFuelDropdowns);
       }
     });
 
     function loadAllPumpData(coreId, userId) {
       // Load fuel transactions
-      const transactionsRef = ref(db, `users/${coreId}/fuelLogs`); 
+      const transactionsRef = ref(db, `users/${coreId}/fuelLogs`);
       onValue(transactionsRef, (snapshot) => {
         allPumpTransactions = [];
         if (snapshot.exists()) {
@@ -541,9 +643,9 @@
           });
         }
         // Once data is loaded, re-render the pumps table with correct totals
-        loadPumps(userId); 
+        loadPumps(userId);
       });
-      
+
       // Load pump payments
       const paymentsRef = ref(db, `users/${userId}/pumpPayments`);
       onValue(paymentsRef, (snapshot) => {
@@ -558,20 +660,20 @@
         }
         loadPumps(userId);
       });
-      
+
       // Load Pumps to match names in allPumpTransactions
       const pumpRef = ref(db, `users/${userId}/petrolPumps`);
       onValue(pumpRef, (snapshot) => {
-          allPumps = [];
-          if (snapshot.exists()) {
-              snapshot.forEach(child => allPumps.push({ id: child.key, ...child.val() }));
-          }
+        allPumps = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(child => allPumps.push({ id: child.key, ...child.val() }));
+        }
       });
     }
-    
+
     // Helper to get pump details
     function getPump(pumpId) {
-        return allPumps.find(p => p.id === pumpId);
+      return allPumps.find(p => p.id === pumpId);
     }
 
     // Helper to get pump payments
@@ -659,7 +761,7 @@
         pumpTable.draw();
       });
     }
-    
+
     // View Pump Details
     window.viewPump = async (pumpId) => {
       document.getElementById('pumpListView').classList.add('hidden');
@@ -733,15 +835,15 @@
     // Load pump payments
     async function loadPumpPayments(pumpId) {
       if (!pumpId) return;
-      
+
       paymentTable.clear();
       const payments = getPumpPayments(pumpId);
-      
+
       if (payments.length > 0) {
         payments.forEach(payment => {
           const typeClass = `payment-type-${payment.type}`;
           const typeText = payment.type.charAt(0).toUpperCase() + payment.type.slice(1);
-          
+
           paymentTable.row.add([
             payment.date,
             `₹${(parseFloat(payment.amount || 0)).toFixed(2)}`,
@@ -808,7 +910,7 @@
         alert('Payment record not found.');
         return;
       }
-      
+
       const payment = snapshot.val();
       currentEditingPaymentId = paymentId;
 
@@ -833,7 +935,7 @@
       try {
         await remove(ref(db, `users/${currentUser.uid}/pumpPayments/${paymentId}`));
         alert('Payment deleted successfully!');
-        
+
         // Refresh the view
         if (currentViewingPumpId) {
           viewPump(currentViewingPumpId);
@@ -874,6 +976,130 @@
       });
     };
 
+    // Load Vehicles
+    function loadVehicles(coreId) {
+      const vRef = ref(db, `users/${coreId}/vehicles`);
+      onValue(vRef, (snap) => {
+        allVehicles = [];
+        if (snap.exists()) {
+          snap.forEach(c => {
+            const val = c.val();
+            allVehicles.push({
+              id: c.key,
+              vehicleNumber: val.vehicleNumber || val.vehicleNo,
+              vehicleNo: val.vehicleNumber || val.vehicleNo,
+              ...val
+            });
+          });
+        }
+        if (document.getElementById('directFuelForm')) {
+          populateDirectFuelDropdowns();
+        }
+      });
+    }
+
+    function populateDirectFuelDropdowns() {
+      // Init Select2 if not already
+      if (!$('#directVehicleSelect').data('select2')) {
+        $('#directVehicleSelect').select2({ theme: 'bootstrap-5', placeholder: 'Select Vehicle', width: '100%' });
+      }
+      if (!$('#directPumpSelect').data('select2')) {
+        $('#directPumpSelect').select2({ theme: 'bootstrap-5', placeholder: 'Select Pump', width: '100%' });
+      }
+
+      const vSelect = document.getElementById('directVehicleSelect');
+      const pSelect = document.getElementById('directPumpSelect');
+
+      // Save current selection if re-populating
+      const curV = $('#directVehicleSelect').val();
+      const curP = $('#directPumpSelect').val();
+
+      vSelect.innerHTML = '<option value="">Select Vehicle</option>';
+      allVehicles.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.vehicleNumber; // Use vehicle number as value to match schema
+        opt.textContent = v.vehicleNumber;
+        vSelect.appendChild(opt);
+      });
+
+      pSelect.innerHTML = '<option value="">Select Pump</option>';
+      allPumps.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        pSelect.appendChild(opt);
+      });
+
+      if (curV) $('#directVehicleSelect').val(curV).trigger('change');
+      if (curP) $('#directPumpSelect').val(curP).trigger('change');
+
+      // Auto-calc rate listener
+      document.getElementById('directFuelLiters').addEventListener('input', calcDirectFuelAmount);
+      document.getElementById('directFuelRate').addEventListener('input', calcDirectFuelAmount);
+    }
+
+    function calcDirectFuelAmount() {
+      const l = parseFloat(document.getElementById('directFuelLiters').value) || 0;
+      const r = parseFloat(document.getElementById('directFuelRate').value) || 0;
+      if (l > 0 && r > 0) {
+        document.getElementById('directFuelAmount').value = (l * r).toFixed(2);
+      }
+    }
+
+    async function saveDirectFuelEntry(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const vehicleNo = $('#directVehicleSelect').val();
+      const pumpId = $('#directPumpSelect').val();
+      const liters = document.getElementById('directFuelLiters').value;
+      const amount = document.getElementById('directFuelAmount').value;
+      const rate = document.getElementById('directFuelRate').value;
+      const date = document.getElementById('directFuelDate').value;
+      const remarks = document.getElementById('directFuelRemarks').value;
+
+      if (!vehicleNo || !pumpId || !amount || !date) {
+        alert('Please fill all required fields.');
+        return;
+      }
+
+      const fuelData = {
+        date: date,
+        timestamp: new Date().toISOString(),
+        truckNumber: vehicleNo,
+        pumpId: pumpId,
+        filledLiters: parseFloat(liters),
+        totalAmount: parseFloat(amount),
+        perLiter: parseFloat(rate) || 0,
+        remarks: remarks,
+        source: 'pump-fillup',
+        lrNumber: 'Without LR', // Explicitly set as requested
+        userId: currentUser.uid
+      };
+
+      try {
+        // 1. Push to fuelLogs
+        const newRef = push(ref(db, `users/${coreAccountId}/fuelLogs`));
+        await set(newRef, fuelData);
+
+        // 2. Link to Pump Transactions
+        await update(ref(db, `users/${currentUser.uid}/petrolPumps/${pumpId}/transactions`), {
+          [newRef.key]: true
+        });
+
+        alert('Fuel entry saved successfully!');
+        document.getElementById('directFuelForm').reset();
+        $('#directVehicleSelect').val(null).trigger('change');
+        $('#directPumpSelect').val(null).trigger('change');
+        document.getElementById('directFuelDate').valueAsDate = new Date();
+        document.getElementById('directFuelDate').valueAsDate = new Date();
+
+      } catch (err) {
+        console.error(err);
+        alert('Error saving fuel entry: ' + err.message);
+      }
+    }
+
     // Delete Pump
     window.deletePump = (id) => {
       if (confirm("Are you sure you want to delete this petrol pump?")) {
@@ -891,4 +1117,5 @@
     window.deletePumpPayment = deletePumpPayment;
   </script>
 </body>
+
 </html
