@@ -1,128 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    
-<!-- 🔐 Secure .env Configuration Loader -->
-    <!-- 🔐 Secure Configuration - Loaded from .env -->
-    <script>
-        // Configuration loaded from .env file (server-side)
-        (function() {
-            'use strict';
-            
-            // Firebase configuration from .env
-            if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-            }
-            
-            // Cloudinary configuration from .env
-            if (!window.CLOUDINARY_CONFIG) {
-                window.CLOUDINARY_CONFIG = {
-                    cloudName: "doqapn15f",
-                    uploadPreset: "vehicle-driver",
-                    presets: {
-                        vehicleDriver: "vehicle-driver",
-                        paymentBilling: "payment-billing",
-                        profilePic: "profile-pic",
-                        documents: "documents",
-                        receipts: "receipts",
-                        expenses: "expenses",
-                        tyres: "tyres",
-                        vehicles: "vehicles",
-                        drivers: "drivers",
-                        invoices: "invoices",
-                        lrReports: "lr-reports",
-                        tripExpenses: "trip-expenses"
-                    },
-                    folders: {
-                        vehicles: "transport/vehicles",
-                        drivers: "transport/drivers", 
-                        documents: "transport/documents",
-                        profiles: "transport/profiles",
-                        receipts: "transport/receipts",
-                        expenses: "transport/expenses",
-                        tyres: "transport/tyres",
-                        invoices: "transport/invoices",
-                        lrReports: "transport/lr-reports",
-                        tripExpenses: "transport/trip-expenses"
-                    },
-                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-                };
-            }
-            
-            // Environment configuration from .env
-            if (!window.ENVIRONMENT) {
-                window.ENVIRONMENT = {
-                    name: "production",
-                    debug: false,
-                    apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0",
-                    corsOrigin: "https://transvortex.online",
-                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
-                    apiRateLimit: 100
-                };
-            }
-            
-            // Security configuration from .env
-            if (!window.SECURITY_CONFIG) {
-                window.SECURITY_CONFIG = {
-                    sessionSecret: "transvortex-session-secret-2024",
-                    jwtSecret: "transvortex-jwt-secret-2024",
-                    encryptionKey: "transvortex-encryption-key-2024"
-                };
-            }
-            
-            // Optional API configurations from .env
-            if (!window.API_CONFIG) {
-                window.API_CONFIG = {
-                    email: {
-                        provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-                        from: "noreply@transvortex.online",
-                        fromName: "TransVortex Transport"
-                    },
-                    payment: {
-                        provider: "stripe",
-                        publicKey: "your-stripe-public-key-here"
-                    },
-                    sms: {
-                        provider: "twilio",
-                        accountSid: "your-twilio-account-sid-here",
-                        phoneNumber: "your-twilio-phone-number-here"
-                    },
-                    maps: {
-                        googleMapsApiKey: "your-google-maps-api-key-here",
-                        googlePlacesApiKey: "your-google-places-api-key-here"
-                    },
-                    analytics: {
-                        googleAnalyticsId: "GA-XXXXXXXXX",
-                        facebookPixelId: "your-facebook-pixel-id-here",
-                        hotjarId: "your-hotjar-id-here"
-                    }
-                };
-            }
-            
-            // Log successful loading (only in debug mode)
-            if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
-                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-                console.log('🌍 Environment:', window.ENVIRONMENT.name);
-                console.log('🔐 Security: Loaded');
-            }
-            
-            // Dispatch event when configuration is ready
-            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-                detail: {
-                    firebase: window.FIREBASE_CONFIG,
-                    cloudinary: window.CLOUDINARY_CONFIG,
-                    environment: window.ENVIRONMENT,
-                    security: window.SECURITY_CONFIG,
-                    apis: window.API_CONFIG
-                }
-            }));
-        })();
-    </script>
+
+  <!-- 🔐 Secure .env Configuration Loader -->
+  <!-- 🔐 Secure Configuration - Loaded from .env -->
+  <script>
+    // Configuration loaded from .env file (server-side)
+    (function () {
+      'use strict';
+
+      // Firebase configuration from .env
+      if (!window.FIREBASE_CONFIG) {
+        apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
+      }
+
+      // Cloudinary configuration from .env
+      if (!window.CLOUDINARY_CONFIG) {
+        window.CLOUDINARY_CONFIG = {
+          cloudName: "doqapn15f",
+          uploadPreset: "vehicle-driver",
+          presets: {
+            vehicleDriver: "vehicle-driver",
+            paymentBilling: "payment-billing",
+            profilePic: "profile-pic",
+            documents: "documents",
+            receipts: "receipts",
+            expenses: "expenses",
+            tyres: "tyres",
+            vehicles: "vehicles",
+            drivers: "drivers",
+            invoices: "invoices",
+            lrReports: "lr-reports",
+            tripExpenses: "trip-expenses"
+          },
+          folders: {
+            vehicles: "transport/vehicles",
+            drivers: "transport/drivers",
+            documents: "transport/documents",
+            profiles: "transport/profiles",
+            receipts: "transport/receipts",
+            expenses: "transport/expenses",
+            tyres: "transport/tyres",
+            invoices: "transport/invoices",
+            lrReports: "transport/lr-reports",
+            tripExpenses: "transport/trip-expenses"
+          },
+          apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
+          baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
+        };
+      }
+
+      // Environment configuration from .env
+      if (!window.ENVIRONMENT) {
+        window.ENVIRONMENT = {
+          name: "production",
+          debug: false,
+          apiBaseUrl: "https://transvortex.online",
+          version: "1.0.0",
+          corsOrigin: "https://transvortex.online",
+          allowedOrigins: "https://transvortex.online,http://localhost:3000",
+          apiRateLimit: 100
+        };
+      }
+
+      // Security configuration from .env
+      if (!window.SECURITY_CONFIG) {
+        window.SECURITY_CONFIG = {
+          sessionSecret: "transvortex-session-secret-2024",
+          jwtSecret: "transvortex-jwt-secret-2024",
+          encryptionKey: "transvortex-encryption-key-2024"
+        };
+      }
+
+      // Optional API configurations from .env
+      if (!window.API_CONFIG) {
+        window.API_CONFIG = {
+          email: {
+            provider: "sendgrid",
+            window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
+            from: "noreply@transvortex.online",
+            fromName: "TransVortex Transport"
+          },
+          payment: {
+            provider: "stripe",
+            publicKey: "your-stripe-public-key-here"
+          },
+          sms: {
+            provider: "twilio",
+            accountSid: "your-twilio-account-sid-here",
+            phoneNumber: "your-twilio-phone-number-here"
+          },
+          maps: {
+            googleMapsApiKey: "your-google-maps-api-key-here",
+            googlePlacesApiKey: "your-google-places-api-key-here"
+          },
+          analytics: {
+            googleAnalyticsId: "GA-XXXXXXXXX",
+            facebookPixelId: "your-facebook-pixel-id-here",
+            hotjarId: "your-hotjar-id-here"
+          }
+        };
+      }
+
+      // Log successful loading (only in debug mode)
+      if (window.ENVIRONMENT.debug) {
+        console.log('✅ Secure configuration loaded from .env');
+        console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
+        console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
+        console.log('🌍 Environment:', window.ENVIRONMENT.name);
+        console.log('🔐 Security: Loaded');
+      }
+
+      // Dispatch event when configuration is ready
+      window.dispatchEvent(new CustomEvent('envConfigLoaded', {
+        detail: {
+          firebase: window.FIREBASE_CONFIG,
+          cloudinary: window.CLOUDINARY_CONFIG,
+          environment: window.ENVIRONMENT,
+          security: window.SECURITY_CONFIG,
+          apis: window.API_CONFIG
+        }
+      }));
+    })();
+  </script>
 
 
 
@@ -144,7 +145,8 @@
     }
 
     mark {
-      background-color: #ffc107; /* A nice yellow highlight */
+      background-color: #ffc107;
+      /* A nice yellow highlight */
       padding: 0.2em 0;
       border-radius: 3px;
     }
@@ -241,7 +243,7 @@
     .vehicle-input-container {
       position: relative;
     }
-    
+
     .vehicle-suggestions {
       position: absolute;
       background: white;
@@ -253,35 +255,36 @@
       overflow-y: auto;
       display: none;
     }
-    
+
     .vehicle-suggestion {
       padding: 8px 12px;
       cursor: pointer;
       border-bottom: 1px solid #eee;
     }
-    
+
     .vehicle-suggestion:hover {
       background-color: #f5f5f5;
     }
-    
-    .vehicle-not-found, .vehicle-valid {
+
+    .vehicle-not-found,
+    .vehicle-valid {
       font-size: 0.875em;
       margin-top: 5px;
       display: none;
     }
-    
+
     .vehicle-not-found {
       color: #dc3545;
     }
-    
+
     .vehicle-valid {
       color: #28a745;
     }
-    
+
     .is-valid {
       border-color: #28a745 !important;
     }
-    
+
     .is-invalid {
       border-color: #dc3545 !important;
     }
@@ -300,7 +303,9 @@
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
 
-    .container h1, h2, h3 {
+    .container h1,
+    h2,
+    h3 {
       color: #2E8B57;
       margin-bottom: 20px;
     }
@@ -348,7 +353,8 @@
       font-weight: 500;
     }
 
-    .form-group input, .form-group select {
+    .form-group input,
+    .form-group select {
       width: 100%;
       padding: 10px;
       border: 1px solid #ddd;
@@ -356,7 +362,8 @@
       font-size: 16px;
     }
 
-    .form-group input:focus, .form-group select:focus {
+    .form-group input:focus,
+    .form-group select:focus {
       outline: none;
       border-color: #2E8B57;
       box-shadow: 0 0 5px rgba(46, 139, 87, 0.2);
@@ -411,13 +418,13 @@
       align-items: center;
       gap: 8px;
     }
-    
+
     .vehicle-number {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    
+
     .vehicle-icon {
       font-size: 1.2em;
     }
@@ -451,12 +458,12 @@
       position: relative;
       min-height: 60px;
       transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
-    
+
     .tyre-item:hover {
       transform: translateX(2px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .tyre-actions {
@@ -467,7 +474,7 @@
       display: flex;
       gap: 8px;
     }
-    
+
     .tyre-actions .btn {
       width: 30px;
       height: 30px;
@@ -479,16 +486,16 @@
       font-size: 12px;
       transition: all 0.2s ease;
     }
-    
+
     .tyre-actions .btn i {
       font-size: 12px;
       margin: 0;
     }
-    
+
     .tyre-actions .btn:hover {
       transform: scale(1.1);
     }
-    
+
     .status-badge {
       display: inline-block;
       padding: 2px 6px;
@@ -496,22 +503,22 @@
       font-size: 12px;
       font-weight: 500;
     }
-    
+
     .status-badge.active {
       background-color: #d4edda;
       color: #155724;
     }
-    
+
     .status-badge.worn {
       background-color: #fff3cd;
       color: #856404;
     }
-    
+
     .status-badge.damaged {
       background-color: #f8d7da;
       color: #721c24;
     }
-    
+
     .tyre-details {
       margin-right: 10px;
     }
@@ -608,7 +615,7 @@
       padding: 20px;
       border-radius: 8px;
       border-left: 4px solid #2E8B57;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
     .summary-card h3 {
@@ -719,6 +726,7 @@
       border-bottom: 2px solid #ddd;
       margin-bottom: 20px;
     }
+
     .tab-button {
       padding: 10px 15px;
       cursor: pointer;
@@ -730,79 +738,178 @@
       transition: color 0.3s, border-bottom 0.3s;
       margin-right: 10px;
     }
+
     .tab-button.active {
       color: #2E8B57;
       border-bottom: 3px solid #2E8B57;
     }
+
     .tab-content {
       display: none;
     }
+
     .tab-content.active {
       display: block;
     }
-    
+
     /* STYLES FROM TYRE_ANALYTICS.HTML */
-    .analytics-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px; margin-top: 16px; margin-bottom: 16px;}
-    .analytics-kpi{background:#fff;border:1px solid #e8efe9;border-radius:16px;padding:18px;box-shadow:0 10px 28px rgba(0,0,0,.08)}
-    .analytics-label{color:#5b6676;font-size:.9rem}
-    .analytics-value{font-size:1.6rem;font-weight:900;margin-top:6px}
-    .analytics-sub{font-size:.85rem;color:#5b6676}
-    .analytics-grid-2{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
-    .analytics-grid-2-even{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .analytics-card{background:#fff;border:1px solid #e8efe9;border-radius:16px;padding:16px;box-shadow:0 10px 28px rgba(0,0,0,.08)}
-    .analytics-card h3{margin:0 0 10px;font-size:1.05rem; color: #2E8B57;}
-    .analytics-chart-wrap{position:relative;height:320px}
-    .ai-list{margin:0;padding-left:18px;color:#3a4656}
-    .analytics-table-wrap{overflow:auto; margin-top:8px}
-    .analytics-table{width:100%;border-collapse:separate;border-spacing:0 8px}
-    .analytics-table thead th{font-size:.9rem;text-align:left;color:#425066;padding:10px 10px}
-    .analytics-table tbody td{background:#fff;border:1px solid #e8efe9;border-left:none;border-right:none;padding:12px 10px; box-shadow:0 1px 3px rgba(0,0,0,0.05);}
-    
-    @media (max-width: 1080px) {
-        .analytics-kpis{grid-template-columns:1fr 1fr}
-        .analytics-grid-2{grid-template-columns:1fr}
-        .analytics-grid-2-even{grid-template-columns:1fr}
+    .analytics-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+      margin-bottom: 16px;
     }
+
+    .analytics-kpi {
+      background: #fff;
+      border: 1px solid #e8efe9;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .08)
+    }
+
+    .analytics-label {
+      color: #5b6676;
+      font-size: .9rem
+    }
+
+    .analytics-value {
+      font-size: 1.6rem;
+      font-weight: 900;
+      margin-top: 6px
+    }
+
+    .analytics-sub {
+      font-size: .85rem;
+      color: #5b6676
+    }
+
+    .analytics-grid-2 {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 16px
+    }
+
+    .analytics-grid-2-even {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px
+    }
+
+    .analytics-card {
+      background: #fff;
+      border: 1px solid #e8efe9;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .08)
+    }
+
+    .analytics-card h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      color: #2E8B57;
+    }
+
+    .analytics-chart-wrap {
+      position: relative;
+      height: 320px
+    }
+
+    .ai-list {
+      margin: 0;
+      padding-left: 18px;
+      color: #3a4656
+    }
+
+    .analytics-table-wrap {
+      overflow: auto;
+      margin-top: 8px
+    }
+
+    .analytics-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px
+    }
+
+    .analytics-table thead th {
+      font-size: .9rem;
+      text-align: left;
+      color: #425066;
+      padding: 10px 10px
+    }
+
+    .analytics-table tbody td {
+      background: #fff;
+      border: 1px solid #e8efe9;
+      border-left: none;
+      border-right: none;
+      padding: 12px 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 1080px) {
+      .analytics-kpis {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .analytics-grid-2 {
+        grid-template-columns: 1fr
+      }
+
+      .analytics-grid-2-even {
+        grid-template-columns: 1fr
+      }
+    }
+
     @media (max-width: 768px) {
       .container {
         padding: 15px;
       }
-      
+
       .tyre-row {
         grid-template-columns: 1fr;
       }
-      
+
       .tyre-grid {
         grid-template-columns: 1fr;
       }
-      
+
       .vehicle-header {
         flex-direction: column;
         align-items: flex-start;
       }
-      
+
       .vehicle-actions {
         margin-top: 10px;
       }
-      .analytics-kpis{grid-template-columns:1fr}
-      .analytics-chart-wrap{height:280px}
+
+      .analytics-kpis {
+        grid-template-columns: 1fr
+      }
+
+      .analytics-chart-wrap {
+        height: 280px
+      }
     }
   </style>
 
-    <!-- 🔥 Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-    
-    <!-- 🔐 Configuration Loading -->
-    <script src="evm.js"></script>
-    <script src="secure-api-loader.js"></script>
+  <!-- 🔥 Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+
+  <!-- 🔐 Configuration Loading -->
+  <script src="evm.js"></script>
+  <script src="secure-api-loader.js"></script>
 </head>
+
 <body>
-    <!-- Load secure configuration first -->
-  
-  
+  <!-- Load secure configuration first -->
+
+
 
   <script src="navbar-loader.js"></script>
   <script src="table-pager.js"></script>
@@ -811,164 +918,175 @@
     <h1>Tyre Management & Analytics System</h1>
 
     <div class="tab-header">
-        <button class="tab-button active" onclick="openTab(event, 'Management')"><i class="fas fa-list-check"></i> Management</button>
-        <button class="tab-button" onclick="openTab(event, 'Analytics')"><i class="fas fa-chart-pie"></i> Analytics</button>
+      <button class="tab-button active" onclick="openTab(event, 'Management')"><i class="fas fa-list-check"></i>
+        Management</button>
+      <button class="tab-button" onclick="openTab(event, 'Analytics')"><i class="fas fa-chart-pie"></i>
+        Analytics</button>
     </div>
 
     <div id="Management" class="tab-content active">
-        
-        <div class="summary-dashboard">
-          <div class="summary-card">
-            <h3><i class="fas fa-truck"></i> Total Vehicles</h3>
-            <p id="totalVehiclesStat">0</p>
-          </div>
-          <div class="summary-card">
-            <h3><i class="fas fa-coins"></i> Total Tyre Investment</h3>
-            <p id="totalInvestmentStat">₹0</p>
+
+      <div class="summary-dashboard">
+        <div class="summary-card">
+          <h3><i class="fas fa-truck"></i> Total Vehicles</h3>
+          <p id="totalVehiclesStat">0</p>
+        </div>
+        <div class="summary-card">
+          <h3><i class="fas fa-coins"></i> Total Tyre Investment</h3>
+          <p id="totalInvestmentStat">₹0</p>
+        </div>
+      </div>
+
+      <div id="alertContainer"></div>
+
+      <div class="form-section">
+        <h3 id="formTitle">Add New Vehicle</h3>
+
+        <div class="form-group">
+          <label for="vehicleNumber">Vehicle Number: <span class="text-danger">*</span></label>
+          <div class="vehicle-input-container" style="position: relative;">
+            <input type="text" id="vehicleNumber" class="form-control" placeholder="e.g., RJ38GA2433" required
+              oninput="validateVehicleInput(this.value)">
+            <div id="vehicleSuggestions" class="vehicle-suggestions" style="display: none;"></div>
+            <div id="vehicleNotFound" class="vehicle-not-found" style="display: none;">
+              <i class="fas fa-exclamation-triangle"></i> This vehicle is not registered.
+            </div>
+            <div id="vehicleValid" class="vehicle-valid" style="display: none;">
+              <i class="fas fa-check-circle"></i> Vehicle is registered and valid.
+            </div>
           </div>
         </div>
 
-        <div id="alertContainer"></div>
-        
-        <div class="form-section">
-          <h3 id="formTitle">Add New Vehicle</h3>
-          
-          <div class="form-group">
-            <label for="vehicleNumber">Vehicle Number: <span class="text-danger">*</span></label> 
-            <div class="vehicle-input-container" style="position: relative;">
-              <input type="text" id="vehicleNumber" class="form-control" placeholder="e.g., RJ38GA2433" required oninput="validateVehicleInput(this.value)"> 
-              <div id="vehicleSuggestions" class="vehicle-suggestions" style="display: none;"></div> 
-              <div id="vehicleNotFound" class="vehicle-not-found" style="display: none;"> 
-                <i class="fas fa-exclamation-triangle"></i> This vehicle is not registered.
-              </div> 
-              <div id="vehicleValid" class="vehicle-valid" style="display: none;"> 
-                <i class="fas fa-check-circle"></i> Vehicle is registered and valid.
-              </div>
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="vehicleModel">Vehicle Model:</label>
-            <input type="text" id="vehicleModel" placeholder="e.g., Tata Bulker Z" required>
-          </div>
-          
-          <div id="tyresContainer">
-            <div class="tyre-container">
-              <div class="tyre-header">
-                <span class="tyre-title">Tyre 1</span>
-              </div>
-              <div class="tyre-row">
-                <div class="form-group">
-                  <label>Tyre Number:</label>
-                  <input type="text" class="tyre-number" placeholder="e.g., T001" required>
-                </div>
-                <div class="form-group">
-                  <label>Brand:</label>
-                  <input type="text" class="tyre-brand" placeholder="e.g., Apollo" required>
-                </div>
-                <div class="form-group">
-                  <label>Position:</label>
-                  <input type="text" class="tyre-position" placeholder="e.g., Front-Left" required>
-                </div>
-                <div class="form-group">
-                  <label>Added Date:</label>
-                  <input type="date" class="tyre-added-date" required>
-                </div>
-                <div class="form-group">
-                  <label>Cost (₹):</label>
-                  <input type="number" class="tyre-cost" placeholder="e.g., 5000" required>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <button class="btn btn-primary" onclick="addTyre()">Add Another Tyre</button>
-          <button class="btn btn-primary" id="saveVehicleBtn" onclick="saveVehicle()">Save Vehicle</button>
-          <button class="btn btn-danger" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">Cancel</button>
+        <div class="form-group">
+          <label for="vehicleModel">Vehicle Model:</label>
+          <input type="text" id="vehicleModel" placeholder="e.g., Tata Bulker Z" required>
         </div>
-        
-        <div class="form-section">
-          <h3>Vehicle List</h3>
-          <div class="search-section">
-            <input type="text" id="searchInput" class="search-input" placeholder="Search by vehicle number, model, or tyre details..." oninput="searchVehicles()">
-          </div>
 
-          <div id="vehicleList"></div>
-          <div style="margin-top: 16px;">
-            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-              <label for="entriesPerPageVehicles" style="font-weight:600;">Entries per page:</label>
-              <select id="entriesPerPageVehicles" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </select>
-              <div id="entriesInfoVehicles" style="color:#666; font-size:14px;"></div>
+        <div id="tyresContainer">
+          <div class="tyre-container">
+            <div class="tyre-header">
+              <span class="tyre-title">Tyre 1</span>
             </div>
-            <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
-              <button class="tab-nav-control" id="prevVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;" disabled>
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <div class="tab-navigation" id="tabNavigationVehicles" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
-              <button class="tab-nav-control" id="nextVehicles" style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
-                <i class="fas fa-chevron-right"></i>
-              </button>
+            <div class="tyre-row">
+              <div class="form-group">
+                <label>Tyre Number:</label>
+                <input type="text" class="tyre-number" placeholder="e.g., T001" required>
+              </div>
+              <div class="form-group">
+                <label>Brand:</label>
+                <input type="text" class="tyre-brand" placeholder="e.g., Apollo" required>
+              </div>
+              <div class="form-group">
+                <label>Position:</label>
+                <input type="text" class="tyre-position" placeholder="e.g., Front-Left" required>
+              </div>
+              <div class="form-group">
+                <label>Added Date:</label>
+                <input type="date" class="tyre-added-date" required>
+              </div>
+              <div class="form-group">
+                <label>Cost (₹):</label>
+                <input type="number" class="tyre-cost" placeholder="e.g., 5000" required>
+              </div>
             </div>
           </div>
         </div>
+
+        <button class="btn btn-primary" onclick="addTyre()">Add Another Tyre</button>
+        <button class="btn btn-primary" id="saveVehicleBtn" onclick="saveVehicle()">Save Vehicle</button>
+        <button class="btn btn-danger" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">Cancel</button>
+      </div>
+
+      <div class="form-section">
+        <h3>Vehicle List</h3>
+        <div class="search-section">
+          <input type="text" id="searchInput" class="search-input"
+            placeholder="Search by vehicle number, model, or tyre details..." oninput="searchVehicles()">
+        </div>
+
+        <div id="vehicleList"></div>
+        <div style="margin-top: 16px;">
+          <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+            <label for="entriesPerPageVehicles" style="font-weight:600;">Entries per page:</label>
+            <select id="entriesPerPageVehicles" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+            <div id="entriesInfoVehicles" style="color:#666; font-size:14px;"></div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+            <button class="tab-nav-control" id="prevVehicles"
+              style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;"
+              disabled>
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="tab-navigation" id="tabNavigationVehicles"
+              style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+            <button class="tab-nav-control" id="nextVehicles"
+              style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="Analytics" class="tab-content">
-        <section class="analytics-kpis">
-            <div class="analytics-kpi"><div class="analytics-label">Avg Tyre Health</div><div class="analytics-value" id="kpiHealth">0%</div><div class="analytics-sub">Across fleet</div></div>
-            <div class="analytics-kpi"><div class="analytics-label">Active Tyres</div><div class="analytics-value" id="kpiActive">0</div><div class="analytics-sub">Mounted & in‑use</div></div>
-            <div class="analytics-kpi"><div class="analytics-label">Attention Needed</div><div class="analytics-value" id="kpiAlerts">0</div><div class="analytics-sub">Health < 60% or age > 2y</div></div>
-            <div class="analytics-kpi"><div class="analytics-label">Total Tyre Cost</div><div class="analytics-value" id="kpiCost">₹0</div><div class="analytics-sub">Purchase + maintenance</div></div>
-        </section>
-    
-        <section class="analytics-grid-2" style="margin-top:16px">
-            <div class="analytics-card">
-              <h3>Tyre Health by Vehicle</h3>
-              <div class="analytics-chart-wrap"><canvas id="healthByVehicle"></canvas></div>
-            </div>
-            <div class="analytics-card">
-              <h3>Brand Distribution</h3>
-              <div class="analytics-chart-wrap"><canvas id="brandShare"></canvas></div>
-            </div>
-        </section>
-    
-        <section class="analytics-grid-2-even" style="margin-top:16px">
-            <div class="analytics-card">
-              <h3>Cost per Km (Trend)</h3>
-              <div class="analytics-chart-wrap"><canvas id="cpkTrend"></canvas></div>
-            </div>
-            <div class="analytics-card">
-              <h3>AI Insights</h3>
-              <ul id="aiInsights" class="ai-list">
-                <li>Loading insights…</li>
-              </ul>
-            </div>
-        </section>
-    
-        <section class="analytics-card" style="margin-top:16px">
-          <h3 style="margin:0 0 8px">Tyre Inventory</h3>
-          <div class="analytics-table-wrap">
-            <table class="analytics-table">
-              <thead>
-                <tr>
-                  <th>Tyre ID</th><th>Vehicle</th><th>Position</th><th>Brand</th><th>Size</th><th>Installed</th><th>Km</th><th>Health</th><th>Status</th><th>Cost</th>
-                </tr>
-              </thead>
-              <tbody id="tyreTbodyAnalytics"></tbody> </table>
-          </div>
-        </section>
+      <section class="analytics-kpis">
+        <div class="analytics-kpi">
+          <div class="analytics-label">Avg Tyre Health</div>
+          <div class="analytics-value" id="kpiHealth">0%</div>
+          <div class="analytics-sub">Across fleet</div>
+        </div>
+        <div class="analytics-kpi">
+          <div class="analytics-label">Active Tyres</div>
+          <div class="analytics-value" id="kpiActive">0</div>
+          <div class="analytics-sub">Mounted & in‑use</div>
+        </div>
+        <div class="analytics-kpi">
+          <div class="analytics-label">Attention Needed</div>
+          <div class="analytics-value" id="kpiAlerts">0</div>
+          <div class="analytics-sub">Health < 60% or age> 2y</div>
+        </div>
+        <div class="analytics-kpi">
+          <div class="analytics-label">Total Tyre Cost</div>
+          <div class="analytics-value" id="kpiCost">₹0</div>
+          <div class="analytics-sub">Purchase + maintenance</div>
+        </div>
+      </section>
+
+      <section class="analytics-grid-2" style="margin-top:16px">
+        <div class="analytics-card">
+          <h3>Tyre Health by Vehicle</h3>
+          <div class="analytics-chart-wrap"><canvas id="healthByVehicle"></canvas></div>
+        </div>
+        <div class="analytics-card">
+          <h3>Brand Distribution</h3>
+          <div class="analytics-chart-wrap"><canvas id="brandShare"></canvas></div>
+        </div>
+      </section>
+
+      <section class="analytics-grid-2-even" style="margin-top:16px">
+        <div class="analytics-card">
+          <h3>Cost per Km (Trend)</h3>
+          <div class="analytics-chart-wrap"><canvas id="cpkTrend"></canvas></div>
+        </div>
+
+      </section>
+
+
     </div>
 
   </div>
 
-  <div id="changeTyreModal" style="display:none; position:fixed; z-index:1050; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center; flex-direction:column;">
-    <div style="background-color:#fff; padding:25px; border-radius:10px; width:90%; max-width:600px; position:relative;">
-      <span onclick="closeChangeTyreModal()" style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer;">&times;</span>
+  <div id="changeTyreModal"
+    style="display:none; position:fixed; z-index:1050; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center; flex-direction:column;">
+    <div
+      style="background-color:#fff; padding:25px; border-radius:10px; width:90%; max-width:600px; position:relative;">
+      <span onclick="closeChangeTyreModal()"
+        style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer;">&times;</span>
       <h3 id="changeTyreModalTitle">Change Tyre</h3>
       <p>Changing Tyre: <strong id="sourceTyreInfo"></strong> from Vehicle: <strong id="sourceVehicleInfo"></strong></p>
 
@@ -1000,53 +1118,55 @@
     </div>
   </div>
 
-  
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script> <script type="module">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged ,signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getDatabase, ref, set, push, onValue, update, remove, get, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     // ... (Firebase Config and init remains) ...
     // Load Firebase configuration securely from EVM
     let firebaseConfig;
-    
+
     try {
       // Get Firebase configuration from secure EVM system
       // Initialize Firebase with proper error handling
-    try {
+      try {
         if (!window.FIREBASE_CONFIG) {
-            throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
+          throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
         }
-        
+
         if (!window.FIREBASE_CONFIG.databaseURL) {
-            throw new Error('Firebase databaseURL not found in configuration.');
+          throw new Error('Firebase databaseURL not found in configuration.');
         }
-        
+
         if (!window.FIREBASE_CONFIG.projectId) {
-            throw new Error('Firebase projectId not found in configuration.');
+          throw new Error('Firebase projectId not found in configuration.');
         }
-        
+
         firebaseConfig = window.FIREBASE_CONFIG;
-        
+
         // Check if we're using fallback values
         if (false) { // Condition is always false in the final logic, keeping as per original structure
-            
+
         } else {
-            
-            
-            
+
+
+
         }
-    } catch (error) {
+      } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
-        
+
         // Use fallback configuration to prevent complete failure
         window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig();
-        
-    }} catch (error) {
+
+      }
+    } catch (error) {
       console.error('❌ Failed to load Firebase configuration:', error);
-      
+
       // Use fallback configuration to prevent complete failure
       firebaseConfig = window.FIREBASE_CONFIG;
     }
@@ -1074,165 +1194,134 @@
     // ANALYTICS STATE AND FUNCTIONS (Copied from tyre_analytics.html)
     // Chart theme
     const gridColor = '#e8efe9';
-    Chart.defaults.color = '#3b4758';
-    Chart.defaults.borderColor = gridColor;
-    Chart.defaults.font.family = 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
-    const analyticsBaseOpts = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'top', labels:{ boxWidth:12 }}, tooltip:{ mode:'index', intersect:false }}, scales:{ x:{ grid:{ color:gridColor }}, y:{ grid:{ color:gridColor }, beginAtZero:true }}};
+    Chart.defaults.color = '#3b4758';
+    Chart.defaults.borderColor = gridColor;
+    Chart.defaults.font.family = 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+    const analyticsBaseOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 12 } }, tooltip: { mode: 'index', intersect: false } }, scales: { x: { grid: { color: gridColor } }, y: { grid: { color: gridColor }, beginAtZero: true } } };
     let analyticsCharts = {};
     let analyticsRows = [];
 
-    const INR = n => '₹'+(Number(n)||0).toLocaleString('en-IN');
-    function healthColor(p){ return p>=75? '#22c55e' : p>=50? '#f59e0b' : '#ef4444'; }
-    function computeHealth(t){
-      const km = Number(t.totalRunningKm||0); // Adjusted to use totalRunningKm from tyre.html structure
-      const installed = t.addedAt ? new Date(t.addedAt) : null;
+    const INR = n => '₹' + (Number(n) || 0).toLocaleString('en-IN');
+    function healthColor(p) { return p >= 75 ? '#22c55e' : p >= 50 ? '#f59e0b' : '#ef4444'; }
+    function computeHealth(t) {
+      const km = Number(t.totalRunningKm || 0); // Adjusted to use totalRunningKm from tyre.html structure
+      const installed = t.addedAt ? new Date(t.addedAt) : null;
       // Convert addedAt (timestamp) to Date
       const installDate = t.addedAt ? new Date(t.addedAt) : null;
-      const ageYears = installDate? (Date.now()-installDate.getTime())/31557600000 : 0;
-      let score = 100 - (km/50000)*100 - ageYears*10; // Simple heuristic
-      if (t.status==='damaged') score -= 30;
-      return Math.max(0, Math.min(100, score));
-    }
-    function setUpdated(){ 
-        // We'll update a general last sync time if needed, but not critical for this integration
+      const ageYears = installDate ? (Date.now() - installDate.getTime()) / 31557600000 : 0;
+      let score = 100 - (km / 50000) * 100 - ageYears * 10; // Simple heuristic
+      if (t.status === 'damaged') score -= 30;
+      return Math.max(0, Math.min(100, score));
+    }
+    function setUpdated() {
+      // We'll update a general last sync time if needed, but not critical for this integration
     }
 
-    function destroyAnalyticsCharts(){ Object.values(analyticsCharts).forEach(c=>c.destroy()); analyticsCharts = {}; }
+    function destroyAnalyticsCharts() { Object.values(analyticsCharts).forEach(c => c.destroy()); analyticsCharts = {}; }
 
-    function flattenTyreData(){
-      analyticsRows = [];
-      for (const [vehKey, v] of Object.entries(allVehiclesData)){
-        const vno = v.vehicleNumber || vehKey;
-        const tyres = v.tyres || []; // tyres is an array in tyre.html
-        for (const t of tyres){
-          const installDate = t.addedAt ? new Date(t.addedAt) : null;
+    function flattenTyreData() {
+      analyticsRows = [];
+      for (const [vehKey, v] of Object.entries(allVehiclesData)) {
+        const vno = v.vehicleNumber || vehKey;
+        const tyres = v.tyres || []; // tyres is an array in tyre.html
+        for (const t of tyres) {
+          const installDate = t.addedAt ? new Date(t.addedAt) : null;
           // Calculate install date
-          const ageYears = installDate? ((Date.now()-installDate.getTime())/31557600000) : 0;
+          const ageYears = installDate ? ((Date.now() - installDate.getTime()) / 31557600000) : 0;
           const health = computeHealth(t);
-          const r = {
-            id: t.number, // Using tyre number as ID
-            vehicle: vno,
-            position: t.position || 'N/A',
-            brand: t.brand || '',
-            size: t.size || 'N/A', // Size is not in data, defaulting
-            installDate: installDate? installDate.toLocaleDateString() : 'N/A',
-            km: Number(t.totalRunningKm||0),
-            cost: Number(t.cost||0),
-            status: t.status || 'active',
-            health: health,
-            installAgeYears: ageYears,
-            installMonth: installDate? installDate.getMonth() : 0
-          };
-          analyticsRows.push(r);
-        }
-      }
+          const r = {
+            id: t.number, // Using tyre number as ID
+            vehicle: vno,
+            position: t.position || 'N/A',
+            brand: t.brand || '',
+            size: t.size || 'N/A', // Size is not in data, defaulting
+            installDate: installDate ? installDate.toLocaleDateString() : 'N/A',
+            km: Number(t.totalRunningKm || 0),
+            cost: Number(t.cost || 0),
+            status: t.status || 'active',
+            health: health,
+            installAgeYears: ageYears,
+            installMonth: installDate ? installDate.getMonth() : 0
+          };
+          analyticsRows.push(r);
+        }
+      }
       renderAnalytics();
-    }
-
-    function renderAnalytics(){
-        renderAnalyticsKPIs();
-        renderAnalyticsCharts();
-        renderAnalyticsTable();
-        renderAnalyticsInsights();
     }
 
-    function renderAnalyticsKPIs(){
-      const avgHealth = analyticsRows.length? analyticsRows.reduce((a,b)=>a+b.health,0)/analyticsRows.length : 0;
-      const active = analyticsRows.filter(r=> r.status==='active').length;
-      const alerts = analyticsRows.filter(r=> r.health<60 || (r.installAgeYears||0)>2).length;
-      const totalCost = analyticsRows.reduce((a,b)=> a + (Number(b.cost||0)), 0);
-      document.getElementById('kpiHealth').textContent = `${avgHealth.toFixed(1)}%`;
-      document.getElementById('kpiActive').textContent = active;
-      document.getElementById('kpiAlerts').textContent = alerts;
-      document.getElementById('kpiCost').textContent = INR(totalCost);
-    }
+    function renderAnalytics() {
+      renderAnalyticsKPIs();
+      renderAnalyticsCharts();
 
-    function renderAnalyticsCharts(){
-      destroyAnalyticsCharts();
-      // Health by vehicle (avg)
-      const byVeh = {};
-      analyticsRows.forEach(r=>{ if(!byVeh[r.vehicle]) byVeh[r.vehicle]=[]; byVeh[r.vehicle].push(r.health); });
-      const vLabels = Object.keys(byVeh);
-      const vData = vLabels.map(v=> byVeh[v].reduce((a,b)=>a+b,0)/byVeh[v].length);
-      analyticsCharts.hbv = new Chart(document.getElementById('healthByVehicle'), {
-        type:'bar', data:{ labels:vLabels, datasets:[{ label:'Avg Health %', data:vData, backgroundColor:'#2E8B57' }]}, options: analyticsBaseOpts
-      });
+    }
 
-      // Brand share
-      const byBrand = {};
-      analyticsRows.forEach(r=>{ const b=r.brand||'—'; byBrand[b]=(byBrand[b]||0)+1; });
-      const bLabels = Object.keys(byBrand); const bVals = Object.values(byBrand);
-      analyticsCharts.brand = new Chart(document.getElementById('brandShare'), {
-        type:'doughnut', data:{ labels:bLabels, datasets:[{ data:bVals, backgroundColor:['#2E8B57','#3CB371','#20B2AA','#66CDAA','#8FBC8F','#A1E3B5','#7BD389','#43B97F']}]}, options:{ plugins:{ legend:{ position:'right' }}}
-      });
+    function renderAnalyticsKPIs() {
+      const avgHealth = analyticsRows.length ? analyticsRows.reduce((a, b) => a + b.health, 0) / analyticsRows.length : 0;
+      const active = analyticsRows.filter(r => r.status === 'active').length;
+      const alerts = analyticsRows.filter(r => r.health < 60 || (r.installAgeYears || 0) > 2).length;
+      const totalCost = analyticsRows.reduce((a, b) => a + (Number(b.cost || 0)), 0);
+      document.getElementById('kpiHealth').textContent = `${avgHealth.toFixed(1)}%`;
+      document.getElementById('kpiActive').textContent = active;
+      document.getElementById('kpiAlerts').textContent = alerts;
+      document.getElementById('kpiCost').textContent = INR(totalCost);
+    }
 
-      // Cost per km trend (monthly buckets from install dates as a proxy)
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const buckets = Array.from({length:12},()=>({cost:0, km:0}));
-      analyticsRows.forEach(r=>{ const i = (r.installMonth||0)%12; buckets[i].cost += Number(r.cost||0); buckets[i].km += Number(r.km||0); });
-      const cpk = buckets.map(b=> b.km? b.cost/b.km : 0);
-      analyticsCharts.cpk = new Chart(document.getElementById('cpkTrend'), { type:'line', data:{ labels:months, datasets:[{ label:'₹/km', data:cpk, tension:.25, borderColor:'#2E8B57', backgroundColor:'rgba(46,139,87,.12)', fill:true }]}, options: analyticsBaseOpts });
-    }
+    function renderAnalyticsCharts() {
+      destroyAnalyticsCharts();
+      // Health by vehicle (avg)
+      const byVeh = {};
+      analyticsRows.forEach(r => { if (!byVeh[r.vehicle]) byVeh[r.vehicle] = []; byVeh[r.vehicle].push(r.health); });
+      const vLabels = Object.keys(byVeh);
+      const vData = vLabels.map(v => byVeh[v].reduce((a, b) => a + b, 0) / byVeh[v].length);
+      analyticsCharts.hbv = new Chart(document.getElementById('healthByVehicle'), {
+        type: 'bar', data: { labels: vLabels, datasets: [{ label: 'Avg Health %', data: vData, backgroundColor: '#2E8B57' }] }, options: analyticsBaseOpts
+      });
 
-    function renderAnalyticsTable(){
-      const tbody = document.getElementById('tyreTbodyAnalytics');
-      tbody.innerHTML = '';
-      analyticsRows.forEach(r=>{
-        const tr = document.createElement('tr');
-        const hc = healthColor(r.health);
-        tr.innerHTML = `
-          <td>${r.id}</td>
-          <td>${r.vehicle}</td>
-          <td>${r.position}</td>
-          <td>${r.brand||'-'}</td>
-          <td>${r.size||'-'}</td>
-          <td>${r.installDate||'-'}</td>
-          <td>${(r.km||0).toLocaleString('en-IN')}</td>
-          <td><span style="display:inline-block;background:${hc}1f;color:${hc};padding:6px 10px;border-radius:999px;font-weight:700;font-size:.8rem">${r.health.toFixed(1)}%</span></td>
-          <td>${r.status}</td>
-          <td>${INR(r.cost||0)}</td>`;
-        tbody.appendChild(tr);
-      });
-    }
+      // Brand share
+      const byBrand = {};
+      analyticsRows.forEach(r => { const b = r.brand || '—'; byBrand[b] = (byBrand[b] || 0) + 1; });
+      const bLabels = Object.keys(byBrand); const bVals = Object.values(byBrand);
+      analyticsCharts.brand = new Chart(document.getElementById('brandShare'), {
+        type: 'doughnut', data: { labels: bLabels, datasets: [{ data: bVals, backgroundColor: ['#2E8B57', '#3CB371', '#20B2AA', '#66CDAA', '#8FBC8F', '#A1E3B5', '#7BD389', '#43B97F'] }] }, options: { plugins: { legend: { position: 'right' } } }
+      });
 
-    function renderAnalyticsInsights(){
-      const list = document.getElementById('aiInsights');
-      if (!analyticsRows.length){ list.innerHTML = '<li>No tyres found.</li>'; return; }
-      const avg = analyticsRows.reduce((a,b)=>a+b.health,0)/analyticsRows.length;
-      const low = analyticsRows.filter(r=>r.health<60);
-      const oldest = [...analyticsRows].sort((a,b)=> (a.installAgeYears||0)-(b.installAgeYears||0)).pop();
-      list.innerHTML = `
-        <li>Average tyre health across fleet is <strong>${avg.toFixed(1)}%</strong>.</li>
-        <li><strong>${low.length}</strong> tyres likely need attention (health < 60%).</li>
-        <li>Oldest install on <strong>${oldest?.vehicle||'-'}</strong> (${(oldest?.installAgeYears||0).toFixed(1)} years).</li>
-        <li>Tip: Rotate front ↔ rear every 8–10k km to improve wear balance by ~12%.</li>`;
-    }
+      // Cost per km trend (monthly buckets from install dates as a proxy)
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const buckets = Array.from({ length: 12 }, () => ({ cost: 0, km: 0 }));
+      analyticsRows.forEach(r => { const i = (r.installMonth || 0) % 12; buckets[i].cost += Number(r.cost || 0); buckets[i].km += Number(r.km || 0); });
+      const cpk = buckets.map(b => b.km ? b.cost / b.km : 0);
+      analyticsCharts.cpk = new Chart(document.getElementById('cpkTrend'), { type: 'line', data: { labels: months, datasets: [{ label: '₹/km', data: cpk, tension: .25, borderColor: '#2E8B57', backgroundColor: 'rgba(46,139,87,.12)', fill: true }] }, options: analyticsBaseOpts });
+    }
+
+
+
+
 
     // TAB SWITCHING FUNCTION (NEW)
-    window.openTab = function(evt, tabName) {
-        // Declare all variables
-        let i, tabcontent, tablinks;
+    window.openTab = function (evt, tabName) {
+      // Declare all variables
+      let i, tabcontent, tablinks;
 
-        // Get all elements with class="tab-content" and hide them
-        tabcontent = document.getElementsByClassName("tab-content");
-        for (i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
-        }
+      // Get all elements with class="tab-content" and hide them
+      tabcontent = document.getElementsByClassName("tab-content");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
 
-        // Get all elements with class="tab-button" and remove the class "active"
-        tablinks = document.getElementsByClassName("tab-button");
-        for (i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(" active", "");
-        }
+      // Get all elements with class="tab-button" and remove the class "active"
+      tablinks = document.getElementsByClassName("tab-button");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
 
-        // Show the current tab, and add an "active" class to the button that opened the tab
-        document.getElementById(tabName).style.display = "block";
-        evt.currentTarget.className += " active";
-        
-        // If switching to the Analytics tab, ensure charts re-render
-        if(tabName === 'Analytics' && analyticsRows.length > 0) {
-            renderAnalyticsCharts();
-        }
+      // Show the current tab, and add an "active" class to the button that opened the tab
+      document.getElementById(tabName).style.display = "block";
+      evt.currentTarget.className += " active";
+
+      // If switching to the Analytics tab, ensure charts re-render
+      if (tabName === 'Analytics' && analyticsRows.length > 0) {
+        renderAnalyticsCharts();
+      }
     }
 
 
@@ -1245,22 +1334,22 @@
     // Function to load registered vehicles from add.html data (FIXED)
     async function loadRegisteredVehicles() {
       // Use currentUser.uid directly.
-      if (!currentUser || !currentUser.uid) return; 
-      
+      if (!currentUser || !currentUser.uid) return;
+
       try {
         const vehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
         const snapshot = await get(vehiclesRef);
-        
+
         if (snapshot.exists()) {
           const vehicles = snapshot.val();
           // Filter vehicles to get vehicle numbers.
-          registeredVehicles = Object.values(vehicles) 
-            .map(vehicle => vehicle.vehicleNumber ? vehicle.vehicleNumber.toUpperCase() : '') 
+          registeredVehicles = Object.values(vehicles)
+            .map(vehicle => vehicle.vehicleNumber ? vehicle.vehicleNumber.toUpperCase() : '')
             .filter(v => v !== '');
-          
+
         } else {
           registeredVehicles = [];
-          
+
         }
       } catch (error) {
         console.error("Error loading registered vehicles:", error);
@@ -1284,8 +1373,8 @@
         const userSnap = await get(ref(db, `users/${user.uid}`));
         const userData = userSnap.exists() ? userSnap.val() : {};
         const role = (userData.role || userData.profile?.role || userData.profile?.userRole || 'normal').toLowerCase();
-        
-        
+
+
       } catch (e) {
         // If the entire read fails, it defaults to restricted which is the safest path.
         console.warn('Failed to read user role, defaulting to restricted', e);
@@ -1293,7 +1382,7 @@
         setTimeout(() => { window.location.href = 'home.html'; }, 1200);
         return;
       }
-      
+
       // Load registered vehicles first
       await loadRegisteredVehicles();
 
@@ -1301,7 +1390,7 @@
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('vehicleNumber')) {
         document.getElementById('vehicleNumber').value = urlParams.get('vehicleNumber') || '';
-        
+
         // Pre-fill the first tyre's details
         const firstTyreContainer = document.querySelector('.tyre-container');
         if (firstTyreContainer) {
@@ -1318,7 +1407,7 @@
     });
 
     // Live validation for vehicle number input
-    window.validateVehicleInput = function(query) {
+    window.validateVehicleInput = function (query) {
       const suggestionsContainer = document.getElementById('vehicleSuggestions');
       const notFoundMessage = document.getElementById('vehicleNotFound');
       const validMessage = document.getElementById('vehicleValid');
@@ -1379,20 +1468,20 @@
     }
 
     // Show alert message
-    window.showAlert = function(message, type) {
+    window.showAlert = function (message, type) {
       const alertContainer = document.getElementById('alertContainer');
       const alert = document.createElement('div');
       alert.className = `alert alert-${type}`;
       alert.textContent = message;
       alertContainer.appendChild(alert);
-      
+
       setTimeout(() => {
         alert.remove();
       }, 3000);
     };
 
     // Add new tyre input fields
-    window.addTyre = function() {
+    window.addTyre = function () {
       // Get all existing tyre numbers to find the highest one
       const tyreNumbers = [];
       document.querySelectorAll('.tyre-number').forEach(input => {
@@ -1401,12 +1490,12 @@
           tyreNumbers.push(num);
         }
       });
-      
+
       // Start from 1 if no tyres, otherwise continue from the highest number + 1
       const nextTyreNum = tyreNumbers.length > 0 ? Math.max(...tyreNumbers) + 1 : 1;
-      
+
       const tyresContainer = document.getElementById('tyresContainer');
-      
+
       const tyreDiv = document.createElement('div');
       tyreDiv.className = 'tyre-container';
       tyreDiv.innerHTML = `
@@ -1437,43 +1526,43 @@
           </div>
         </div>
       `;
-      
+
       tyresContainer.appendChild(tyreDiv);
-      
+
       // Update the tyre count to the highest number used
       tyreCount = Math.max(tyreCount, nextTyreNum);
     };
 
     // Remove tyre input fields
-    window.removeTyre = function(button) {
+    window.removeTyre = function (button) {
       const tyreContainer = button.closest('.tyre-container');
       tyreContainer.remove();
-      
+
       // Update tyre titles
       const tyreTitles = document.querySelectorAll('.tyre-title');
       tyreTitles.forEach((title, index) => {
         title.textContent = `Tyre ${index + 1}`;
       });
-      
+
       tyreCount = tyreTitles.length;
     };
 
     // Save vehicle and tyres - FIXED VERSION
-    window.saveVehicle = async function() {
+    window.saveVehicle = async function () {
       const vehicleNumber = document.getElementById('vehicleNumber').value.trim().toUpperCase();
       const vehicleModel = document.getElementById('vehicleModel').value.trim();
-      
+
       if (!vehicleNumber || !vehicleModel) {
         showAlert('Please fill in all vehicle details', 'warning');
         return;
       }
-      
+
       // Validate if vehicle is registered
       if (!registeredVehicles.includes(vehicleNumber)) {
         showAlert(`Vehicle ${vehicleNumber} is not registered. Please register the vehicle first in the Vehicle & Driver section.`, 'danger');
         return;
       }
-      
+
       // Check for duplicate vehicle number in tyre management system
       if (!editingVehicleId) {
         const vehicleExists = Object.values(allVehiclesData).some(
@@ -1489,27 +1578,27 @@
       const tyreContainers = document.querySelectorAll('.tyre-container');
       const newTyres = [];
       const tyreNumbers = new Set();
-      
+
       for (const container of tyreContainers) {
         const tyreNumber = container.querySelector('.tyre-number').value.trim();
         const tyreBrand = container.querySelector('.tyre-brand').value.trim();
         const tyrePosition = container.querySelector('.tyre-position').value.trim();
         const tyreAddedDate = container.querySelector('.tyre-added-date').value;
         const tyreCost = container.querySelector('.tyre-cost').value;
-        
+
         if (!tyreNumber || !tyreBrand || !tyrePosition || !tyreAddedDate || !tyreCost) {
           showAlert('Please fill in all tyre details, including cost', 'warning');
           return;
         }
-        
+
         // Check for duplicate tyre numbers within the form
         if (tyreNumbers.has(tyreNumber)) {
           showAlert(`Duplicate tyre number: ${tyreNumber}`, 'danger');
           return;
         }
-        
+
         tyreNumbers.add(tyreNumber);
-        
+
         newTyres.push({
           number: tyreNumber,
           brand: tyreBrand,
@@ -1519,28 +1608,28 @@
           totalRunningKm: 0 // Initialize running KMs for new tyres
         });
       }
-      
+
       if (newTyres.length === 0) {
         showAlert('Please add at least one tyre', 'warning');
         return;
       }
-      
+
       try {
         // Check if we're in edit mode
         if (editingVehicleId) {
           // Get the existing vehicle data
           const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${editingVehicleId}`);
           const snapshot = await get(vehicleRef);
-          
+
           if (snapshot.exists()) {
             const existingVehicle = snapshot.val();
             const existingTyres = existingVehicle.tyres || [];
-            
+
             // If we're editing a specific tyre (tyre edit mode)
             const isEditingSingleTyre = document.getElementById('saveVehicleBtn').textContent === 'Update Tyre';
-            
+
             let updatedTyres = [];
-            
+
             if (isEditingSingleTyre) {
               // In tyre edit mode, replace only the edited tyre and keep others
               const editedTyreNumber = document.querySelector('.tyre-number[readonly]')?.value;
@@ -1550,37 +1639,37 @@
                 // Fallback if the readonly field isn't found, though it should be.
                 updatedTyres = [...existingTyres, ...newTyres];
               }
-            }else if (document.getElementById('saveVehicleBtn').textContent === 'Update Vehicle') {
+            } else if (document.getElementById('saveVehicleBtn').textContent === 'Update Vehicle') {
               // In vehicle edit mode, we replace all tyres with the ones from the form.
-              
+
               // We'll iterate through existingTyres and update with newTyres where the number matches
               updatedTyres = existingTyres.map(existingT => {
-                  const matchingNewT = newTyres.find(newT => newT.number === existingT.number);
-                  return matchingNewT ? { ...existingT, ...matchingNewT } : existingT;
+                const matchingNewT = newTyres.find(newT => newT.number === existingT.number);
+                return matchingNewT ? { ...existingT, ...matchingNewT } : existingT;
               }).filter(existingT => newTyres.some(newT => newT.number === existingT.number)); // Remove tyres not in the form
-              
+
               // Add any entirely new tyres from the form
               const existingTyreNumbers = existingTyres.map(t => t.number);
               newTyres.filter(newT => !existingTyreNumbers.includes(newT.number)).forEach(newT => updatedTyres.push(newT));
-              
-            }else {
+
+            } else {
               // In add tyre mode, add new tyres to existing ones
               updatedTyres = [...existingTyres, ...newTyres];
             }
-            
+
             // Check for duplicate tyre numbers across all vehicles (FIXED)
             const allVehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
             const allVehiclesSnapshot = await get(allVehiclesRef);
-            
+
             if (allVehiclesSnapshot.exists()) {
               const allVehicles = allVehiclesSnapshot.val();
-              
+
               for (const vehicleKey in allVehicles) {
                 // Skip the current vehicle we're editing
                 if (vehicleKey === editingVehicleId) continue;
-                
+
                 const vehicleTyres = allVehicles[vehicleKey].tyres || []; // Use the tyres array from the vehicle
-                
+
                 for (const newTyre of newTyres) {
                   const isDuplicate = vehicleTyres.some(t => t.number === newTyre.number);
                   if (isDuplicate) {
@@ -1590,7 +1679,7 @@
                 }
               }
             }
-            
+
             // Update the vehicle with the combined tyres
             await update(vehicleRef, {
               vehicleNumber,
@@ -1598,14 +1687,14 @@
               tyres: updatedTyres,
               updatedAt: Date.now()
             });
-            
+
             showAlert(isEditingSingleTyre ? 'Tyre updated successfully' : 'Tyres added successfully', 'success');
           }
         } else {
           // This is a new vehicle
           const vehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
           const snapshot = await get(vehiclesRef);
-          
+
           // Check for duplicate vehicle number
           if (snapshot.exists()) {
             const vehicles = snapshot.val();
@@ -1616,7 +1705,7 @@
               }
             }
           }
-          
+
           // Check for duplicate tyre numbers across all vehicles (FIXED)
           if (snapshot.exists()) {
             const vehicles = snapshot.val();
@@ -1631,7 +1720,7 @@
               }
             }
           }
-          
+
           // Add new vehicle
           await push(vehiclesRef, {
             vehicleNumber,
@@ -1640,10 +1729,10 @@
             createdAt: Date.now(),
             updatedAt: Date.now()
           });
-          
+
           showAlert('Vehicle added successfully', 'success');
         }
-        
+
         // Reset form and reload the vehicle list
         resetForm();
         loadVehicles();
@@ -1654,7 +1743,7 @@
     };
 
     // Load vehicles from database with card deck layout (single realtime listener) (FIXED)
-    window.loadVehicles = function() {
+    window.loadVehicles = function () {
       // Use currentUser.uid directly.
       const vehicleListContainer = document.getElementById('vehicleList');
       const vehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
@@ -1830,7 +1919,7 @@
     }
 
     // Toggle vehicle card expansion
-    window.toggleVehicleCard = function(vehicleId) {
+    window.toggleVehicleCard = function (vehicleId) {
       const card = document.getElementById(`vehicle-${vehicleId}`);
       if (card) {
         card.classList.toggle('expanded');
@@ -1838,38 +1927,38 @@
     };
 
     // Search vehicles function
-    window.searchVehicles = function() {
+    window.searchVehicles = function () {
       searchTermVehicles = document.getElementById('searchInput').value.trim();
       renderVehiclesWithPagination();
     };
 
     // Edit vehicle (FIXED)
-    window.editVehicle = function(vehicleId) {
+    window.editVehicle = function (vehicleId) {
       const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
-      
+
       get(vehicleRef).then((snapshot) => {
         if (snapshot.exists()) {
           const vehicle = snapshot.val();
-          
+
           // Set form to edit mode
           document.getElementById('formTitle').textContent = 'Edit Vehicle';
           document.getElementById('vehicleNumber').value = vehicle.vehicleNumber;
           document.getElementById('vehicleModel').value = vehicle.vehicleModel;
-          
+
           // Clear existing tyre inputs
           document.getElementById('tyresContainer').innerHTML = '';
-          
+
           // Add tyre inputs for each existing tyre
           const tyres = vehicle.tyres || [];
           tyreCount = 0;
-          
+
           // First pass: find the highest tyre number
           let maxTyreNumber = 0;
           for (const tyre of tyres) {
             const tyreNum = parseInt(tyre.number.replace(/\D/g, '')) || 0;
             maxTyreNumber = Math.max(maxTyreNumber, tyreNum);
           }
-          
+
           // Second pass: create tyre inputs
           for (const tyre of tyres) {
             tyreCount++;
@@ -1902,23 +1991,23 @@
                 </div>
               </div>
             `;
-            
+
             document.getElementById('tyresContainer').appendChild(tyreDiv);
           }
-          
+
           // Update tyreCount to the highest number found or the number of tyres, whichever is higher
           tyreCount = Math.max(tyreCount, maxTyreNumber);
-          
+
           // If no tyres, add one empty tyre input
           if (tyreCount === 0) {
             addTyre();
           }
-          
+
           // Set editing state
           editingVehicleId = vehicleId;
           document.getElementById('saveVehicleBtn').textContent = 'Update Vehicle';
           document.getElementById('cancelEditBtn').style.display = 'inline-block';
-          
+
           // Scroll to form
           document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
         }
@@ -1926,7 +2015,7 @@
     };
 
     // Delete vehicle (FIXED)
-    window.deleteVehicle = function(vehicleId) {
+    window.deleteVehicle = function (vehicleId) {
       if (confirm('Are you sure you want to delete this vehicle? All its tyres will be moved to the disposal history.')) {
         const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
         get(vehicleRef).then(snapshot => {
@@ -1967,33 +2056,33 @@
     };
 
     // Add tyre to existing vehicle (FIXED)
-    window.addTyreToVehicle = function(vehicleId) {
+    window.addTyreToVehicle = function (vehicleId) {
       // Set form to add tyre mode
       resetForm();
       document.getElementById('formTitle').textContent = 'Add Tyre to Vehicle';
-      
+
       // Get vehicle details
       get(ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`)).then((snapshot) => {
         if (snapshot.exists()) {
           const vehicle = snapshot.val();
-          
+
           // Set vehicle fields and disable them
           document.getElementById('vehicleNumber').value = vehicle.vehicleNumber;
           document.getElementById('vehicleModel').value = vehicle.vehicleModel;
           document.getElementById('vehicleNumber').disabled = true;
           document.getElementById('vehicleModel').disabled = true;
-          
+
           // Set tyre count based on existing tyres
           tyreCount = vehicle.tyres ? vehicle.tyres.length : 0;
-          
+
           // Set editing state
           editingVehicleId = vehicleId;
           document.getElementById('saveVehicleBtn').textContent = 'Add Tyre to Vehicle';
           document.getElementById('cancelEditBtn').style.display = 'inline-block';
-          
+
           // Add one empty tyre input
           addTyre();
-          
+
           // Scroll to form
           document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
         }
@@ -2001,24 +2090,24 @@
     };
 
     // Edit specific tyre (FIXED)
-    window.editTyre = function(vehicleId, tyreNumber) {
+    window.editTyre = function (vehicleId, tyreNumber) {
       get(ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`)).then((snapshot) => {
         if (snapshot.exists()) {
           const vehicle = snapshot.val();
           const tyres = vehicle.tyres || [];
           const tyreToEdit = tyres.find(t => t.number === tyreNumber);
-          
+
           if (tyreToEdit) {
             // Set form to edit tyre mode
             resetForm();
             document.getElementById('formTitle').textContent = 'Edit Tyre';
-            
+
             // Set vehicle fields and disable them
             document.getElementById('vehicleNumber').value = vehicle.vehicleNumber;
             document.getElementById('vehicleModel').value = vehicle.vehicleModel;
             document.getElementById('vehicleNumber').disabled = true;
             document.getElementById('vehicleModel').disabled = true;
-            
+
             // Add tyre input with the tyre details
             const tyreDiv = document.createElement('div');
             tyreDiv.className = 'tyre-container';
@@ -2050,15 +2139,15 @@
                 </div>
               </div>
             `;
-            
+
             document.getElementById('tyresContainer').innerHTML = '';
             document.getElementById('tyresContainer').appendChild(tyreDiv);
-            
+
             // Set editing state
             editingVehicleId = vehicleId;
             document.getElementById('saveVehicleBtn').textContent = 'Update Tyre';
             document.getElementById('cancelEditBtn').style.display = 'inline-block';
-            
+
             // Scroll to form
             document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
           }
@@ -2067,7 +2156,7 @@
     };
 
     // **NEW**: Functions for Change/Swap Tyre Modal (FIXED)
-    window.openChangeTyreModal = function(vehicleId, tyreNumber) {
+    window.openChangeTyreModal = function (vehicleId, tyreNumber) {
       const modal = document.getElementById('changeTyreModal');
       const sourceVehicle = allVehiclesData[vehicleId];
       const sourceTyre = (sourceVehicle.tyres || []).find(t => t.number === tyreNumber);
@@ -2107,11 +2196,11 @@
       modal.style.display = 'flex';
     }
 
-    window.closeChangeTyreModal = function() {
+    window.closeChangeTyreModal = function () {
       document.getElementById('changeTyreModal').style.display = 'none';
     }
 
-    window.populateSwapTargetTyres = function(targetVehicleId) {
+    window.populateSwapTargetTyres = function (targetVehicleId) {
       const targetTyreSelect = document.getElementById('swapTargetTyre');
       targetTyreSelect.innerHTML = '<option value="">Select a tyre</option>';
 
@@ -2131,7 +2220,7 @@
       }
     }
 
-    window.moveTyre = async function() {
+    window.moveTyre = async function () {
       const modal = document.getElementById('changeTyreModal');
       const sourceVehicleId = modal.dataset.sourceVehicleId;
       const sourceTyreNumber = modal.dataset.sourceTyreNumber;
@@ -2152,7 +2241,7 @@
         const targetVehicle = targetSnap.val();
 
         const tyreToMove = (sourceVehicle.tyres || []).find(t => t.number === sourceTyreNumber);
-        
+
         // Check if target vehicle already has a tyre in that position (optional check)
         const targetTyres = targetVehicle.tyres || [];
         if (targetTyres.some(t => t.position === newPosition)) {
@@ -2175,7 +2264,7 @@
       }
     }
 
-    window.swapTyre = async function() {
+    window.swapTyre = async function () {
       const modal = document.getElementById('changeTyreModal');
       const sourceVehicleId = modal.dataset.sourceVehicleId;
       const sourceTyreNumber = modal.dataset.sourceTyreNumber;
@@ -2200,7 +2289,7 @@
 
         // Swap positions
         [sourceTyre.position, targetTyre.position] = [targetTyre.position, sourceTyre.position];
-        
+
         // Remove old tyres and add the swapped ones back (source gets target, target gets source)
         const newSourceTyres = (sourceVehicle.tyres || []).filter(t => t.number !== sourceTyreNumber).concat(targetTyre);
         const newTargetTyres = (targetVehicle.tyres || []).filter(t => t.number !== targetTyreNumber).concat(sourceTyre);
@@ -2216,7 +2305,7 @@
     }
 
     // Show disposal modal (FIXED)
-    window.disposeTyre = function(vehicleId, tyreNumber) {
+    window.disposeTyre = function (vehicleId, tyreNumber) {
       // Create disposal modal if it doesn't exist
       let modal = document.getElementById('disposalModal');
       if (!modal) {
@@ -2233,7 +2322,7 @@
         modal.style.justifyContent = 'center';
         modal.style.alignItems = 'center';
         modal.style.flexDirection = 'column';
-        
+
         const modalContent = document.createElement('div');
         modalContent.style.backgroundColor = '#fff';
         modalContent.style.padding = '20px';
@@ -2241,7 +2330,7 @@
         modalContent.style.width = '90%';
         modalContent.style.maxWidth = '500px';
         modalContent.style.position = 'relative';
-        
+
         const closeBtn = document.createElement('span');
         closeBtn.innerHTML = '&times;';
         closeBtn.style.position = 'absolute';
@@ -2249,20 +2338,20 @@
         closeBtn.style.top = '5px';
         closeBtn.style.fontSize = '24px';
         closeBtn.style.cursor = 'pointer';
-        closeBtn.onclick = function() {
+        closeBtn.onclick = function () {
           modal.style.display = 'none';
         };
-        
+
         const title = document.createElement('h3');
         title.textContent = 'Dispose Tyre';
         title.style.marginTop = '0';
         title.style.color = '#2E8B57';
-        
+
         const reasonLabel = document.createElement('label');
         reasonLabel.textContent = 'Select disposal reason:';
         reasonLabel.style.display = 'block';
         reasonLabel.style.marginBottom = '10px';
-        
+
         const select = document.createElement('select');
         select.id = 'disposalReason';
         select.style.width = '100%';
@@ -2271,20 +2360,8 @@
         select.style.borderRadius = '4px';
         select.style.border = '1px solid #ddd';
 
-        const resellPriceLabel = document.createElement('label');
-        resellPriceLabel.textContent = 'Resell Price (₹):';
-        resellPriceLabel.style.display = 'block';
-        resellPriceLabel.style.marginBottom = '10px';
 
-        const resellPriceInput = document.createElement('input');
-        resellPriceInput.type = 'number';
-        resellPriceInput.id = 'resellPrice';
-        resellPriceInput.placeholder = 'Enter resell price (optional)';
-        resellPriceInput.style.width = 'calc(100% - 20px)';
-        resellPriceInput.style.padding = '8px';
-        resellPriceInput.style.borderRadius = '4px';
-        resellPriceInput.style.border = '1px solid #ddd';
-        
+
         const reasons = [
           'Worn out',
           'Tyre burst',
@@ -2292,14 +2369,14 @@
           'Wrong tyre number',
           'Other'
         ];
-        
+
         reasons.forEach(reason => {
           const option = document.createElement('option');
           option.value = reason;
           option.textContent = reason;
           select.appendChild(option);
         });
-        
+
         const otherInput = document.createElement('input');
         otherInput.type = 'text';
         otherInput.id = 'otherReason';
@@ -2310,107 +2387,107 @@
         otherInput.style.borderRadius = '4px';
         otherInput.style.border = '1px solid #ddd';
         otherInput.style.display = 'none';
-        
-        select.onchange = function() {
+
+        select.onchange = function () {
           otherInput.style.display = this.value === 'Other' ? 'block' : 'none';
         };
-        
+
         const buttonContainer = document.createElement('div');
         buttonContainer.style.display = 'flex';
         buttonContainer.style.justifyContent = 'flex-end';
         buttonContainer.style.gap = '10px';
         buttonContainer.style.marginTop = '15px';
-        
+
         const cancelBtn = document.createElement('button');
         cancelBtn.textContent = 'Cancel';
         cancelBtn.className = 'btn btn-danger';
-        cancelBtn.onclick = function() {
+        cancelBtn.onclick = function () {
           modal.style.display = 'none';
         };
-        
+
         const confirmBtn = document.createElement('button');
         confirmBtn.textContent = 'Confirm Disposal';
         confirmBtn.className = 'btn btn-primary';
-        confirmBtn.onclick = function() {
-          const reason = select.value === 'Other' 
+        confirmBtn.onclick = function () {
+          const reason = select.value === 'Other'
             ? (document.getElementById('otherReason').value.trim() || 'Other')
             : select.value;
-          const resellPrice = parseFloat(document.getElementById('resellPrice').value) || 0;
-          
+          const resellPrice = 0;
+
           if (!reason) {
             alert('Please enter a disposal reason');
             return;
           }
-          
+
           // Close the modal
           modal.style.display = 'none';
-          
+
           // Proceed with disposal
           proceedWithDisposal(vehicleId, tyreNumber, reason, resellPrice);
         };
-        
+
         buttonContainer.appendChild(cancelBtn);
         buttonContainer.appendChild(confirmBtn);
-        
+
         modalContent.appendChild(closeBtn);
         modalContent.appendChild(title);
         modalContent.appendChild(reasonLabel);
         modalContent.appendChild(select);
-        modalContent.appendChild(resellPriceLabel);
-        modalContent.appendChild(resellPriceInput);
+
         modalContent.appendChild(otherInput);
         modalContent.appendChild(buttonContainer);
-        
+
         modal.appendChild(modalContent);
         document.body.appendChild(modal);
       }
-      
+
       // Show the modal
       modal.style.display = 'flex';
-      
+
       // Reset form
       document.getElementById('disposalReason').value = 'Worn out';
-      document.getElementById('resellPrice').value = '';
+
       const otherInput = document.getElementById('otherReason');
       otherInput.value = '';
       otherInput.style.display = 'none';
-      
+
       // Close modal when clicking outside
-      modal.onclick = function(event) {
+      modal.onclick = function (event) {
         if (event.target === modal) {
           modal.style.display = 'none';
         }
       };
     };
-    
+
     // Function to handle the actual disposal (FIXED)
     function proceedWithDisposal(vehicleId, tyreNumber, reason, resellPrice) {
       get(ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`)).then((snapshot) => {
         if (snapshot.exists()) {
           const vehicle = snapshot.val();
           const tyres = vehicle.tyres || [];
-          
+
           // Find the tyre to dispose
           const tyreToDispose = tyres.find(t => t.number === tyreNumber);
           if (!tyreToDispose) return;
-          
+
           // Add disposal information
           const disposedTyre = {
             ...tyreToDispose,
             disposedAt: Date.now(),
             disposalReason: reason,
             resellPrice: resellPrice,
+            status: resellPrice > 0 ? 'Sold' : 'Unsold',
             vehicleId: vehicleId,
             vehicleNumber: vehicle.vehicleNumber,
             vehicleModel: vehicle.vehicleModel
           };
-          
+
           // Save to tyre history
           const historyRef = ref(db, `users/${currentUser.uid}/tyre_history`);
           push(historyRef, disposedTyre).then(() => {
             // Filter out the disposed tyre from vehicle
             const updatedTyres = tyres.filter(t => t.number !== tyreNumber);
-            
+
             // Update the vehicle with the new tyres array
             update(ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`), {
               tyres: updatedTyres
@@ -2427,7 +2504,7 @@
     };
 
     // Cancel edit mode
-    window.cancelEdit = function() {
+    window.cancelEdit = function () {
       resetForm();
     };
 
@@ -2438,20 +2515,20 @@
       document.getElementById('vehicleModel').value = '';
       document.getElementById('vehicleNumber').disabled = false;
       document.getElementById('vehicleModel').disabled = false;
-      
+
       // Clear validation states
       const suggestionsContainer = document.getElementById('vehicleSuggestions');
       const notFoundMessage = document.getElementById('vehicleNotFound');
       const validMessage = document.getElementById('vehicleValid');
       const truckNumberInput = document.getElementById('vehicleNumber');
-      
+
       if (suggestionsContainer) suggestionsContainer.style.display = 'none';
       if (notFoundMessage) notFoundMessage.style.display = 'none';
       if (validMessage) validMessage.style.display = 'none';
       if (truckNumberInput) {
         truckNumberInput.classList.remove('is-valid', 'is-invalid');
       }
-      
+
       document.getElementById('tyresContainer').innerHTML = `
         <div class="tyre-container">
           <div class="tyre-header">
@@ -2481,7 +2558,7 @@
           </div>
         </div>
       `;
-      
+
       tyreCount = 1;
       editingVehicleId = null;
       document.getElementById('saveVehicleBtn').textContent = 'Save Vehicle';
@@ -2489,14 +2566,14 @@
     }
 
     // Search vehicles function
-    window.searchVehicles = function() {
+    window.searchVehicles = function () {
       searchTermVehicles = document.getElementById('searchInput').value.trim();
       currentPageVehicles = 1; // Reset to first page on new search
       renderVehiclesWithPagination();
     };
 
     // Download PDF for a specific vehicle's tyres (FIXED)
-    window.downloadVehicleTyrePDF = function(vehicleId) {
+    window.downloadVehicleTyrePDF = function (vehicleId) {
       const vehicle = allVehiclesData[vehicleId];
       if (!vehicle) {
         showAlert('Vehicle data not found.', 'danger');
@@ -2552,12 +2629,12 @@
       doc.save(`Tyre_Report_${vehicle.vehicleNumber}.pdf`);
     };
 
-    window.logout = function() {
-        signOut(auth).then(() => {
-          window.location.href = "index.html";
-        }).catch(error => {
-          alert("Error logging out: " + error.message);
-        });
+    window.logout = function () {
+      signOut(auth).then(() => {
+        window.location.href = "index.html";
+      }).catch(error => {
+        alert("Error logging out: " + error.message);
+      });
     };
 
     window.toggleMenu = function () {
@@ -2585,8 +2662,9 @@
 
     // Initial load for tab
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('Management').style.display = 'block';
+      document.getElementById('Management').style.display = 'block';
     });
   </script>
 </body>
+
 </html>
