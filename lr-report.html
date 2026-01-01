@@ -39,13 +39,19 @@
     <div class="tab-content">
       <div class="tab-pane fade show active" id="view">
         <div class="row mb-3">
-          <div class="col-md-3">
+          <div class="col-md-2">
             <label class="form-label">From Date</label>
             <input type="date" class="form-control" id="fromDate">
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <label class="form-label">To Date</label>
             <input type="date" class="form-control" id="toDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Client</label>
+            <select class="form-select" id="clientFilter">
+              <option value="">All Clients</option>
+            </select>
           </div>
           <div class="col-md-3">
             <label class="form-label">Truck Number</label>
@@ -53,9 +59,9 @@
               <option value="">All Trucks</option>
             </select>
           </div>
-          <div class="col-md-3 d-flex align-items-end">
-            <button class="btn btn-primary me-2" id="applyFiltersBtn">Filter</button>
-            <button class="btn btn-success" id="exportPdfBtn">PDF</button>
+          <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary me-2 w-100" id="applyFiltersBtn">Filter</button>
+            <button class="btn btn-success" id="exportPdfBtn"><i class="fas fa-file-pdf"></i></button>
           </div>
         </div>
 
@@ -208,6 +214,16 @@
                 <div class="col-md-3">
                   <label class="form-label">Order No</label>
                   <input type="text" class="form-control" id="orderNo" placeholder="Auto-generated">
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3">
+                  <label class="form-label">E-Way Bill No</label>
+                  <input type="text" class="form-control" id="eWayBillNo" placeholder="E-Way Bill Number">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">EWB Expiry Date</label>
+                  <input type="date" class="form-control" id="ewbExpiry">
                 </div>
               </div>
               <div class="row">
@@ -774,6 +790,19 @@
                     <input type="date" class="form-control" id="editLrDate" required>
                   </div>
                   <div class="col-md-3">
+                    <label for="editStatus" class="form-label">Status</label>
+                    <select class="form-select" id="editStatus">
+                      <option value="">Auto (Default)</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Loaded">Loaded</option>
+                      <option value="In Transit">In Transit</option>
+                      <option value="Unloading">Unloading</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
                     <label for="editLrNumber" class="form-label">LR Number*</label>
                     <input type="text" class="form-control" id="editLrNumber" required>
                   </div>
@@ -806,6 +835,16 @@
                       type="text" class="form-control" id="editDeliveryNo"></div>
                   <div class="col-md-3"><label for="editOrderNo" class="form-label">Order No.</label><input type="text"
                       class="form-control" id="editOrderNo"></div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-3">
+                    <label class="form-label">E-Way Bill No</label>
+                    <input type="text" class="form-control" id="editEWayBillNo" placeholder="E-Way Bill Number">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">EWB Expiry Date</label>
+                    <input type="date" class="form-control" id="editEwbExpiry">
+                  </div>
                 </div>
                 <div class="row">
                   <div class="col-md-4 mb-3">
