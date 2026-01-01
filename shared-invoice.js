@@ -435,19 +435,19 @@ window.viewInvoice = async function (invoiceId) {
                 <table class="table table-bordered">
                 <thead ${headerBgStyle}>
                     <tr>
-                    <th>LR No / Item</th><th>Date</th><th>Truck No</th><th class="text-end">Weight (MT)</th><th class="text-end">Rate</th><th class="text-end">Amount (₹)</th>
+                    <th>LR No / Item</th><th>Date</th><th>Truck No</th><th>From</th><th>To</th><th class="text-end">Weight (MT)</th><th class="text-end">Rate</th><th class="text-end">Amount (₹)</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${lrs.map((lr, index) => {
             const rate = lr.weight > 0 ? (lr.amount / lr.weight).toFixed(2) : '0.00';
             const rowStyle = accentStyle === 'zebra' && index % 2 !== 0 ? `class="table-zebra-stripe"` : '';
-            return `<tr ${rowStyle}><td>${lr.lrNumber || 'N/A'} - ${lr.item || 'Freight'}</td><td>${new Date(lr.date).toLocaleDateString('en-IN')}</td><td>${lr.truckNumber || 'N/A'}</td><td class="text-end">${(lr.weight || 0).toFixed(2)}</td><td class="text-end">₹${rate}</td><td class="text-end">₹${(lr.amount || 0).toFixed(2)}</td></tr>`;
+            return `<tr ${rowStyle}><td>${lr.lrNumber || 'N/A'} - ${lr.item || 'Freight'}</td><td>${new Date(lr.date).toLocaleDateString('en-IN')}</td><td>${lr.truckNumber || 'N/A'}</td><td>${lr.from || lr.fromLocation || ''}</td><td>${lr.to || lr.toLocation || ''}</td><td class="text-end">${(lr.weight || 0).toFixed(2)}</td><td class="text-end">₹${rate}</td><td class="text-end">₹${(lr.amount || 0).toFixed(2)}</td></tr>`;
         }).join('')}
                 </tbody>
                 <tfoot>
                     <tr>
-                    <td colspan="3" rowspan="4" class="align-bottom">
+                    <td colspan="5" rowspan="4" class="align-bottom">
                         <p class="fw-bold mb-1">Remarks / Payment Instructions:</p>
                         <p class="small">Payment is due on receipt. Please include the Invoice number in all bank transfers.</p>
                         <div class="row">
@@ -459,7 +459,7 @@ window.viewInvoice = async function (invoiceId) {
                     </td><td colspan="2" class="text-end"><strong>SUBTOTAL:</strong></td><td class="text-end fw-bold">₹${(invoice.subtotal || 0).toFixed(2)}</td></tr>
                     <tr><td colspan="2" class="text-end"><strong>CGST (${invoice.cgstPercentage || 9}%):</strong></td><td class="text-end fw-bold">₹${(invoice.cgstAmount || 0).toFixed(2)}</td></tr>
                     <tr><td colspan="2" class="text-end"><strong>SGST (${invoice.sgstPercentage || 9}%):</strong></td><td class="text-end fw-bold">₹${(invoice.sgstAmount || 0).toFixed(2)}</td></tr>
-                    <tr ${footerBgStyle}><td colspan="3" class="text-start ps-3 small fw-bold">AMOUNT IN WORDS: ${numberToWords(invoice.grandTotal || 0)}</td><td colspan="2" class="text-end"><strong>BALANCE DUE:</strong></td><td class="text-end fw-bold fs-5">₹${(invoice.grandTotal || 0).toFixed(2)}</td></tr>
+                    <tr ${footerBgStyle}><td colspan="5" class="text-start ps-3 small fw-bold">AMOUNT IN WORDS: ${numberToWords(invoice.grandTotal || 0)}</td><td colspan="2" class="text-end"><strong>BALANCE DUE:</strong></td><td class="text-end fw-bold fs-5">₹${(invoice.grandTotal || 0).toFixed(2)}</td></tr>
                 </tfoot>
                 </table>
             </div>
@@ -497,3 +497,4 @@ window.numberToWords = function (num) {
 
     return str.trim().replace(/\s+/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') + ' Only';
 };
+
