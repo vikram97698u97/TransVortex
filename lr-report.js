@@ -202,12 +202,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize Select2 for searchable dropdowns
     try {
-        $('#truckFilter, #truckNumber, #editTruckNumber').select2({
+        $('#truckFilter, #truckNumber, #editTruckNumber, #clientFilter').select2({
             theme: 'bootstrap-5',
-            placeholder: 'Select or search for a truck',
+            placeholder: 'Select...',
             width: '100%',
-            // Allow dynamically added options for "quick add" functionality
-            tags: true
+            tags: true // Allow new entries for trucks, maybe not clients but ok for consistency
         });
     } catch (e) {
         console.warn('Select2 initialization failed:', e);
@@ -230,23 +229,30 @@ function addLoadMoreButton() {
 window.loadLRData = function (mode = 'initial') {
     if (!window.currentCoreAccountId) return;
 
-    // If initial, reset tables and pagination
     if (mode === 'initial') {
         if (window.lrTable) window.lrTable.clear().draw();
         if (window.marketLrTable) window.marketLrTable.clear().draw();
         window.allLRs = [];
+        window.selectedLRs = [];
+        window.selectedMarketLRs = [];
+        updateInvoiceButtonStates();
+        updateSelectAllCheckboxes();
         lastLoadedKey = null;
     }
 
-    const tableBody = document.getElementById('lrTable').querySelector('tbody');
-    // Show loading indicator if needed (DataTables handles empty state, but we can add a spinner overlay)
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+    const truckFilter = document.getElementById('truckFilter').value;
+    const clientFilter = document.getElementById('clientFilter')?.value;
 
-    let query = window.db.ref(`users/${window.currentCoreAccountId}/lrReports`).orderByKey();
+    let query = window.db.ref(`users/${window.currentCoreAccountId}/lrReports`);
 
-    if (mode === 'next' && lastLoadedKey) {
-        query = query.endAt(lastLoadedKey).limitToLast(pageSize + 1);
+    // Date Filtering Logic
+    if (fromDate && toDate) {
+        query = query.orderByChild('date').startAt(fromDate).endAt(toDate);
     } else {
-        query = query.limitToLast(pageSize);
+        // Default: Last 100 entries if no date filter (Increased from 50)
+        query = query.orderByKey().limitToLast(100);
     }
 
     query.once('value').then(async (snapshot) => {
@@ -256,45 +262,35 @@ window.loadLRData = function (mode = 'initial') {
             return;
         }
 
-        const keys = Object.keys(data);
-        if (mode === 'next' && keys.length > 0) {
-            // Remove the anchor key (lastLoadedKey) which is included in the result
-            const index = keys.indexOf(lastLoadedKey);
-            if (index > -1) keys.splice(index, 1);
+        let newLRs = [];
+        Object.entries(data).forEach(([key, val]) => {
+            newLRs.push({ id: key, ...val });
+        });
+
+        // Client-side Filtering for Truck and Client (and Date if needed for precision)
+        if (truckFilter) {
+            newLRs = newLRs.filter(lr => (lr.truckNumber || '').toUpperCase() === truckFilter.toUpperCase());
+        }
+        if (clientFilter) {
+            newLRs = newLRs.filter(lr => lr.clientId === clientFilter);
         }
 
-        if (keys.length === 0) {
-            if (mode === 'next') alert("No more records.");
+        // Sort Descending by Date
+        newLRs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (newLRs.length === 0) {
+            if (mode !== 'initial') alert("No matching records found.");
             return;
         }
 
-        // Fetch clients for name resolution
+        // Fetch clients map
         const clientsSnap = await window.db.ref(`users/${window.currentCoreAccountId}/clients`).once('value');
         const clients = clientsSnap.val() || {};
         const getClientName = (id) => clients[id]?.clientName || 'N/A';
 
-        const newLRs = [];
-        keys.forEach(key => {
-            newLRs.push({ id: key, ...data[key] });
-        });
-
-        // Sort by date desc (newest first) - Client side sort for the batch
-        newLRs.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        // Update lastLoadedKey (it's the 'oldest' key in this batch, which is the last one after sorting? 
-        // No, Firebase keys are time-ordered. limitToLast gives the newest. 
-        // So the 'oldest' key in this batch is the one with the 'smallest' key.
-        // Since we sort Descending by date, and keys are roughly date-based, 
-        // the last item in our sorted array is likely the oldest.
-        // But strictly speaking, we want the 'smallest' key from the fetched set.
-        keys.sort(); // Ascending keys
-        lastLoadedKey = keys[0]; // The oldest key
-
-        // Render
         newLRs.forEach(lr => {
             // Skip invoiced LRs
             if (lr.status === 'invoiced') return;
-
             addLRToTable(lr, getClientName);
         });
 
@@ -325,8 +321,36 @@ function addLRToTable(lr, getClientName) {
     const detailButtonClass = detailsExist ? 'btn-success' : 'btn-warning';
     const detailButtonIcon = detailsExist ? 'fas fa-check' : 'fas fa-plus';
     const detailButtonTitle = detailsExist ? 'View/Edit Trip Details' : 'Add Trip Details';
-    const displayStatus = detailsExist ? 'Completed' : 'Active';
-    const displayStatusClass = detailsExist ? 'bg-success' : 'bg-info';
+
+    // Status Logic: Manual > Invoiced > Auto
+    let displayStatus = lr.status;
+    let displayStatusClass = 'bg-secondary';
+
+    if (!displayStatus || displayStatus === 'Active' || displayStatus === 'Completed') {
+        // Auto-calculate if no manual status or if it's one of the legacy auto-statuses
+        // (Actually, if saved as manual 'Active', we treat as manual. But legacy data won't have it saved)
+        // Let's rely on presence. If lr.status is undefined/null, use auto.
+        if (!lr.status) {
+            displayStatus = detailsExist ? 'Completed' : 'Active';
+        }
+    }
+
+    if (lr.status === 'invoiced') {
+        displayStatus = 'Invoiced';
+        displayStatusClass = 'bg-dark';
+    } else {
+        switch (displayStatus) {
+            case 'Active': displayStatusClass = 'bg-info'; break;
+            case 'Completed': displayStatusClass = 'bg-success'; break;
+            case 'Pending': displayStatusClass = 'bg-warning text-dark'; break;
+            case 'Loaded': displayStatusClass = 'bg-primary'; break;
+            case 'In Transit': displayStatusClass = 'bg-primary'; break;
+            case 'Unloading': displayStatusClass = 'bg-info'; break;
+            case 'Delivered': displayStatusClass = 'bg-success'; break;
+            case 'Cancelled': displayStatusClass = 'bg-danger'; break;
+            default: displayStatusClass = 'bg-secondary';
+        }
+    }
 
     // Get Employee Name
     const employee = window.allEmployees.find(e => e.id === lr.employeeId);
@@ -357,8 +381,9 @@ function addLRToTable(lr, getClientName) {
 
     // Correct Data Construction
     if (lr.lrType === 'market_company') {
+        const isSelected = window.selectedMarketLRs.includes(lrId);
         window.marketLrTable.row.add([
-            `<div class=\"form-check\"><input class=\"form-check-input market-lr-checkbox\" type=\"checkbox\" value=\"${lrId}\" onchange=\"toggleLRSelection('${lrId}', this.checked, true)\"></div>`,
+            `<div class=\"form-check\"><input class=\"form-check-input market-lr-checkbox\" type=\"checkbox\" value=\"${lrId}\" ${isSelected ? 'checked' : ''} onchange=\"toggleLRSelection('${lrId}', this.checked, true)\"></div>`,
             lr.date,
             lr.lrNumber,
             lr.truckNumber,
@@ -374,8 +399,9 @@ function addLRToTable(lr, getClientName) {
             `<button class="btn btn-sm btn-outline-primary" onclick="editLR('${lrId}')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="deleteLR('${lrId}')"><i class="fas fa-trash"></i></button>`
         ]);
     } else {
+        const isSelected = window.selectedLRs.includes(lrId);
         window.lrTable.row.add([
-            `<div class=\"form-check\"><input class=\"form-check-input lr-checkbox\" type=\"checkbox\" value=\"${lrId}\" onchange=\"toggleLRSelection('${lrId}', this.checked, false)\"></div>`,
+            `<div class=\"form-check\"><input class=\"form-check-input lr-checkbox\" type=\"checkbox\" value=\"${lrId}\" ${isSelected ? 'checked' : ''} onchange=\"toggleLRSelection('${lrId}', this.checked, false)\"></div>`,
             lr.date,
             lr.lrNumber,
             lr.truckNumber,
@@ -396,6 +422,28 @@ function addLRToTable(lr, getClientName) {
 
 // --- MASTER DATA LOADING ---
 
+window.loadAllVehicles = async function (uid) {
+    try {
+        const snap = await window.db.ref(`users/${uid}/vehicles`).once('value');
+        window.allVehicles = [];
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const val = child.val();
+                // Ensure we have both vehicleNo and vehicleNumber for compatibility
+                window.allVehicles.push({
+                    id: child.key,
+                    vehicleNumber: val.vehicleNumber,
+                    vehicleNo: val.vehicleNumber || val.vehicleNo, // Fallback
+                    ...val
+                });
+            });
+        }
+        window.updateTruckFilterDropdown(); // Update filter dropdown if needed
+    } catch (e) {
+        console.error("Error loading vehicles:", e);
+    }
+};
+
 async function loadAllData() {
     const user = window.auth.currentUser;
     if (!user) return;
@@ -410,8 +458,10 @@ async function loadAllData() {
         const consigneeSelect = document.getElementById('consigneeId');
         const editClientSelect = document.getElementById('editClientId');
         const editConsigneeSelect = document.getElementById('editConsigneeId');
+        const clientFilter = document.getElementById('clientFilter'); // Added Filter
 
         if (clientSelect) clientSelect.innerHTML = '<option value="">Select a Client</option>';
+        if (clientFilter) clientFilter.innerHTML = '<option value="">All Clients</option>'; // Reset Filter
         [consigneeSelect, editClientSelect, editConsigneeSelect].forEach(el => { if (el) el.innerHTML = '<option value="">Select...</option>'; });
 
         if (snapshot.exists()) {
@@ -421,10 +471,12 @@ async function loadAllData() {
                 const opt = document.createElement('option');
                 opt.value = c.id;
                 opt.textContent = c.name;
+
                 if (clientSelect) clientSelect.appendChild(opt.cloneNode(true));
                 if (consigneeSelect) consigneeSelect.appendChild(opt.cloneNode(true));
                 if (editClientSelect) editClientSelect.appendChild(opt.cloneNode(true));
-                if (editConsigneeSelect) editConsigneeSelect.appendChild(opt);
+                if (editConsigneeSelect) editConsigneeSelect.appendChild(opt.cloneNode(true));
+                if (clientFilter) clientFilter.appendChild(opt.cloneNode(true)); // Add to Filter
             });
         }
     });
@@ -711,6 +763,8 @@ async function saveLR() {
         deliveryNo: document.getElementById('deliveryNo').value,
         orderNo: document.getElementById('orderNo').value,
         shipmentNo: document.getElementById('shipmentNo').value,
+        ewayBillNo: document.getElementById('eWayBillNo').value,
+        ewbExp: document.getElementById('ewbExpiry').value,
         truckNumber: truckNumber,
         driverName: driverName,
         truckId: vehicle ? vehicle.id : null,
@@ -783,6 +837,7 @@ async function updateLR() {
     const lrUpdateData = {
         date: document.getElementById('editLrDate').value,
         lrNumber: document.getElementById('editLrNumber').value,
+        status: document.getElementById('editStatus').value, // Save Manual Status
         lrType: transporterId ? 'market_company' : (isMarketVehicle ? 'market' : 'own'),
         transporterId: transporterId,
         transporterCompany: transporterName,
@@ -790,6 +845,8 @@ async function updateLR() {
         invoiceNumber: document.getElementById('editInvoiceNumberInput').value,
         deliveryNo: document.getElementById('editDeliveryNo').value,
         orderNo: document.getElementById('editOrderNo').value,
+        ewayBillNo: document.getElementById('editEWayBillNo').value,
+        ewbExp: document.getElementById('editEwbExpiry').value,
         truckNumber: truckNumber,
         driverName: driverName,
         truckId: vehicle ? vehicle.id : null,
@@ -878,6 +935,9 @@ window.editLR = function (lrId) {
         document.getElementById('editInvoiceNumberInput').value = lr.invoiceNumber || '';
         document.getElementById('editDeliveryNo').value = lr.deliveryNo || '';
         document.getElementById('editOrderNo').value = lr.orderNo || '';
+        document.getElementById('editEWayBillNo').value = lr.ewayBillNo || '';
+        document.getElementById('editEwbExpiry').value = lr.ewbExp || '';
+        document.getElementById('editStatus').value = lr.status || ''; // Populate Status
         document.getElementById('editClientId').value = lr.clientId;
 
         if (isMarketVehicle) {
@@ -885,24 +945,17 @@ window.editLR = function (lrId) {
             document.getElementById('editMarketDriverName').value = lr.driverName || '';
         } else {
             // Set truck number with proper matching
-            const editTruckSelect = document.getElementById('editTruckNumber');
-            if (editTruckSelect) {
-                // Try to find exact match first
-                let found = false;
-                for (let i = 0; i < editTruckSelect.options.length; i++) {
-                    if (editTruckSelect.options[i].value.toUpperCase() === lr.truckNumber.toUpperCase()) {
-                        editTruckSelect.selectedIndex = i;
-                        found = true;
-                        break;
-                    }
-                }
-                // If not found, add it as an option
-                if (!found && lr.truckNumber) {
-                    const opt = document.createElement('option');
-                    opt.value = lr.truckNumber;
-                    opt.textContent = lr.truckNumber;
-                    editTruckSelect.appendChild(opt);
-                    editTruckSelect.value = lr.truckNumber;
+            const editTruckNumber = lr.truckNumber;
+            const $editTruckSelect = $('#editTruckNumber');
+
+            if ($editTruckSelect.length) {
+                // Check if option exists
+                if ($editTruckSelect.find(`option[value="${editTruckNumber}"]`).length) {
+                    $editTruckSelect.val(editTruckNumber).trigger('change');
+                } else {
+                    // Create a new option if it doesn't exist (e.g. for deleted trucks or manual entry scenarios if allowed)
+                    const newOption = new Option(editTruckNumber, editTruckNumber, true, true);
+                    $editTruckSelect.append(newOption).trigger('change');
                 }
             }
 
@@ -1358,10 +1411,30 @@ async function loadCurrentFuelLevel(truckNumber) {
 async function loadRecentFuelEntries(truckNumber) {
     const body = document.getElementById('recentFuelEntriesBody');
     body.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
-    const snap = await window.db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).orderByChild('truckNumber').equalTo(truckNumber).once('value');
+
+    // Ensure pumps are loaded for name resolution
+    if (window.allPumps.length === 0) {
+        const pSnap = await window.db.ref(`users/${window.currentCoreAccountId}/petrolPumps`).once('value');
+        if (pSnap.exists()) {
+            pSnap.forEach(c => window.allPumps.push({ id: c.key, ...c.val() }));
+        }
+    }
+
+    // Fallback to client-side filtering if index is missing
+    const snap = await window.db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).once('value');
+
     body.innerHTML = '';
     const entries = [];
-    snap.forEach(c => entries.push(c.val()));
+    if (snap.exists()) {
+        snap.forEach(c => {
+            const val = c.val();
+            // Case-insensitive check
+            if ((val.truckNumber || '').toUpperCase() === truckNumber.toUpperCase()) {
+                entries.push(val);
+            }
+        });
+    }
+
     entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     entries.forEach(e => {
         if (e.source === 'pump-fillup' || e.source === 'manual') {
@@ -1451,11 +1524,29 @@ window.updateSelectAllCheckboxes = function () {
 
 window.toggleSelectAll = function (isMarket) {
     const all = document.getElementById(isMarket ? 'selectAllMarketCheckbox' : 'selectAllCheckbox');
+    const checkedState = all.checked; // Capture state ONCE
     const boxes = document.querySelectorAll(isMarket ? '.market-lr-checkbox' : '.lr-checkbox');
+
+    // Update logic for all
+    const list = isMarket ? window.selectedMarketLRs : window.selectedLRs;
+
     boxes.forEach(b => {
-        b.checked = all.checked;
-        window.toggleLRSelection(b.value, all.checked, isMarket);
+        b.checked = checkedState;
+        if (checkedState) {
+            if (!list.includes(b.value)) list.push(b.value);
+        } else {
+            const idx = list.indexOf(b.value);
+            if (idx > -1) list.splice(idx, 1);
+        }
     });
+
+    // Update UI once at the end
+    updateInvoiceButtonStates();
+    // No need to call updateSelectAllCheckboxes as we just set the master checkbox state manually
+    // But to be safe on indeterminate state:
+    // Actually, if we selected all visible, we are good.
+    // Let's explicitly set indeterminate false since we just clicked it.
+    all.indeterminate = false;
 };
 
 window.showBankDetailsModal = function (isMarket) {
