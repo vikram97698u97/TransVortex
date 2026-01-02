@@ -226,9 +226,14 @@
     const itemsPerPage = 15;
 
     // Standard Initialize function
-    function initApp() {
+    function initApp(attempt = 1) {
       // 1. Check if Firebase is loaded
       if (!firebase.apps.length) {
+        if (attempt < 20) {
+          console.log(`Firebase not yet ready, retrying (${attempt}/20)...`);
+          setTimeout(() => initApp(attempt + 1), 200);
+          return;
+        }
         console.error("Firebase not initialized! Check evm.js loading.");
         alert("System Error: Firebase connection failed.");
         return;
