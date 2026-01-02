@@ -530,9 +530,13 @@
                   <div class="col-md-3 mb-3">
                     <label for="fuelPumpSelect" class="form-label">Select Pump <span
                         class="text-danger">*</span></label>
-                    <select id="fuelPumpSelect" class="form-select" required>
-                      <option value="">Select a Pump</option>
-                    </select>
+                    <div class="input-group">
+                      <select id="fuelPumpSelect" class="form-select" required>
+                        <option value="">Select a Pump</option>
+                      </select>
+                      <button class="btn btn-outline-success" type="button" id="quickAddPumpBtn" title="Add New Pump"><i
+                          class="fas fa-plus"></i></button>
+                    </div>
                   </div>
                   <div class="col-md-3 mb-3">
                     <label for="fuelFillDate" class="form-label">Date <span class="text-danger">*</span></label>
@@ -1074,6 +1078,53 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button type="button" class="btn btn-primary" id="saveQuickAddDriverBtn">Save Driver</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="modal fade" id="quickAddFuelPumpModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Fuel Pump</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="quickAddFuelPumpForm">
+            <div class="mb-3"><label class="form-label">Pump Name*</label><input type="text" id="q_pumpName"
+                class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Location</label><input type="text" id="q_pumpLocation"
+                class="form-control"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveQuickAddPumpBtn">Save Pump</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="quickAddVendorModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Vendor</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="quickAddVendorForm">
+            <div class="mb-3"><label class="form-label">Vendor Name*</label><input type="text" id="q_vendorName"
+                class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Contact Number</label><input type="tel" id="q_vendorContact"
+                class="form-control"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveQuickAddVendorBtn">Save Vendor</button>
         </div>
       </div>
     </div>
