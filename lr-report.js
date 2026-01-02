@@ -13,7 +13,6 @@ window.allTransporters = [];
 window.allRoutes = [];
 window.allPumps = [];
 window.allWorkVendors = [];
-window.allWorkVendors = [];
 window.currentUserProfile = null;
 window.allEmployees = [];
 
@@ -202,12 +201,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize Select2 for searchable dropdowns
     try {
-        $('#truckFilter, #truckNumber, #editTruckNumber, #clientFilter').select2({
+        $('#truckFilter, #truckNumber, #editTruckNumber, #clientFilter, #driverName, #editDriverName').select2({
             theme: 'bootstrap-5',
             placeholder: 'Select...',
             width: '100%',
-            tags: true // Allow new entries for trucks, maybe not clients but ok for consistency
+            tags: true
         });
+
+        // Initialize Fuel Pump Select specifically with correct dropdownParent for modal
+        $('#fuelPumpSelect').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select Pump',
+            width: '100%',
+            dropdownParent: $('#tripDetailsModal')
+        });
+
+        // Quick Add Pump Listener
+        const quickAddPumpBtn = document.getElementById('quickAddPumpBtn');
+        if (quickAddPumpBtn) quickAddPumpBtn.addEventListener('click', () => showQuickAddModal('pump'));
+
+        // Quick Add Save Listeners
+        const saveQuickAddPumpBtn = document.getElementById('saveQuickAddPumpBtn');
+        if (saveQuickAddPumpBtn) saveQuickAddPumpBtn.addEventListener('click', saveQuickAddPump);
+
+        const saveQuickAddVendorBtn = document.getElementById('saveQuickAddVendorBtn');
+        if (saveQuickAddVendorBtn) saveQuickAddVendorBtn.addEventListener('click', saveQuickAddVendor);
+
     } catch (e) {
         console.warn('Select2 initialization failed:', e);
     }
@@ -426,16 +445,30 @@ window.loadAllVehicles = async function (uid) {
     try {
         const snap = await window.db.ref(`users/${uid}/vehicles`).once('value');
         window.allVehicles = [];
+        const truckSelect = document.getElementById('truckNumber');
+        const editTruckSelect = document.getElementById('editTruckNumber');
+
+        if (truckSelect) truckSelect.innerHTML = '<option value="">Select Vehicle</option>';
+        if (editTruckSelect) editTruckSelect.innerHTML = '<option value="">Select Vehicle</option>';
+
         if (snap.exists()) {
             snap.forEach(child => {
                 const val = child.val();
                 // Ensure we have both vehicleNo and vehicleNumber for compatibility
-                window.allVehicles.push({
+                const vehicle = {
                     id: child.key,
                     vehicleNumber: val.vehicleNumber,
                     vehicleNo: val.vehicleNumber || val.vehicleNo, // Fallback
                     ...val
-                });
+                };
+                window.allVehicles.push(vehicle);
+
+                const opt = document.createElement('option');
+                opt.value = vehicle.vehicleNumber;
+                opt.textContent = vehicle.vehicleNumber;
+
+                if (truckSelect) truckSelect.appendChild(opt.cloneNode(true));
+                if (editTruckSelect) editTruckSelect.appendChild(opt.cloneNode(true));
             });
         }
         window.updateTruckFilterDropdown(); // Update filter dropdown if needed
@@ -444,10 +477,51 @@ window.loadAllVehicles = async function (uid) {
     }
 };
 
+window.loadAllDrivers = async function (uid) {
+    try {
+        const snap = await window.db.ref(`users/${uid}/drivers`).once('value');
+        window.allDrivers = [];
+        const driverSelect = document.getElementById('driverName');
+        const editDriverSelect = document.getElementById('editDriverName');
+
+        if (driverSelect) driverSelect.innerHTML = '<option value="">Select Driver</option>';
+        if (editDriverSelect) editDriverSelect.innerHTML = '<option value="">Select Driver</option>';
+
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const val = child.val();
+                const driver = { id: child.key, ...val };
+                window.allDrivers.push(driver);
+
+                const opt = document.createElement('option');
+                opt.value = driver.driverName; // Use driverName from add.html
+                opt.dataset.mobile = driver.contactNumber || ''; // Use contactNumber from add.html
+                opt.dataset.license = driver.driverLicense || ''; // Use driverLicense from add.html
+                opt.textContent = `${driver.driverName} ${driver.contactNumber ? '(' + driver.contactNumber + ')' : ''}`; // Use correct fields
+
+                if (driverSelect) driverSelect.appendChild(opt.cloneNode(true));
+                if (editDriverSelect) editDriverSelect.appendChild(opt.cloneNode(true));
+            });
+        }
+    } catch (e) {
+        console.error("Error loading drivers:", e);
+    }
+};
+
 async function loadAllData() {
     const user = window.auth.currentUser;
     if (!user) return;
-    await loadAllVehicles(user.uid);
+
+    // 1. Resolve Core Account ID FIRST
+    const userSnap = await window.db.ref(`users/${user.uid}`).once('value');
+    const userData = userSnap.val() || {};
+    window.currentCoreAccountId = userData.coreAccountId || user.uid;
+
+    // 2. Load all data using the resolved Core ID
+    await Promise.all([
+        loadAllVehicles(window.currentCoreAccountId),
+        loadAllDrivers(window.currentCoreAccountId)
+    ]);
 
     if (!window.currentCoreAccountId) return;
 
@@ -542,36 +616,169 @@ async function loadAllData() {
         }
     });
 
-    // Load Work Vendors
-    window.db.ref(`users/${window.currentCoreAccountId}/workVendors`).on('value', (snapshot) => {
-        window.allWorkVendors = [];
-        if (snapshot.exists()) {
-            snapshot.forEach(child => window.allWorkVendors.push({ id: child.key, ...child.val() }));
-        }
-    });
+    // Load Work Vendors - REMOVED LISTENER to prevent conflict with renderVendorSelects force-fetch
+    // We will rely on renderVendorSelects() being called when needed or on initial open
+    if (window.renderVendorSelects) window.renderVendorSelects();
 
     // Load Pumps (User specific)
-    window.db.ref(`users/${user.uid}/petrolPumps`).on('value', (snapshot) => {
+    window.db.ref(`users/${window.currentCoreAccountId}/petrolPumps`).on('value', (snapshot) => {
         window.allPumps = [];
         if (snapshot.exists()) {
             snapshot.forEach(child => window.allPumps.push({ id: child.key, ...child.val() }));
         }
+        console.log(`Loaded ${window.allPumps.length} pumps`);
+        // Just reload the dropdown options
+        if (window.loadFuelPumps) window.loadFuelPumps();
     });
 
-    // Load Initial LRs
     loadLRData('initial');
 }
 
-async function loadAllVehicles(userId) {
-    const userProfileRef = window.db.ref(`users/${userId}`);
-    const userSnapshot = await userProfileRef.once('value');
-    const userData = userSnapshot.val();
+// Global Render Functions to ensure consistency
+// Kept renderVendorSelects for dynamic rows but removed renderFuelPumpSelect to avoid conflicts
+window.loadFuelPumps = async function () {
+    const pumpSelect = document.getElementById('fuelPumpSelect');
+    if (!pumpSelect) return;
 
-    // Store profile for invoice
-    const profileSnap = await window.db.ref(`users/${userId}/profile`).once('value');
-    window.currentUserProfile = profileSnap.val() || {};
+    // Destroy Select2 safely if exists
+    if ($(pumpSelect).hasClass('select2-hidden-accessible')) {
+        $(pumpSelect).select2('destroy');
+    }
 
-    window.currentCoreAccountId = (userData && userData.coreAccountId) || userId;
+    pumpSelect.innerHTML = '<option value="">Loading...</option>';
+
+    try {
+        const uid = window.currentCoreAccountId || (window.auth.currentUser ? window.auth.currentUser.uid : null);
+        if (!uid) {
+            console.error("No user ID found for loading pumps");
+            pumpSelect.innerHTML = '<option value="">Error: No User</option>';
+            return;
+        }
+
+        // Force Fetch every time to ensure freshness
+        const pumpRef = window.db.ref(`users/${uid}/petrolPumps`);
+        const snapshot = await pumpRef.once('value');
+
+        let pumps = [];
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                pumps.push({ id: child.key, ...child.val() });
+            });
+        }
+
+        // Update global cache just in case
+        window.allPumps = pumps;
+
+        // Clear and Populate
+        pumpSelect.innerHTML = '<option value="">Select Pump</option>';
+
+        if (pumps.length > 0) {
+            pumps.forEach(pump => {
+                const opt = document.createElement('option');
+                opt.value = pump.id;
+                opt.textContent = pump.name || pump.pumpName || 'Unnamed Pump';
+                pumpSelect.appendChild(opt);
+            });
+        } else {
+            const opt = document.createElement('option');
+            opt.disabled = true;
+            opt.textContent = "No pumps found. Please add one in Fuel Management.";
+            pumpSelect.appendChild(opt);
+        }
+
+        // Slight delay to ensure DOM is ready for Select2
+        setTimeout(() => {
+            $(pumpSelect).select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#tripDetailsModal'),
+                placeholder: 'Select Pump'
+            });
+        }, 100);
+
+    } catch (e) {
+        console.error("Error loading pumps:", e);
+        pumpSelect.innerHTML = '<option value="">Error loading data</option>';
+    }
+};
+
+
+window.renderVendorSelects = async function () {
+    const uid = window.currentCoreAccountId || (window.auth.currentUser ? window.auth.currentUser.uid : null);
+    if (!uid) return;
+
+    const selects = document.querySelectorAll('.expense-vendor');
+
+    // Destroy previous instances safely
+    selects.forEach(select => {
+        if ($(select).hasClass('select2-hidden-accessible')) {
+            $(select).select2('destroy');
+        }
+        select.innerHTML = '<option value="">Loading...</option>';
+    });
+
+    try {
+        console.log("Fetching vendors from:", `users/${uid}/workVendors`);
+        const vendorRef = window.db.ref(`users/${uid}/workVendors`);
+        const snapshot = await vendorRef.once('value');
+
+        let vendors = [];
+        if (snapshot.exists()) {
+            // Robust iteration using val() to handle potential map/list discrepancies
+            const val = snapshot.val();
+            if (val) {
+                Object.keys(val).forEach(key => {
+                    vendors.push({ id: key, ...val[key] });
+                });
+            }
+        }
+        console.log(`Fetched ${vendors.length} vendors`);
+        window.allWorkVendors = vendors;
+    } catch (e) {
+        console.error("Error fetching vendors:", e);
+        selects.forEach(select => select.innerHTML = '<option value="">Error loading</option>');
+        return;
+    }
+
+    selects.forEach(select => {
+        const selected = select.getAttribute('data-selected-value') || select.value;
+
+        select.innerHTML = '<option value="">Select Vendor</option>';
+
+        if (window.allWorkVendors && window.allWorkVendors.length > 0) {
+            window.allWorkVendors.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = v.name || 'Unnamed Vendor';
+                if (v.id === selected) opt.selected = true;
+                select.appendChild(opt);
+            });
+        } else {
+            const opt = document.createElement('option');
+            opt.disabled = true;
+            opt.textContent = "No vendors found (0)";
+            select.appendChild(opt);
+        }
+
+        setTimeout(() => {
+            $(select).select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#tripDetailsModal'),
+                placeholder: 'Select Vendor'
+            });
+        }, 100);
+    });
+};
+
+
+
+async function loadAllVehicles(coreId) {
+    // Load current user profile for invoice headers (using auth uid, not coreId)
+    if (window.auth.currentUser) {
+        const profileSnap = await window.db.ref(`users/${window.auth.currentUser.uid}/profile`).once('value');
+        window.currentUserProfile = profileSnap.val() || {};
+    }
 
     window.db.ref(`users/${window.currentCoreAccountId}/vehicles`).on('value', (snapshot) => {
         window.allVehicles = [];
@@ -1058,16 +1265,20 @@ window.showTripDetailsModal = async function (lrId, lrNumber, weight, truckNumbe
     calculateTotalKm();
     loadCurrentFuelLevel(truckNumber);
     loadRecentFuelEntries(truckNumber);
+    loadFuelPumps(); // Ensure pumps are loaded immediately
     document.getElementById('fuelFillDate').value = new Date().toISOString().split('T')[0];
 
     // Expenses
     const genericContainer = document.getElementById('tripGenericExpensesContainer');
     genericContainer.innerHTML = '';
-    (details.genericExpenses || []).forEach(exp => addExpenseRow('tripGenericExpensesContainer', exp));
+    (details.genericExpenses || []).forEach(exp => addExpenseRow('tripGenericExpensesContainer', exp, true));
 
     const emptyGenericContainer = document.getElementById('emptyTripGenericExpensesContainer');
     emptyGenericContainer.innerHTML = '';
-    (lr.emptyTripData?.genericExpenses || []).forEach(exp => addExpenseRow('emptyTripGenericExpensesContainer', exp));
+    (lr.emptyTripData?.genericExpenses || []).forEach(exp => addExpenseRow('emptyTripGenericExpensesContainer', exp, true));
+
+    // Initialize all vendor dropdowns once after loading rows
+    setTimeout(() => window.renderVendorSelects(), 100);
 
     document.getElementById('tripCgstPercentage').value = details.cgstPercentage || 9;
     document.getElementById('tripSgstPercentage').value = details.sgstPercentage || 9;
@@ -1285,13 +1496,10 @@ window.toggleEditVehicleInput = function (isMarket) {
     if (mtNum) mtNum.required = isMarket;
 };
 
-window.addExpenseRow = function (containerId, data = {}) {
+window.addExpenseRow = function (containerId, data = {}, suppressInit = false) {
     const container = document.getElementById(containerId);
     const div = document.createElement('div');
     div.className = 'row g-3 mb-2 expense-row align-items-center';
-
-    let vendorOpts = '<option value="">Select Vendor</option>';
-    window.allWorkVendors.forEach(v => vendorOpts += `<option value="${v.id}" ${data.vendorId === v.id ? 'selected' : ''}>${v.name}</option>`);
 
     div.innerHTML = `
         <div class="col-md-2">
@@ -1304,20 +1512,54 @@ window.addExpenseRow = function (containerId, data = {}) {
           </select>
         </div>
         <div class="col-md-2"><input type="number" step="0.01" class="form-control expense-amount" placeholder="Amount" value="${data.amount || ''}" oninput="calculateTripTotals()"></div>
-        <div class="col-md-3 vendor-select-container" style="display: none;"><select class="form-select expense-vendor">${vendorOpts}</select></div>
+        <div class="col-md-3 vendor-select-container" style="display: none;">
+            <div class="input-group">
+                <select class="form-select expense-vendor"><option value="">Select Vendor</option></select>
+                <button class="btn btn-outline-success quick-add-vendor-btn" type="button" title="Add New Vendor" onclick="showQuickAddModal('vendor')"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
         <div class="col-md-2"><input type="date" class="form-control expense-date" value="${data.date || new Date().toISOString().split('T')[0]}"></div>
         <div class="col-md-2"><input type="text" class="form-control expense-note" placeholder="Remarks" value="${data.note || ''}"></div>
         <div class="col-md-1 text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.expense-row').remove(); calculateTripTotals();"><i class="fas fa-trash"></i></button></div>
     `;
-    if (data.type) div.querySelector('.expense-type').value = data.type;
     container.appendChild(div);
+
+    if (data.type) div.querySelector('.expense-type').value = data.type;
     window.toggleVendorDropdown(div.querySelector('.expense-type'));
+
+    // Re-initialize select2 for new row ONLY if not suppressed (prevents lag on bulk load)
+    if (!suppressInit) {
+        setTimeout(() => window.renderVendorSelects(), 100);
+    }
 };
 
 window.toggleVendorDropdown = function (el) {
     const row = el.closest('.expense-row');
     const v = row.querySelector('.vendor-select-container');
-    v.style.display = el.value === 'Vehicle Work' ? 'block' : 'none';
+    const isVehicleWork = el.value === 'Vehicle Work';
+    v.style.display = isVehicleWork ? 'block' : 'none';
+
+    if (isVehicleWork) {
+        const select = row.querySelector('.expense-vendor');
+
+        // Check if we need to load data
+        if (select && select.options.length <= 1) {
+            console.log("Vehicle Work selected but vendors empty, forcing load...");
+            if (window.renderVendorSelects) window.renderVendorSelects();
+        } else {
+            // Data exists, but Select2 might be broken (0 width) because it was initialized while hidden
+            // Force re-initialization to correct the display
+            if ($(select).hasClass('select2-hidden-accessible')) {
+                $(select).select2('destroy');
+            }
+            $(select).select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#tripDetailsModal'),
+                placeholder: 'Select Vendor'
+            });
+        }
+    }
 };
 
 window.calculateTripTotals = function () {
@@ -1386,12 +1628,6 @@ window.calculateTripFreightRate = function () {
 };
 
 // Fuel Entry
-window.loadFuelPumps = function () {
-    const s = document.getElementById('fuelPumpSelect');
-    if (s.options.length > 1) return;
-    s.innerHTML = '<option value="">Select a Pump</option>';
-    window.allPumps.forEach(p => s.innerHTML += `<option value="${p.id}">${p.name}</option>`);
-};
 
 window.calculateFuelTotalAmount = function () {
     document.getElementById('fuelAmount').value = ((parseFloat(document.getElementById('fuelLiters').value) || 0) * (parseFloat(document.getElementById('fuelPerLiter').value) || 0)).toFixed(2);
@@ -1476,7 +1712,7 @@ if (fuelForm) {
                 lrNumber: document.getElementById('modalLrNumber').textContent,
                 beforeLiters: before, afterLiters: after
             };
-            updates[`users/${window.auth.currentUser.uid}/petrolPumps/${pumpId}/transactions/${logKey}`] = true;
+            updates[`users/${window.currentCoreAccountId}/petrolPumps/${pumpId}/transactions/${logKey}`] = true;
 
             await window.db.ref().update(updates);
             alert('Fuel recorded.');
@@ -1744,7 +1980,6 @@ window.showLRCopy = async function (lrId) {
     const html = `
       <div id="lr-pdf-content" style="font-family: Arial, sans-serif; background: #ffffff; color: #000; padding: 20px; max-width: 900px; margin: 0 auto; border: 1px solid #ccc; font-size: 11px; line-height: 1.3;">
         
-        <!-- Header Section -->
         <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
              <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 10px; margin-bottom: 5px;">
                 <span>Subject to ${profile.city || 'Jurisdiction'} Jurisdiction</span>
@@ -1763,13 +1998,11 @@ window.showLRCopy = async function (lrId) {
             </div>
         </div>
 
-        <!-- Upper Info Row -->
         <div style="font-weight: bold; margin-bottom: 15px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
             From: ${lr.fromLocation || 'N/A'} To ${lr.toLocation || 'N/A'}
         </div>
 
         <div style="display: flex; gap: 20px; margin-bottom: 10px;">
-            <!-- Left Column: Consignor & Consignee -->
             <div style="flex: 1;">
                 <div style="margin-bottom: 10px; border-bottom: 1px dotted #ccc; padding-bottom: 5px;">
                     <strong>Consignor:</strong><br>
@@ -1793,7 +2026,6 @@ window.showLRCopy = async function (lrId) {
                 </div>
             </div>
 
-            <!-- Right Column: LR Details -->
             <div style="flex: 1;">
                 <div style="display: grid; grid-template-columns: 140px 1fr; row-gap: 2px;">
                     <strong>LR No:</strong> <span>${lr.lrNumber || 'N/A'}</span>
@@ -1810,7 +2042,6 @@ window.showLRCopy = async function (lrId) {
             </div>
         </div>
 
-        <!-- Table -->
         <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px;">
             <thead>
                 <tr style="border-bottom: 1px solid #000; background: #eee;">
@@ -1834,7 +2065,6 @@ window.showLRCopy = async function (lrId) {
             </tbody>
         </table>
 
-        <!-- Driver & Signatures -->
         <div style="display: flex; position: relative; margin-top: 20px;">
              <div style="flex: 1.5;">
                 <div style="margin-bottom: 10px;"><strong>Remarks:</strong> ${lr.remarks || 'GST TO BE PAID BY CONSIGNOR / GOODS TRANSPORT AGENCY'}</div>
@@ -1862,14 +2092,12 @@ window.showLRCopy = async function (lrId) {
              </div>
         </div>
 
-        <!-- Terms Footer -->
         <div style="margin-top: 20px; border-top: 1px solid #000; padding-top: 5px; font-size: 10px; color: #555;">
             <div>Note: Damaged bags are not to be returned to Truck driver.</div>
             <div>If acknowledgement is not submitted within 15 days, freight will not be paid.</div>
             <div>Comments: __________________________________________________________________</div>
         </div>
 
-        <!-- Receipt Slip -->
         <div style="border-top: 2px dashed #000; margin-top: 20px; padding-top: 10px;">
              <div style="text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Receipt of Goods</div>
              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
@@ -1914,13 +2142,80 @@ function showQuickAddModal(type) {
         'client': 'quickAddClientModal',
         'transporter': 'quickAddTransporterModal',
         'route': 'quickAddRouteModal',
-        'consignee': 'quickAddClientModal' // Consignee uses same modal as client
+        'consignee': 'quickAddClientModal',
+        'pump': 'quickAddFuelPumpModal',
+        'vendor': 'quickAddVendorModal'
     };
 
     const modalId = modalMap[type];
     if (modalId) {
         const modal = new bootstrap.Modal(document.getElementById(modalId));
         modal.show();
+    }
+}
+
+async function saveQuickAddPump() {
+    const name = document.getElementById('q_pumpName').value;
+    const location = document.getElementById('q_pumpLocation').value;
+
+    if (!name) return alert('Pump Name is required');
+
+    try {
+        const ref = window.db.ref(`users/${window.currentCoreAccountId}/petrolPumps`);
+        const newRef = ref.push();
+        await newRef.set({
+            name: name,
+            place: location, // 'place' to match route-details.html schema
+            createdAt: new Date().toISOString()
+        });
+
+        // Refresh dropdowns if necessary (listeners handle it mostly, but specific dropdowns might need reset)
+        // Fuel pump dropdown is re-rendered by loadFuelPumps on click usually
+
+        const modalEl = document.getElementById('quickAddFuelPumpModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        document.getElementById('quickAddFuelPumpForm').reset();
+
+        // If fuel pump select is visible and loaded, refresh it?
+        // loadFuelPumps check options length > 1, so we might need to clear it to force reload
+        const s = document.getElementById('fuelPumpSelect');
+        if (s) s.innerHTML = '<option value="">Select a Pump</option>';
+        // Calling loadFuelPumps manually if modal is open? 
+        if (window.loadFuelPumps) window.loadFuelPumps();
+
+    } catch (e) {
+        console.error(e);
+        alert('Error saving pump: ' + e.message);
+    }
+}
+
+async function saveQuickAddVendor() {
+    const name = document.getElementById('q_vendorName').value;
+    const contact = document.getElementById('q_vendorContact').value;
+
+    if (!name) return alert('Vendor Name is required');
+
+    try {
+        const ref = window.db.ref(`users/${window.currentCoreAccountId}/workVendors`); // Assuming workVendors generic
+        const newRef = ref.push();
+        await newRef.set({
+            name: name,
+            mobile: contact, // 'mobile' to match work-management.html schema
+            createdAt: new Date().toISOString()
+        });
+
+        // Refresh logic is handled by 'on' listener for workVendors in loadAllData
+        // The listener updates allWorkVendors and calls renderVendorSelects() automatically.
+
+        const modalEl = document.getElementById('quickAddVendorModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        document.getElementById('quickAddVendorForm').reset();
+
+    } catch (e) {
+        console.error(e);
+        alert('Error saving vendor: ' + e.message);
     }
 }
 
@@ -2083,4 +2378,3 @@ async function saveQuickAddDriver() {
         alert('Error adding driver');
     }
 }
-
