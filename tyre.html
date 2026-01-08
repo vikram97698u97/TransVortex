@@ -78,7 +78,6 @@
         window.API_CONFIG = {
           email: {
             provider: "sendgrid",
-            window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
             from: "noreply@transvortex.online",
             fromName: "TransVortex Transport"
           },
@@ -922,6 +921,8 @@
         Management</button>
       <button class="tab-button" onclick="openTab(event, 'Analytics')"><i class="fas fa-chart-pie"></i>
         Analytics</button>
+      <button class="tab-button" onclick="openTab(event, 'Stock')"><i class="fas fa-warehouse"></i>
+        Tyre Stock</button>
     </div>
 
     <div id="Management" class="tab-content active">
@@ -1033,6 +1034,44 @@
       </div>
     </div>
 
+    <div id="Stock" class="tab-content">
+      <div class="summary-dashboard">
+        <div class="summary-card">
+          <h3><i class="fas fa-cubes"></i> Tyres in Stock</h3>
+          <p id="totalStockStat">0</p>
+        </div>
+        <div class="summary-card">
+          <h3><i class="fas fa-coins"></i> Stock Value</h3>
+          <p id="totalStockValueStat">₹0</p>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Tyre Stock Inventory</h3>
+        <div class="search-section">
+          <input type="text" id="searchStockInput" class="search-input"
+            placeholder="Search stock by tyre number, brand..." oninput="renderStockTyres()">
+        </div>
+        <div id="stockList" class="table-responsive">
+          <table class="table table-bordered table-striped" id="stockTable" style="margin-top: 20px;">
+            <thead class="thead-dark">
+              <tr>
+                <th>Tyre No</th>
+                <th>Brand</th>
+                <th>Status</th>
+                <th>Running Km</th>
+                <th>Cost</th>
+                <th>Stock Since</th>
+                <th>Last Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="stockTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div id="Analytics" class="tab-content">
       <section class="analytics-kpis">
         <div class="analytics-kpi">
@@ -1118,6 +1157,28 @@
     </div>
   </div>
 
+  <!-- Assign From Stock Modal -->
+  <div id="assignStockModal"
+    style="display:none; position:fixed; z-index:1050; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+    <div
+      style="background-color:#fff; padding:25px; border-radius:10px; width:90%; max-width:500px; position:relative;">
+      <span onclick="closeAssignStockModal()"
+        style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer;">&times;</span>
+      <h3>Assign Stock Tyre</h3>
+      <p>Assigning: <strong id="assignStockTyreInfo"></strong></p>
+
+      <div class="form-group">
+        <label for="assignTargetVehicle">Select Vehicle:</label>
+        <select id="assignTargetVehicle" class="form-group"></select>
+      </div>
+      <div class="form-group">
+        <label for="assignTargetPosition">Position:</label>
+        <input type="text" id="assignTargetPosition" class="form-group" placeholder="e.g., Front-Right">
+      </div>
+      <button class="btn btn-primary" onclick="assignFromStock()">Assign to Vehicle</button>
+    </div>
+  </div>
+
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -1125,7 +1186,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getDatabase, ref, set, push, onValue, update, remove, get, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, set, push, onValue, update, remove, get, child, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     // ... (Firebase Config and init remains) ...
     // Load Firebase configuration securely from EVM
@@ -1406,6 +1467,21 @@
       loadVehicles();
     });
 
+    // Tab switching logic
+    window.openTab = function (evt, tabName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tab-content");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("tab-button");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(tabName).style.display = "block";
+      evt.currentTarget.className += " active";
+    };
+
     // Live validation for vehicle number input
     window.validateVehicleInput = function (query) {
       const suggestionsContainer = document.getElementById('vehicleSuggestions');
@@ -1508,21 +1584,22 @@
             <label>Tyre Number:</label>
             <input type="text" class="tyre-number" value="T${String(nextTyreNum).padStart(3, '0')}" required>
           </div>
+          </div>
           <div class="form-group">
             <label>Brand:</label>
-            <input type="text" class="tyre-brand" placeholder="e.g., MRF" required>
+            <input type="text" class="tyre-brand" placeholder="e.g., MRF">
           </div>
           <div class="form-group">
             <label>Position:</label>
-            <input type="text" class="tyre-position" placeholder="e.g., Rear-Right-Outer" required>
+            <input type="text" class="tyre-position" placeholder="e.g., Rear-Right-Outer">
           </div>
           <div class="form-group">
             <label>Added Date:</label>
-            <input type="date" class="tyre-added-date" required>
+            <input type="date" class="tyre-added-date">
           </div>
           <div class="form-group">
             <label>Cost (₹):</label>
-            <input type="number" class="tyre-cost" placeholder="e.g., 5000" required>
+            <input type="number" class="tyre-cost" placeholder="e.g., 5000">
           </div>
         </div>
       `;
@@ -1586,8 +1663,8 @@
         const tyreAddedDate = container.querySelector('.tyre-added-date').value;
         const tyreCost = container.querySelector('.tyre-cost').value;
 
-        if (!tyreNumber || !tyreBrand || !tyrePosition || !tyreAddedDate || !tyreCost) {
-          showAlert('Please fill in all tyre details, including cost', 'warning');
+        if (!tyreNumber) {
+          showAlert('Please provide a tyre number', 'warning');
           return;
         }
 
@@ -1601,11 +1678,12 @@
 
         newTyres.push({
           number: tyreNumber,
-          brand: tyreBrand,
-          position: tyrePosition,
-          addedAt: new Date(tyreAddedDate).getTime(),
-          cost: parseFloat(tyreCost) || 0,
-          totalRunningKm: 0 // Initialize running KMs for new tyres
+          brand: tyreBrand || '', // Optional
+          position: tyrePosition || '', // Optional
+          addedAt: tyreAddedDate ? new Date(tyreAddedDate).getTime() : 0, // 0 if not provided
+          cost: parseFloat(tyreCost) || 0, // 0 if not provided
+          totalRunningKm: 0,
+          lastUpdated: Date.now() // Add timestamp
         });
       }
 
@@ -1657,6 +1735,24 @@
               updatedTyres = [...existingTyres, ...newTyres];
             }
 
+            // Check Global Duplicates (Stock & History)
+            for (const newTyre of newTyres) {
+              // Check Stock
+              if (window.stockTyres && window.stockTyres.some(t => t.number === newTyre.number)) {
+                showAlert(`Tyre ${newTyre.number} already exists in Stock Inventory.`, 'danger');
+                return;
+              }
+
+              // Check History
+              const historyRef = ref(db, `users/${currentUser.uid}/tyre_history`);
+              const historyQuery = query(historyRef, orderByChild('number'), equalTo(newTyre.number));
+              const historySnap = await get(historyQuery);
+              if (historySnap.exists()) {
+                showAlert(`Tyre ${newTyre.number} already exists in Tyre History (Disposed).`, 'danger');
+                return;
+              }
+            }
+
             // Check for duplicate tyre numbers across all vehicles (FIXED)
             const allVehiclesRef = ref(db, `users/${currentUser.uid}/vehicles`);
             const allVehiclesSnapshot = await get(allVehiclesRef);
@@ -1706,6 +1802,24 @@
             }
           }
 
+          // Check Global Duplicates (Stock & History) for New Vehicle
+          for (const newTyre of newTyres) {
+            // Check Stock
+            if (window.stockTyres && window.stockTyres.some(t => t.number === newTyre.number)) {
+              showAlert(`Tyre ${newTyre.number} already exists in Stock Inventory.`, 'danger');
+              return;
+            }
+
+            // Check History
+            const historyRef = ref(db, `users/${currentUser.uid}/tyre_history`);
+            const historyQuery = query(historyRef, orderByChild('number'), equalTo(newTyre.number));
+            const historySnap = await get(historyQuery);
+            if (historySnap.exists()) {
+              showAlert(`Tyre ${newTyre.number} already exists in Tyre History (Disposed).`, 'danger');
+              return;
+            }
+          }
+
           // Check for duplicate tyre numbers across all vehicles (FIXED)
           if (snapshot.exists()) {
             const vehicles = snapshot.val();
@@ -1736,6 +1850,12 @@
         // Reset form and reload the vehicle list
         resetForm();
         loadVehicles();
+        loadStockTyres();
+        window.loadTyreHistory().then(() => {
+          // Wait for history to load before checking deep link for history items
+          window.handleDeepLink();
+        });
+        window.handleDeepLink(); // Check immediate vehicle matches
       } catch (error) {
         console.error('Error saving vehicle:', error);
         showAlert(`Error: ${error.message}`, 'danger');
@@ -1824,6 +1944,7 @@
                         <div><strong>#${highlightText(tyre.number || 'N/A', searchTerm)}</strong> - ${highlightText(tyre.brand || '', searchTerm)}</div>
                         <div>Status: <span class="status-badge ${tyre.status ? tyre.status.toLowerCase() : 'active'}">${tyre.status || 'Active'}</span></div>
                         <div>Position: <strong>${tyre.position || 'N/A'}</strong> | Added: <strong>${tyre.addedAt ? new Date(tyre.addedAt).toLocaleDateString() : 'N/A'}</strong> | Cost: <strong>₹${(tyre.cost || 0).toFixed(2)}</strong> | Running: <strong>${(tyre.totalRunningKm || 0).toLocaleString('en-IN')} KM</strong></div>
+                        <div style="font-size: 0.85em; color: #666; margin-top: 4px;">Last Updated: <strong>${tyre.lastUpdated ? new Date(tyre.lastUpdated).toLocaleString() : 'N/A'}</strong></div>
                       </div>
                       <div class="tyre-actions">
                         <button onclick="event.stopPropagation(); editTyre('${id}', '${tyre.number}')" class="btn btn-primary" title="Edit Tyre">
@@ -1831,6 +1952,9 @@
                         </button>
                         <button onclick="event.stopPropagation(); openChangeTyreModal('${id}', '${tyre.number}')" class="btn btn-info" title="Change/Replace Tyre">
                           <i class="fas fa-exchange-alt"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); moveToStock('${id}', '${tyre.number}')" class="btn btn-warning" title="Move to Stock">
+                          <i class="fas fa-warehouse"></i>
                         </button>
                         <button onclick="event.stopPropagation(); if(confirm('Are you sure you want to dispose this tyre? This action cannot be undone.')) { disposeTyre('${id}', '${tyre.number}') }" class="btn btn-danger" title="Dispose Tyre">
                           <i class="fas fa-trash"></i>
@@ -1852,6 +1976,62 @@
           </div>
         `;
       });
+
+      // CROSS-TAB SEARCH: Check if tyre is in Stock
+      if (searchTermVehicles && searchTermVehicles.length > 0) {
+        const term = searchTermVehicles.toLowerCase();
+        const stockMatches = (window.stockTyres || []).filter(t =>
+          (t.number || '').toLowerCase().includes(term) || (t.brand || '').toLowerCase().includes(term)
+        );
+
+        if (stockMatches.length > 0) {
+          html += `<div style="width:100%; margin: 20px 0; border-top: 2px dashed #ccc; padding-top: 10px;">
+                <h4 style="color:#f39c12;"><i class="fas fa-warehouse"></i> Found in Tyre Stock</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                ${stockMatches.map(t => `
+                    <div class="card" style="border: 1px solid #f39c12; max-width: 300px;">
+                        <div class="card-header" style="background-color: #fff3cd; color: #856404; padding: 10px;">
+                            <h4 style="margin:0;">${t.number}</h4>
+                            <span style="font-size:0.9em;">${t.brand}</span>
+                        </div>
+                        <div class="card-body" style="padding: 10px;">
+                            <p style="margin-bottom:5px;"><strong>Status:</strong> In Stock</p>
+                            <button class="btn btn-sm btn-warning" onclick="openTab({currentTarget: document.querySelector('.tab-button:nth-child(3)')}, 'Stock'); document.getElementById('searchStockInput').value='${t.number}'; window.renderStockTyres();">Go to Stock</button>
+                        </div>
+                    </div>
+                `).join('')}
+                </div>
+            </div>`;
+        }
+      }
+
+      // CROSS-TAB SEARCH: Check if tyre is in History
+      if (searchTermVehicles && searchTermVehicles.length > 0) {
+        const term = searchTermVehicles.toLowerCase();
+        const historyMatches = (window.tyreHistory || []).filter(t =>
+          (t.number || '').toLowerCase().includes(term) || (t.brand || '').toLowerCase().includes(term)
+        );
+
+        if (historyMatches.length > 0) {
+          html += `<div style="width:100%; margin: 20px 0; border-top: 2px dashed #999; padding-top: 10px;">
+                <h4 style="color:#666;"><i class="fas fa-history"></i> Found in Disposed History</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                ${historyMatches.map(t => `
+                    <div style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; background: #eee; width: 300px;">
+                        <div><strong>${t.number}</strong> <span class="badge badge-secondary">Disposed</span></div>
+                        <div>Brand: ${t.brand}</div>
+                        <div>Reason: ${t.disposalReason}</div>
+                        <div>Date: ${t.disposedAt ? new Date(t.disposedAt).toLocaleDateString() : 'N/A'}</div>
+                        <div style="margin-top:5px;">
+                            <a href="tyre_history.html?search=${t.number}" target="_blank" class="btn btn-sm btn-outline-secondary">View in History</a>
+                        </div>
+                    </div>
+                `).join('')}
+                </div>
+              </div>`;
+        }
+      }
+
       vehicleListContainer.innerHTML = html;
     }
 
@@ -2304,6 +2484,122 @@
       }
     }
 
+    // Load Tyre History (for searching)
+    window.tyreHistory = [];
+    window.loadTyreHistory = async function () {
+      if (!currentUser) return;
+      try {
+        const hRef = ref(db, `users/${currentUser.uid}/tyre_history`);
+        const snapshot = await get(hRef);
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          window.tyreHistory = Object.values(data);
+        } else {
+          window.tyreHistory = [];
+        }
+      } catch (error) {
+        console.error("Error loading tyre history:", error);
+      }
+    };
+
+    // Tab Switching Function (Override/Polyfill)
+    window.openTab = function (evt, tabName) {
+      // Hide all tab content
+      const tabContents = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < tabContents.length; i++) {
+        tabContents[i].style.display = "none";
+      }
+
+      // Deactivate all buttons
+      const tabLinks = document.getElementsByClassName("tab-button");
+      for (let i = 0; i < tabLinks.length; i++) {
+        tabLinks[i].className = tabLinks[i].className.replace(" active", "");
+      }
+
+      // Show current tab
+      const tab = document.getElementById(tabName);
+      if (tab) tab.style.display = "block";
+
+      // Activate button
+      if (evt) {
+        evt.currentTarget.className += " active";
+      } else {
+        // Find button by text or index? 
+        // Better to assume if evt is null we just switch content.
+        // But we should try to highlight the button.
+        // Let's iterate and find the one that points to this tab? 
+        // Hard to link button to tab without explicit ID or map.
+        // We'll rely on index or text.
+        for (let i = 0; i < tabLinks.length; i++) {
+          if (tabLinks[i].textContent.includes(tabName) ||
+            (tabName === 'Management' && i === 0) ||
+            (tabName === 'Analytics' && i === 1) ||
+            (tabName === 'Stock' && i === 2)) { // Adjust indices based on actual HTML
+            if (!tabLinks[i].className.includes("active")) tabLinks[i].className += " active";
+          }
+        }
+      }
+    }
+
+    // Deep Linking Handler
+    window.initialDeepLinkHandled = false;
+    window.handleDeepLink = function () {
+      if (window.initialDeepLinkHandled) return;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const search = urlParams.get('search');
+      if (!search) return;
+
+      let found = false;
+
+      // Check Stock
+      if (window.stockTyres) {
+        const inStock = window.stockTyres.find(t => t.number === search);
+        if (inStock) {
+          openTab(null, 'Stock');
+          document.getElementById('searchStockInput').value = search;
+          if (window.renderStockTyres) window.renderStockTyres();
+          found = true;
+        }
+      }
+
+      // Check Vehicles (if not found in stock)
+      if (!found && typeof allVehiclesData !== 'undefined') {
+        // Check if it exists in any vehicle
+        let inVehicle = false;
+        Object.values(allVehiclesData).forEach(v => {
+          if (v.tyres && v.tyres.some(t => t.number === search)) inVehicle = true;
+        });
+
+        if (inVehicle) {
+          openTab(null, 'Management');
+          const searchInput = document.getElementById('searchInput'); // Vehicle search input
+          if (searchInput) {
+            searchInput.value = search;
+            if (window.searchVehicles) window.searchVehicles();
+            else if (window.renderVehiclesWithPagination) window.renderVehiclesWithPagination();
+          }
+          found = true;
+        }
+      }
+
+      // Check History (if not found in active)
+      if (!found && window.tyreHistory && window.tyreHistory.some(t => t.number === search)) {
+        // Stay on Management (or go to History page?) - User said "open that page or tab"
+        // If we are on tyre.html, we show the "Found in History" section.
+        // So Management tab is correct.
+        openTab(null, 'Management');
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+          searchInput.value = search;
+          if (window.searchVehicles) window.searchVehicles();
+        }
+        found = true;
+      }
+
+      if (found) window.initialDeepLinkHandled = true;
+    };
+
     // Show disposal modal (FIXED)
     window.disposeTyre = function (vehicleId, tyreNumber) {
       // Create disposal modal if it doesn't exist
@@ -2400,31 +2696,15 @@
 
         const cancelBtn = document.createElement('button');
         cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'btn btn-danger';
-        cancelBtn.onclick = function () {
-          modal.style.display = 'none';
-        };
+        cancelBtn.className = 'btn';
+        cancelBtn.style.backgroundColor = '#6c757d';
+        cancelBtn.style.color = 'white';
+        cancelBtn.onclick = function () { document.getElementById('disposalModal').style.display = 'none'; };
 
         const confirmBtn = document.createElement('button');
-        confirmBtn.textContent = 'Confirm Disposal';
-        confirmBtn.className = 'btn btn-primary';
-        confirmBtn.onclick = function () {
-          const reason = select.value === 'Other'
-            ? (document.getElementById('otherReason').value.trim() || 'Other')
-            : select.value;
-          const resellPrice = 0;
-
-          if (!reason) {
-            alert('Please enter a disposal reason');
-            return;
-          }
-
-          // Close the modal
-          modal.style.display = 'none';
-
-          // Proceed with disposal
-          proceedWithDisposal(vehicleId, tyreNumber, reason, resellPrice);
-        };
+        confirmBtn.textContent = 'Dispose';
+        confirmBtn.className = 'btn btn-danger';
+        // Initial placeholder, will be updated
 
         buttonContainer.appendChild(cancelBtn);
         buttonContainer.appendChild(confirmBtn);
@@ -2433,7 +2713,6 @@
         modalContent.appendChild(title);
         modalContent.appendChild(reasonLabel);
         modalContent.appendChild(select);
-
         modalContent.appendChild(otherInput);
         modalContent.appendChild(buttonContainer);
 
@@ -2441,23 +2720,417 @@
         document.body.appendChild(modal);
       }
 
-      // Show the modal
+      // Logic to run every time modal opens
+      // modal is handled above
+      const confirmBtn = document.getElementById('disposalModal').querySelector('.btn-danger');
+      const newConfirm = confirmBtn.cloneNode(true);
+      confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+      newConfirm.onclick = async function () {
+        const reasonSelect = document.getElementById('disposalReason');
+        let reason = reasonSelect.value;
+        if (reason === 'Other') reason = document.getElementById('otherReason').value;
+        if (!reason) { alert('Please select a reason'); return; }
+
+        if (confirm('Confirm disposal?')) {
+          try {
+            const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
+            const snap = await get(vehicleRef);
+            if (snap.exists()) {
+              const vehicle = snap.val();
+              const tyre = (vehicle.tyres || []).find(t => t.number === tyreNumber);
+              if (tyre) {
+                // Push to history
+                await push(ref(db, `users/${currentUser.uid}/tyre_history`), {
+                  ...tyre,
+                  disposedAt: Date.now(),
+                  disposalReason: reason,
+                  vehicleId: vehicleId,
+                  vehicleNumber: vehicle.vehicleNumber
+                });
+                // Remove from vehicle
+                const newTyres = (vehicle.tyres || []).filter(t => t.number !== tyreNumber);
+                await update(vehicleRef, { tyres: newTyres });
+
+                showAlert('Tyre disposed.', 'success');
+                modal.style.display = 'none';
+              }
+            }
+          } catch (e) { console.error(e); showAlert('Error: ' + e.message, 'danger'); }
+        }
+      };
+
       modal.style.display = 'flex';
+    };
 
-      // Reset form
-      document.getElementById('disposalReason').value = 'Worn out';
+    // ==========================================
+    // TYRE STOCK LOGIC
+    // ==========================================
 
-      const otherInput = document.getElementById('otherReason');
-      otherInput.value = '';
-      otherInput.style.display = 'none';
+    let stockTyres = [];
 
-      // Close modal when clicking outside
-      modal.onclick = function (event) {
-        if (event.target === modal) {
-          modal.style.display = 'none';
+    // Load Stock Tyres
+    function loadStockTyres() {
+      if (!currentUser) return;
+      const stockRef = ref(db, `users/${currentUser.uid}/tyre_stock`);
+      onValue(stockRef, (snapshot) => {
+        stockTyres = [];
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          // Convert object to array if needed, though usually it's list-like but with unique keys
+          // We'll trust the structure is similar to tyres: array or object map.
+          // Since we push to stock, it likely generates unique keys.
+          Object.entries(data).forEach(([key, tyre]) => {
+            stockTyres.push({ ...tyre, stockKey: key });
+          });
+        }
+        window.stockTyres = stockTyres; // Expose for global validation
+        renderStockTyres();
+        window.handleDeepLink(); // Check if we need to switch tab
+      });
+    }
+
+    // Render Stock Tyres (TABLE VIEW)
+    window.renderStockTyres = function () {
+      const container = document.getElementById('stockTableBody');
+      const searchTerm = (document.getElementById('searchStockInput').value || '').toLowerCase();
+
+      const filtered = stockTyres.filter(t =>
+        (t.number || '').toLowerCase().includes(searchTerm) ||
+        (t.brand || '').toLowerCase().includes(searchTerm)
+      );
+
+      // Update Stats
+      document.getElementById('totalStockStat').textContent = filtered.length;
+      const totalVal = filtered.reduce((acc, t) => acc + (parseFloat(t.cost) || 0), 0);
+      document.getElementById('totalStockValueStat').textContent = `₹${totalVal.toFixed(2)}`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<tr><td colspan="8" style="text-align: center;">No tyres in stock.</td></tr>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(t => `
+        <tr>
+          <td><strong>${t.number}</strong></td>
+          <td>${t.brand}</td>
+          <td><span class="badge badge-warning">In Stock</span></td>
+          <td>${(t.totalRunningKm || 0).toLocaleString()} km</td>
+          <td>₹${(t.cost || 0).toFixed(2)}</td>
+          <td>${t.movedToStockAt ? new Date(t.movedToStockAt).toLocaleDateString() : 'N/A'}</td>
+          <td>${t.lastUpdated ? new Date(t.lastUpdated).toLocaleDateString() : 'N/A'}</td>
+          <td>
+             <button class="btn btn-sm btn-primary" onclick="openAssignStockModal('${t.stockKey}')" title="Assign to Vehicle"><i class="fas fa-arrow-right"></i> Assign</button>
+             <button class="btn btn-sm btn-danger" onclick="initiateStockDisposal('${t.stockKey}')" title="Dispose"><i class="fas fa-trash"></i> Dispose</button>
+          </td>
+        </tr>
+      `).join('');
+
+      // CROSS-TAB SEARCH: Check if tyre is in Vehicles
+      if (searchTerm && searchTerm.length > 0) {
+        const vehicleMatches = [];
+        Object.entries(allVehiclesData).forEach(([vid, v]) => {
+          const tyres = v.tyres || [];
+          (Array.isArray(tyres) ? tyres : Object.values(tyres)).forEach(t => {
+            if ((t.number || '').toLowerCase().includes(searchTerm) || (t.brand || '').toLowerCase().includes(searchTerm)) {
+              vehicleMatches.push({ ...t, vehicleNumber: v.vehicleNumber, vehicleId: vid });
+            }
+          });
+        });
+
+        if (vehicleMatches.length > 0) {
+          container.innerHTML += `
+                <tr style="background-color: #e2e3e5;"><td colspan="8" style="font-weight:bold; text-align:center;">Found on Vehicles</td></tr>
+                ${vehicleMatches.map(t => `
+                    <tr style="background-color: #f8f9fa;">
+                      <td><strong>${t.number}</strong></td>
+                      <td>${t.brand}</td>
+                      <td><span class="badge badge-info">On Vehicle (${t.vehicleNumber})</span></td>
+                      <td>${(t.totalRunningKm || 0).toLocaleString()} km</td>
+                      <td>₹${(t.cost || 0).toFixed(2)}</td>
+                      <td>Installed: ${t.installedAt ? new Date(t.installedAt).toLocaleDateString() : 'N/A'}</td>
+                      <td>${t.lastUpdated ? new Date(t.lastUpdated).toLocaleDateString() : 'N/A'}</td>
+                      <td>
+                         <button class="btn btn-sm btn-info" onclick="openTab({currentTarget: document.querySelector('.tab-button:nth-child(1)')}, 'Management'); document.getElementById('searchVehiclesInput').value='${t.vehicleNumber}'; window.searchVehicles('${t.vehicleNumber}');">Go to Vehicle</button>
+                      </td>
+                    </tr>
+                `).join('')}
+              `;
+        }
+
+        // CROSS-TAB SEARCH: Check if tyre is in History
+        const historyMatches = (window.tyreHistory || []).filter(t =>
+          (t.number || '').toLowerCase().includes(searchTerm) || (t.brand || '').toLowerCase().includes(searchTerm)
+        );
+
+        if (historyMatches.length > 0) {
+          container.innerHTML += `
+              <tr style="background-color: #f2f2f2; color: #666;"><td colspan="8" style="font-weight:bold; text-align:center;">Found in Disposed History</td></tr>
+              ${historyMatches.map(t => `
+                  <tr style="background-color: #f8f9fa;">
+                    <td><strong>${t.number}</strong></td>
+                    <td>${t.brand}</td>
+                    <td><span class="badge badge-secondary">Disposed</span></td>
+                    <td>${(t.totalRunningKm || 0).toLocaleString()} km</td>
+                    <td>₹${(t.cost || 0).toFixed(2)}</td>
+                    <td>${t.addedAt ? new Date(t.addedAt).toLocaleDateString() : 'N/A'}</td>
+                    <td>Disposed: ${t.disposedAt ? new Date(t.disposedAt).toLocaleDateString() : 'N/A'}</td>
+                    <td>
+                       <a href="tyre_history.html?search=${t.number}" target="_blank" class="btn btn-sm btn-outline-secondary">View History</a>
+                    </td>
+                  </tr>
+              `).join('')}
+            `;
+        }
+      }
+    };
+
+    // Move to Stock
+    window.moveToStock = async function (vehicleId, tyreNumber) {
+      if (!confirm(`Move tyre ${tyreNumber} to Stock Inventory?`)) return;
+
+      const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`);
+      try {
+        const snap = await get(vehicleRef);
+        if (!snap.exists()) return;
+        const vehicle = snap.val();
+        const tyre = (vehicle.tyres || []).find(t => t.number === tyreNumber);
+        if (!tyre) {
+          showAlert('Tyre not found.', 'danger');
+          return;
+        }
+
+        // Add to stock
+        const stockRef = ref(db, `users/${currentUser.uid}/tyre_stock`);
+        const stockTyre = {
+          ...tyre,
+          vehicleIdOfOrigin: vehicleId,
+          vehicleNumberOfOrigin: vehicle.vehicleNumber,
+          movedToStockAt: Date.now(),
+          position: null // Clear position
+        };
+        await push(stockRef, stockTyre);
+
+        // Remove from vehicle
+        const newTyres = (vehicle.tyres || []).filter(t => t.number !== tyreNumber);
+        await update(vehicleRef, { tyres: newTyres });
+
+        showAlert('Tyre moved to Stock successfully!', 'success');
+      } catch (e) {
+        console.error(e);
+        showAlert('Error moving to stock: ' + e.message, 'danger');
+      }
+    };
+
+    // Dispose from Stock
+    window.initiateStockDisposal = function (stockKey) {
+      // Reuse the main disposal modal logic but adapted for stock
+      const tyre = stockTyres.find(t => t.stockKey === stockKey);
+      if (!tyre) return;
+
+      let modal = document.getElementById('disposalModal');
+      // Ensure modal exists (logic duplicate from above, ideally refactor, but for now accessing existing)
+      if (!modal) {
+        // If modal not created yet, create it by invoking disposeTyre dummy? No.
+        // Best to just manually ensure it exists or use the same creation function.
+        // We'll trust disposeTyre created it or create a simple version here.
+        // Actually, let's call existing disposeTyre with nulls to init modal, then override onclick.
+        // disposeTyre('dummy', 'dummy'); 
+        // That interacts with DB.
+
+        // Let's create it if missing:
+        // To save tokens/complexity, assuming user has viewed page, but better safe.
+        // Copy-paste creation logic is risky.
+        // Let's assume the user has clicked something else? No.
+        // Let's just create a quick STOCK disposal modal or reuse the existing one if present.
+        // ... The existing disposeTyre function creates it if !modal.
+        // So we can assume it exists or call a helper.
+
+        // Simplest: Just use standard prompt for now? User requested "move to tyre-history with reason".
+        // We need that modal.
+
+        // Let's hijack the existing `disposeTyre` function's Modal Creation part only?
+        // Or better, let's just create a new function `openDisposalModal(callback)`
+      }
+
+      // Manual override for Stock Disposal
+      // Check if modal exists, if not, create it (simplified version of header code)
+      if (!document.getElementById('disposalModal')) {
+        // Quickly register the disposeTyre creator... actually calling disposeTyre with non-existent vehicleID might be safe-ish but dirty.
+        // Let's just create the modal structure here if missing, cleanly.
+        const m = document.createElement('div'); m.id = 'disposalModal'; m.innerHTML = `
+              <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:9999;">
+                <div style="background:#fff;padding:20px;border-radius:8px;width:90%;max-width:500px;">
+                  <h3>Dispose Tyre From Stock</h3>
+                  <label>Reason:</label>
+                  <select id="disposalReasonStock" class="form-control" style="margin-bottom:10px;">
+                    <option>Worn out</option><option>Tyre burst</option><option>Change</option><option>Other</option>
+                  </select>
+                  <input id="otherReasonStock" style="display:none;margin-bottom:10px;" class="form-control" placeholder="Specify other...">
+                  <div style="text-align:right;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('disposalModal').remove()">Cancel</button>
+                    <button class="btn btn-danger" id="confirmStockDisposeBtn">Dispose</button>
+                  </div>
+                </div>
+              </div>
+            `;
+        document.body.appendChild(m);
+
+        // Event listeners for the new simplified modal
+        document.getElementById('disposalReasonStock').onchange = function () {
+          document.getElementById('otherReasonStock').style.display = this.value === 'Other' ? 'block' : 'none';
+        };
+      } else {
+        // Existing modal is designed for Vehicle disposal. Using it might be complex due to `proceedWithDisposal` coupling.
+        // Let's use the new simplified one defined above or if it exists, replace innerHTML?
+        // To avoid conflicts, let's remove existing disposalModal if present and create fresh Stock one
+        const old = document.getElementById('disposalModal');
+        if (old) old.remove();
+        initiateStockDisposal(stockKey); // Recursive call to create fresh
+        return;
+      }
+
+      // Attach Logic
+      document.getElementById('confirmStockDisposeBtn').onclick = async function () {
+        const select = document.getElementById('disposalReasonStock');
+        const other = document.getElementById('otherReasonStock');
+        const reason = select.value === 'Other' ? other.value : select.value;
+
+        if (!reason) { alert('Reason required'); return; }
+
+        if (confirm('Confirm disposal from stock?')) {
+          try {
+            const stockTyre = stockTyres.find(t => t.stockKey === stockKey);
+            // Add to history
+            await push(ref(db, `users/${currentUser.uid}/tyre_history`), {
+              ...stockTyre,
+              disposedAt: Date.now(),
+              disposalReason: reason,
+              fromStock: true
+            });
+
+            // Remove from stock
+            await remove(ref(db, `users/${currentUser.uid}/tyre_stock/${stockKey}`));
+
+            showAlert('Tyre disposed from stock.', 'success');
+            document.getElementById('disposalModal').remove();
+          } catch (e) {
+            console.error(e);
+            showAlert('Error: ' + e.message, 'danger');
+          }
         }
       };
     };
+
+    // Assign Modal
+    window.openAssignStockModal = function (stockKey) {
+      const modal = document.getElementById('assignStockModal');
+      const tyre = stockTyres.find(t => t.stockKey === stockKey);
+      if (!tyre) return;
+
+      modal.dataset.stockKey = stockKey;
+      document.getElementById('assignStockTyreInfo').textContent = `${tyre.number} (${tyre.brand})`;
+
+      // Populate vehicles
+      const select = document.getElementById('assignTargetVehicle');
+      select.innerHTML = '<option value="">Select Vehicle</option>';
+      Object.entries(allVehiclesData).forEach(([id, v]) => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = v.vehicleNumber;
+        select.appendChild(opt);
+      });
+
+      modal.style.display = 'flex';
+    };
+
+    window.closeAssignStockModal = function () {
+      document.getElementById('assignStockModal').style.display = 'none';
+    };
+
+    // Assign Logic
+    window.assignFromStock = async function () {
+      const modal = document.getElementById('assignStockModal');
+      const stockKey = modal.dataset.stockKey;
+      const targetVehicleId = document.getElementById('assignTargetVehicle').value;
+      const position = document.getElementById('assignTargetPosition').value.trim();
+
+      if (!targetVehicleId || !position) {
+        showAlert('Please select vehicle and position.', 'warning');
+        return;
+      }
+
+      try {
+        const stockTyre = stockTyres.find(t => t.stockKey === stockKey);
+        if (!stockTyre) {
+          showAlert('Tyre not found in stock.', 'danger');
+          return;
+        }
+
+        const vehicleRef = ref(db, `users/${currentUser.uid}/vehicles/${targetVehicleId}`);
+        const snap = await get(vehicleRef);
+        const vehicle = snap.val();
+
+        // Check position
+        if ((vehicle.tyres || []).some(t => t.position === position)) {
+          showAlert(`Position ${position} is already occupied.`, 'warning');
+          return;
+        }
+
+        // Prepare tyre for vehicle
+        const vehicleTyre = {
+          ...stockTyre,
+          stockKey: null, // Remove internal key
+          vehicleIdOfOrigin: null,
+          vehicleNumberOfOrigin: null,
+          movedToStockAt: null,
+          position: position,
+          installedAt: Date.now() // Track new install time
+        };
+
+        const newTyres = [...(vehicle.tyres || []), vehicleTyre];
+
+        // Update vehicle
+        await update(vehicleRef, { tyres: newTyres });
+
+        // Remove from stock
+        await remove(ref(db, `users/${currentUser.uid}/tyre_stock/${stockKey}`));
+
+        showAlert('Tyre assigned to vehicle successfully!', 'success');
+        closeAssignStockModal();
+      } catch (e) {
+        console.error(e);
+        showAlert('Error assigning tyre: ' + e.message, 'danger');
+      }
+    };
+
+    // Initialize Listener
+    const origLoadRegistered = window.loadRegisteredVehicles; // Hook into init flow if needed, but onAuthStateChanged calls loadVehicles
+
+    // We can just call loadStockTyres once user is authenticated. 
+    // Adding it to onAuthStateChanged:
+    const originalAuthStateChanged = onAuthStateChanged;
+    // Wait, onAuthStateChanged is already defined in the module script.
+    // I need to inject the call inside the existing onAuthStateChanged callback.
+    // Since I can't easily inject into the middle of the function with replacement chunks without context, I'll use a specific hook or just rely on 'currentUser' being set.
+
+    // Actually, I can just setting up the listener here if currentUser is already set (unlikely at script load) 
+    // OR I can hook into the 'envConfigLoaded' or just poll? No.
+
+    // I will redefine the onAuthStateChanged logic? No, too risky.
+    // I'll add a check:
+
+    // Since this script runs at the end, I can just add a separate auth listener for the stock feature.
+    // Firebase supports multiple listeners.
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loadStockTyres();
+        window.loadTyreHistory();
+      }
+    });
+
+
 
     // Function to handle the actual disposal (FIXED)
     function proceedWithDisposal(vehicleId, tyreNumber, reason, resellPrice) {
