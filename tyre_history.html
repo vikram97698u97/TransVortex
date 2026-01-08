@@ -276,6 +276,9 @@
       const historyTableBody = document.getElementById('historyTableBody');
       historyTableBody.innerHTML = '<tr><td colspan="12" class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>Loading history...</td></tr>';
 
+      // Load Active Inventory (Vehicles & Stock) for Cross-Search
+      loadActiveInventory();
+
       try {
         const historyRef = db.ref(`users/${currentUser.uid}/tyre_history`);
         const snapshot = await historyRef.get();
@@ -288,6 +291,14 @@
           })).sort((a, b) => (b.disposedAt || 0) - (a.disposedAt || 0)); // Newest first
 
           populateFilters(allHistoryData);
+
+          // Check for URL search param
+          const urlParams = new URLSearchParams(window.location.search);
+          const searchParam = urlParams.get('search');
+          if (searchParam) {
+            document.getElementById('searchInput').value = searchParam;
+          }
+
           runFilters(); // Initial render
         } else {
           allHistoryData = [];
@@ -298,6 +309,38 @@
         console.error("Error loading history:", error);
         historyTableBody.innerHTML = `<tr><td colspan="12" class="text-center text-danger py-3">Error loading data: ${error.message}</td></tr>`;
       }
+    }
+
+    let activeInventory = [];
+    async function loadActiveInventory() {
+      try {
+        const vRef = db.ref(`users/${currentUser.uid}/vehicles`);
+        const sRef = db.ref(`users/${currentUser.uid}/tyre_stock`);
+        const [vSnap, sSnap] = await Promise.all([vRef.get(), sRef.get()]);
+
+        activeInventory = [];
+
+        if (vSnap.exists()) {
+          const vehicles = vSnap.val();
+          Object.values(vehicles).forEach(v => {
+            const tyres = v.tyres || [];
+            (Array.isArray(tyres) ? tyres : Object.values(tyres)).forEach(t => {
+              activeInventory.push({ ...t, source: 'Vehicle', vehicleNumber: v.vehicleNumber });
+            });
+          });
+        }
+
+        if (sSnap.exists()) {
+          const stock = sSnap.val();
+          Object.values(stock).forEach(t => {
+            activeInventory.push({ ...t, source: 'Stock' });
+          });
+        }
+
+        // Re-run filters if search input exists (to show active matches)
+        if (document.getElementById('searchInput').value) runFilters();
+
+      } catch (e) { console.error("Error loading active inventory", e); }
     }
 
     function populateFilters(data) {
@@ -399,8 +442,30 @@
       const selectAll = document.getElementById('selectAllCheckbox');
       selectAll.checked = false;
 
+      // CROSS-SEARCH DISPLAY
+      const sText = document.getElementById('searchInput').value.toLowerCase();
+      let activeMatchesHtml = '';
+      if (sText && activeInventory.length > 0) {
+        const matches = activeInventory.filter(t => (t.number || '').toLowerCase().includes(sText) || (t.brand || '').toLowerCase().includes(sText));
+        if (matches.length > 0) {
+          activeMatchesHtml = `
+               <tr class="table-info"><td colspan="12" class="fw-bold text-center">Found in Active Inventory (Not Disposed)</td></tr>
+               ${matches.map(t => `
+                 <tr style="background-color: #e2e3e5;">
+                    <td colspan="3" class="text-center"><span class="badge bg-success">${t.source === 'Stock' ? 'In Stock' : 'On Vehicle: ' + t.vehicleNumber}</span></td>
+                    <td><strong>${t.number}</strong></td>
+                    <td>${t.brand || '-'}</td>
+                    <td colspan="6" class="text-muted">Currently Active - <a href="tyre.html?search=${t.number}" target="_blank">View in Management</a></td>
+                    <td></td>
+                 </tr>
+               `).join('')}
+               <tr class="table-secondary"><td colspan="12" class="fw-bold text-center">Disposed History</td></tr>
+             `;
+        }
+      }
+
       if (filteredData.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="12" class="text-center py-4 text-muted">No records found matching filters.</td></tr>';
+        tableBody.innerHTML = activeMatchesHtml + '<tr><td colspan="12" class="text-center py-4 text-muted">No disposed records found matching filters.</td></tr>';
         document.getElementById('entriesInfo').textContent = 'Showing 0 to 0 of 0 entries';
         document.getElementById('paginationControls').innerHTML = '';
         updateBulkButtonState();
@@ -460,7 +525,7 @@
          `;
       });
 
-      tableBody.innerHTML = html;
+      tableBody.innerHTML = activeMatchesHtml + html; // Prepend active matches
       document.getElementById('entriesInfo').textContent = `Showing ${startIdx + 1} to ${endIdx} of ${totalItems} entries`;
       renderPaginationControls(totalPages);
       updateBulkButtonState();
