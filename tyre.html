@@ -960,7 +960,7 @@
 
         <div class="form-group">
           <label for="vehicleModel">Vehicle Model:</label>
-          <input type="text" id="vehicleModel" placeholder="e.g., Tata Bulker Z">
+          <input type="text" id="vehicleModel" placeholder="e.g., Tata Bulker Z" required>
         </div>
 
         <div id="tyresContainer">
@@ -1629,8 +1629,8 @@
       const vehicleNumber = document.getElementById('vehicleNumber').value.trim().toUpperCase();
       const vehicleModel = document.getElementById('vehicleModel').value.trim();
 
-      if (!vehicleNumber || !vehicleModel) {
-        showAlert('Please fill in all vehicle details', 'warning');
+      if (!vehicleNumber) {
+        showAlert('Please fill in valid Vehicle Number', 'warning');
         return;
       }
 
@@ -3055,8 +3055,8 @@
       const targetVehicleId = document.getElementById('assignTargetVehicle').value;
       const position = document.getElementById('assignTargetPosition').value.trim();
 
-      if (!targetVehicleId || !position) {
-        showAlert('Please select vehicle and position.', 'warning');
+      if (!targetVehicleId) {
+        showAlert('Please select a vehicle.', 'warning');
         return;
       }
 
@@ -3072,7 +3072,7 @@
         const vehicle = snap.val();
 
         // Check position
-        if ((vehicle.tyres || []).some(t => t.position === position)) {
+        if (position && (vehicle.tyres || []).some(t => t.position === position)) {
           showAlert(`Position ${position} is already occupied.`, 'warning');
           return;
         }
@@ -3085,7 +3085,8 @@
           vehicleNumberOfOrigin: null,
           movedToStockAt: null,
           position: position,
-          installedAt: Date.now() // Track new install time
+          installedAt: Date.now(), // Track new install time
+          lastUpdated: Date.now() // Update timestamp
         };
 
         const newTyres = [...(vehicle.tyres || []), vehicleTyre];
