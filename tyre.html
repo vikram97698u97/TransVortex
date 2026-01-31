@@ -1069,6 +1069,33 @@
             <tbody id="stockTableBody"></tbody>
           </table>
         </div>
+
+        <!-- Pagination Controls for Stock -->
+        <div style="margin-top: 16px;">
+          <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+            <label for="entriesPerPageStock" style="font-weight:600;">Entries per page:</label>
+            <select id="entriesPerPageStock" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="25">25</option>
+              <option value="35">35</option>
+            </select>
+            <div id="entriesInfoStock" style="color:#666; font-size:14px;"></div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+            <button class="tab-nav-control" id="prevStock"
+              style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;"
+              disabled>
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="tab-navigation" id="tabNavigationStock"
+              style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+            <button class="tab-nav-control" id="nextStock"
+              style="padding:8px 12px; background:#43b97f; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1169,11 +1196,16 @@
 
       <div class="form-group">
         <label for="assignTargetVehicle">Select Vehicle:</label>
-        <select id="assignTargetVehicle" class="form-group"></select>
+        <input type="text" id="searchVehicleInModal" placeholder="Search vehicles..."
+          style="width:100%; padding:8px; margin-bottom:8px; border:1px solid #ddd; border-radius:4px;"
+          oninput="filterAssignVehicles()">
+        <select id="assignTargetVehicle" class="form-group"
+          style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></select>
       </div>
       <div class="form-group">
         <label for="assignTargetPosition">Position:</label>
-        <input type="text" id="assignTargetPosition" class="form-group" placeholder="e.g., Front-Right">
+        <input type="text" id="assignTargetPosition" class="form-group" placeholder="e.g., Front-Right"
+          style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
       </div>
       <button class="btn btn-primary" onclick="assignFromStock()">Assign to Vehicle</button>
     </div>
@@ -1252,7 +1284,19 @@
     let totalPagesVehicles = 1;
     let searchTermVehicles = '';
 
+    // Pagination state for stock table
+    const entriesPerPageStock = document.getElementById('entriesPerPageStock');
+    const entriesInfoStock = document.getElementById('entriesInfoStock');
+    const tabNavigationStock = document.getElementById('tabNavigationStock');
+    const prevStockBtn = document.getElementById('prevStock');
+    const nextStockBtn = document.getElementById('nextStock');
+    let currentPageStock = 1;
+    let itemsPerPageStock = 10;
+    let totalPagesStock = 1;
+    let searchTermStock = '';
+
     // ANALYTICS STATE AND FUNCTIONS (Copied from tyre_analytics.html)
+
     // Chart theme
     const gridColor = '#e8efe9';
     Chart.defaults.color = '#3b4758';
@@ -2790,14 +2834,14 @@
       });
     }
 
-    // Render Stock Tyres (TABLE VIEW)
+    // Render Stock Tyres (TABLE VIEW WITH PAGINATION)
     window.renderStockTyres = function () {
       const container = document.getElementById('stockTableBody');
-      const searchTerm = (document.getElementById('searchStockInput').value || '').toLowerCase();
+      searchTermStock = (document.getElementById('searchStockInput').value || '').toLowerCase();
 
       const filtered = stockTyres.filter(t =>
-        (t.number || '').toLowerCase().includes(searchTerm) ||
-        (t.brand || '').toLowerCase().includes(searchTerm)
+        (t.number || '').toLowerCase().includes(searchTermStock) ||
+        (t.brand || '').toLowerCase().includes(searchTermStock)
       );
 
       // Update Stats
@@ -2805,12 +2849,24 @@
       const totalVal = filtered.reduce((acc, t) => acc + (parseFloat(t.cost) || 0), 0);
       document.getElementById('totalStockValueStat').textContent = `₹${totalVal.toFixed(2)}`;
 
-      if (filtered.length === 0) {
+      // Calculate pagination
+      const totalItems = filtered.length;
+      totalPagesStock = Math.max(1, Math.ceil(totalItems / itemsPerPageStock));
+      if (currentPageStock > totalPagesStock) currentPageStock = totalPagesStock;
+
+      const start = (currentPageStock - 1) * itemsPerPageStock;
+      const end = Math.min(start + itemsPerPageStock, totalItems);
+      const pageEntries = filtered.slice(start, end);
+
+      // Update pagination info
+      updateStockPaginationControls(totalItems);
+
+      if (pageEntries.length === 0 && !searchTermStock) {
         container.innerHTML = '<tr><td colspan="8" style="text-align: center;">No tyres in stock.</td></tr>';
         return;
       }
 
-      container.innerHTML = filtered.map(t => `
+      container.innerHTML = pageEntries.map(t => `
         <tr>
           <td><strong>${t.number}</strong></td>
           <td>${t.brand}</td>
@@ -2826,13 +2882,13 @@
         </tr>
       `).join('');
 
-      // CROSS-TAB SEARCH: Check if tyre is in Vehicles
-      if (searchTerm && searchTerm.length > 0) {
+      // CROSS-TAB SEARCH: Check if tyre is in Vehicles (only show on first page)
+      if (searchTermStock && searchTermStock.length > 0 && currentPageStock === 1) {
         const vehicleMatches = [];
         Object.entries(allVehiclesData).forEach(([vid, v]) => {
           const tyres = v.tyres || [];
           (Array.isArray(tyres) ? tyres : Object.values(tyres)).forEach(t => {
-            if ((t.number || '').toLowerCase().includes(searchTerm) || (t.brand || '').toLowerCase().includes(searchTerm)) {
+            if ((t.number || '').toLowerCase().includes(searchTermStock) || (t.brand || '').toLowerCase().includes(searchTermStock)) {
               vehicleMatches.push({ ...t, vehicleNumber: v.vehicleNumber, vehicleId: vid });
             }
           });
@@ -2851,7 +2907,7 @@
                       <td>Installed: ${t.installedAt ? new Date(t.installedAt).toLocaleDateString() : 'N/A'}</td>
                       <td>${t.lastUpdated ? new Date(t.lastUpdated).toLocaleDateString() : 'N/A'}</td>
                       <td>
-                         <button class="btn btn-sm btn-info" onclick="openTab({currentTarget: document.querySelector('.tab-button:nth-child(1)')}, 'Management'); document.getElementById('searchVehiclesInput').value='${t.vehicleNumber}'; window.searchVehicles('${t.vehicleNumber}');">Go to Vehicle</button>
+                         <button class="btn btn-sm btn-info" onclick="openTab({currentTarget: document.querySelector('.tab-button:nth-child(1)')}, 'Management'); document.getElementById('searchInput').value='${t.vehicleNumber}'; window.searchVehicles();">Go to Vehicle</button>
                       </td>
                     </tr>
                 `).join('')}
@@ -2860,7 +2916,7 @@
 
         // CROSS-TAB SEARCH: Check if tyre is in History
         const historyMatches = (window.tyreHistory || []).filter(t =>
-          (t.number || '').toLowerCase().includes(searchTerm) || (t.brand || '').toLowerCase().includes(searchTerm)
+          (t.number || '').toLowerCase().includes(searchTermStock) || (t.brand || '').toLowerCase().includes(searchTermStock)
         );
 
         if (historyMatches.length > 0) {
@@ -2884,6 +2940,51 @@
         }
       }
     };
+
+    // Stock Pagination Helper Functions
+    function updateStockPaginationControls(totalItems) {
+      prevStockBtn.disabled = currentPageStock === 1;
+      nextStockBtn.disabled = currentPageStock === totalPagesStock;
+      const startIndex = Math.min((currentPageStock - 1) * itemsPerPageStock + 1, totalItems);
+      const endIndex = Math.min(currentPageStock * itemsPerPageStock, totalItems);
+      entriesInfoStock.textContent = `Showing ${totalItems === 0 ? 0 : startIndex} to ${endIndex} of ${totalItems} entries`;
+      generateStockTabs();
+    }
+
+    function generateStockTabs() {
+      tabNavigationStock.innerHTML = '';
+      if (totalPagesStock <= 1) return;
+      addStockTab(1);
+      let startPage = Math.max(2, currentPageStock - 2);
+      let endPage = Math.min(totalPagesStock - 1, currentPageStock + 2);
+      if (startPage > 2) addStockEllipsis();
+      for (let i = startPage; i <= endPage; i++) addStockTab(i);
+      if (endPage < totalPagesStock - 1) addStockEllipsis();
+      addStockTab(totalPagesStock);
+    }
+
+    function addStockTab(pageNumber) {
+      const tab = document.createElement('div');
+      tab.className = `tab ${pageNumber === currentPageStock ? 'active' : ''}`;
+      tab.style.cssText = 'padding:6px 10px; background:#e0e0e0; border-radius:4px; cursor:pointer; min-width:36px; text-align:center;';
+      if (pageNumber === currentPageStock) {
+        tab.style.background = '#43b97f';
+        tab.style.color = '#fff';
+      }
+      tab.textContent = pageNumber;
+      tab.addEventListener('click', () => {
+        currentPageStock = pageNumber;
+        renderStockTyres();
+      });
+      tabNavigationStock.appendChild(tab);
+    }
+
+    function addStockEllipsis() {
+      const ellipsis = document.createElement('div');
+      ellipsis.textContent = '...';
+      ellipsis.style.cssText = 'padding:6px 10px; color:#666;';
+      tabNavigationStock.appendChild(ellipsis);
+    }
 
     // Move to Stock
     window.moveToStock = async function (vehicleId, tyreNumber) {
@@ -3369,6 +3470,52 @@
         renderVehiclesWithPagination();
       }
     });
+
+    // Stock Pagination Event Listeners
+    entriesPerPageStock.addEventListener('change', function () {
+      itemsPerPageStock = parseInt(this.value, 10);
+      currentPageStock = 1;
+      renderStockTyres();
+    });
+    prevStockBtn.addEventListener('click', function () {
+      if (currentPageStock > 1) {
+        currentPageStock--;
+        renderStockTyres();
+      }
+    });
+    nextStockBtn.addEventListener('click', function () {
+      if (currentPageStock < totalPagesStock) {
+        currentPageStock++;
+        renderStockTyres();
+      }
+    });
+
+    // Vehicle Search Filter for Assign Modal
+    window.filterAssignVehicles = function () {
+      const searchInput = document.getElementById('searchVehicleInModal');
+      const select = document.getElementById('assignTargetVehicle');
+      const searchTerm = (searchInput.value || '').toLowerCase();
+
+      // Get all options
+      const options = Array.from(select.options);
+
+      // Filter and show/hide options
+      options.forEach(option => {
+        if (option.value === '') {
+          // Keep the placeholder option
+          option.style.display = '';
+        } else {
+          const vehicleText = option.textContent.toLowerCase();
+          option.style.display = vehicleText.includes(searchTerm) ? '' : 'none';
+        }
+      });
+
+      // Reset selection if current selection is now hidden
+      if (select.selectedIndex > 0 && options[select.selectedIndex].style.display === 'none') {
+        select.selectedIndex = 0;
+      }
+    };
+
 
     // Initial load for tab
     document.addEventListener('DOMContentLoaded', () => {
