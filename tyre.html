@@ -1212,6 +1212,13 @@
   </div>
 
 
+  <!-- jQuery (required for Select2) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Select2 CSS and JS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -3490,31 +3497,28 @@
       }
     });
 
-    // Vehicle Search Filter for Assign Modal
-    window.filterAssignVehicles = function () {
-      const searchInput = document.getElementById('searchVehicleInModal');
-      const select = document.getElementById('assignTargetVehicle');
-      const searchTerm = (searchInput.value || '').toLowerCase();
-
-      // Get all options
-      const options = Array.from(select.options);
-
-      // Filter and show/hide options
-      options.forEach(option => {
-        if (option.value === '') {
-          // Keep the placeholder option
-          option.style.display = '';
-        } else {
-          const vehicleText = option.textContent.toLowerCase();
-          option.style.display = vehicleText.includes(searchTerm) ? '' : 'none';
-        }
-      });
-
-      // Reset selection if current selection is now hidden
-      if (select.selectedIndex > 0 && options[select.selectedIndex].style.display === 'none') {
-        select.selectedIndex = 0;
+    // Initialize Select2 on Assign Modal Vehicle Dropdown
+    window.initAssignVehicleSelect2 = function () {
+      // Destroy existing Select2 instance if it exists
+      if ($('#assignTargetVehicle').hasClass('select2-hidden-accessible')) {
+        $('#assignTargetVehicle').select2('destroy');
       }
+
+      // Initialize with settings
+      $('#assignTargetVehicle').select2({
+        placeholder: 'Search and select vehicle...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#assignStockModal')
+      });
     };
+
+    // Initialize Select2 on page load
+    $(document).ready(function () {
+      // Wait a bit for vehicles to load, then init Select2
+      setTimeout(initAssignVehicleSelect2, 1000);
+    });
+
 
 
     // Initial load for tab
