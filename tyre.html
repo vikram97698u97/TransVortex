@@ -3105,14 +3105,14 @@
           return;
         }
 
-        // Prepare tyre for vehicle (clean data structure)
+        // Prepare tyre for vehicle (clean data structure - ensure no undefined values for Firebase)
         const vehicleTyre = {
-          number: stockTyre.number,
-          brand: stockTyre.brand,
-          cost: stockTyre.cost,
-          totalRunningKm: stockTyre.totalRunningKm || 0,
+          number: stockTyre.number || '',
+          brand: stockTyre.brand || '',
+          cost: parseFloat(stockTyre.cost) || 0,
+          totalRunningKm: parseFloat(stockTyre.totalRunningKm) || 0,
           addedAt: stockTyre.addedAt || Date.now(),
-          position: position,
+          position: position || '',
           installedAt: Date.now(),
           lastUpdated: Date.now(),
           status: stockTyre.status || 'active'
