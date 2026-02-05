@@ -1196,7 +1196,7 @@
 
       <div class="form-group">
         <label for="assignTargetVehicle">Select Vehicle:</label>
-        
+
         <select id="assignTargetVehicle" class="form-group"
           style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;"></select>
       </div>
@@ -1205,7 +1205,7 @@
         <input type="text" id="assignTargetPosition" class="form-group" placeholder="e.g., Front-Right"
           style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
       </div>
-      <button class="btn btn-primary" onclick="assignFromStock()">Assign to Vehicle</button>
+      <button id="assignFromStockBtn" class="btn btn-primary" onclick="assignFromStock()">Assign to Vehicle</button>
     </div>
   </div>
 
@@ -3146,6 +3146,27 @@
         opt.textContent = v.vehicleNumber;
         select.appendChild(opt);
       });
+
+      // Add explicit event listeners to the assign button to handle both mouse and touch
+      const assignBtn = document.getElementById('assignFromStockBtn');
+      if (assignBtn) {
+        // Remove any existing listeners
+        const newBtn = assignBtn.cloneNode(true);
+        assignBtn.parentNode.replaceChild(newBtn, assignBtn);
+
+        // Add both click and touchend listeners
+        newBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          assignFromStock();
+        }, { passive: false });
+
+        newBtn.addEventListener('touchend', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          assignFromStock();
+        }, { passive: false });
+      }
 
       modal.style.display = 'flex';
     };
