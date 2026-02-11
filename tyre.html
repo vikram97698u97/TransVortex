@@ -3225,13 +3225,6 @@
         const vehicle = snap.val();
         console.log('[assignFromStock] Vehicle found:', vehicle);
 
-        // Check if position is already occupied
-        if (position && (vehicle.tyres || []).some(t => t.position === position)) {
-          console.warn('[assignFromStock] Position already occupied:', position);
-          showAlert(`Position "${position}" is already occupied on this vehicle. Please choose a different position.`, 'warning');
-          return;
-        }
-
         // Prepare tyre for vehicle (clean data structure - ensure no undefined values for Firebase)
         const vehicleTyre = {
           number: stockTyre.number || '',
