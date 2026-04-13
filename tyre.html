@@ -2613,18 +2613,34 @@
         title.id = 'movementModalTitle';
         title.style.cssText = 'margin-top:0; color:#2E8B57; border-bottom:1px solid #eee; padding-bottom:10px;';
         
+        const controlsDiv = document.createElement('div');
+        controlsDiv.id = 'movementModalControls';
+        controlsDiv.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:10px; margin-bottom:4px;';
+        controlsDiv.innerHTML = `
+          <label style="font-size:0.9em;font-weight:600;color:#555;">Show:</label>
+          <select id="movementLimitSelect" style="padding:4px 8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em;">
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="all">All</option>
+          </select>
+          <span style="font-size:0.85em; color:#888;" id="movementCountInfo"></span>
+        `;
+
         const listDiv = document.createElement('div');
         listDiv.id = 'movementModalList';
-        listDiv.style.cssText = 'overflow-y:auto; flex-grow:1; margin-top:10px;';
+        listDiv.style.cssText = 'overflow-y:auto; flex-grow:1; margin-top:4px;';
         
         content.appendChild(close);
         content.appendChild(title);
+        content.appendChild(controlsDiv);
         content.appendChild(listDiv);
         modal.appendChild(content);
         document.body.appendChild(modal);
       }
 
-      document.getElementById('movementModalTitle').textContent = tyreNumber ? `Tyre Lifecycle History - ${tyreNumber}` : `Last 10 Movements - ${v ? v.vehicleNumber : 'STOCK'}`;
+      document.getElementById('movementModalTitle').textContent = tyreNumber ? `Tyre Lifecycle History - ${tyreNumber}` : `Recent Movements - ${v ? v.vehicleNumber : 'STOCK'}`;
       const listDiv = document.getElementById('movementModalList');
       listDiv.innerHTML = '<p>Loading history...</p>';
       modal.style.display = 'flex';
@@ -2642,13 +2658,19 @@
                  filteredMovements = allMovements.filter(m => m.vehicleId === vehicleId || (v && m.vehicleNumber === v.vehicleNumber));
              }
              
-             const limit = tyreNumber ? 50 : 10;
-             const finalMovements = filteredMovements.sort((a,b) => b.timestamp - a.timestamp).slice(0, limit);
-            
-             if (finalMovements.length === 0) {
+             const sortedMovements = filteredMovements.sort((a,b) => b.timestamp - a.timestamp);
+
+             const renderMovements = () => {
+               const selectEl = document.getElementById('movementLimitSelect');
+               const limitVal = selectEl ? selectEl.value : '10';
+               const finalMovements = limitVal === 'all' ? sortedMovements : sortedMovements.slice(0, parseInt(limitVal, 10));
+               const countInfo = document.getElementById('movementCountInfo');
+               if (countInfo) countInfo.textContent = `Showing ${finalMovements.length} of ${sortedMovements.length}`;
+
+               if (finalMovements.length === 0) {
                  listDiv.innerHTML = '<p style="color:#666;">No recent movements recorded.</p>';
-             } else {
-                 listDiv.innerHTML = '<ul style="list-style:none; padding:0; margin:0;">' + 
+               } else {
+                 listDiv.innerHTML = '<ul style="list-style:none; padding:0; margin:0;">' +
                    finalMovements.map((m, i) => `
                      <li style="padding:12px 10px; border-bottom:1px solid #eee; background-color: ${i%2===0?'#f9f9f9':'#fff'}">
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
@@ -2658,7 +2680,13 @@
                         <div>Action: <span style="color:#2E8B57; font-weight:500;">${m.action}</span></div>
                      </li>
                    `).join('') + '</ul>';
-             }
+               }
+             };
+
+             // Reset dropdown to default on each open
+             const selectEl = document.getElementById('movementLimitSelect');
+             if (selectEl) { selectEl.value = '10'; selectEl.onchange = renderMovements; }
+             renderMovements();
          } else {
              listDiv.innerHTML = '<p style="color:#666;">No recent movements recorded.</p>';
          }
