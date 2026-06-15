@@ -980,7 +980,7 @@
               </div>
               <div class="form-group">
                 <label>Vendor:</label>
-                <select class="tyre-vendor form-select" data-placeholder="Select Vendor"></select>
+                <select class="tyre-vendor form-select"><option value="">-- Select Vendor (Optional) --</option></select>
               </div>
               <div class="form-group">
                 <label>Brand:</label>
@@ -1498,7 +1498,6 @@
         document.getElementById('vehicleModel').value = draft.vehicleModel || '';
         document.getElementById('vehicleNumber').disabled = !!draft.vehicleNumberDisabled;
         document.getElementById('vehicleModel').disabled = !!draft.vehicleModelDisabled;
-        populateVendorDropdowns();
 
         const tyres = Array.isArray(draft.tyres) && draft.tyres.length > 0 ? draft.tyres : [{
           title: 'Tyre 1',
@@ -1513,6 +1512,8 @@
         }];
 
         document.getElementById('tyresContainer').innerHTML = tyres.map((tyre, index) => buildTyreDraftRowHtml(tyre, index)).join('');
+        // IMPORTANT: populate vendor dropdowns AFTER the innerHTML is set
+        populateVendorDropdowns();
         tyreCount = Math.max(draft.tyreCount || tyres.length, tyres.length);
         editingVehicleId = draft.editingVehicleId || null;
         return true;
@@ -1685,6 +1686,131 @@
     window.get = get;
     window.currentUser = null;
 
+    // ---- VENDOR LOADING FOR TYRE FORMS ----
+
+    // Holds all workVendors as [{id, name}, ...]
+    let workVendorsList = [];
+
+    function loadWorkVendors() {
+      if (!coreAccountId) return;
+      // Prevent double subscription
+      if (window.__tyreVendorLoaded) return;
+      window.__tyreVendorLoaded = true;
+      const vendorsRef = ref(db, `users/${coreAccountId}/workVendors`);
+      onValue(vendorsRef, (snapshot) => {
+        workVendorsList = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            workVendorsList.push({ id: child.key, name: child.val().name || child.key });
+          });
+        }
+        allWorkVendors = workVendorsList;
+        // Re-populate all vendor dropdowns on every update
+        populateVendorDropdowns();
+        // Re-render vehicle cards so vendor names resolve (race condition fix)
+        // Only re-render if vehicles are already loaded to avoid blank flash
+        if (Object.keys(allVehiclesData).length > 0) {
+          renderVehiclesWithPagination();
+        }
+      }, (e) => {
+        console.warn('[TyreVendors] Failed to load vendors:', e);
+        window.__tyreVendorLoaded = false; // Allow retry
+      });
+    }
+
+    function populateVendorDropdowns() {
+      document.querySelectorAll('select.tyre-vendor').forEach(select => {
+        // Read current value from the element OR from data-selected-value attribute
+        // Use || '' to ensure empty string if nothing is selected
+        const selectedVal = select.dataset.selectedValue || select.value || '';
+        // Rebuild options
+        select.innerHTML = '<option value="">-- Select Vendor (Optional) --</option>';
+        workVendorsList.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          opt.textContent = v.name;
+          select.appendChild(opt);
+        });
+        // Restore the previously selected value
+        if (selectedVal) {
+          select.value = selectedVal;
+          // Remove stale data-selected-value once applied so future reads use select.value
+          if (select.dataset.selectedValue) {
+            select.dataset.selectedValue = selectedVal;
+          }
+        }
+      });
+    }
+
+    // ---- TYRE WORK ENTRY LOGGER ----
+    // Logs a tyre purchase/update as a vehicleWork entry so it appears in vendor work history
+    async function logTyreWorkEntry(vehicleNumber, tyreNumber, vendorId, cost, date) {
+      if (!coreAccountId) return;
+      try {
+        const workRef = ref(db, `users/${coreAccountId}/vehicleWork`);
+        
+        // Find existing tyre work entry by matching tyre number, vehicle number, and source
+        const snapshot = await get(workRef);
+        let existingKey = null;
+        if (snapshot.exists()) {
+          const workData = snapshot.val();
+          const match = Object.entries(workData).find(([key, work]) => {
+            const workVehicle = (work.vehicleNumber || '').trim().toUpperCase();
+            const targetVehicle = vehicleNumber.trim().toUpperCase();
+            const workNotes = (work.notes || '').trim().toUpperCase();
+            const targetNotes = `Tyre No: ${tyreNumber}`.trim().toUpperCase();
+            return workVehicle === targetVehicle && workNotes === targetNotes && work.source === 'tyre_management';
+          });
+          if (match) {
+            existingKey = match[0];
+          }
+        }
+
+        if (vendorId) {
+          // A vendor is selected
+          const entryData = {
+            vendorId: vendorId,
+            vehicleNumber: vehicleNumber,
+            amount: cost || 0,
+            date: date || new Date().toISOString().split('T')[0],
+            notes: `Tyre No: ${tyreNumber}`,
+            lrNo: '',
+            source: 'tyre_management',
+            userId: currentUser ? currentUser.uid : '',
+            status: 'completed',
+            createdAt: new Date().toISOString()
+          };
+
+          if (existingKey) {
+            // Update the existing entry with new vendorId, amount, and date
+            await update(ref(db, `users/${coreAccountId}/vehicleWork/${existingKey}`), {
+              vendorId: entryData.vendorId,
+              amount: entryData.amount,
+              date: entryData.date,
+              lastUpdated: new Date().toISOString()
+            });
+            console.log(`[TyreWork] Updated existing work entry for tyre ${tyreNumber} under vendor ${vendorId}`);
+          } else {
+            // Push a new entry
+            await push(workRef, entryData);
+            console.log(`[TyreWork] Logged new work entry for tyre ${tyreNumber} under vendor ${vendorId}`);
+          }
+        } else {
+          // No vendor is selected. If an entry exists, delete it.
+          if (existingKey) {
+            await remove(ref(db, `users/${coreAccountId}/vehicleWork/${existingKey}`));
+            console.log(`[TyreWork] Removed work entry for tyre ${tyreNumber} as vendor was removed.`);
+          }
+        }
+      } catch (e) {
+        console.warn('[TyreWork] Failed to log/update work entry:', e);
+      }
+    }
+    window.logTyreWorkEntry = logTyreWorkEntry;
+    // ----------------------------------------
+
+
+
     // Function to load registered vehicles (IMPROVED with explicit context)
     async function loadRegisteredVehicles(targetAccountId = null) {
       const dataRoot = targetAccountId || coreAccountId || (currentUser ? currentUser.uid : null);
@@ -1738,6 +1864,7 @@
       await loadRegisteredVehicles(coreAccountId);
       loadVehicles();
       loadStockTyres();
+      loadWorkVendors();
       await window.loadTyreHistory(); // Wait for history to load
       retroactiveTyreFix();
       
@@ -1899,6 +2026,9 @@
                <option value="T${String(nextTyreNum).padStart(3, '0')}">T${String(nextTyreNum).padStart(3, '0')}</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Vendor:</label>
+            <select class="tyre-vendor form-select"><option value="">-- Select Vendor (Optional) --</option></select>
           </div>
           <div class="form-group">
             <label>Brand:</label>
@@ -1913,13 +2043,16 @@
             <input type="date" class="tyre-added-date">
           </div>
           <div class="form-group">
-            <label>Cost (₹):</label>
+            <label>Cost (&#8377;):</label>
             <input type="number" class="tyre-cost" placeholder="e.g., 5000">
           </div>
         </div>
       `;
 
       tyresContainer.appendChild(tyreDiv);
+
+      // Populate vendor dropdown for this new tyre row
+      populateVendorDropdowns();
 
       // Initialize Select2 on the new select
       initializeTyreSelect(tyreDiv.querySelector('.tyre-select'));
@@ -2051,13 +2184,14 @@
         newTyres.push({
           number: tyreNumber,
           vendorId: tyreVendorId || '',
-          brand: tyreBrand || '', // Optional
-          position: tyrePosition || '', // Optional
-          addedAt: tyreAddedDate ? new Date(tyreAddedDate).getTime() : 0, // 0 if not provided
-          cost: parsedCost, // 0 if not provided
+          brand: tyreBrand || '',
+          position: tyrePosition || '',
+          addedAt: tyreAddedDate ? new Date(tyreAddedDate).getTime() : 0,
+          cost: parsedCost,
           totalRunningKm: 0,
-          lastUpdated: Date.now(), // Add timestamp
-          portalAddedAt: Date.now() // Immutable portal timestamp
+          lastUpdated: Date.now(),
+          // portalAddedAt is set on first save only — preserved on edits via merge logic below
+          portalAddedAt: Date.now()
         });
       }
 
@@ -2086,11 +2220,25 @@
               // In tyre edit mode, replace only the edited tyre and keep others
               const editedTyreNumber = document.querySelector('.tyre-number[readonly]')?.value;
               if (editedTyreNumber) {
-                updatedTyres = existingTyres.map(t => t.number === editedTyreNumber ? newTyres[0] : t);
+                updatedTyres = existingTyres.map(t => {
+                  if (t.number === editedTyreNumber) {
+                    // Merge: preserve immutable fields (portalAddedAt, totalRunningKm, status)
+                    // and apply form edits on top
+                    return {
+                      ...t,                          // keep ALL existing fields first
+                      ...newTyres[0],                // overlay form edits
+                      portalAddedAt: t.portalAddedAt || t.addedAt || Date.now(), // NEVER overwrite
+                      totalRunningKm: t.totalRunningKm || 0, // preserve km data
+                      status: t.status || 'active',  // preserve status
+                      lastUpdated: Date.now()        // update timestamp
+                    };
+                  }
+                  return t;
+                });
               } else {
-                // Fallback if the readonly field isn't found, though it should be.
                 updatedTyres = [...existingTyres, ...newTyres];
               }
+
             } else if (document.getElementById('saveVehicleBtn').textContent === 'Update Vehicle') {
               // In vehicle edit mode, we replace all tyres with the ones from the form.
 
@@ -2099,6 +2247,7 @@
                 const matchingNewT = newTyres.find(newT => newT.number === existingT.number);
                 if (matchingNewT) {
                    matchingNewT.portalAddedAt = existingT.portalAddedAt || existingT.addedAt || Date.now();
+                   matchingNewT.lastUpdated = Date.now();
                    window.logTyreMovement(editingVehicleId, vehicleNumber, matchingNewT.number, 'Details Updated');
                    return { ...existingT, ...matchingNewT };
                 }
@@ -2115,6 +2264,7 @@
             } else {
               // In add tyre mode, add new tyres to existing ones
               updatedTyres = [...existingTyres, ...newTyres];
+
             }
 
             // Check Global Duplicates (Stock & History)
@@ -2172,6 +2322,21 @@
             if (tyresToRemoveFromStock.length > 0) {
               for (const stockKey of tyresToRemoveFromStock) {
                 await remove(ref(db, `users/${coreAccountId}/tyre_stock/${stockKey}`));
+              }
+            }
+
+            // Sync work history logs for edited/added tyres
+            for (const t of newTyres) {
+              const dateStr = t.addedAt ? new Date(t.addedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+              await logTyreWorkEntry(vehicleNumber, t.number, t.vendorId, t.cost, dateStr);
+            }
+
+            // Sync work history logs for deleted tyres
+            if (!isEditingSingleTyre && existingTyres) {
+              const newTyreNumbers = newTyres.map(t => t.number);
+              const deletedTyres = existingTyres.filter(t => !newTyreNumbers.includes(t.number));
+              for (const t of deletedTyres) {
+                await logTyreWorkEntry(vehicleNumber, t.number, null, 0, null);
               }
             }
 
@@ -2246,6 +2411,8 @@
 
           for (const t of newTyres) {
              window.logTyreMovement(newVehicleId, vehicleNumber, t.number, 'Added to Vehicle via Registration', t.portalAddedAt);
+             const dateStr = t.addedAt ? new Date(t.addedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+             await logTyreWorkEntry(vehicleNumber, t.number, t.vendorId, t.cost, dateStr);
           }
 
           showAlert('Vehicle added successfully', 'success');
@@ -2254,13 +2421,12 @@
         // Reset form and reload the vehicle list
         clearTyreDraftState();
         resetForm();
-        loadVehicles();
-        loadStockTyres();
+        // NOTE: Do NOT call loadVehicles()/loadStockTyres() here — they use onValue
+        // listeners that auto-update. Calling them again would create duplicate listeners.
         window.loadTyreHistory().then(() => {
-          // Wait for history to load before checking deep link for history items
           window.handleDeepLink();
         });
-        window.handleDeepLink(); // Check immediate vehicle matches
+        window.handleDeepLink();
       } catch (error) {
         console.error('Error saving vehicle:', error);
         showAlert(`Error: ${error.message}`, 'danger');
@@ -2271,7 +2437,9 @@
     window.loadVehicles = function () {
       // Use coreAccountId directly.
       if (!coreAccountId && currentUser) coreAccountId = currentUser.uid;
-      const vehicleListContainer = document.getElementById('vehicleList');
+      // Guard: only subscribe once — re-calling after save must not create a duplicate listener
+      if (window.__vehiclesListenerActive) return;
+      window.__vehiclesListenerActive = true;
       const vehiclesRef = ref(db, `users/${coreAccountId}/vehicles`);
       onValue(vehiclesRef, (snapshot) => {
         const vehicles = snapshot.val() || {};
@@ -2344,16 +2512,21 @@
               ${tyreCountLocal > 0 ? `
                 <h4>Tyre Details</h4>
                 <ul class="tyre-list">
-                  ${Object.entries(vehicle.tyres || {}).map(([tyreId, tyre]) => `
+                  ${(vehicle.tyres || []).map((tyre) => `
                     <li class="tyre-item">
                       <div class="tyre-details">
-                        <div><strong>#${highlightText(tyre.number || 'N/A', searchTerm)}</strong> - ${highlightText(tyre.brand || '', searchTerm)}</div>
-                        <div class="small text-muted"><i class="fas fa-store me-1"></i> Vendor: ${allWorkVendors.find(v => v.id === tyre.vendorId)?.name || 'N/A'}</div>
-                        <div>Status: <span class="status-badge ${tyre.status ? tyre.status.toLowerCase() : 'active'}">${tyre.status || 'Active'}</span></div>
-                        <div>Position: <strong>${tyre.position || 'N/A'}</strong> | Added: <strong>${tyre.addedAt ? new Date(tyre.addedAt).toLocaleDateString() : 'N/A'}</strong> | Cost: <strong>₹${(tyre.cost || 0).toFixed(2)}</strong> | Running: <strong>${(tyre.totalRunningKm || 0).toLocaleString('en-IN')} KM</strong></div>
-                        <div style="font-size: 0.85em; color: #666; margin-top: 4px;">
-                           Portal Added: <strong>${tyre.portalAddedAt ? new Date(tyre.portalAddedAt).toLocaleString() : 'N/A'}</strong> | 
-                           Last Updated: <strong>${tyre.lastUpdated ? new Date(tyre.lastUpdated).toLocaleString() : 'N/A'}</strong>
+                        <div><strong>#${highlightText(tyre.number || 'N/A', searchTerm)}</strong>${tyre.brand ? ' — ' + highlightText(tyre.brand, searchTerm) : ''}</div>
+                        <div class="small" style="margin-top:4px; display:flex; flex-wrap:wrap; gap:10px;">
+                          <span><i class="fas fa-store"></i> <strong>Vendor:</strong> ${allWorkVendors.find(v => v.id === tyre.vendorId)?.name || '—'}</span>
+                          <span><i class="fas fa-map-marker-alt"></i> <strong>Position:</strong> ${tyre.position || '—'}</span>
+                          <span><i class="fas fa-calendar-plus"></i> <strong>Added:</strong> ${tyre.addedAt ? new Date(tyre.addedAt).toLocaleDateString('en-IN') : '—'}</span>
+                          <span><i class="fas fa-rupee-sign"></i> <strong>Cost:</strong> &#8377;${(tyre.cost || 0).toFixed(2)}</span>
+                          <span><i class="fas fa-road"></i> <strong>Running:</strong> ${(tyre.totalRunningKm || 0).toLocaleString('en-IN')} KM</span>
+                        </div>
+                        <div class="small" style="margin-top:4px; display:flex; flex-wrap:wrap; gap:10px;">
+                          <span>Status: <span class="status-badge ${tyre.status ? tyre.status.toLowerCase() : 'active'}">${tyre.status || 'Active'}</span></span>
+                          <span style="color:#888;"><i class="fas fa-plus-circle"></i> Portal Added: <strong>${tyre.portalAddedAt ? new Date(tyre.portalAddedAt).toLocaleString('en-IN') : 'N/A'}</strong></span>
+                          <span style="color:#888;"><i class="fas fa-edit"></i> Last Updated: <strong>${tyre.lastUpdated ? new Date(tyre.lastUpdated).toLocaleString('en-IN') : 'N/A'}</strong></span>
                         </div>
                       </div>
                       <div class="tyre-actions">
@@ -2569,6 +2742,10 @@
                   <input type="text" class="tyre-number" value="${tyre.number}" readonly required>
                 </div>
                 <div class="form-group">
+                  <label>Vendor:</label>
+                  <select class="tyre-vendor form-select" data-selected-value="${tyre.vendorId || ''}"><option value="">-- Select Vendor (Optional) --</option></select>
+                </div>
+                <div class="form-group">
                   <label>Brand:</label>
                   <input type="text" class="tyre-brand" value="${tyre.brand}" required>
                 </div>
@@ -2581,7 +2758,7 @@
                   <input type="date" class="tyre-added-date" value="${tyre.addedAt ? new Date(tyre.addedAt).toISOString().split('T')[0] : ''}" required>
                 </div>
                 <div class="form-group">
-                  <label>Cost (₹):</label>
+                  <label>Cost (&#8377;):</label>
                   <input type="number" class="tyre-cost" value="${tyre.cost || 0}" required>
                 </div>
               </div>
@@ -2597,6 +2774,9 @@
           if (tyreCount === 0) {
             addTyre();
           }
+
+          // Populate vendor dropdowns for all tyre rows
+          populateVendorDropdowns();
 
           // Set editing state
           editingVehicleId = vehicleId;
@@ -2680,6 +2860,10 @@
                   <input type="hidden" class="tyre-original-number" value="${tyreToEdit.number}">
                 </div>
                 <div class="form-group">
+                  <label>Vendor:</label>
+                  <select class="tyre-vendor form-select" data-selected-value="${tyreToEdit.vendorId || ''}"><option value="">-- Select Vendor (Optional) --</option></select>
+                </div>
+                <div class="form-group">
                   <label>Brand:</label>
                   <input type="text" class="tyre-brand" value="${tyreToEdit.brand}" required>
                 </div>
@@ -2692,7 +2876,7 @@
                   <input type="date" class="tyre-added-date" value="${tyreToEdit.addedAt ? new Date(tyreToEdit.addedAt).toISOString().split('T')[0] : ''}" required>
                 </div>
                 <div class="form-group">
-                  <label>Cost (₹):</label>
+                  <label>Cost (&#8377;):</label>
                   <input type="number" class="tyre-cost" value="${tyreToEdit.cost || 0}" required>
                 </div>
               </div>
@@ -2700,6 +2884,9 @@
 
             document.getElementById('tyresContainer').innerHTML = '';
             document.getElementById('tyresContainer').appendChild(tyreDiv);
+
+            // Populate vendor dropdowns after inserting the element
+            populateVendorDropdowns();
 
             // Set editing state
             editingVehicleId = vehicleId;
@@ -3323,6 +3510,9 @@
     // Load Stock Tyres
     function loadStockTyres() {
       if (!currentUser) return;
+      // Guard: only subscribe once — re-calling must not create a duplicate listener
+      if (window.__stockListenerActive) return;
+      window.__stockListenerActive = true;
       const stockRef = ref(db, `users/${coreAccountId}/tyre_stock`);
       onValue(stockRef, (snapshot) => {
         stockTyres = [];

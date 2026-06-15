@@ -949,7 +949,14 @@
         if (!coreAccountId) return;
         // NOTE: We check the current user's path for pumps based on route-details.html logic
         db.ref(`users/${coreAccountId}/petrolPumps`).on('value', (snap) => {
-            allPumps = snap.val() || {};
+            const rawPumps = snap.val() || {};
+            allPumps = {};
+            Object.entries(rawPumps).forEach(([id, pump]) => {
+                allPumps[id] = {
+                    ...pump,
+                    name: pump.name || pump.pumpName || 'Unnamed Pump'
+                };
+            });
         });
     }
 

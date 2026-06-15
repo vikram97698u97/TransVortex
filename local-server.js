@@ -65,7 +65,17 @@ const server = http.createServer((req, res) => {
                 }
             };
         }
-        res.end(JSON.stringify(config));
+    }
+
+    // Client-side logging endpoint
+    if (urlPath === '/api/log' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', () => {
+            console.log('🔴 [CLIENT LOG]:', body);
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('Logged');
+        });
         return;
     }
 

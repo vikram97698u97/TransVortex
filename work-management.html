@@ -470,9 +470,20 @@
         <div class="tab-pane fade show active p-3" id="work-history-content" role="tabpanel">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0">Work History</h5>
-            <button class="btn btn-sm btn-success" onclick="downloadVendorWorkHistoryPDF()">
-              <i class="fas fa-file-pdf me-1"></i> Download PDF
-            </button>
+            <div class="d-flex gap-2 align-items-center">
+              <select id="workTypeFilter" class="form-select form-select-sm" style="width: auto;">
+                <option value="all">All Work Types</option>
+                <option value="tyre">Tyre Purchases & Work</option>
+                <option value="other">Other / Vehicle Work</option>
+              </select>
+              <select id="workSortOrder" class="form-select form-select-sm" style="width: auto;">
+                <option value="desc">Newest First</option>
+                <option value="asc">Oldest First</option>
+              </select>
+              <button class="btn btn-sm btn-success" onclick="downloadVendorWorkHistoryPDF()">
+                <i class="fas fa-file-pdf me-1"></i> Download PDF
+              </button>
+            </div>
           </div>
           <div class="table-responsive">
             <table id="vendorWorkHistoryTable" class="table table-striped table-bordered" style="width:100%">
@@ -857,8 +868,14 @@
       });
 
       // Process Direct Vehicle Work
+      const seenTyres = new Set();
       Object.values(vehicleWorkData).forEach(work => {
         if (work.vendorId) {
+          if (work.source === 'tyre_management' && work.notes && work.notes.startsWith('Tyre No:')) {
+            const tyreKey = `${work.vendorId}_${work.vehicleNumber || 'N/A'}_${work.notes}`;
+            if (seenTyres.has(tyreKey)) return;
+            seenTyres.add(tyreKey);
+          }
           const vId = work.vendorId;
           const amount = parseFloat(work.amount) || 0;
           workByVendor[vId] = (workByVendor[vId] || 0) + amount;
@@ -940,19 +957,28 @@
       // 2. Listen for LR Changes
       onValue(lrReportsRef, (snapshot) => {
         lrData = snapshot.exists() ? snapshot.val() : {};
-        if (Object.keys(vendorsData).length > 0) renderVendorTable();
+        if (Object.keys(vendorsData).length > 0) {
+          renderVendorTable();
+          if (currentViewingVendorId) viewVendorHistory(currentViewingVendorId);
+        }
       });
 
       // 3. Listen for Payment Changes
       onValue(workPaymentsRef, (snapshot) => {
         paymentsData = snapshot.exists() ? snapshot.val() : {};
-        if (Object.keys(vendorsData).length > 0) renderVendorTable();
+        if (Object.keys(vendorsData).length > 0) {
+          renderVendorTable();
+          if (currentViewingVendorId) viewVendorHistory(currentViewingVendorId);
+        }
       });
 
       // 4. Listen for Direct Vehicle Work Changes
       onValue(vehicleWorkRef, (snapshot) => {
         vehicleWorkData = snapshot.exists() ? snapshot.val() : {};
-        if (Object.keys(vendorsData).length > 0) renderVendorTable();
+        if (Object.keys(vendorsData).length > 0) {
+          renderVendorTable();
+          if (currentViewingVendorId) viewVendorHistory(currentViewingVendorId);
+        }
       });
     }
 
@@ -978,11 +1004,13 @@
 
       const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
       const workPaymentsRef = ref(db, `users/${coreAccountId}/workPayments`);
-      const vehicleWorkRef = ref(db, `users/${coreAccountId}/vehicleWork`);
 
-      const [lrSnap, paymentSnap, vehicleWorkSnap] = await Promise.all([get(lrReportsRef), get(workPaymentsRef), get(vehicleWorkRef)]);
+      const [lrSnap, paymentSnap] = await Promise.all([get(lrReportsRef), get(workPaymentsRef)]);
       let totalWork = 0;
       let totalPaid = 0;
+
+      const filterSelect = document.getElementById('workTypeFilter');
+      const selectedFilter = filterSelect ? filterSelect.value : 'all';
 
       if (vendorWorkHistoryTable) vendorWorkHistoryTable.clear();
 
@@ -996,13 +1024,21 @@
                 if (expense.type === 'Vehicle Work' && expense.vendorId === vendorId) {
                   const workAmount = parseFloat(expense.amount) || 0;
                   totalWork += workAmount;
-                  if (vendorWorkHistoryTable) vendorWorkHistoryTable.row.add([
-                    expense.date || lr.date || 'N/A',
-                    `<a href="lr-report.html?view=${child.key}" target="_blank">${lr.lrNumber || 'N/A'}</a> ${tripType === 'Empty' ? '(Return)' : ''}`,
-                    lr.truckNumber || 'N/A',
-                    expense.note || '—',
-                    `₹${workAmount.toFixed(2)}`
-                  ]);
+
+                  const isTyre = expense.note && (expense.note.trim().toUpperCase().startsWith('TYRE NO') || expense.note.trim().toUpperCase().includes('TYRE'));
+                  const matchesFilter = (selectedFilter === 'all') || 
+                                        (selectedFilter === 'tyre' && isTyre) || 
+                                        (selectedFilter === 'other' && !isTyre);
+
+                  if (matchesFilter && vendorWorkHistoryTable) {
+                    vendorWorkHistoryTable.row.add([
+                      expense.date || lr.date || 'N/A',
+                      `<a href="lr-report.html?view=${child.key}" target="_blank">${lr.lrNumber || 'N/A'}</a> ${tripType === 'Empty' ? '(Return)' : ''}`,
+                      lr.truckNumber || 'N/A',
+                      expense.note || '—',
+                      `₹${workAmount.toFixed(2)}`
+                    ]);
+                  }
                 }
               });
             }
@@ -1012,25 +1048,42 @@
         });
       }
 
-      // Process Direct Vehicle Work
-      if (vehicleWorkSnap.exists()) {
-        vehicleWorkSnap.forEach(child => {
-          const work = child.val();
-          if (work.vendorId === vendorId) {
-            const workAmount = parseFloat(work.amount) || 0;
-            totalWork += workAmount;
-            if (vendorWorkHistoryTable) vendorWorkHistoryTable.row.add([
+      // Process Direct Vehicle Work (use in-memory vehicleWorkData — kept live by onValue listener)
+      // This includes entries from tyre.html (source: 'tyre_management') and manual entries
+      const seenTyresHistory = new Set();
+      Object.values(vehicleWorkData).forEach(work => {
+        if (work.vendorId === vendorId) {
+          if (work.source === 'tyre_management' && work.notes && work.notes.startsWith('Tyre No:')) {
+            const tyreKey = `${work.vendorId}_${work.vehicleNumber || 'N/A'}_${work.notes}`;
+            if (seenTyresHistory.has(tyreKey)) return;
+            seenTyresHistory.add(tyreKey);
+          }
+          const workAmount = parseFloat(work.amount) || 0;
+          totalWork += workAmount;
+
+          const isTyre = work.source === 'tyre_management' || 
+                         (work.notes && (work.notes.trim().toUpperCase().startsWith('TYRE NO') || work.notes.trim().toUpperCase().includes('TYRE')));
+          const matchesFilter = (selectedFilter === 'all') || 
+                                (selectedFilter === 'tyre' && isTyre) || 
+                                (selectedFilter === 'other' && !isTyre);
+
+          if (matchesFilter && vendorWorkHistoryTable) {
+            vendorWorkHistoryTable.row.add([
               work.date || 'N/A',
-              'Direct Entry',
+              work.lrNo !== undefined ? work.lrNo : 'Direct Entry',
               work.vehicleNumber || 'N/A',
               work.notes || '—',
               `₹${workAmount.toFixed(2)}`
             ]);
           }
-        });
-      }
+        }
+      });
 
-      if (vendorWorkHistoryTable) vendorWorkHistoryTable.draw();
+      if (vendorWorkHistoryTable) {
+        const sortSelect = document.getElementById('workSortOrder');
+        const selectedSort = sortSelect ? sortSelect.value : 'desc';
+        vendorWorkHistoryTable.order([0, selectedSort]).draw();
+      }
 
       if (vendorPaymentHistoryTable) vendorPaymentHistoryTable.clear();
       if (paymentSnap.exists()) {
@@ -1049,6 +1102,7 @@
       document.getElementById('vendorDetailOutstanding').textContent = `₹${(totalWork - totalPaid).toFixed(2)}`;
     };
 
+
     // **NEW**: Function to download the vendor's work history as a PDF
     window.downloadVendorWorkHistoryPDF = async function () {
       if (!currentViewingVendorId || !currentViewingVendorName) {
@@ -1062,12 +1116,16 @@
       // --- 1. Fetch Data ---
       const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
       const paymentRef = ref(db, `users/${coreAccountId}/workPayments`);
+      const vehicleWorkPdfRef = ref(db, `users/${coreAccountId}/vehicleWork`);
 
-      const [lrSnap, paymentSnap] = await Promise.all([get(lrReportsRef), get(paymentRef)]);
+      const [lrSnap, paymentSnap, vehicleWorkPdfSnap] = await Promise.all([get(lrReportsRef), get(paymentRef), get(vehicleWorkPdfRef)]);
 
       const workHistoryData = [];
       let totalWork = 0;
       let totalPaid = 0;
+
+      const filterSelect = document.getElementById('workTypeFilter');
+      const selectedFilter = filterSelect ? filterSelect.value : 'all';
 
       if (lrSnap.exists()) {
         lrSnap.forEach(child => {
@@ -1077,20 +1135,61 @@
               expenses.forEach(expense => {
                 if (expense.type === 'Vehicle Work' && expense.vendorId === currentViewingVendorId) {
                   const workAmount = parseFloat(expense.amount) || 0;
-                  totalWork += workAmount;
-                  workHistoryData.push([
-                    expense.date || lr.date || 'N/A',
-                    `${lr.lrNumber || 'N/A'} ${tripType === 'Empty' ? '(Return)' : ''}`,
-                    lr.truckNumber || 'N/A',
-                    expense.note || '—',
-                    workAmount.toFixed(2)
-                  ]);
+
+                  const isTyre = expense.note && (expense.note.trim().toUpperCase().startsWith('TYRE NO') || expense.note.trim().toUpperCase().includes('TYRE'));
+                  const matchesFilter = (selectedFilter === 'all') || 
+                                        (selectedFilter === 'tyre' && isTyre) || 
+                                        (selectedFilter === 'other' && !isTyre);
+
+                  if (matchesFilter) {
+                    totalWork += workAmount;
+                    workHistoryData.push([
+                      expense.date || lr.date || 'N/A',
+                      `${lr.lrNumber || 'N/A'} ${tripType === 'Empty' ? '(Return)' : ''}`,
+                      lr.truckNumber || 'N/A',
+                      expense.note || '—',
+                      workAmount.toFixed(2)
+                    ]);
+                  }
                 }
               });
             }
           };
           if (lr.tripDetails) processExpensesForPDF(lr.tripDetails.genericExpenses, 'Main');
           if (lr.emptyTripData) processExpensesForPDF(lr.emptyTripData.genericExpenses, 'Empty');
+        });
+      }
+
+      // Process Direct Vehicle Work for PDF
+      if (vehicleWorkPdfSnap.exists()) {
+        const seenTyresPdf = new Set();
+        vehicleWorkPdfSnap.forEach(child => {
+          const work = child.val();
+          if (work.vendorId === currentViewingVendorId) {
+            if (work.source === 'tyre_management' && work.notes && work.notes.startsWith('Tyre No:')) {
+              const tyreKey = `${work.vendorId}_${work.vehicleNumber || 'N/A'}_${work.notes}`;
+              if (seenTyresPdf.has(tyreKey)) return;
+              seenTyresPdf.add(tyreKey);
+            }
+            const workAmount = parseFloat(work.amount) || 0;
+
+            const isTyre = work.source === 'tyre_management' || 
+                           (work.notes && (work.notes.trim().toUpperCase().startsWith('TYRE NO') || work.notes.trim().toUpperCase().includes('TYRE')));
+            const matchesFilter = (selectedFilter === 'all') || 
+                                  (selectedFilter === 'tyre' && isTyre) || 
+                                  (selectedFilter === 'other' && !isTyre);
+
+            if (matchesFilter) {
+              totalWork += workAmount;
+              workHistoryData.push([
+                work.date || 'N/A',
+                work.lrNo !== undefined ? work.lrNo : 'Direct Entry',
+                work.vehicleNumber || 'N/A',
+                work.notes || '—',
+                workAmount.toFixed(2)
+              ]);
+            }
+          }
         });
       }
 
@@ -1103,9 +1202,21 @@
         });
       }
 
+      // Sort PDF data by Date matching chosen sort order
+      const sortSelect = document.getElementById('workSortOrder');
+      const selectedSort = sortSelect ? sortSelect.value : 'desc';
+      workHistoryData.sort((a, b) => {
+        const dateA = a[0] || '';
+        const dateB = b[0] || '';
+        return selectedSort === 'asc' ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+      });
+
       // --- 2. Build PDF ---
       doc.setFontSize(18);
-      doc.text(`Work History for: ${currentViewingVendorName}`, 14, 22);
+      let filterText = '';
+      if (selectedFilter === 'tyre') filterText = ' (Tyre Work)';
+      if (selectedFilter === 'other') filterText = ' (Other / Vehicle Work)';
+      doc.text(`Work History for: ${currentViewingVendorName}${filterText}`, 14, 22);
       doc.setFontSize(11);
       doc.setTextColor(100);
       doc.text(`Total Work: ₹${totalWork.toFixed(2)} | Total Paid: ₹${totalPaid.toFixed(2)} | Outstanding: ₹${(totalWork - totalPaid).toFixed(2)}`, 14, 30);
@@ -1165,6 +1276,18 @@
       currentViewingVendorId = null; // Clear the currently viewed vendor
       currentViewingVendorName = null;
       document.getElementById('vendorDetailView').classList.add('hidden');
+    });
+
+    document.getElementById('workTypeFilter').addEventListener('change', () => {
+      if (currentViewingVendorId) {
+        viewVendorHistory(currentViewingVendorId);
+      }
+    });
+
+    document.getElementById('workSortOrder').addEventListener('change', () => {
+      if (currentViewingVendorId) {
+        viewVendorHistory(currentViewingVendorId);
+      }
     });
 
     async function populateVendorPaymentAccounts() {

@@ -128,6 +128,15 @@
   async function getCurrentUserContext() {
     if (_userContext) return _userContext;
 
+    // Check sessionStorage cache first to avoid redundant database reads and race conditions
+    try {
+      const raw = sessionStorage.getItem('tv_user_context');
+      if (raw) {
+        _userContext = JSON.parse(raw);
+        return _userContext;
+      }
+    } catch (_) {}
+
     const fb = window.firebase;
     if (!fb || !fb.auth || !fb.database) {
       console.warn('[AuthManager] Firebase not available');
@@ -166,6 +175,14 @@
             status:        data.status || 'active',
           };
 
+          // DIAGNOSTIC LOG
+          try {
+            fetch('/api/log', {
+              method: 'POST',
+              body: `[AuthManager] fetched database for uid=${user.uid}, got coreAccountId=${coreAccountId}, snapExists=${snap.exists()}`
+            });
+          } catch (_) {}
+
           // Block disabled sub-users
           if (_userContext.isSubUser && data.status === 'disabled') {
             try { await auth.signOut(); } catch (_) {}
@@ -181,6 +198,13 @@
           resolve(_userContext);
         } catch (err) {
           console.error('[AuthManager] Error fetching user context:', err);
+          // DIAGNOSTIC LOG
+          try {
+            fetch('/api/log', {
+              method: 'POST',
+              body: `[AuthManager] ERROR fetching database for uid=${user.uid}: ${err.message}`
+            });
+          } catch (_) {}
           resolve(null);
         }
       });

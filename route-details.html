@@ -216,6 +216,7 @@
   <!-- 🔐 Configuration Loading -->
   <script src="evm.js"></script>
   <script src="secure-api-loader.js"></script>
+  <script src="auth-manager.js"></script>
   <script src="money-flow-utils.js"></script>
 </head>
 
@@ -478,59 +479,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
-  <script type="module">
-    // Firebase imports
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, push, onValue, update, remove, get, query, orderByChild, equalTo, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
+  <script>
     // Config
-    // Load Firebase configuration securely from EVM
-    let firebaseConfig;
-
-    try {
-      // Get Firebase configuration from secure EVM system
-      // Initialize Firebase with proper error handling
-      try {
-        if (!window.FIREBASE_CONFIG) {
-          throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
-        }
-
-        if (!window.FIREBASE_CONFIG.databaseURL) {
-          throw new Error('Firebase databaseURL not found in configuration.');
-        }
-
-        if (!window.FIREBASE_CONFIG.projectId) {
-          throw new Error('Firebase projectId not found in configuration.');
-        }
-
-        firebaseConfig = window.FIREBASE_CONFIG;
-
-        // Check if we're using fallback values
-        if (false) { // Condition is always false in the final logic, keeping as per original structure
-
-        } else {
-
-
-
-        }
-      } catch (error) {
-        console.error('❌ Failed to load Firebase configuration:', error);
-
-        // Use fallback configuration to prevent complete failure
-        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig();
-
-      }
-    } catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = window.FIREBASE_CONFIG;
-    }
-
-    const app = initializeApp(window.FIREBASE_CONFIG);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
+    const db = firebase.database();
+    const auth = firebase.auth();
 
     let pumpTable;
     let currentUser = null;
@@ -547,7 +499,6 @@
     let currentEditingPaymentId = null;
     let allMoneyAccounts = {};
 
-
     // Save active tab
     const fuelTabs = document.querySelectorAll('#fuelTabs button');
     fuelTabs.forEach(tab => {
@@ -555,50 +506,75 @@
     });
 
     // Auth Check
-    onAuthStateChanged(auth, user => {
+    auth.onAuthStateChanged(async (user) => {
       if (!user) {
         window.location.href = "index.html";
       } else {
         currentUser = user;
 
-        // Determine the core account ID to fetch shared data
-        const userRef = ref(db, `users/${user.uid}`);
-        get(userRef).then(snapshot => {
-          if (snapshot.exists()) {
-            const userData = snapshot.val();
-            coreAccountId = userData.coreAccountId || user.uid;
+        try {
+          // Resolve coreAccountId using AuthManager context to ensure sub-users load owner's pumps
+          const ctx = await window.AuthManager.getCurrentUserContext();
+          if (ctx && ctx.coreAccountId) {
+            coreAccountId = ctx.coreAccountId;
+          } else {
+            // Direct fallback to sessionStorage
+            const cachedCtx = sessionStorage.getItem('tv_user_context');
+            if (cachedCtx) {
+              const parsed = JSON.parse(cachedCtx);
+              coreAccountId = parsed.coreAccountId || user.uid;
+            } else {
+              coreAccountId = user.uid;
+            }
+          }
+        } catch (e) {
+          console.warn('[FuelManagement] Context error, falling back to UID:', e);
+          // Try sessionStorage first
+          const cachedCtx = sessionStorage.getItem('tv_user_context');
+          if (cachedCtx) {
+            try {
+              coreAccountId = JSON.parse(cachedCtx).coreAccountId || user.uid;
+            } catch(_) {
+              coreAccountId = user.uid;
+            }
           } else {
             coreAccountId = user.uid;
           }
+        }
 
-          if (window.MoneyFlow) {
-              window.MoneyFlow.coreAccountId = coreAccountId;
-              window.MoneyFlow.recordedBy = user.displayName || user.email || 'System';
-          }
+        if (window.MoneyFlow) {
+            window.MoneyFlow.coreAccountId = coreAccountId;
+            window.MoneyFlow.recordedBy = user.displayName || user.email || 'System';
+        }
 
-          // Initialize tables
+        // Initialize tables (check if they already exist to avoid DataTable error)
+        if (!$.fn.DataTable.isDataTable('#pumpTable')) {
           pumpTable = $('#pumpTable').DataTable({
             "pageLength": 10,
             "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
             "columnDefs": [{ "orderable": false, "targets": 7 }, { "className": "text-end", "targets": [4, 5, 6, 7] }],
             "order": [[4, "desc"]]
           });
+        }
 
+        if (!$.fn.DataTable.isDataTable('#pumpTransactionTable')) {
           transactionTable = $('#pumpTransactionTable').DataTable({
             "pageLength": 10,
             "order": [[0, "desc"]]
           });
+        }
 
+        if (!$.fn.DataTable.isDataTable('#pumpPaymentTable')) {
           paymentTable = $('#pumpPaymentTable').DataTable({
             "pageLength": 10,
             "order": [[0, "desc"]]
           });
+        }
 
-          loadPumps(coreAccountId);
-          loadAllPumpData(coreAccountId, coreAccountId); // **NEW**: Load all data needed for calculations
-          loadVehicles(coreAccountId); // Load vehicles for direct entry
-          populateFuelPaymentAccounts(); // Load money flow accounts
-        });
+        // Load all data
+        loadAllPumpData(coreAccountId);
+        loadVehicles(coreAccountId);
+        populateFuelPaymentAccounts();
 
         // Restore active tab
         const activeTabId = localStorage.getItem('activeFuelTab');
@@ -698,35 +674,37 @@
       }
     }
 
-    function loadAllPumpData(coreId, userId) {
+    function loadAllPumpData(coreId) {
       // Load fuel transactions
-      const transactionsRef = ref(db, `users/${coreId}/fuelLogs`);
-      onValue(transactionsRef, (snapshot) => {
+      const transactionsRef = db.ref(`users/${coreId}/fuelLogs`);
+      transactionsRef.on('value', (snapshot) => {
         allPumpTransactions = [];
         if (snapshot.exists()) {
           snapshot.forEach(child => {
             const tr = child.val();
-            // Map the `fuelLogs` structure to what `getPumpTotals` expects for billing/liters
+            // Only count actual pump fill-ups (not internal km-usage deductions)
             if (tr.source === 'pump-fillup' || tr.source === 'manual') {
-              const pump = getPump(tr.pumpId);
               allPumpTransactions.push({
-                pumpName: pump ? pump.name : 'Unknown Pump',
+                key: child.key,
+                pumpId: tr.pumpId || '',
+                pumpName: '',
                 total: tr.totalAmount || 0,
                 liters: tr.filledLiters || 0,
-                date: tr.date || tr.timestamp.slice(0, 10),
+                date: tr.date || (tr.timestamp || '').slice(0, 10),
                 vehicleNumber: tr.truckNumber || 'N/A',
                 perLiter: tr.perLiter || 0,
+                isPaid: !!(tr.paymentAccountId && tr.paymentAccountId !== ''),
+                paidAmount: (tr.paymentAccountId && tr.paymentAccountId !== '') ? (tr.totalAmount || 0) : 0,
               });
             }
           });
         }
-        // Once data is loaded, re-render the pumps table with correct totals
-        loadPumps(coreId);
+        renderPumpTable();
       });
 
       // Load pump payments
-      const paymentsRef = ref(db, `users/${coreId}/pumpPayments`);
-      onValue(paymentsRef, (snapshot) => {
+      const paymentsRef = db.ref(`users/${coreId}/pumpPayments`);
+      paymentsRef.on('value', (snapshot) => {
         allPumpPayments = [];
         if (snapshot.exists()) {
           snapshot.forEach(child => {
@@ -736,16 +714,28 @@
             });
           });
         }
-        loadPumps(coreId);
+        renderPumpTable();
       });
 
-      // Load Pumps to match names in allPumpTransactions
-      const pumpRef = ref(db, `users/${coreId}/petrolPumps`);
-      onValue(pumpRef, (snapshot) => {
+      // Load Pumps
+      const pumpRef = db.ref(`users/${coreId}/petrolPumps`);
+      pumpRef.on('value', (snapshot) => {
         allPumps = [];
         if (snapshot.exists()) {
-          snapshot.forEach(child => allPumps.push({ id: child.key, ...child.val() }));
+          snapshot.forEach(child => {
+            const val = child.val();
+            allPumps.push({
+              id: child.key,
+              ...val,
+              name: val.name || val.pumpName || 'Unnamed Pump',
+              place: val.place || val.location || '-'
+            });
+          });
         }
+        if (document.getElementById('directFuelForm')) {
+          populateDirectFuelDropdowns();
+        }
+        renderPumpTable();
       });
     }
 
@@ -759,20 +749,24 @@
       return allPumpPayments.filter(p => p.pumpId === pumpId);
     }
 
-    // **NEW**: Helper function to calculate totals for a given pump name
+    // Helper function to calculate totals for a given pump
     function getPumpTotals(pumpName, pumpId) {
-      const transactions = allPumpTransactions.filter(t => t.pumpName === pumpName);
+      const transactions = allPumpTransactions.filter(t => t.pumpId === pumpId);
       const payments = getPumpPayments(pumpId);
 
       const totalBilled = transactions.reduce((sum, t) => sum + (parseFloat(t.total) || 0), 0);
       const totalLiters = transactions.reduce((sum, t) => sum + (parseFloat(t.liters) || 0), 0);
-      const totalPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+      const totalPaidAtFill = transactions.reduce((sum, t) => sum + (parseFloat(t.paidAmount) || 0), 0);
+      const totalPaidLater = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+      const totalPaid = totalPaidAtFill + totalPaidLater;
       const outstanding = totalBilled - totalPaid;
 
       return {
         totalBilled,
         totalLiters,
         totalPaid,
+        totalPaidAtFill,
+        totalPaidLater,
         outstanding
       };
     }
@@ -797,8 +791,8 @@
         createdAt: new Date().toISOString()
       };
 
-      const pumpRef = ref(db, `users/${coreAccountId}/petrolPumps`);
-      push(pumpRef, pumpData)
+      const pumpRef = db.ref(`users/${coreAccountId}/petrolPumps`);
+      pumpRef.push(pumpData)
         .then(() => {
           e.target.reset();
           localStorage.removeItem(`tv_draft_pumpForm_${coreAccountId}`);
@@ -809,36 +803,31 @@
         });
     });
 
-    // Load Pumps
-    function loadPumps(uid) {
-      const pumpRef = ref(db, `users/${uid}/petrolPumps`);
-      onValue(pumpRef, (snapshot) => {
-        pumpTable.clear();
-        if (snapshot.exists()) {
-          snapshot.forEach(child => {
-            const pumpId = child.key;
-            const pump = child.val();
-            const totals = getPumpTotals(pump.name, pumpId);
+    // Render Petrol Pumps Table
+    function renderPumpTable() {
+      if (!pumpTable) return;
+      pumpTable.clear();
+      allPumps.forEach(pump => {
+        const pumpId = pump.id;
+        const totals = getPumpTotals(pump.name, pumpId);
 
-            pumpTable.row.add([
-              pump.name,
-              pump.place || "-",
-              pump.contact || "-",
-              pump.gstin || "-",
-              `₹${totals.totalBilled.toFixed(2)}`,
-              `<span class="text-success">₹${totals.totalPaid.toFixed(2)}</span>`,
-              `<span class="fw-bold ${totals.outstanding > 0 ? 'text-danger' : 'text-success'}">₹${totals.outstanding.toFixed(2)}</span>`,
-              `${totals.totalLiters.toFixed(2)} L`,
-              `<div class="text-center">
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewPump('${child.key}')" title="View Details"><i class="fas fa-eye"></i></button>
-                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPump('${child.key}')" title="Edit" data-permission="edit_records"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deletePump('${child.key}')" title="Delete" data-permission="delete_records"><i class="fas fa-trash"></i></button>
-              </div>`
-            ]).node().id = `pump-row-${child.key}`;
-          });
-        }
-        pumpTable.draw();
+        pumpTable.row.add([
+          pump.name,
+          pump.place || "-",
+          pump.contact || "-",
+          pump.gstin || "-",
+          `₹${totals.totalBilled.toFixed(2)}`,
+          `<span class="text-success">₹${totals.totalPaid.toFixed(2)}</span>`,
+          `<span class="fw-bold ${totals.outstanding > 0 ? 'text-danger' : 'text-success'}">₹${totals.outstanding.toFixed(2)}</span>`,
+          `${totals.totalLiters.toFixed(2)} L`,
+          `<div class="text-center">
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="viewPump('${pumpId}')" title="View Details"><i class="fas fa-eye"></i></button>
+            <button class="btn btn-sm btn-outline-secondary me-1" onclick="editPump('${pumpId}')" title="Edit" data-permission="edit_records"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deletePump('${pumpId}')" title="Delete" data-permission="delete_records"><i class="fas fa-trash"></i></button>
+          </div>`
+        ]).node().id = `pump-row-${pumpId}`;
       });
+      pumpTable.draw();
     }
 
     // View Pump Details
@@ -848,19 +837,19 @@
 
       currentViewingPumpId = pumpId;
 
-      const pumpRef = ref(db, `users/${coreAccountId}/petrolPumps/${pumpId}`);
-      const pumpSnap = await get(pumpRef);
+      const pumpRef = db.ref(`users/${coreAccountId}/petrolPumps/${pumpId}`);
+      const pumpSnap = await pumpRef.once('value');
       if (!pumpSnap.exists()) return;
       const pump = pumpSnap.val();
-      currentViewingPumpName = pump.name;
+      currentViewingPumpName = pump.name || pump.pumpName || 'Unnamed Pump';
 
-      document.getElementById('pumpTitle').textContent = pump.name;
+      document.getElementById('pumpTitle').textContent = currentViewingPumpName;
       document.getElementById('pumpDetailContact').textContent = pump.contact || '-';
       document.getElementById('pumpDetailGSTIN').textContent = pump.gstin || '-';
       document.getElementById('pumpDetailEmail').textContent = pump.email || '-';
 
       // Calculate and display totals in the detail view
-      const totals = getPumpTotals(pump.name, pumpId);
+      const totals = getPumpTotals(currentViewingPumpName, pumpId);
       document.getElementById('pumpDetailTotalSpent').textContent = `₹${totals.totalBilled.toFixed(2)}`;
       document.getElementById('pumpDetailTotalLiters').textContent = `${totals.totalLiters.toFixed(2)} L`;
       document.getElementById('pumpDetailTotalPaid').textContent = `₹${totals.totalPaid.toFixed(2)}`;
@@ -881,8 +870,8 @@
       transactionTable.clear();
 
       // 1. Get the list of transaction keys from the pump's data.
-      const transactionKeysRef = ref(db, `users/${coreAccountId}/petrolPumps/${pumpId}/transactions`);
-      const keysSnap = await get(transactionKeysRef);
+      const transactionKeysRef = db.ref(`users/${coreAccountId}/petrolPumps/${pumpId}/transactions`);
+      const keysSnap = await transactionKeysRef.once('value');
 
       if (!keysSnap.exists()) {
         transactionTable.draw(); // Draw an empty table
@@ -891,7 +880,7 @@
 
       // 2. Fetch each transaction log using its key.
       const transactionPromises = Object.keys(keysSnap.val()).map(logKey =>
-        get(ref(db, `users/${coreAccountId}/fuelLogs/${logKey}`))
+        db.ref(`users/${coreAccountId}/fuelLogs/${logKey}`).once('value')
       );
       const transactionSnaps = await Promise.all(transactionPromises);
 
@@ -920,8 +909,8 @@
         try {
           const updates = {};
           // 1. Fetch vehicle id to deduct fuel
-          const vehiclesRef = ref(db, `users/${coreAccountId}/vehicles`);
-          const vSnap = await get(vehiclesRef);
+          const vehiclesRef = db.ref(`users/${coreAccountId}/vehicles`);
+          const vSnap = await vehiclesRef.once('value');
           if (vSnap.exists()) {
             let foundVehicleId = null;
             vSnap.forEach(vChild => {
@@ -931,8 +920,8 @@
               }
             });
             if (foundVehicleId) {
-              const vFuelRef = ref(db, `users/${coreAccountId}/vehicles/${foundVehicleId}/currentFuel`);
-              const curFuelSnap = await get(vFuelRef);
+              const vFuelRef = db.ref(`users/${coreAccountId}/vehicles/${foundVehicleId}/currentFuel`);
+              const curFuelSnap = await vFuelRef.once('value');
               const before = parseFloat(curFuelSnap.val()) || 0;
               const after = before - parseFloat(liters || 0);
               updates[`users/${coreAccountId}/vehicles/${foundVehicleId}/currentFuel`] = after;
@@ -947,7 +936,7 @@
             updates[`users/${coreAccountId}/petrolPumps/${pumpId}/transactions/${logKey}`] = null;
           }
 
-          await update(ref(db), updates);
+          await db.ref().update(updates);
 
           // 4. Reverse Money Flow transaction
           if (window.MoneyFlow) {
@@ -958,9 +947,7 @@
           
           // Reload dynamic data and transactions list
           loadPumpTransactions(pumpId);
-          if (typeof loadAllPumpData === 'function') {
-            loadAllPumpData(coreAccountId, coreAccountId);
-          }
+          loadAllPumpData(coreAccountId);
         } catch (e) {
           console.error('Error deleting fuel log:', e);
           alert('Error deleting fuel log.');
@@ -1024,14 +1011,14 @@
         let paymentId = currentEditingPaymentId;
         if (currentEditingPaymentId) {
           // Update existing payment
-          await update(ref(db, `users/${coreAccountId}/pumpPayments/${currentEditingPaymentId}`), paymentData);
+          await db.ref(`users/${coreAccountId}/pumpPayments/${currentEditingPaymentId}`).update(paymentData);
           alert('Payment updated successfully!');
           currentEditingPaymentId = null;
         } else {
           // Add new payment
-          const newPayRef = push(ref(db, `users/${coreAccountId}/pumpPayments`));
+          const newPayRef = db.ref(`users/${coreAccountId}/pumpPayments`).push();
           paymentId = newPayRef.key;
-          await set(newPayRef, paymentData);
+          await newPayRef.set(paymentData);
           alert('Payment saved successfully!');
         }
 
@@ -1062,8 +1049,8 @@
 
     // Edit Pump Payment
     window.editPumpPayment = async (paymentId) => {
-      const paymentRef = ref(db, `users/${coreAccountId}/pumpPayments/${paymentId}`);
-      const snapshot = await get(paymentRef);
+      const paymentRef = db.ref(`users/${coreAccountId}/pumpPayments/${paymentId}`);
+      const snapshot = await paymentRef.once('value');
       if (!snapshot.exists()) {
         alert('Payment record not found.');
         return;
@@ -1091,7 +1078,7 @@
       }
 
       try {
-        await remove(ref(db, `users/${coreAccountId}/pumpPayments/${paymentId}`));
+        await db.ref(`users/${coreAccountId}/pumpPayments/${paymentId}`).remove();
         if (window.MoneyFlow) {
           await window.MoneyFlow.deletePayment('pump_pay_' + paymentId);
         }
@@ -1118,18 +1105,20 @@
     }
 
     window.editPump = (id) => {
-      const pumpRef = ref(db, `users/${coreAccountId}/petrolPumps/${id}`);
-      get(pumpRef).then(snapshot => {
+      const pumpRef = db.ref(`users/${coreAccountId}/petrolPumps/${id}`);
+      pumpRef.once('value').then(snapshot => {
         if (snapshot.exists()) {
           const pump = snapshot.val();
-          const newName = prompt("Enter new pump name:", pump.name);
+          const name = pump.name || pump.pumpName || 'Unnamed Pump';
+          const place = pump.place || pump.location || '';
+          const newName = prompt("Enter new pump name:", name);
           if (!newName) return;
-          const newPlace = prompt("Enter new place:", pump.place || '');
+          const newPlace = prompt("Enter new place:", place);
           const newContact = prompt("Enter new contact number:", pump.contact || '');
           const newEmail = prompt("Enter new email:", pump.email || '');
           const newGstin = prompt("Enter new GSTIN:", pump.gstin || '');
 
-          update(pumpRef, {
+          pumpRef.update({
             name: newName, place: newPlace, contact: newContact, email: newEmail, gstin: newGstin, updatedAt: new Date().toISOString()
           }).then(() => alert('Pump details updated.')).catch(err => alert('Update failed: ' + err.message));
         }
@@ -1138,8 +1127,8 @@
 
     // Load Vehicles
     function loadVehicles(coreId) {
-      const vRef = ref(db, `users/${coreId}/vehicles`);
-      onValue(vRef, (snap) => {
+      const vRef = db.ref(`users/${coreId}/vehicles`);
+      vRef.on('value', (snap) => {
         allVehicles = [];
         if (snap.exists()) {
           snap.forEach(c => {
@@ -1159,20 +1148,20 @@
     }
 
     function populateDirectFuelDropdowns() {
-      // Init Select2 if not already
-      if (!$('#directVehicleSelect').data('select2')) {
-        $('#directVehicleSelect').select2({ theme: 'bootstrap-5', placeholder: 'Select Vehicle', width: '100%' });
-      }
-      if (!$('#directPumpSelect').data('select2')) {
-        $('#directPumpSelect').select2({ theme: 'bootstrap-5', placeholder: 'Select Pump', width: '100%' });
-      }
-
       const vSelect = document.getElementById('directVehicleSelect');
       const pSelect = document.getElementById('directPumpSelect');
 
       // Save current selection if re-populating
       const curV = $('#directVehicleSelect').val();
       const curP = $('#directPumpSelect').val();
+
+      // Destroy Select2 if already initialized to prevent cached options issues
+      if ($('#directVehicleSelect').data('select2')) {
+        $('#directVehicleSelect').select2('destroy');
+      }
+      if ($('#directPumpSelect').data('select2')) {
+        $('#directPumpSelect').select2('destroy');
+      }
 
       vSelect.innerHTML = '<option value="">Select Vehicle</option>';
       allVehicles.forEach(v => {
@@ -1189,6 +1178,10 @@
         opt.textContent = p.name;
         pSelect.appendChild(opt);
       });
+
+      // Re-initialize Select2 with updated options
+      $('#directVehicleSelect').select2({ theme: 'bootstrap-5', placeholder: 'Select Vehicle', width: '100%' });
+      $('#directPumpSelect').select2({ theme: 'bootstrap-5', placeholder: 'Select Pump', width: '100%' });
 
       if (curV) $('#directVehicleSelect').val(curV).trigger('change');
       if (curP) $('#directPumpSelect').val(curP).trigger('change');
@@ -1241,12 +1234,12 @@
 
       try {
         // 1. Push to fuelLogs
-        const newRef = push(ref(db, `users/${coreAccountId}/fuelLogs`));
+        const newRef = db.ref(`users/${coreAccountId}/fuelLogs`).push();
         const logKey = newRef.key;
-        await set(newRef, fuelData);
+        await newRef.set(fuelData);
 
         // 2. Link to Pump Transactions
-        await update(ref(db, `users/${coreAccountId}/petrolPumps/${pumpId}/transactions`), {
+        await db.ref(`users/${coreAccountId}/petrolPumps/${pumpId}/transactions`).update({
           [logKey]: true
         });
 
@@ -1284,7 +1277,7 @@
     // Delete Pump
     window.deletePump = (id) => {
       if (confirm("Are you sure you want to delete this petrol pump?")) {
-        remove(ref(db, `users/${coreAccountId}/petrolPumps/${id}`))
+        db.ref(`users/${coreAccountId}/petrolPumps/${id}`).remove()
           .then(() => alert('Pump deleted.'))
           .catch(err => alert('Deletion failed: ' + err.message));
       }
