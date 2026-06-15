@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LR Management - Transport System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="lr-report.css">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+</head>
+
+<body>
+
+  <div id="navbar-placeholder"></div>
+
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0"><i class="fas fa-file-invoice me-2"></i>LR Management</h2>
+    </div>
+
+    <ul class="nav nav-tabs" id="lrTabs">
+      <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#view">View Entries</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#add">Add New LR</a>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="view">
+        <div class="row mb-3">
+          <div class="col-md-2">
+            <label class="form-label">From Date</label>
+            <input type="date" class="form-control" id="fromDate">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">To Date</label>
+            <input type="date" class="form-control" id="toDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Client</label>
+            <select class="form-select" id="clientFilter">
+              <option value="">All Clients</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Truck Number</label>
+            <select class="form-select" id="truckFilter">
+              <option value="">All Trucks</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary me-2 w-100" id="applyFiltersBtn">Filter</button>
+            <button class="btn btn-success" id="exportPdfBtn"><i class="fas fa-file-pdf"></i></button>
+          </div>
+        </div>
+
+        <div class="tab-content" id="lrViewTabsContent">
+          <div class="tab-pane fade show active" id="own-lrs-content" role="tabpanel">
+            <div class="mb-3">
+              <button class="btn btn-primary" id="generateInvoiceBtn" onclick="showBankDetailsModal()" disabled>
+                <i class="fas fa-file-invoice me-2"></i>Generate Client Invoice
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table id="lrTable" class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAllCheckbox"
+                          onclick="toggleSelectAll()">
+                      </div>
+                    </th>
+                    <th>Date</th>
+                    <th>LR No</th>
+                    <th>Truck No</th>
+                    <th>Client</th>
+                    <th>Consignor</th>
+                    <th>Consignee</th>
+                    <th>Item</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Weight</th>
+                    <th><i class="fas fa-plus"></i> Details</th>
+                    <th>Status</th>
+                    <th>LR Made By</th>
+                    <th>LR Copy</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                </tbody>
+              </table>
+            </div>
+            <div class="text-center mt-3">
+              <button class="btn btn-outline-primary" onclick="loadLRData('next')">Load More LRs</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="add">
+        <form id="lrForm">
+          <div class="card mb-4">
+            <div class="card-header bg-light">
+              <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Basic LR Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <span class="fw-bold me-3">Ownership Type:</span>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="vehicleTypeRadio" id="ownVehicleRadio" value="own" checked onchange="toggleVehicleInput(this.value === 'market')">
+                    <label class="form-check-label" for="ownVehicleRadio">Own Fleet</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="vehicleTypeRadio" id="marketVehicleRadio" value="market" onchange="toggleVehicleInput(this.value === 'market')">
+                    <label class="form-check-label" for="marketVehicleRadio">Market Vehicle</label>
+                  </div>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3">
+                  <label for="lrDate" class="form-label">Date*</label>
+                  <input type="date" class="form-control" id="lrDate" required />
+                </div>
+                <div class="col-md-3">
+                  <label for="lrNumber" class="form-label">LR Number</label>
+                  <input type="text" class="form-control" id="lrNumber" />
+                  <small class="text-muted">Leave blank to auto-generate</small>
+                </div>
+                <div class="col-md-6 vehicle-input-container">
+                    <label id="truckLabel" for="truckNumber" class="form-label">Truck Number <span class="text-danger">*</span></label>
+                    <div id="ownVehicleFields" class="d-flex gap-2">
+                      <select id="truckNumber" class="form-select flex-grow-1" required></select>
+                      <button class="btn btn-outline-success" type="button" id="quickAddVehicleBtn" title="Add New Vehicle"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="marketVehicleFields" style="display:none;" class="row g-2">
+                      <div class="col-6">
+                        <input type="text" id="marketTruckNumber" class="form-control" placeholder="Enter Truck No.">
+                      </div>
+                      <div class="col-6">
+                        <select id="transporterSelect" class="form-select"></select>
+                      </div>
+                    </div>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3">
+                  <label for="invoiceNumberInput" class="form-label">Invoice No.</label>
+                  <input type="text" class="form-control" id="invoiceNumberInput" />
+                  <small class="text-muted">Leave blank to auto-generate</small>
+                </div>
+                <div class="col-md-3">
+                  <label for="shipmentNo" class="form-label">Shipment No</label>
+                  <input type="text" class="form-control" id="shipmentNo" />
+                  <small class="text-muted">Leave blank to auto-generate</small>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Delivery No</label>
+                  <input type="text" class="form-control" id="deliveryNo" />
+                  <small class="text-muted">Leave blank to auto-generate</small>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Order No</label>
+                  <input type="text" class="form-control" id="orderNo" />
+                  <small class="text-muted">Leave blank to auto-generate</small>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3">
+                  <label class="form-label">E-Way Bill No</label>
+                  <input type="text" class="form-control" id="eWayBillNo" placeholder="E-Way Bill Number">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">EWB Expiry Date</label>
+                  <input type="date" class="form-control" id="ewbExpiry">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="driverSelect" class="form-label">Driver</label>
+                    <div id="ownDriverField" class="input-group">
+                      <select id="driverSelect" class="form-select"></select>
+                      <button class="btn btn-outline-success" type="button" id="quickAddDriverBtn" title="Add New Driver"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="marketDriverField" style="display:none;">
+                      <input type="text" id="marketDriverName" class="form-control" placeholder="Enter Driver Name / Contact">
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="clientId" class="form-label">Billed To (Client)*</label>
+                  <div class="input-group">
+                    <select id="clientId" class="form-select" required
+                      onchange="window.updateConsigneeFromClient()"></select>
+                    <button class="btn btn-outline-success" type="button" id="quickAddClientBtn"
+                      title="Add New Client"><i class="fas fa-plus"></i></button>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="employeeSelect" class="form-label">Employee</label>
+                  <select id="employeeSelect" class="form-select">
+                    <option value="">Select Employee</option>
+                  </select>
+                  <small class="text-muted">Select the employee managing this LR</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Route (From --> To) <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <select class="form-select" id="routeSelect" required></select>
+                    <button class="btn btn-outline-success" type="button" id="quickAddRouteBtn" title="Add New Route"><i
+                        class="fas fa-plus"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-box me-2"></i>Shipment Details</h5>
+              </div>
+              <div class="card-body">
+                <div class="row g-3 align-items-end fuel-entry-grid">
+                  <div class="col-md-4 mb-3">
+                    <label for="consignorName" class="form-label">Consignor</label>
+                    <input type="text" id="consignorName" class="form-control" placeholder="Consignor Name">
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label for="consigneeName" class="form-label">Consignee</label>
+                    <input type="text" id="consigneeName" class="form-control" placeholder="Consignee Name">
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Item</label>
+                    <input type="text" class="form-control" id="item" placeholder="e.g., Cement Bags, Steel Bars">
+                  </div>
+                </div>
+                <div class="row g-3 align-items-end fuel-entry-grid">
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Number of Packages</label>
+                    <input type="number" class="form-control" id="numPackages" placeholder="For package goods"
+                      oninput="calculateWeightFromPackages()">
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Weight per Package (kg)</label>
+                    <input type="number" step="0.01" class="form-control" id="weightPerPackage" placeholder="e.g., 50"
+                      oninput="calculateWeightFromPackages()">
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Weight (tonne) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="weight" step="0.01" required
+                      oninput="handleManualWeightInput()" placeholder="Total weight in MT">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-primary" id="saveLRBtn">Save LR</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="modal fade" id="tripDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="fas fa-file-invoice-dollar me-2"></i>Trip Financials for LR: <span
+              id="modalLrNumber"></span></h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-tabs trip-details-nav" id="tripDetailsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing-content"
+                type="button" role="tab">1. Billing & Freight</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="fuel-tab" data-bs-toggle="tab" data-bs-target="#fuel-content" type="button"
+                role="tab">2. KM & Fuel Usage</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="fuel-entry-tab" data-bs-toggle="tab" data-bs-target="#fuel-entry-content"
+                type="button" role="tab" onclick="loadFuelPumps()">3. Fuel Entry</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses-content"
+                type="button" role="tab">4. Trip Expenses</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="empty-expenses-tab" data-bs-toggle="tab"
+                data-bs-target="#empty-expenses-content" type="button" role="tab">5. Empty Trip Expenses</button>
+            </li>
+          </ul>
+
+          <div class="tab-content trip-details-tab-content" id="tripDetailsTabsContent">
+            <div class="tab-pane fade show active" id="billing-content" role="tabpanel">
+              <div class="card">
+                <div class="card-body">
+                  <div class="row align-items-end">
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Billing Rate (₹/tonne)</label>
+                      <input type="number" step="0.01" class="form-control" id="tripBillingRate"
+                        oninput="calculateTripBillingAmount()">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Billing Amount (₹)</label>
+                      <input type="number" step="0.01" class="form-control" id="tripBillingAmount"
+                        oninput="calculateTripBillingRate()">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Freight Rate (₹/tonne)</label>
+                      <input type="number" step="0.01" class="form-control" id="tripFreightRate"
+                        oninput="calculateTripFreightAmount()">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <label class="form-label">Freight Amount (₹)</label>
+                      <input type="number" step="0.01" class="form-control" id="tripFreightAmount"
+                        oninput="calculateTripFreightRate()">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 mb-3" id="tripAdvanceField">
+                      <div class="row g-2">
+                        <div class="col-7">
+                          <label class="form-label">Driver Advance (₹)</label>
+                          <input type="number" step="0.01" class="form-control" id="tripAdvance" value="0"
+                            oninput="calculateTripTotals()">
+                        </div>
+                        <div class="col-5">
+                          <label class="form-label">Payment Account</label>
+                          <select id="tripAdvanceAccountId" class="form-select">
+                            <option value="">Select Account</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Shortage (kg)</label>
+                      <input type="number" step="0.01" class="form-control" id="tripShortage" value="0"
+                        placeholder="Shortage in kg">
+                    </div>
+                    <div class="col-md-6 mb-3" id="commissionField" style="display: none;">
+                      <label class="form-label fw-bold text-success">Commission (₹)</label>
+                      <input type="number" step="0.01" class="form-control" id="tripCommission"
+                        placeholder="Your commission from this trip">
+                    </div>
+                  </div>
+                  <hr>
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">CGST %</label>
+                      <input type="number" step="0.01" class="form-control" id="tripCgstPercentage" value="9"
+                        oninput="calculateTripTotals()">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">SGST %</label>
+                      <input type="number" step="0.01" class="form-control" id="tripSgstPercentage" value="9"
+                        oninput="calculateTripTotals()">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Total Billing (Incl. GST)</label>
+                      <input type="number" step="0.01" class="form-control bg-success-subtle"
+                        id="tripTotalBillingAmount" readonly>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane fade" id="fuel-content" role="tabpanel">
+              <div class="card">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Starting KM</label>
+                      <input type="number" min="0" class="form-control" id="tripStartingKm"
+                        oninput="calculateTotalKm()">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Ending KM</label>
+                      <input type="number" min="0" class="form-control" id="tripEndingKm" oninput="calculateTotalKm()">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Total Distance (KM)</label>
+                      <input type="number" class="form-control bg-light" id="tripTotalKm" readonly>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Vehicle Avg (km/l)</label>
+                      <input type="number" step="0.01" min="0" class="form-control" id="tripVehicleAverage"
+                        oninput="calculateFuelUsed()">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Fuel Used (Litres)</label>
+                      <input type="number" step="0.01" min="0" class="form-control bg-light" id="tripFuelUsedLiters"
+                        readonly>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Fuel Rate (₹/L)</label>
+                      <input type="number" step="0.01" min="0" class="form-control" id="tripDieselRatePerLiter"
+                        oninput="calculateFuelAmount()">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane fade" id="fuel-entry-content" role="tabpanel">
+              <div class="card mb-3">
+                <div class="card-body bg-light">
+                  <div class="row align-items-center">
+                    <div class="col-md-6">
+                      <h6 class="mb-0">Selected Truck: <strong id="fuelEntryTruckNumber">N/A</strong></h6>
+                    </div>
+                    <div class="col-md-6 text-end">
+                      <h6 class="mb-0">Current Tank Level: <strong id="currentFuelLevel" class="text-secondary">--
+                          L</strong></h6>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <form id="fuelEntryForm">
+                <h5 class="mb-3">Record Fuel Fill-up (Adds to Inventory)</h5>
+                <div class="row g-3 align-items-end fuel-entry-grid">
+                  <div class="col-md-3">
+                    <label for="fuelPumpSelect" class="form-label">Select Pump <span
+                        class="text-danger">*</span></label>
+                    <div class="fuel-pump-group">
+                      <select id="fuelPumpSelect" class="form-select" required>
+                        <option value="">Select a Pump</option>
+                      </select>
+                      <button class="btn btn-outline-success" type="button" id="quickAddPumpBtn" title="Add New Pump"><i
+                          class="fas fa-plus"></i></button>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="fuelFillDate" class="form-label">Date <span class="text-danger">*</span></label>
+                    <input type="date" id="fuelFillDate" class="form-control" required>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="fuelLiters" class="form-label">Liters <span class="text-danger">*</span></label>
+                    <input type="number" id="fuelLiters" class="form-control" placeholder="0.00" required step="0.01"
+                      oninput="calculateFuelTotalAmount()">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="fuelTripKm" class="form-label">KM Reading <span class="text-danger">*</span></label>
+                    <input type="number" id="fuelTripKm" class="form-control" placeholder="Enter KM reading" required
+                      step="0.1" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="fuelPerLiter" class="form-label">Price/Liter <span class="text-danger">*</span></label>
+                    <input type="number" id="fuelPerLiter" class="form-control" placeholder="0.00" required step="0.01"
+                      oninput="calculateFuelTotalAmount()">
+                  </div>
+                  <div class="col-md-3 mb-3">
+                    <label class="form-label">Amount (₹)</label>
+                    <input type="number" id="fuelAmount" class="form-control bg-light" placeholder="0.00" required
+                      step="0.01" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="fuelPaymentAccountId" class="form-label">Payment Account</label>
+                    <select id="fuelPaymentAccountId" class="form-select">
+                      <option value="">Select Account</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="fuelRemarks" class="form-label">Remarks</label>
+                    <input type="text" id="fuelRemarks" class="form-control" placeholder="Driver name or note">
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save me-2"></i>Record Fuel Entry</button>
+              </form>
+
+              <h5 class="mt-4">Recent Fuel Entries (Fill-ups)</h5>
+              <div class="table-responsive">
+                <table id="recentFuelEntriesTable" class="table table-striped table-bordered" style="width:100%">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Pump</th>
+                      <th class="text-end">Liters</th>
+                      <th class="text-end">Amount (₹)</th>
+                      <th>Remarks</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recentFuelEntriesBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="expenses-content" role="tabpanel">
+              <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Trip Expense Log</h5>
+                  <button type="button" class="btn btn-sm btn-outline-success"
+                    onclick="addExpenseRow('tripGenericExpensesContainer')">
+                    <i class="fas fa-plus me-1"></i>Add Expense
+                  </button>
+                </div>
+                <div class="card-body">
+                  <div id="tripGenericExpensesContainer" class="d-flex flex-column gap-2">
+                  </div>
+                  <hr>
+                  <div class="text-end">
+                    <h5 class="mb-0">Total Trip Expenses: <span id="tripTotalExpensesDisplay"
+                        class="fw-bold text-danger">₹0.00</span></h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane fade" id="empty-expenses-content" role="tabpanel">
+              <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Empty Return Expense Log</h5>
+                  <button type="button" class="btn btn-sm btn-outline-success"
+                    onclick="addExpenseRow('emptyTripGenericExpensesContainer')">
+                    <i class="fas fa-plus me-1"></i>Add Expense
+                  </button>
+                </div>
+                <div class="card-body">
+                  <div id="emptyTripGenericExpensesContainer" class="d-flex flex-column gap-2">
+                  </div>
+                  <hr>
+                  <div class="text-end">
+                    <h5 class="mb-0">Total Empty Trip Expenses: <span id="emptyTripTotalExpensesDisplay"
+                        class="fw-bold text-danger">₹0.00</span></h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-4">
+            <div class="card-header bg-light">
+              <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Trip Summary</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Total Payable to Driver (₹)</label>
+                  <input type="number" step="0.01" class="form-control bg-info-subtle" id="tripDriverPayable" readonly>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Total Trip Expense (₹)</label>
+                  <input type="number" step="0.01" class="form-control bg-warning-subtle" id="tripTotalExpenses"
+                    readonly>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Total Billing Amount (Incl. GST)</label>
+                  <input type="number" step="0.01" class="form-control bg-success-subtle" id="tripTotalBillingAmount"
+                    readonly>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Client Balance (₹)</label>
+                  <input type="number" step="0.01" class="form-control bg-primary-subtle" id="tripClientBalance"
+                    readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <div>
+            <button type="button" class="btn btn-outline-secondary" onclick="navigateTripTabs(-1)">Previous</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="navigateTripTabs(1)">Next</button>
+          </div>
+          <div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-success" id="saveTripDetailsBtn">Save Trip Details</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVOICE DETAIL MODAL (Copied from invoice.html) -->
+  <div class="modal fade" id="invoiceDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title">Invoice Details & Style Customization</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-lg-3 style-panel-section">
+              <div id="styleSettingsPanel">
+                <h6 class="mb-3"><i class="fas fa-palette me-2"></i>Invoice Style</h6>
+                <form id="invoiceStyleForm">
+                  <div class="mb-3">
+                    <label for="templatePreset" class="form-label small fw-bold">Style Template</label>
+                    <select id="templatePreset" class="form-select form-select-sm" onchange="applyTemplate(this.value)">
+                      <option value="custom">-- Custom Style --</option>
+                      <option value="default">Template 1: Default Red (Like Sample)</option>
+                      <option value="blue">Template 2: Corporate Blue</option>
+                      <option value="green">Template 3: Traditional Green</option>
+                      <option value="minimal">Template 4: Minimal</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="themeColor" class="form-label small fw-bold">Primary Theme Color</label>
+                    <input type="color" id="themeColor" class="form-control form-control-color" value="#dc3545"
+                      title="Choose your primary color">
+                  </div>
+                  <div class="mb-3">
+                    <label for="accentStyle" class="form-label small fw-bold">Table Accent Style</label>
+                    <select id="accentStyle" class="form-select form-select-sm">
+                      <option value="header">Header Only</option>
+                      <option value="zebra">Zebra Stripes (Alternating Rows)</option>
+                      <option value="footer">Footer Only</option>
+                      <option value="none">No Accent</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="fontStyle" class="form-label small fw-bold">Font Style</label>
+                    <select id="fontStyle" class="form-select form-select-sm">
+                      <option value="sans-serif">Modern Sans-serif (Default)</option>
+                      <option value="serif">Classic Serif</option>
+                      <option value="monospace">Monospace (Technical)</option>
+                    </select>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="col-lg-9">
+              <h6 class="mb-3">Live Invoice Preview (Scrollable)</h6>
+              <div class="invoice-preview-container">
+                <div id="printableInvoiceDetail"
+                  style="width: 100%; min-height: 800px; padding: 15px; background: white; border: 1px solid #ddd;">
+                  <div class="text-center p-5 text-muted">Select an invoice to see the live preview.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-end">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="printInvoiceDetail()"><i
+              class="fas fa-print me-2"></i>Print</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="lrCopyModal" tabindex="-1" aria-labelledby="lrCopyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header text-white" style="background-color: #2E8B57;">
+          <h5 class="modal-title" id="lrCopyModalLabel">Lorry Receipt</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0" id="lrCopyContent" style="background-color: #ffffff;"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <i class="fas fa-cog"></i> Print Settings
+            </button>
+            <ul class="dropdown-menu p-2" style="min-width: 200px;">
+              <li class="form-check form-switch"><input class="form-check-input" type="checkbox" id="printLogoToggle"
+                  checked><label class="form-check-label" for="printLogoToggle">Show Logo</label></li>
+              <li class="form-check form-switch"><input class="form-check-input" type="checkbox" id="printStampToggle"
+                  checked><label class="form-check-label" for="printStampToggle">Show Stamp</label></li>
+              <li class="form-check form-switch"><input class="form-check-input" type="checkbox"
+                  id="printWatermarkToggle" checked><label class="form-check-label" for="printWatermarkToggle">Show
+                  Watermark</label></li>
+            </ul>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="downloadLRCopyPDF()"><i
+              class="fas fa-file-pdf me-2"></i>Download PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="editLRModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit LR Record</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editLrForm">
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Basic LR Information</h5>
+              </div>
+              <div class="card-body">
+                <div class="row mb-3">
+                  <div class="col-md-12">
+                    <span class="fw-bold me-3">Ownership Type:</span>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="editVehicleTypeRadio" id="editOwnVehicleRadio" value="own" checked onchange="toggleEditVehicleInput(this.value === 'market')">
+                      <label class="form-check-label" for="editOwnVehicleRadio">Own Fleet</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="editVehicleTypeRadio" id="editMarketVehicleRadio" value="market" onchange="toggleEditVehicleInput(this.value === 'market')">
+                      <label class="form-check-label" for="editMarketVehicleRadio">Market Vehicle</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-3">
+                    <label for="editLrDate" class="form-label">Date*</label>
+                    <input type="date" class="form-control" id="editLrDate" required>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="editStatus" class="form-label">Status</label>
+                    <select class="form-select" id="editStatus">
+                      <option value="">Auto (Default)</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Loaded">Loaded</option>
+                      <option value="In Transit">In Transit</option>
+                      <option value="Unloading">Unloading</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="editLrNumber" class="form-label">LR Number</label>
+                    <input type="text" class="form-control" id="editLrNumber" />
+                    <small class="text-muted">Leave blank to auto-generate</small>
+                  </div>
+                  <div class="col-md-6 vehicle-input-container">
+                      <label id="editTruckLabel" for="editTruckNumber" class="form-label">Truck Number</label>
+                      <div id="editOwnVehicleFields" class="input-group">
+                        <select id="editTruckNumber" class="form-select" required></select>
+                        <button class="btn btn-outline-success" type="button" id="editQuickAddVehicleBtn" title="Add New Vehicle"><i class="fas fa-plus"></i></button>
+                      </div>
+                      <div id="editMarketVehicleFields" style="display:none;" class="row g-2">
+                        <div class="col-6">
+                          <input type="text" id="editMarketTruckNumber" class="form-control" placeholder="Enter Truck No.">
+                        </div>
+                        <div class="col-6">
+                          <select id="editTransporterSelect" class="form-select"></select>
+                        </div>
+                      </div>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-3">
+                    <label for="editInvoiceNumberInput" class="form-label">Invoice No.</label>
+                    <input type="text" class="form-control" id="editInvoiceNumberInput">
+                    <small class="text-muted">Leave blank to auto-generate</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="editShipmentNo" class="form-label">Shipment No.</label>
+                    <input type="text" class="form-control" id="editShipmentNo">
+                    <small class="text-muted">Leave blank to auto-generate</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="editDeliveryNo" class="form-label">Delivery No.</label>
+                    <input type="text" class="form-control" id="editDeliveryNo">
+                    <small class="text-muted">Leave blank to auto-generate</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="editOrderNo" class="form-label">Order No.</label>
+                    <input type="text" class="form-control" id="editOrderNo">
+                    <small class="text-muted">Leave blank to auto-generate</small>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-3">
+                    <label class="form-label">E-Way Bill No</label>
+                    <input type="text" class="form-control" id="editEWayBillNo" placeholder="E-Way Bill Number">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">EWB Expiry Date</label>
+                    <input type="date" class="form-control" id="editEwbExpiry">
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                      <label for="editDriverSelect" class="form-label">Driver</label>
+                      <div id="editOwnDriverField" class="input-group">
+                        <select id="editDriverSelect" class="form-select"></select>
+                        <button class="btn btn-outline-success" type="button" id="editQuickAddDriverBtn" title="Add New Driver"><i class="fas fa-plus"></i></button>
+                      </div>
+                      <div id="editMarketDriverField" style="display:none;">
+                        <input type="text" id="editMarketDriverName" class="form-control" placeholder="Enter Driver Name / Contact">
+                      </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="editClientId" class="form-label">Billed To (Client)*</label>
+                    <div class="input-group">
+                      <select id="editClientId" class="form-select" required></select>
+                      <button class="btn btn-outline-success" type="button" id="editQuickAddClientBtn"
+                        title="Add New Client"><i class="fas fa-plus"></i></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="editEmployeeSelect" class="form-label">Employee</label>
+                    <select id="editEmployeeSelect" class="form-select">
+                      <option value="">Select Employee</option>
+                    </select>
+                    <small class="text-muted">Select the employee managing this LR</small>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="editRouteSelect" class="form-label">Route*</label>
+                    <div class="input-group">
+                      <select id="editRouteSelect" class="form-select" required></select>
+                      <button class="btn btn-outline-success" type="button" id="editQuickAddRouteBtn"
+                        title="Add New Route"><i class="fas fa-plus"></i></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-box me-2"></i>Shipment Details</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <label for="editConsignorName" class="form-label">Consignor</label>
+                    <input type="text" id="editConsignorName" class="form-control">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="editConsigneeName" class="form-label">Consignee</label>
+                    <input type="text" id="editConsigneeName" class="form-control">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="editItem" class="form-label">Item</label>
+                    <input type="text" class="form-control" id="editItem" placeholder="e.g., Cement Bags, Steel Bars">
+                  </div>
+                </div>
+                <div class="row mt-3">
+                  <div class="col-md-4">
+                    <label for="editNumPackages" class="form-label">No. of Packages</label>
+                    <input type="number" class="form-control" id="editNumPackages" placeholder="For package goods">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="editWeightPerPackage" class="form-label">Weight/Package (kg)</label>
+                    <input type="number" class="form-control" id="editWeightPerPackage" step="0.01"
+                      placeholder="e.g., 50">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="editWeight" class="form-label">Total Weight (tonne)</label>
+                    <input type="number" class="form-control" id="editWeight" step="0.01" required
+                      oninput="window.recalculateAmountsOnWeightChange()" placeholder="Total weight in MT">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="updateLRBtn">Update LR</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="quickAddClientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Client</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="quickAddClientForm">
+            <div class="row">
+              <div class="col-md-6 mb-3"><label class="form-label">Client Name*</label><input type="text"
+                  id="q_clientName" class="form-control" required></div>
+              <div class="col-md-6 mb-3"><label class="form-label">Contact Person</label><input type="text"
+                  id="q_contactPerson" class="form-control"></div>
+              <div class="col-md-6 mb-3"><label class="form-label">Mobile*</label><input type="tel" id="q_mobile"
+                  class="form-control" required></div>
+              <div class="col-md-6 mb-3"><label class="form-label">GSTIN</label><input type="text" id="q_gstin"
+                  class="form-control"></div>
+              <div class="col-12 mb-3"><label class="form-label">Billing Address</label><textarea id="q_billingAddress"
+                  class="form-control" rows="2"></textarea></div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveQuickAddClientBtn">Save Client</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="quickAddRouteModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Route</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="quickAddRouteForm">
+            <div class="mb-3"><label class="form-label">From Location*</label><input type="text" id="q_fromLocation"
+                class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">To Location*</label><input type="text" id="q_toLocation"
+                class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Distance (KM)</label><input type="number" id="q_distance"
+                class="form-control"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveQuickAddRouteBtn">Save Route</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="quickAddTransporterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Transporter</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="quickAddTransporterForm">
+            <div class="row">
+              <div class="col-md-6 mb-3"><label class="form-label">Transporter Name*</label><input type="text"
+                  id="q_transporterName" class="form-control" required></div>
+              <div class="col-md-6 mb-3"><label class="form-label">Contact Person</label><input type="text"
+                  id="q_transporterContactPerson" class="form-control"></div>
+              <div class="col-md-6 mb-3"><label class="form-label">Mobile</label><input type="tel"
+                  id="q_transporterMobile" class="form-control"></div>
+              <div class="col-md-6 mb-3"><label class="form-label">GSTIN</label><input type="text"
+                  id="q_transporterGstin" class="form-control"></div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveQuickAddTransporterBtn">Save Transporter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="quickAddVehicleModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Vehicle</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="quickAddVehicleForm">
+            <div class="mb-3"><label class="form-label">Vehicle Number*</label><input type="text" id="q_vehicleNumber"
+                class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Vehicle Type</label><input type="text" id="q_vehicleType"
+                class="form-control" placeholder="e.g., Truck, Mini Truck"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveQuickAddVehicleBtn">Save Vehicle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="quickAddDriverModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Driver</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="quickAddDriverForm">
+            <div class="mb-3"><label class="form-label">Driver Name*</label><input type="text" id="q_driverName"
+                class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Contact Number</label><input type="tel" id="q_driverContact"
+                class="form-control"></div>
+            <div class="mb-3"><label class="form-label">License No.</label><input type="text" id="q_driverLicense"
+                class="form-control"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveQuickAddDriverBtn">Save Driver</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="modal fade" id="quickAddFuelPumpModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Fuel Pump</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="quickAddFuelPumpForm">
+            <div class="mb-3"><label class="form-label">Pump Name*</label><input type="text" id="q_pumpName"
+                class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Location</label><input type="text" id="q_pumpLocation"
+                class="form-control"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveQuickAddPumpBtn">Save Pump</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="quickAddVendorModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Vendor</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="quickAddVendorForm">
+            <div class="mb-3"><label class="form-label">Vendor Name*</label><input type="text" id="q_vendorName"
+                class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Contact Number</label><input type="tel" id="q_vendorContact"
+                class="form-control"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveQuickAddVendorBtn">Save Vendor</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+
+  <script src="navbar-loader.js"></script>
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
+      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
+      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "transport-dashboard-ad69a",
+      storageBucket: "transport-dashboard-ad69a.appspot.com",
+      messagingSenderId: "526889676196",
+      appId: "1:526889676196:web:66032c80a4aede690ae531",
+      measurementId: "G-7F9R7HJYDH"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    window.db = db;
+    window.auth = auth;
+  </script>
+  <script src="auth-manager.js"></script>
+  <script src="shared-invoice.js"></script>
+  <script src="money-flow-utils.js"></script>
+  <script src="lr-report.js?v=autogen-remove-1"></script>
+
+  <script>
+    // RBAC Page Guard
+    document.addEventListener('DOMContentLoaded', async function() {
+      if (window.AuthManager) {
+        await window.AuthManager.enforcePageAccess('lr-report');
+        window.AuthManager.applyUIPermissions();
+      }
+    });
+  </script>
+
+</body>
+
+</html>

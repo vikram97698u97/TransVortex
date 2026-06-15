@@ -1,0 +1,42 @@
+/* print-invoice.css */
+
+@media print {
+  /* Set the page size to A4 portrait and adjust margins */
+  @page {
+    size: A4 portrait;
+    margin: 0.5cm;
+  }
+
+  /* Ensure the body and html take up the full print area */
+  html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #fff !important; /* Ensure background is white */
+    font-size: 10px; /* Base font size for print */
+  }
+
+  /* Styles for the invoice table to make it fit */
+  #printableInvoiceDetail .table {
+    font-size: 8px; /* Reduce font size for the table to fit more content */
+    width: 100% !important;
+    table-layout: fixed; /* Use fixed layout for better control over columns */
+    border-collapse: collapse;
+  }
+
+  #printableInvoiceDetail .table th,
+  #printableInvoiceDetail .table td {
+    padding: 3px 4px; /* Reduce padding in cells */
+    word-wrap: break-word; /* Allow long text to wrap within the cell */
+    word-break: break-word; /* Force break for long words without spaces */
+    border: 1px solid #ccc !important; /* Ensure borders are visible */
+  }
+
+  /* Ensure text colors are print-friendly */
+  #printableInvoiceDetail * { color: #000 !important; }
+
+  /* Hide unnecessary elements */
+  .modal-header, .modal-footer {
+    display: none !important;
+  }
+}

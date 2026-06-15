@@ -1,0 +1,91 @@
+name: Build Configuration
+
+on:
+  push:
+    paths:
+      - '.env'
+      - 'build-config.js'
+      - 'package.json'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.env'
+      - 'build-config.js'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Build configuration from GitHub Secrets
+      env:
+        FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+        FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+        FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+        FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+        FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+        FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
+        CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+        CLOUDINARY_UPLOAD_PRESET_VEHICLE_DRIVER: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_VEHICLE_DRIVER }}
+        CLOUDINARY_UPLOAD_PRESET_PAYMENT_BILLING: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_PAYMENT_BILLING }}
+        CLOUDINARY_UPLOAD_PRESET_PROFILE_PIC: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_PROFILE_PIC }}
+        CLOUDINARY_UPLOAD_PRESET_DOCUMENTS: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_DOCUMENTS }}
+        CLOUDINARY_UPLOAD_PRESET_RECEIPTS: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_RECEIPTS }}
+        CLOUDINARY_UPLOAD_PRESET_EXPENSES: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_EXPENSES }}
+        CLOUDINARY_UPLOAD_PRESET_TYRES: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_TYRES }}
+        CLOUDINARY_UPLOAD_PRESET_VEHICLES: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_VEHICLES }}
+        CLOUDINARY_UPLOAD_PRESET_DRIVERS: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_DRIVERS }}
+        CLOUDINARY_UPLOAD_PRESET_INVOICES: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_INVOICES }}
+        CLOUDINARY_UPLOAD_PRESET_LR_REPORTS: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_LR_REPORTS }}
+        CLOUDINARY_UPLOAD_PRESET_TRIP_EXPENSES: ${{ secrets.CLOUDINARY_UPLOAD_PRESET_TRIP_EXPENSES }}
+        CLOUDINARY_API_URL: ${{ secrets.CLOUDINARY_API_URL }}
+        CLOUDINARY_BASE_URL: ${{ secrets.CLOUDINARY_BASE_URL }}
+        ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
+        DEBUG: ${{ secrets.DEBUG }}
+        API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        VERSION: ${{ secrets.VERSION }}
+        SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+        API_RATE_LIMIT: ${{ secrets.API_RATE_LIMIT }}
+        CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
+        ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
+      run: node secure-config-builder.js
+      
+    - name: Verify generated files
+      run: |
+        echo "Checking generated evm.js..."
+        if [ -f evm.js ]; then
+          echo "✅ evm.js generated successfully"
+          head -20 evm.js
+        else
+          echo "❌ evm.js not found"
+          exit 1
+        fi
+      
+    - name: Commit generated evm.js
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add evm.js
+        git diff --staged --quiet || git commit -m "Auto-update evm.js from GitHub Secrets [skip ci]"
+        
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}

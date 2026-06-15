@@ -1,0 +1,2870 @@
+/**
+ * LR Report Management Logic
+ * Handles fetching, displaying, editing, and deleting LRs.
+ * Implements pagination for performance.
+ */
+
+// --- GLOBAL VARIABLES ---
+window.currentCoreAccountId = null;
+window.allVehicles = [];
+window.allClients = [];
+window.allDrivers = [];
+window.allTransporters = [];
+window.allRoutes = [];
+window.allPumps = [];
+window.allWorkVendors = [];
+window.currentUserProfile = null;
+window.allEmployees = [];
+
+// LR Data & Pagination
+window.allLRs = []; // Stores LRs for the CURRENT PAGE
+window.selectedLRs = [];
+window.selectedMarketLRs = [];
+window.lrTable = null;
+window.marketLrTable = null;
+
+// Pagination State
+let currentPage = 1;
+const pageSize = 50;
+let lastLoadedKey = null;
+let paginationStack = []; // Stack of start keys for previous pages (not fully used yet, simple load more for now)
+
+// Current Editing/Trip State
+window.currentEditingLRId = null;
+window.currentTripLRId = null;
+window.currentTripWeight = 0;
+window.currentTripTruckNumber = null;
+
+// Auto-Generation Settings
+window.autoSettings = {
+    lrNo: true,
+    invoiceNo: true,
+    shipmentNo: true,
+    orderNo: true,
+    deliveryNo: true
+};
+
+// --- INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', function () {
+    // Initialize DataTables
+    window.lrTable = $('#lrTable').DataTable({
+        pageLength: 10,
+        order: [[1, 'desc']], // Sort by date descending
+        columnDefs: [{ orderable: false, targets: [0, 10, 13, 14] }] // Disable sorting on checkbox and action columns
+    });
+    window.marketLrTable = $('#marketLrTable').DataTable({
+        pageLength: 10,
+        order: [[1, 'desc']],
+        columnDefs: [{ orderable: false, targets: [0, 9, 12, 13] }]
+    });
+
+    // Add Last Saved Indicator
+    const statusEl = document.createElement('div');
+    statusEl.id = 'draftStatus';
+    statusEl.style.cssText = 'font-size: 0.85rem; color: #666; margin-bottom: 10px; text-align: right;';
+    const container = document.querySelector('.tab-content');
+    if (container) container.prepend(statusEl);
+
+    // Add "Load More" button to the UI if not exists
+    addLoadMoreButton();
+
+    // 🔐 🔐 Auth Listener (REFACTORED for sub-user support)
+    window.auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = "index.html";
+            return;
+        }
+
+        // Use AuthManager to resolve context (ensures coreAccountId is correct)
+        try {
+            console.log("[LR-System] Resolving user context...");
+            const ctx = await window.AuthManager.getCurrentUserContext();
+            if (ctx) {
+                window.currentCoreAccountId = ctx.coreAccountId;
+                console.log(`[LR-System] Logged in as: ${ctx.name} (${ctx.role}), Namespace: ${window.currentCoreAccountId}`);
+            } else {
+                window.currentCoreAccountId = user.uid;
+            }
+        } catch (e) {
+            console.warn('[LR-System] Context error, falling back to UID:', e);
+            window.currentCoreAccountId = user.uid;
+        }
+
+        // Now load data with the CERTAIN coreAccountId
+        await loadAllData();
+
+        // --- GLOBAL AUTO-SAVE & DRAFT PERSISTENCE ---
+        const lrForm = document.getElementById('lrForm');
+        if (lrForm) {
+            lrForm.addEventListener('input', scheduleLRDraftSave);
+            lrForm.addEventListener('change', scheduleLRDraftSave);
+            restoreLRDraft();
+        }
+        const editLrForm = document.getElementById('editLrForm');
+        if (editLrForm) editLrForm.addEventListener('input', () => updateLastSavedUI('edit'));
+        // --------------------------------------------
+
+            // ---- Sub-user: auto-fill & lock the employee select ----
+            try {
+                const ctxRaw = sessionStorage.getItem('tv_user_context');
+                if (ctxRaw) {
+                    const ctx = JSON.parse(ctxRaw);
+                    if (ctx && ctx.uid) {
+                        // After allEmployees loaded, try to match by uid stored in employees node
+                        // OR inject a synthetic non-removable option using the user's own profile
+                        const prefillEmployee = (selectId) => {
+                            const sel = document.getElementById(selectId);
+                            if (!sel) return;
+
+                            // Try exact match first
+                            const match = window.allEmployees && window.allEmployees.find(e => e.uid === ctx.uid || e.email === ctx.email);
+                            if (match) {
+                                sel.value = match.id;
+                            } else {
+                                // Inject a synthetic locked option for this user
+                                const syntheticOpt = document.createElement('option');
+                                syntheticOpt.value       = ctx.uid;
+                                syntheticOpt.textContent = `${ctx.name || 'Owner'} (${ctx.role})`;
+                                syntheticOpt.selected    = true;
+                                syntheticOpt.dataset.synthetic = 'true';
+                                // Remove any previous synthetic option
+                                Array.from(sel.options).forEach(o => { if (o.dataset.synthetic) o.remove(); });
+                                sel.prepend(syntheticOpt);
+                                sel.value = ctx.uid;
+                            }
+                            sel.disabled = true; // Lock — user cannot change who they are
+                            sel.title    = 'Auto-filled: You are logged in as ' + (ctx.name || 'Owner');
+                        };
+                        // Pre-fill after a tick to ensure loadAllData has populated options
+                        setTimeout(() => {
+                            prefillEmployee('employeeSelect');
+                            // We don't pre-fill editEmployeeSelect to force it, otherwise editing someone else's LR would change the employee
+                        }, 300);
+
+                        // Hide edit/delete buttons for employees (create-only role)
+                        if (ctx.role === 'employee') {
+                            const style = document.createElement('style');
+                            style.textContent = `
+                                /* Employee role: hide edit and delete action buttons in LR table */
+                                #lrTable td:last-child .btn-outline-primary,
+                                #lrTable td:last-child .btn-outline-danger { display: none !important; }
+                            `;
+                            document.head.appendChild(style);
+                        }
+
+                        // Stamp createdBy on saveLR (also set activity stamp data globally)
+                        window._tvSubUserCtx = ctx;
+                    }
+                }
+            } catch (_) {}
+            // -------------------------------------------------------
+
+            // Set default date
+            const today = new Date().toISOString().split('T')[0];
+            const d = document.getElementById('lrDate');
+            if (d) d.value = today;
+
+            // Event Listeners
+            const saveBtn = document.getElementById('saveLRBtn');
+            if (saveBtn) saveBtn.addEventListener('click', saveLR);
+
+            const updateBtn = document.getElementById('updateLRBtn');
+            if (updateBtn) updateBtn.addEventListener('click', updateLR); // Defined later
+
+            const applyFilterBtn = document.getElementById('applyFiltersBtn');
+            if (applyFilterBtn) applyFilterBtn.addEventListener('click', () => loadLRData('initial'));
+
+            // Quick Add Button Event Listeners
+            const quickAddVehicleBtn = document.getElementById('quickAddVehicleBtn');
+            if (quickAddVehicleBtn) quickAddVehicleBtn.addEventListener('click', () => showQuickAddModal('vehicle'));
+
+            const quickAddDriverBtn = document.getElementById('quickAddDriverBtn');
+            if (quickAddDriverBtn) quickAddDriverBtn.addEventListener('click', () => showQuickAddModal('driver'));
+
+            const quickAddClientBtn = document.getElementById('quickAddClientBtn');
+            if (quickAddClientBtn) quickAddClientBtn.addEventListener('click', () => showQuickAddModal('client'));
+
+            const quickAddTransporterBtn = document.getElementById('quickAddTransporterBtn');
+            if (quickAddTransporterBtn) quickAddTransporterBtn.addEventListener('click', () => showQuickAddModal('transporter'));
+
+            const quickAddRouteBtn = document.getElementById('quickAddRouteBtn');
+            if (quickAddRouteBtn) quickAddRouteBtn.addEventListener('click', () => showQuickAddModal('route'));
+
+            const quickAddConsigneeBtn = document.getElementById('quickAddConsigneeBtn');
+            if (quickAddConsigneeBtn) quickAddConsigneeBtn.addEventListener('click', () => showQuickAddModal('consignee'));
+
+            // Edit Quick Add Button Event Listeners
+            const editQuickAddVehicleBtn = document.getElementById('editQuickAddVehicleBtn');
+            if (editQuickAddVehicleBtn) editQuickAddVehicleBtn.addEventListener('click', () => showQuickAddModal('vehicle'));
+
+            const editQuickAddDriverBtn = document.getElementById('editQuickAddDriverBtn');
+            if (editQuickAddDriverBtn) editQuickAddDriverBtn.addEventListener('click', () => showQuickAddModal('driver'));
+
+            const editQuickAddClientBtn = document.getElementById('editQuickAddClientBtn');
+            if (editQuickAddClientBtn) editQuickAddClientBtn.addEventListener('click', () => showQuickAddModal('client'));
+
+            const editQuickAddTransporterBtn = document.getElementById('editQuickAddTransporterBtn');
+            if (editQuickAddTransporterBtn) editQuickAddTransporterBtn.addEventListener('click', () => showQuickAddModal('transporter'));
+
+            const editQuickAddRouteBtn = document.getElementById('editQuickAddRouteBtn');
+            if (editQuickAddRouteBtn) editQuickAddRouteBtn.addEventListener('click', () => showQuickAddModal('route'));
+
+            const editQuickAddConsigneeBtn = document.getElementById('editQuickAddConsigneeBtn');
+            if (editQuickAddConsigneeBtn) editQuickAddConsigneeBtn.addEventListener('click', () => showQuickAddModal('consignee'));
+
+            // Quick Add Save Button Event Listeners
+            const saveQuickAddClientBtn = document.getElementById('saveQuickAddClientBtn');
+            if (saveQuickAddClientBtn) saveQuickAddClientBtn.addEventListener('click', saveQuickAddClient);
+
+            const saveQuickAddRouteBtn = document.getElementById('saveQuickAddRouteBtn');
+            if (saveQuickAddRouteBtn) saveQuickAddRouteBtn.addEventListener('click', saveQuickAddRoute);
+
+            const saveQuickAddTransporterBtn = document.getElementById('saveQuickAddTransporterBtn');
+            if (saveQuickAddTransporterBtn) saveQuickAddTransporterBtn.addEventListener('click', saveQuickAddTransporter);
+
+            const saveQuickAddVehicleBtn = document.getElementById('saveQuickAddVehicleBtn');
+            if (saveQuickAddVehicleBtn) saveQuickAddVehicleBtn.addEventListener('click', saveQuickAddVehicle);
+
+            const saveQuickAddDriverBtn = document.getElementById('saveQuickAddDriverBtn');
+            if (saveQuickAddDriverBtn) saveQuickAddDriverBtn.addEventListener('click', saveQuickAddDriver);
+
+
+            // Check URL for invoice view
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const invoiceId = params.get('view') || params.get('invoiceId') || params.get('viewInvoice');
+                if (invoiceId && window.viewInvoice) {
+                    setTimeout(() => window.viewInvoice(invoiceId), 150);
+                }
+            } catch (e) { /* ignore */ }
+
+    });
+
+    // Tab Listeners
+    const addTab = document.querySelector('a[data-bs-toggle="tab"][href="#add"]');
+    if (addTab) {
+        addTab.addEventListener('shown.bs.tab', () => {
+            const d = document.getElementById('lrDate');
+            if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+        });
+    }
+
+    // Vehicle Toggle Listeners
+    const vehicleTypeToggle = document.getElementById('vehicleTypeToggle');
+    if (vehicleTypeToggle) {
+        vehicleTypeToggle.addEventListener('change', () => toggleVehicleInput(vehicleTypeToggle.checked));
+        toggleVehicleInput(vehicleTypeToggle.checked); // Initial state
+    }
+
+    const editVehicleTypeToggle = document.getElementById('editVehicleTypeToggle');
+    if (editVehicleTypeToggle) {
+        editVehicleTypeToggle.addEventListener('change', () => toggleEditVehicleInput(editVehicleTypeToggle.checked));
+    }
+
+    // Print Settings Toggles (for LR Copy)
+    const printLogoToggle = document.getElementById('printLogoToggle');
+    if (printLogoToggle) {
+        printLogoToggle.onchange = function () {
+            document.querySelectorAll('.logo-on-print').forEach(el => el.classList.toggle('hidden-print', !this.checked));
+        };
+    }
+    const printStampToggle = document.getElementById('printStampToggle');
+    if (printStampToggle) {
+        printStampToggle.onchange = function () {
+            document.querySelectorAll('.stamp-on-print').forEach(el => el.classList.toggle('hidden-print', !this.checked));
+        };
+    }
+
+    // Initialize Select2 for searchable dropdowns
+    try {
+        $('#truckFilter, #truckNumber, #editTruckNumber, #clientFilter, #driverName, #editDriverName').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select...',
+            width: '100%',
+            tags: true
+        });
+
+        // Initialize Fuel Pump Select specifically with correct dropdownParent for modal
+        $('#fuelPumpSelect').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select Pump',
+            width: '100%',
+            dropdownParent: $('#tripDetailsModal')
+        });
+
+        // Quick Add Pump Listener
+        const quickAddPumpBtn = document.getElementById('quickAddPumpBtn');
+        if (quickAddPumpBtn) quickAddPumpBtn.addEventListener('click', () => showQuickAddModal('pump'));
+
+        // Quick Add Save Listeners
+        const saveQuickAddPumpBtn = document.getElementById('saveQuickAddPumpBtn');
+        if (saveQuickAddPumpBtn) saveQuickAddPumpBtn.addEventListener('click', saveQuickAddPump);
+
+        const saveQuickAddVendorBtn = document.getElementById('saveQuickAddVendorBtn');
+        if (saveQuickAddVendorBtn) saveQuickAddVendorBtn.addEventListener('click', saveQuickAddVendor);
+
+    } catch (e) {
+        console.warn('Select2 initialization failed:', e);
+    }
+});
+
+/**
+ * Updates the visible "Last Saved" status on the page.
+ * @param {string} type - 'add' or 'edit'
+ */
+function updateLastSavedUI(type = 'add') {
+    const statusId = type === 'edit' ? 'editDraftStatus' : 'draftStatus';
+    const el = document.getElementById(statusId);
+    if (el) el.textContent = 'Form draft last saved: ' + new Date().toLocaleTimeString();
+}
+
+/**
+ * LR Form Draft Persistence
+ */
+let lrDraftTimer = null;
+function scheduleLRDraftSave() {
+    if (lrDraftTimer) clearTimeout(lrDraftTimer);
+    lrDraftTimer = setTimeout(saveLRDraft, 500);
+}
+
+function saveLRDraft() {
+    const scope = window.currentCoreAccountId || 'anon';
+    const fields = ['lrDate', 'lrNumber', 'truckNumber', 'driverSelect', 'routeSelect', 'invoiceNumberInput', 'deliveryNo', 'orderNo', 'shipmentNo', 'eWayBillNo', 'ewbExpiry', 'clientId', 'consignorName', 'consigneeId', 'consigneeName', 'item', 'numPackages', 'weightPerPackage', 'weight'];
+    const draft = {};
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) draft[id] = el.value;
+    });
+    localStorage.setItem(`tv_lr_draft_${scope}`, JSON.stringify(draft));
+    updateLastSavedUI();
+}
+
+function restoreLRDraft() {
+    const scope = window.currentCoreAccountId || 'anon';
+    const raw = localStorage.getItem(`tv_lr_draft_${scope}`);
+    if (!raw) return;
+    try {
+        const draft = JSON.parse(raw);
+        Object.keys(draft).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = draft[id];
+                // Trigger Select2 update if applicable
+                if ($(el).hasClass('select2-hidden-accessible')) $(el).trigger('change');
+            }
+        });
+    } catch (e) { console.warn('LR Draft restore failed', e); }
+}
+
+function addLoadMoreButton() {
+    const container = document.querySelector('.tab-content');
+    if (container && !document.getElementById('loadMoreContainer')) {
+        const div = document.createElement('div');
+        div.id = 'loadMoreContainer';
+        div.className = 'text-center mt-3 mb-5';
+        div.innerHTML = `<button id="loadMoreBtn" class="btn btn-outline-primary" onclick="loadMoreLRs()">Load More Records</button>`;
+        container.after(div);
+    }
+}
+
+// --- DATA LOADING & PAGINATION ---
+
+window.loadLRData = function (mode = 'initial') {
+    if (!window.currentCoreAccountId) return;
+
+    if (mode === 'initial') {
+        if (window.lrTable) window.lrTable.clear().draw();
+        if (window.marketLrTable) window.marketLrTable.clear().draw();
+        window.allLRs = [];
+        window.selectedLRs = [];
+        window.selectedMarketLRs = [];
+        updateInvoiceButtonStates();
+        updateSelectAllCheckboxes();
+        lastLoadedKey = null;
+        window.loadedLRIds = new Set();
+    }
+
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+    const truckFilter = document.getElementById('truckFilter').value;
+    const clientFilter = document.getElementById('clientFilter')?.value;
+
+    let query = window.db.ref(`users/${window.currentCoreAccountId}/lrReports`);
+
+    // Date Filtering Logic
+    if (fromDate && toDate) {
+        query = query.orderByChild('date').startAt(fromDate).endAt(toDate);
+    } else {
+        if (mode === 'next' && lastLoadedKey) {
+            query = query.orderByKey().endAt(lastLoadedKey).limitToLast(100);
+        } else {
+            query = query.orderByKey().limitToLast(100);
+        }
+    }
+
+    query.once('value').then(async (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+            if (mode === 'next') alert("No more records.");
+            return;
+        }
+
+        let newLRs = [];
+        const sortedKeys = Object.keys(data).sort(); // Ensure lexicographical sort of push IDs
+        
+        sortedKeys.forEach(key => {
+            if (!window.loadedLRIds.has(key)) {
+                window.loadedLRIds.add(key);
+                newLRs.push({ id: key, ...data[key] });
+            }
+        });
+        
+        if (newLRs.length > 0) {
+            lastLoadedKey = sortedKeys[0]; // The smallest/oldest key becomes the new end endpoint
+        } else {
+            if (mode === 'next') alert("No more older records.");
+            return;
+        }
+
+        // Client-side Filtering for Truck and Client (and Date if needed for precision)
+        if (truckFilter) {
+            newLRs = newLRs.filter(lr => (lr.truckNumber || '').toUpperCase() === truckFilter.toUpperCase());
+        }
+        if (clientFilter) {
+            newLRs = newLRs.filter(lr => lr.clientId === clientFilter);
+        }
+
+        // Sort Descending by Date
+        newLRs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (newLRs.length === 0) {
+            if (mode !== 'initial') alert("No matching records found.");
+            return;
+        }
+
+        // Fetch clients map
+        const clientsSnap = await window.db.ref(`users/${window.currentCoreAccountId}/clients`).once('value');
+        const clients = clientsSnap.val() || {};
+        const getClientName = (id) => clients[id]?.clientName || 'N/A';
+
+        newLRs.forEach(lr => {
+            // Skip invoiced LRs
+            if (lr.status === 'invoiced') return;
+            addLRToTable(lr, getClientName);
+        });
+
+        if (window.lrTable) window.lrTable.draw(false);
+        if (window.marketLrTable) window.marketLrTable.draw(false);
+
+        updateInvoiceButtonStates();
+
+    }).catch(err => {
+        console.error("Error loading LRs:", err);
+    });
+};
+
+window.loadMoreLRs = function () {
+    loadLRData('next');
+};
+
+function addLRToTable(lr, getClientName) {
+    const lrId = lr.id;
+    const details = lr.tripDetails || {};
+    const emptyDetails = lr.emptyTripData || {};
+
+    // Calculate total expenses for status check
+    const totalExpenses = (details.tyreExpenses || 0) + (details.tollExpenses || 0) + (details.foodExpenses || 0) + (details.loadingUnloadingExpenses || 0) + (details.policeChallanExpenses || 0) + (details.tacExpenses || 0) + (details.permitExpenses || 0) + (details.brokerageExpenses || 0) + (details.vehicleWorkAmount || 0) + (details.commissionExpenses || 0) + (details.tirpalRopeExpenses || 0) + (details.otherExpenses || 0) + (details.fuelUsedLiters || 0) + (details.advance || 0) + (details.billingAmount || 0) +
+        (emptyDetails.tyreExpenses || 0) + (emptyDetails.tollExpenses || 0) + (emptyDetails.foodExpenses || 0) + (emptyDetails.loadingUnloadingExpenses || 0) + (emptyDetails.policeChallanExpenses || 0) + (emptyDetails.tacExpenses || 0) + (emptyDetails.permitExpenses || 0) + (emptyDetails.brokerageExpenses || 0) + (emptyDetails.vehicleWorkAmount || 0) + (emptyDetails.commissionExpenses || 0) + (emptyDetails.tirpalRopeExpenses || 0) + (emptyDetails.otherExpenses || 0);
+
+    const detailsExist = totalExpenses > 0 || (details.genericExpenses && details.genericExpenses.length > 0) || (emptyDetails.genericExpenses && emptyDetails.genericExpenses.length > 0);
+    const detailButtonClass = detailsExist ? 'btn-success' : 'btn-warning';
+    const detailButtonIcon = detailsExist ? 'fas fa-check' : 'fas fa-plus';
+    const detailButtonTitle = detailsExist ? 'View/Edit Trip Details' : 'Add Trip Details';
+
+    // Status Logic: Manual > Invoiced > Auto
+    let displayStatus = lr.status;
+    let displayStatusClass = 'bg-secondary';
+
+    if (!displayStatus || displayStatus === 'Active' || displayStatus === 'Completed') {
+        // Auto-calculate if no manual status or if it's one of the legacy auto-statuses
+        // (Actually, if saved as manual 'Active', we treat as manual. But legacy data won't have it saved)
+        // Let's rely on presence. If lr.status is undefined/null, use auto.
+        if (!lr.status) {
+            displayStatus = detailsExist ? 'Completed' : 'Active';
+        }
+    }
+
+    if (lr.status === 'invoiced') {
+        displayStatus = 'Invoiced';
+        displayStatusClass = 'bg-dark';
+    } else {
+        switch (displayStatus) {
+            case 'Active': displayStatusClass = 'bg-info'; break;
+            case 'Completed': displayStatusClass = 'bg-success'; break;
+            case 'Pending': displayStatusClass = 'bg-warning text-dark'; break;
+            case 'Loaded': displayStatusClass = 'bg-primary'; break;
+            case 'In Transit': displayStatusClass = 'bg-primary'; break;
+            case 'Unloading': displayStatusClass = 'bg-info'; break;
+            case 'Delivered': displayStatusClass = 'bg-success'; break;
+            case 'Cancelled': displayStatusClass = 'bg-danger'; break;
+            default: displayStatusClass = 'bg-secondary';
+        }
+    }
+
+    // Get Employee Name: prefer stored name (for team members), fall back to employees list
+    const employee     = window.allEmployees.find(e => e.id === lr.employeeId);
+    const employeeName = lr.employeeName || (employee ? employee.name : (lr.employeeId ? lr.employeeId.slice(0,8) + '…' : 'N/A'));
+
+    const isSelected = window.selectedLRs.includes(lrId);
+    window.lrTable.row.add([
+        `<div class=\"form-check\"><input class=\"form-check-input lr-checkbox\" type=\"checkbox\" value=\"${lrId}\" ${isSelected ? 'checked' : ''} onchange=\"toggleLRSelection('${lrId}', this.checked, false)\"></div>`,
+        lr.date,
+        lr.lrNumber,
+        lr.truckNumber,
+        getClientName(lr.clientId),
+        lr.consignorName || 'N/A',
+        lr.consigneeName || 'N/A',
+        lr.item || 'N/A',
+        lr.fromLocation,
+        lr.toLocation,
+        lr.weight,
+        `<button class="btn btn-sm ${detailButtonClass}" onclick="showTripDetailsModal('${lrId}', '${lr.lrNumber}', ${lr.weight}, '${lr.truckNumber}', '${lr.driverName || 'N/A'}')" title="${detailButtonTitle}"><i class="${detailButtonIcon}"></i></button>`,
+        `<span class="badge ${displayStatusClass}">${displayStatus}</span>`,
+        employeeName,
+        `<button class="btn btn-sm btn-outline-info" onclick="showLRCopy('${lrId}')" title="View LR Copy"><i class="fas fa-print"></i></button>`,
+        `<button class="btn btn-sm btn-outline-primary" onclick="editLR('${lrId}')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="deleteLR('${lrId}')"><i class="fas fa-trash"></i></button>`
+    ]);
+}
+
+// --- MASTER DATA LOADING ---
+
+window.loadAllVehicles = async function (uid) {
+    try {
+        const snap = await window.db.ref(`users/${uid}/vehicles`).once('value');
+        window.allVehicles = [];
+        const truckSelect = document.getElementById('truckNumber');
+        const editTruckSelect = document.getElementById('editTruckNumber');
+
+        if (truckSelect) truckSelect.innerHTML = '<option value="">Select Vehicle</option>';
+        if (editTruckSelect) editTruckSelect.innerHTML = '<option value="">Select Vehicle</option>';
+
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const val = child.val();
+                // Ensure we have both vehicleNo and vehicleNumber for compatibility
+                const vehicle = {
+                    id: child.key,
+                    vehicleNumber: val.vehicleNumber,
+                    vehicleNo: val.vehicleNumber || val.vehicleNo, // Fallback
+                    ...val
+                };
+                window.allVehicles.push(vehicle);
+
+                const opt = document.createElement('option');
+                opt.value = vehicle.vehicleNumber;
+                opt.textContent = vehicle.vehicleNumber;
+
+                if (truckSelect) truckSelect.appendChild(opt.cloneNode(true));
+                if (editTruckSelect) editTruckSelect.appendChild(opt.cloneNode(true));
+            });
+        }
+        window.updateTruckFilterDropdown(); // Update filter dropdown if needed
+    } catch (e) {
+        console.error("Error loading vehicles:", e);
+    }
+};
+
+window.loadAllDrivers = async function (uid) {
+    try {
+        const snap = await window.db.ref(`users/${uid}/drivers`).once('value');
+        window.allDrivers = [];
+        const driverSelect = document.getElementById('driverSelect');
+        const editDriverSelect = document.getElementById('editDriverName');
+
+        if (driverSelect) driverSelect.innerHTML = '<option value="">Select Driver</option>';
+        if (editDriverSelect) editDriverSelect.innerHTML = '<option value="">Select Driver</option>';
+
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const val = child.val();
+                const driver = { id: child.key, ...val };
+                window.allDrivers.push(driver);
+
+                const opt = document.createElement('option');
+                opt.value = driver.driverName; // Use driverName from add.html
+                opt.dataset.mobile = driver.contactNumber || ''; // Use contactNumber from add.html
+                opt.dataset.license = driver.driverLicense || ''; // Use driverLicense from add.html
+                opt.textContent = `${driver.driverName} ${driver.contactNumber ? '(' + driver.contactNumber + ')' : ''}`; // Use correct fields
+
+                if (driverSelect) driverSelect.appendChild(opt.cloneNode(true));
+                if (editDriverSelect) editDriverSelect.appendChild(opt.cloneNode(true));
+            });
+        }
+    } catch (e) {
+        console.error("Error loading drivers:", e);
+    }
+};
+
+async function loadAllData() {
+    const user = window.auth.currentUser;
+    if (!user) return;
+
+    // 1. Resolve Core Account ID FIRST
+    const userSnap = await window.db.ref(`users/${user.uid}`).once('value');
+    const userData = userSnap.val() || {};
+    window.currentCoreAccountId = userData.coreAccountId || user.uid;
+
+    // 2. Load all data using the resolved Core ID
+    await Promise.all([
+        loadAllVehicles(window.currentCoreAccountId),
+        loadAllDrivers(window.currentCoreAccountId)
+    ]);
+
+    if (!window.currentCoreAccountId) return;
+
+    // Load Clients
+    window.db.ref(`users/${window.currentCoreAccountId}/clients`).on('value', (snapshot) => {
+        window.allClients = [];
+        const clientSelect = document.getElementById('clientId');
+        const consigneeSelect = document.getElementById('consigneeId');
+        const editClientSelect = document.getElementById('editClientId');
+        const editConsigneeSelect = document.getElementById('editConsigneeId');
+        const clientFilter = document.getElementById('clientFilter'); // Added Filter
+
+        if (clientSelect) clientSelect.innerHTML = '<option value="">Select a Client</option>';
+        if (clientFilter) clientFilter.innerHTML = '<option value="">All Clients</option>'; // Reset Filter
+        [consigneeSelect, editClientSelect, editConsigneeSelect].forEach(el => { if (el) el.innerHTML = '<option value="">Select...</option>'; });
+
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                const c = { id: child.key, name: child.val().clientName, ...child.val() };
+                window.allClients.push(c);
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+
+                if (clientSelect) clientSelect.appendChild(opt.cloneNode(true));
+                if (consigneeSelect) consigneeSelect.appendChild(opt.cloneNode(true));
+                if (editClientSelect) editClientSelect.appendChild(opt.cloneNode(true));
+                if (editConsigneeSelect) editConsigneeSelect.appendChild(opt.cloneNode(true));
+                if (clientFilter) clientFilter.appendChild(opt.cloneNode(true)); // Add to Filter
+            });
+        }
+    });
+
+    // Load Routes
+    window.db.ref(`users/${window.currentCoreAccountId}/routes`).on('value', (snapshot) => {
+        window.allRoutes = [];
+        const routeSelect = document.getElementById('routeSelect');
+        const editRouteSelect = document.getElementById('editRouteSelect');
+        if (routeSelect) routeSelect.innerHTML = '<option value="">Select a Route</option>';
+        if (editRouteSelect) editRouteSelect.innerHTML = '<option value="">Select a Route</option>';
+
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                const r = { id: child.key, ...child.val() };
+                window.allRoutes.push(r);
+                const opt = document.createElement('option');
+                opt.value = r.id;
+                opt.textContent = `${r.from || '-'} --> ${r.to || '-'}`;
+                opt.dataset.from = r.from;
+                opt.dataset.to = r.to;
+                opt.dataset.distance = r.distance;
+                if (routeSelect) routeSelect.appendChild(opt.cloneNode(true));
+                if (editRouteSelect) editRouteSelect.appendChild(opt);
+            });
+        }
+    });
+
+    // Load Transporters
+    window.db.ref(`users/${window.currentCoreAccountId}/transporters`).on('value', (snapshot) => {
+        window.allTransporters = [];
+        const addSelect = document.getElementById('transporterSelect');
+        const editSelect = document.getElementById('editTransporterSelect');
+        if (addSelect) addSelect.innerHTML = '<option value="">Select a Transporter</option>';
+        if (editSelect) editSelect.innerHTML = '<option value="">Select a Transporter</option>';
+
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                const t = { id: child.key, ...child.val() };
+                window.allTransporters.push(t);
+                populateTransporterDropdowns(t, addSelect, editSelect);
+            });
+        }
+    });
+
+    // Load Employees
+    window.db.ref(`users/${window.currentCoreAccountId}/employees`).on('value', (snapshot) => {
+        const employeeSelect = document.getElementById('employeeSelect');
+        const editEmployeeSelect = document.getElementById('editEmployeeSelect');
+        if (employeeSelect) employeeSelect.innerHTML = '<option value="">Select Employee</option>';
+        if (editEmployeeSelect) editEmployeeSelect.innerHTML = '<option value="">Select Employee</option>';
+        window.allEmployees = [];
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                const e = { id: child.key, ...child.val() };
+                window.allEmployees.push(e);
+                const opt = document.createElement('option');
+                opt.value = e.id;
+                opt.textContent = `${e.name} (${e.designation || 'N/A'})`;
+                if (employeeSelect) employeeSelect.appendChild(opt.cloneNode(true));
+                if (editEmployeeSelect) editEmployeeSelect.appendChild(opt);
+            });
+        }
+    });
+
+    // Load Work Vendors - REMOVED LISTENER to prevent conflict with renderVendorSelects force-fetch
+    // We will rely on renderVendorSelects() being called when needed or on initial open
+    if (window.renderVendorSelects) window.renderVendorSelects();
+
+    // Load Pumps (User specific)
+    window.db.ref(`users/${window.currentCoreAccountId}/petrolPumps`).on('value', (snapshot) => {
+        window.allPumps = [];
+        if (snapshot.exists()) {
+            snapshot.forEach(child => window.allPumps.push({ id: child.key, ...child.val() }));
+        }
+        console.log(`Loaded ${window.allPumps.length} pumps`);
+        // Just reload the dropdown options
+        if (window.loadFuelPumps) window.loadFuelPumps();
+    });
+
+    loadLRData('initial');
+}
+
+// Global Render Functions to ensure consistency
+// Kept renderVendorSelects for dynamic rows but removed renderFuelPumpSelect to avoid conflicts
+window.loadFuelPumps = async function () {
+    const pumpSelect = document.getElementById('fuelPumpSelect');
+    if (!pumpSelect) return;
+
+    // Destroy Select2 safely if exists
+    if ($(pumpSelect).hasClass('select2-hidden-accessible')) {
+        $(pumpSelect).select2('destroy');
+    }
+
+    pumpSelect.innerHTML = '<option value="">Loading...</option>';
+
+    try {
+        const uid = window.currentCoreAccountId || (window.auth.currentUser ? window.auth.currentUser.uid : null);
+        if (!uid) {
+            console.error("No user ID found for loading pumps");
+            pumpSelect.innerHTML = '<option value="">Error: No User</option>';
+            return;
+        }
+
+        // Force Fetch every time to ensure freshness
+        const pumpRef = window.db.ref(`users/${uid}/petrolPumps`);
+        const snapshot = await pumpRef.once('value');
+
+        let pumps = [];
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                pumps.push({ id: child.key, ...child.val() });
+            });
+        }
+
+        // Update global cache just in case
+        window.allPumps = pumps;
+
+        // Clear and Populate
+        pumpSelect.innerHTML = '<option value="">Select Pump</option>';
+
+        if (pumps.length > 0) {
+            pumps.forEach(pump => {
+                const opt = document.createElement('option');
+                opt.value = pump.id;
+                opt.textContent = pump.name || pump.pumpName || 'Unnamed Pump';
+                pumpSelect.appendChild(opt);
+            });
+        } else {
+            const opt = document.createElement('option');
+            opt.disabled = true;
+            opt.textContent = "No pumps found. Please add one in Fuel Management.";
+            pumpSelect.appendChild(opt);
+        }
+
+        // Slight delay to ensure DOM is ready for Select2
+        setTimeout(() => {
+            $(pumpSelect).select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#tripDetailsModal'),
+                placeholder: 'Select Pump'
+            });
+        }, 100);
+
+    } catch (e) {
+        console.error("Error loading pumps:", e);
+        pumpSelect.innerHTML = '<option value="">Error loading data</option>';
+    }
+};
+
+
+window.renderVendorSelects = async function (force = false) {
+    const uid = window.currentCoreAccountId || (window.auth.currentUser ? window.auth.currentUser.uid : null);
+    if (!uid) return;
+
+    const selects = document.querySelectorAll('.expense-vendor');
+
+    // Destroy previous instances safely
+    selects.forEach(select => {
+        if ($(select).hasClass('select2-hidden-accessible')) {
+            $(select).select2('destroy');
+        }
+        select.innerHTML = '<option value="">Loading...</option>';
+    });
+
+    if (!force && window.allWorkVendors && window.allWorkVendors.length > 0) {
+        console.log(`Reusing cached ${window.allWorkVendors.length} vendors`);
+    } else {
+        try {
+            console.log("Fetching vendors from:", `users/${uid}/workVendors`);
+            const vendorRef = window.db.ref(`users/${uid}/workVendors`);
+            const snapshot = await vendorRef.once('value');
+
+            let vendors = [];
+            if (snapshot.exists()) {
+                // Robust iteration using val() to handle potential map/list discrepancies
+                const val = snapshot.val();
+                if (val) {
+                    Object.keys(val).forEach(key => {
+                        vendors.push({ id: key, ...val[key] });
+                    });
+                }
+            }
+            console.log(`Fetched ${vendors.length} vendors`);
+            window.allWorkVendors = vendors;
+        } catch (e) {
+            console.error("Error fetching vendors:", e);
+            selects.forEach(select => select.innerHTML = '<option value="">Error loading</option>');
+            return;
+        }
+    }
+
+    selects.forEach(select => {
+        const savedVal = select.getAttribute('data-selected-value');
+        select.innerHTML = '<option value="">Select Vendor</option>';
+
+        window.allWorkVendors.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.id;
+            opt.textContent = v.name;
+            if (v.id === savedVal) opt.selected = true;
+            select.appendChild(opt);
+        });
+
+        // Only init Select2 if the vendor container is actually visible.
+        // Hidden containers (non-Vehicle Work rows) are handled by toggleVendorDropdown when shown.
+        const container = select.closest('.vendor-select-container');
+        const isVisible = container && container.style.display !== 'none';
+
+        if (isVisible) {
+            if ($(select).hasClass('select2-hidden-accessible')) {
+                $(select).select2('destroy');
+            }
+            $(select).select2({
+                theme: 'bootstrap-5', width: '100%',
+                dropdownParent: $('#tripDetailsModal'),
+                placeholder: 'Select Vendor'
+            });
+            // Restore the saved value — must be after Select2 init
+            if (savedVal) {
+                $(select).val(savedVal).trigger('change');
+            }
+        }
+
+        // Always wire the change listener (visible or hidden) so value is tracked when user picks
+        $(select).off('change.tripVendor').on('change.tripVendor', function () {
+            if (this.options.length > 1) {
+                this.setAttribute('data-selected-value', this.value || '');
+            }
+            if (window.scheduleTripDetailsAutosave) window.scheduleTripDetailsAutosave();
+        });
+    });
+};
+
+
+
+
+
+async function loadAllVehicles(coreId) {
+    // Load current user profile for invoice headers (using auth uid, not coreId)
+    if (window.auth.currentUser) {
+        const profileSnap = await window.db.ref(`users/${window.auth.currentUser.uid}/profile`).once('value');
+        window.currentUserProfile = profileSnap.val() || {};
+    }
+
+    window.db.ref(`users/${window.currentCoreAccountId}/vehicles`).on('value', (snapshot) => {
+        window.allVehicles = [];
+        const truckSelect = document.getElementById('truckNumber');
+        const editTruckSelect = document.getElementById('editTruckNumber');
+        if (truckSelect) truckSelect.innerHTML = '<option value="">Select a Truck</option>';
+        if (editTruckSelect) editTruckSelect.innerHTML = '<option value="">Select a Truck</option>';
+
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                const v = { id: child.key, ...child.val() };
+                window.allVehicles.push(v);
+                const opt = document.createElement('option');
+                opt.value = v.vehicleNumber;
+                opt.textContent = v.vehicleNumber;
+                if (truckSelect) truckSelect.appendChild(opt.cloneNode(true));
+                if (editTruckSelect) editTruckSelect.appendChild(opt);
+            });
+        }
+        updateTruckFilterDropdown();
+    });
+
+    window.db.ref(`users/${window.currentCoreAccountId}/drivers`).on('value', (snapshot) => {
+        window.allDrivers = [];
+        populateDriverDropdowns(snapshot, 'driverSelect', 'editDriverSelect');
+    });
+}
+
+// --- CRUD OPERATIONS ---
+
+// Custom validation function for LR form
+function validateLRFormCustom() {
+    const errors = [];
+
+    // Check required fields
+    const lrDate = document.getElementById('lrDate').value;
+    if (!lrDate) errors.push('- Date is required');
+
+    const isMarket = document.getElementById('marketVehicleRadio') && document.getElementById('marketVehicleRadio').checked;
+    if (isMarket) {
+        const mtNum = document.getElementById('marketTruckNumber') ? document.getElementById('marketTruckNumber').value : '';
+        if (!mtNum) errors.push('- Market Truck Number is required');
+        const transporterId = document.getElementById('transporterSelect') ? document.getElementById('transporterSelect').value : '';
+        if (!transporterId) errors.push('- Transporter is required for market vehicles');
+    } else {
+        const truckNumber = document.getElementById('truckNumber') ? document.getElementById('truckNumber').value : '';
+        if (!truckNumber) errors.push('- Truck Number is required');
+    }
+
+    const driverName = document.getElementById('driverSelect').value;
+    // Driver name is now optional
+
+    const routeSelect = document.getElementById('routeSelect').value;
+    if (!routeSelect) errors.push('- Route is required');
+
+    // Validate From and To locations from selected route
+    const routeSelectElement = document.getElementById('routeSelect');
+    const selectedRoute = routeSelectElement.options[routeSelectElement.selectedIndex];
+    const fromLoc = selectedRoute ? (selectedRoute.dataset.from || '') : '';
+    const toLoc = selectedRoute ? (selectedRoute.dataset.to || '') : '';
+
+    if (!fromLoc || !toLoc) {
+        errors.push('- Both From and To locations are required. Please select a valid route.');
+    }
+
+    const clientId = document.getElementById('clientId').value;
+    if (!clientId) errors.push('- Client is required');
+
+    const item = document.getElementById('item').value;
+    if (!item) errors.push('- Item is required');
+
+    // Check numeric fields (now optional)
+    const numPackages = document.getElementById('numPackages').value;
+    // Number of packages is now optional
+
+    const weight = document.getElementById('weight').value;
+    // Weight is now optional
+
+    if (errors.length > 0) {
+        alert('Please fix the following errors:\n' + errors.join('\n'));
+        return false;
+    }
+
+    return true;
+}
+
+// Custom validation function for Edit LR form
+function validateEditLRFormCustom() {
+    const errors = [];
+
+    // Check required fields
+    const lrDate = document.getElementById('editLrDate').value;
+    if (!lrDate) errors.push('- Date is required');
+
+    const isMarket = document.getElementById('editMarketVehicleRadio') && document.getElementById('editMarketVehicleRadio').checked;
+    if (isMarket) {
+        const mtNum = document.getElementById('editMarketTruckNumber') ? document.getElementById('editMarketTruckNumber').value : '';
+        if (!mtNum) errors.push('- Market Truck Number is required');
+        const transporterId = document.getElementById('editTransporterSelect') ? document.getElementById('editTransporterSelect').value : '';
+        if (!transporterId) errors.push('- Transporter is required for market vehicles');
+    } else {
+        const truckNumber = document.getElementById('editTruckNumber') ? document.getElementById('editTruckNumber').value : '';
+        if (!truckNumber) errors.push('- Truck Number is required');
+    }
+
+    const driverName = document.getElementById('editDriverSelect').value;
+    // Driver name is now optional
+
+    const routeSelect = document.getElementById('editRouteSelect').value;
+    if (!routeSelect) errors.push('- Route is required');
+
+    // Validate From and To locations from selected route
+    const routeSelectElement = document.getElementById('editRouteSelect');
+    const selectedRoute = routeSelectElement ? routeSelectElement.options[routeSelectElement.selectedIndex] : null;
+    const fromLoc = selectedRoute ? (selectedRoute.dataset.from || '') : '';
+    const toLoc = selectedRoute ? (selectedRoute.dataset.to || '') : '';
+
+    if (!fromLoc || !toLoc) {
+        errors.push('- Both From and To locations are required. Please select a valid route.');
+    }
+
+    const clientId = document.getElementById('editClientId').value;
+    if (!clientId) errors.push('- Client is required');
+
+    const item = document.getElementById('editItem').value;
+    if (!item) errors.push('- Item is required');
+
+    // Check numeric fields (now optional)
+    const numPackages = document.getElementById('editNumPackages').value;
+    // Number of packages is now optional
+
+    const weight = document.getElementById('editWeight').value;
+    // Weight is now optional
+
+    if (errors.length > 0) {
+        alert('Please fix the following errors:\n' + errors.join('\n'));
+        return false;
+    }
+
+    return true;
+}
+
+async function saveLR() {
+    const form = document.getElementById('lrForm');
+
+    // Custom validation to handle auto-generated fields
+    if (!validateLRFormCustom()) {
+        return;
+    }
+
+    const routeSelect = document.getElementById('routeSelect');
+    const selectedRoute = routeSelect.options[routeSelect.selectedIndex];
+    const fromLoc = selectedRoute ? (selectedRoute.dataset.from || '') : '';
+    const toLoc = selectedRoute ? (selectedRoute.dataset.to || '') : '';
+    const routeDistance = selectedRoute && selectedRoute.dataset && selectedRoute.dataset.distance ? parseFloat(selectedRoute.dataset.distance) || 0 : 0;
+
+    const isMarket = document.getElementById('marketVehicleRadio').checked;
+    const truckNumber = isMarket ? document.getElementById('marketTruckNumber').value : document.getElementById('truckNumber').value;
+    const driverName = isMarket ? document.getElementById('marketDriverName').value : document.getElementById('driverSelect').value;
+    const transporterId = isMarket ? document.getElementById('transporterSelect').value : null;
+
+    const vehicle = isMarket ? null : window.allVehicles.find(v => (v.vehicleNo || '').toUpperCase() === truckNumber.toUpperCase() && v.driverName === driverName);
+    const employeeSelect = document.getElementById('employeeSelect');
+    // If select is disabled (locked for a sub-user), read the value from the stored context
+    const employeeId = (employeeSelect && employeeSelect.value)
+        || (window._tvSubUserCtx && window._tvSubUserCtx.uid)
+        || null;
+
+    const lrData = {
+        date: document.getElementById('lrDate').value,
+        lrNumber: document.getElementById('lrNumber').value,
+        lrType: isMarket ? 'market' : 'own',
+        routeId: document.getElementById('routeSelect').value,
+        invoiceNumber: document.getElementById('invoiceNumberInput').value,
+        deliveryNo: document.getElementById('deliveryNo').value,
+        orderNo: document.getElementById('orderNo').value,
+        shipmentNo: document.getElementById('shipmentNo').value,
+        ewayBillNo: document.getElementById('eWayBillNo').value,
+        ewbExp: document.getElementById('ewbExpiry').value,
+        truckNumber: truckNumber,
+        driverName: driverName,
+        truckId: vehicle ? vehicle.id : null,
+        transporterId: transporterId,
+        clientId: document.getElementById('clientId').value,
+        consignorName: document.getElementById('consignorName').value,
+        consigneeName: document.getElementById('consigneeName').value,
+        fromLocation: fromLoc,
+        toLocation: toLoc,
+        routeDistanceKm: routeDistance,
+        numPackages: parseFloat(document.getElementById('numPackages').value) || 0,
+        weightPerPackage: parseFloat(document.getElementById('weightPerPackage').value) || 0,
+        weight: parseFloat(document.getElementById('weight').value) || 0,
+        item: document.getElementById('item').value,
+        employeeId:   employeeId || null,
+        employeeName: employeeId
+            ? (window._tvSubUserCtx && window._tvSubUserCtx.uid === employeeId
+                ? window._tvSubUserCtx.name
+                : (window.allEmployees && window.allEmployees.find(e => e.id === employeeId)?.name) || null)
+            : null,
+        tripDetails: {
+            billingRate: 0, billingAmount: 0, freightRate: 0, freightAmount: 0,
+            advance: 0, shortage: 0, endingKm: 0, totalKm: 0,
+            vehicleAverage: 0, fuelUsedLiters: 0, dieselRatePerLiter: 0,
+            fuelAlreadyDeducted: false,
+            tyreExpenses: 0, tollExpenses: 0, foodExpenses: 0, loadingUnloadingExpenses: 0,
+            policeChallanExpenses: 0, tacExpenses: 0, permitExpenses: 0, brokerageExpenses: 0,
+            vehicleWorkAmount: 0, commissionExpenses: 0, tirpalRopeExpenses: 0, otherExpenses: 0,
+            genericExpenses: [],
+            cgstPercentage: 9, cgstAmount: 0, sgstPercentage: 9, sgstAmount: 0,
+            totalBillingAmount: 0, totalExpenses: 0, driverPayable: 0, clientBalance: 0,
+        },
+        createdAt: new Date().toISOString(),
+        status: 'active'
+    };
+
+    if (!window.currentCoreAccountId) { alert('Error: Core account ID not found.'); return; }
+
+    // Stamp the creator info
+    const activityStamp = window.AuthManager ? window.AuthManager.getActivityStamp() : {};
+    if (activityStamp.createdBy) {
+        lrData.createdBy     = activityStamp.createdBy;
+        lrData.createdByName = activityStamp.createdByName;
+        lrData.createdByRole = activityStamp.createdByRole;
+    }
+
+    // Auto-generate sequential numbers for blank fields
+    if (!lrData.invoiceNumber) lrData.invoiceNumber = await getNextSequence('INV');
+    if (!lrData.deliveryNo) lrData.deliveryNo = await getNextSequence('DL');
+    if (!lrData.orderNo) lrData.orderNo = await getNextSequence('ON');
+    if (!lrData.shipmentNo) lrData.shipmentNo = await getNextSequence('SN');
+    if (!lrData.lrNumber) lrData.lrNumber = await getNextSequence('LR');
+
+    try {
+        const newRef = await window.db.ref(`users/${window.currentCoreAccountId}/lrReports`).push(lrData);
+        if (window.AuthManager && window.AuthManager.logActivity) {
+            window.AuthManager.logActivity(
+                'created_lr',
+                `Created LR #${lrData.lrNumber} — Truck: ${lrData.truckNumber}, Route: ${lrData.fromLocation} → ${lrData.toLocation}`,
+                'lrReport',
+                newRef.key
+            ).catch(() => {});
+        }
+        alert('LR saved successfully!');
+        form.reset();
+        document.getElementById('lrDate').value = new Date().toISOString().split('T')[0];
+        // Explicitly refresh the data
+        const scope = window.currentCoreAccountId || 'anon';
+        localStorage.removeItem(`tv_lr_draft_${scope}`);
+        setTimeout(() => loadLRData('initial'), 500);
+    } catch (error) {
+        console.error('Error saving LR:', error);
+        alert('Error saving LR.');
+    }
+}
+
+async function updateLR() {
+    const form = document.getElementById('editLrForm');
+
+    // Custom validation to handle auto-generated fields
+    if (!validateEditLRFormCustom()) {
+        return;
+    }
+
+    const editRouteSelect = document.getElementById('editRouteSelect');
+    const selectedEditRoute = editRouteSelect ? editRouteSelect.options[editRouteSelect.selectedIndex] : null;
+    const editFromLoc = selectedEditRoute ? (selectedEditRoute.dataset.from || '') : '';
+    const editToLoc = selectedEditRoute ? (selectedEditRoute.dataset.to || '') : '';
+    const routeDistance = selectedEditRoute && selectedEditRoute.dataset && selectedEditRoute.dataset.distance ? parseFloat(selectedEditRoute.dataset.distance) || 0 : 0;
+
+    const isMarket = document.getElementById('editMarketVehicleRadio').checked;
+    const truckNumber = isMarket ? document.getElementById('editMarketTruckNumber').value : document.getElementById('editTruckNumber').value;
+    const driverName = isMarket ? document.getElementById('editMarketDriverName').value : document.getElementById('editDriverSelect').value;
+    const transporterId = isMarket ? document.getElementById('editTransporterSelect').value : null;
+    const employeeId = document.getElementById('editEmployeeSelect') ? document.getElementById('editEmployeeSelect').value : null;
+
+    const vehicle = isMarket ? null : window.allVehicles.find(v => (v.vehicleNo || '').toUpperCase() === truckNumber.toUpperCase() && v.driverName === driverName);
+
+    const lrUpdateData = {
+        date: document.getElementById('editLrDate').value,
+        lrNumber: document.getElementById('editLrNumber').value,
+        status: document.getElementById('editStatus').value, // Save Manual Status
+        lrType: isMarket ? 'market' : 'own',
+        routeId: document.getElementById('editRouteSelect').value,
+        invoiceNumber: document.getElementById('editInvoiceNumberInput').value,
+        deliveryNo: document.getElementById('editDeliveryNo').value,
+        orderNo: document.getElementById('editOrderNo').value,
+        ewayBillNo: document.getElementById('editEWayBillNo').value,
+        ewbExp: document.getElementById('editEwbExpiry').value,
+        truckNumber: truckNumber,
+        driverName: driverName,
+        truckId: vehicle ? vehicle.id : null,
+        transporterId: transporterId,
+        clientId: document.getElementById('editClientId').value,
+        consignorName: document.getElementById('editConsignorName').value,
+        consigneeName: document.getElementById('editConsigneeName').value,
+        fromLocation: editFromLoc,
+        toLocation: editToLoc,
+        routeDistanceKm: routeDistance,
+        numPackages: parseFloat(document.getElementById('editNumPackages').value) || 0,
+        weightPerPackage: parseFloat(document.getElementById('editWeightPerPackage').value) || 0,
+        weight: parseFloat(document.getElementById('editWeight').value) || 0,
+        shipmentNo: document.getElementById('editShipmentNo').value,
+        item: document.getElementById('editItem').value,
+        employeeId: employeeId || null,
+        updatedAt: new Date().toISOString()
+    };
+
+    // Auto-generate sequential numbers for blank fields
+    if (!lrUpdateData.invoiceNumber) lrUpdateData.invoiceNumber = await getNextSequence('INV');
+    if (!lrUpdateData.deliveryNo) lrUpdateData.deliveryNo = await getNextSequence('DL');
+    if (!lrUpdateData.orderNo) lrUpdateData.orderNo = await getNextSequence('ON');
+    if (!lrUpdateData.shipmentNo) lrUpdateData.shipmentNo = await getNextSequence('SN');
+    if (!lrUpdateData.lrNumber) lrUpdateData.lrNumber = await getNextSequence('LR');
+
+    if (!window.currentCoreAccountId || !window.currentEditingLRId) return;
+
+    const lrRef = window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${window.currentEditingLRId}`);
+
+    try {
+        const snapshot = await lrRef.once('value');
+        const existingLR = snapshot.val();
+        const existingTripDetails = existingLR.tripDetails || {};
+
+        // Recalculate if weight changed
+        if (existingLR.weight !== lrUpdateData.weight && existingTripDetails.billingRate > 0) {
+            const newBillingAmount = lrUpdateData.weight * (existingTripDetails.billingRate || 0);
+            const newFreightAmount = lrUpdateData.weight * (existingTripDetails.freightRate || 0);
+            const cgstP = existingTripDetails.cgstPercentage || 9;
+            const sgstP = existingTripDetails.sgstPercentage || 9;
+            const newCgst = (newBillingAmount * cgstP) / 100;
+            const newSgst = (newBillingAmount * sgstP) / 100;
+
+            lrUpdateData.tripDetails = {
+                ...existingTripDetails,
+                billingAmount: newBillingAmount,
+                freightAmount: newFreightAmount,
+                cgstAmount: newCgst,
+                sgstAmount: newSgst,
+                totalBillingAmount: newBillingAmount + newCgst + newSgst,
+                updatedAt: new Date().toISOString()
+            };
+        }
+
+        await lrRef.update(lrUpdateData);
+
+        // Sync Invoice if needed
+        if (existingLR.invoiceId && window.syncInvoiceWithCurrentLR) {
+            await window.syncInvoiceWithCurrentLR(existingLR.invoiceId);
+        }
+
+        alert('LR updated successfully!');
+        bootstrap.Modal.getInstance(document.getElementById('editLRModal')).hide();
+        // Explicitly refresh the data
+        setTimeout(() => loadLRData('initial'), 500);
+    } catch (error) {
+        console.error('Error updating LR:', error);
+        alert('Error updating LR.');
+    }
+}
+
+window.deleteLR = async function (lrId) {
+    if (window.AuthManager && !window.AuthManager.hasPermission("delete_records")) { alert("You do not have permission to perform this action."); return; }
+    if (!window.currentCoreAccountId) return;
+    if (confirm('Are you sure you want to delete this LR record?')) {
+        try {
+            const lrSnap = await window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value');
+            const lr = lrSnap.val();
+            if (lr && window.MoneyFlow) {
+                // Delete Driver Advance
+                await window.MoneyFlow.deletePayment(lrId + '_advance');
+
+                // Delete Generic Expenses
+                const expenses = [
+                    ...(lr.tripDetails?.genericExpenses || []),
+                    ...(lr.emptyTripData?.genericExpenses || [])
+                ];
+                for (const exp of expenses) {
+                    if (exp.id) {
+                        await window.MoneyFlow.deletePayment(lrId + '_' + exp.id);
+                    }
+                }
+            }
+            await window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).remove();
+            alert('LR deleted successfully!');
+            if (window.loadLRData) window.loadLRData('initial');
+        } catch (e) {
+            console.error('Error deleting LR:', e);
+            alert('Error deleting LR.');
+        }
+    }
+};
+
+window.editLR = function (lrId) {
+    if (window.AuthManager && !window.AuthManager.hasPermission("edit_records")) { alert("You do not have permission to perform this action."); return; }
+    window.currentEditingLRId = lrId;
+    if (!window.currentCoreAccountId) return;
+
+    window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value').then((snapshot) => {
+        const lr = snapshot.val();
+
+        document.getElementById('editLrDate').value = lr.date;
+        document.getElementById('editLrNumber').value = lr.lrNumber || '';
+        document.getElementById('editInvoiceNumberInput').value = lr.invoiceNumber || '';
+        document.getElementById('editDeliveryNo').value = lr.deliveryNo || '';
+        document.getElementById('editOrderNo').value = lr.orderNo || '';
+        document.getElementById('editEWayBillNo').value = lr.ewayBillNo || '';
+        document.getElementById('editEwbExpiry').value = lr.ewbExp || '';
+        document.getElementById('editStatus').value = lr.status || ''; // Populate Status
+        document.getElementById('editClientId').value = lr.clientId;
+
+        // Set truck number with proper matching
+        const editTruckNumber = lr.truckNumber;
+            // Populate Market/Own toggle and fields
+            const isMarket = lr.lrType === 'market';
+            document.getElementById('editOwnVehicleRadio').checked = !isMarket;
+            document.getElementById('editMarketVehicleRadio').checked = isMarket;
+            toggleEditVehicleInput(isMarket);
+
+            if (isMarket) {
+                document.getElementById('editMarketTruckNumber').value = lr.truckNumber || '';
+                document.getElementById('editMarketDriverName').value = lr.driverName || '';
+                setTimeout(() => { document.getElementById('editTransporterSelect').value = lr.transporterId || ''; }, 100);
+            } else {
+                // Own Vehicle Logic
+                const $editTruckSelect = $('#editTruckNumber');
+                if ($editTruckSelect.length) {
+                    if ($editTruckSelect.find(`option[value="${editTruckNumber}"]`).length) {
+                        $editTruckSelect.val(editTruckNumber).trigger('change');
+                    } else {
+                        const newOption = new Option(editTruckNumber, editTruckNumber, true, true);
+                        $editTruckSelect.append(newOption).trigger('change');
+                    }
+                }
+                setTimeout(() => {
+                    const editDriverSelect = document.getElementById('editDriverSelect');
+                    if (editDriverSelect && lr.driverName) {
+                        let driverFound = false;
+                        for (let i = 0; i < editDriverSelect.options.length; i++) {
+                            if (editDriverSelect.options[i].text.toLowerCase().includes(lr.driverName.toLowerCase()) ||
+                                editDriverSelect.options[i].value === lr.driverName) {
+                                editDriverSelect.selectedIndex = i;
+                                driverFound = true;
+                                break;
+                            }
+                        }
+                        if (!driverFound) {
+                            const opt = document.createElement('option');
+                            opt.value = lr.driverName;
+                            opt.textContent = lr.driverName;
+                            editDriverSelect.appendChild(opt);
+                            editDriverSelect.value = lr.driverName;
+                        }
+                    }
+                }, 100);
+            }
+
+        document.getElementById('editConsignorName').value = lr.consignorName || '';
+        document.getElementById('editConsigneeName').value = lr.consigneeName || '';
+        document.getElementById('editRouteSelect').value = lr.routeId || '';
+
+        const editEmployeeSelect = document.getElementById('editEmployeeSelect');
+        if (editEmployeeSelect && lr.employeeId) setTimeout(() => { editEmployeeSelect.value = lr.employeeId || ''; }, 100);
+
+        document.getElementById('editNumPackages').value = lr.numPackages || '';
+        document.getElementById('editWeightPerPackage').value = lr.weightPerPackage || '';
+        document.getElementById('editWeight').value = lr.weight;
+        document.getElementById('editShipmentNo').value = lr.shipmentNo || '';
+        document.getElementById('editItem').value = lr.item || '';
+
+        new bootstrap.Modal(document.getElementById('editLRModal')).show();
+    });
+};
+
+// --- TRIP DETAILS & FINANCIALS ---
+
+window.currentTripIsMarket = false;
+window.tripDetailsAutosaveTimer = null;
+
+window.showTripDetailsModal = async function (lrId, lrNumber, weight, truckNumber, driverName) {
+    const firstTab = document.querySelector('#tripDetailsTabs button');
+    if (firstTab) new bootstrap.Tab(firstTab).show();
+
+    window.currentTripLRId = lrId;
+    window.currentTripTruckNumber = truckNumber;
+
+    const editModal = document.getElementById('editLRModal');
+    const isEditing = editModal.classList.contains('show');
+    window.currentTripWeight = isEditing ? (parseFloat(document.getElementById('editWeight').value) || weight) : weight;
+
+    document.getElementById('modalLrNumber').textContent = lrNumber;
+    document.getElementById('fuelEntryTruckNumber').textContent = truckNumber;
+
+    // Fetch Last KM
+    let lastKm = 0;
+    if (truckNumber && window.currentCoreAccountId) {
+        const vSnap = await window.db.ref(`users/${window.currentCoreAccountId}/vehicles`).orderByChild('vehicleNumber').equalTo(truckNumber).once('value');
+        if (vSnap.exists()) {
+            const vData = Object.values(vSnap.val())[0];
+            lastKm = vData.lastEndingKm || 0;
+        }
+    }
+
+    const snapshot = await window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value');
+    const lr = snapshot.val();
+    const details = lr.tripDetails || {};
+    const isMarketVehicle = lr.lrType === 'market';
+    window.currentTripIsMarket = isMarketVehicle;
+    if (window.tripDetailsAutosaveTimer) {
+        clearTimeout(window.tripDetailsAutosaveTimer);
+        window.tripDetailsAutosaveTimer = null;
+    }
+
+    // Pre-fetch vendor data into cache (window.allWorkVendors) before building expense rows.
+    // addExpenseRow reads from this cache directly, so no async fetch happens during row building.
+    const uid = window.currentCoreAccountId;
+    if (uid) {
+        if (window.MoneyFlow) {
+            window.MoneyFlow.coreAccountId = uid;
+        }
+        try {
+            const vSnap = await window.db.ref(`users/${uid}/workVendors`).once('value');
+            window.allWorkVendors = [];
+            if (vSnap.exists()) {
+                const val = vSnap.val();
+                Object.keys(val).forEach(key => window.allWorkVendors.push({ id: key, ...val[key] }));
+            }
+        } catch (e) {
+            console.warn('[VendorFix] Pre-fetch failed:', e);
+        }
+        try {
+            window.allMoneyAccounts = await window.MoneyFlow.getAccounts();
+        } catch (e) {
+            console.warn('[MoneyFlow] Pre-fetch failed:', e);
+            window.allMoneyAccounts = {};
+        }
+    }
+
+    updateLastSavedUI('add'); // Reuse status for modal
+
+    // Toggle Fields
+    const ownOnly = ['fuel-tab', 'fuel-entry-tab', 'expenses-tab', 'empty-expenses-tab'].map(id => document.getElementById(id));
+    ownOnly.forEach(el => { if (el) el.style.display = isMarketVehicle ? 'none' : 'block'; });
+
+    const setElementDisplay = (id, display) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = display;
+    };
+    const setElementValue = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    };
+
+    setElementDisplay('commissionField', isMarketVehicle ? 'block' : 'none');
+    setElementDisplay('tripAdvanceField', 'block'); // Ensure advance is visible for both
+
+    setElementValue('tripCommission', details.commission || '');
+    setElementValue('tripStartingKm', details.startingKm || lastKm);
+
+    // Fill Fields
+    setElementValue('tripBillingRate', details.billingRate || '');
+    setElementValue('tripBillingAmount', details.billingAmount || '');
+    setElementValue('tripFreightRate', details.freightRate || '');
+    setElementValue('tripFreightAmount', details.freightAmount || '');
+    setElementValue('tripAdvance', details.advance || 0);
+    setElementValue('tripShortage', details.shortage || 0);
+    
+    // Populate tripAdvanceAccountId select and set its value
+    const advanceAccSelect = document.getElementById('tripAdvanceAccountId');
+    if (advanceAccSelect) {
+        advanceAccSelect.innerHTML = '<option value="">Select Account</option>';
+        if (window.allMoneyAccounts) {
+            const sortedAccounts = Object.entries(window.allMoneyAccounts).sort((a, b) => a[1].name.localeCompare(b[1].name));
+            sortedAccounts.forEach(([id, acc]) => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = `${acc.name} (${acc.type.toUpperCase()})`;
+                if (id === details.advanceAccountId) opt.selected = true;
+                advanceAccSelect.appendChild(opt);
+            });
+        }
+    }
+
+    setElementValue('tripEndingKm', details.endingKm || '');
+    setElementValue('tripVehicleAverage', details.vehicleAverage || '');
+    setElementValue('tripDieselRatePerLiter', details.dieselRatePerLiter || '');
+
+    calculateTotalKm();
+    loadCurrentFuelLevel(truckNumber);
+    loadRecentFuelEntries(truckNumber);
+    loadFuelPumps(); // Ensure pumps are loaded immediately
+    document.getElementById('fuelFillDate').value = new Date().toISOString().split('T')[0];
+
+    // Populate fuelPaymentAccountId select
+    const fuelAccSelect = document.getElementById('fuelPaymentAccountId');
+    if (fuelAccSelect) {
+        fuelAccSelect.innerHTML = '<option value="">Select Account</option>';
+        if (window.allMoneyAccounts) {
+            const sortedAccounts = Object.entries(window.allMoneyAccounts).sort((a, b) => a[1].name.localeCompare(b[1].name));
+            sortedAccounts.forEach(([id, acc]) => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = `${acc.name} (${acc.type.toUpperCase()})`;
+                fuelAccSelect.appendChild(opt);
+            });
+        }
+    }
+
+    // Expenses
+    const genericContainer = document.getElementById('tripGenericExpensesContainer');
+    if (genericContainer) {
+        genericContainer.innerHTML = '';
+        const expenses = details.genericExpenses || [];
+        if (expenses.length > 0) expenses.forEach(exp => addExpenseRow('tripGenericExpensesContainer', exp, true));
+        else addExpenseRow('tripGenericExpensesContainer', {}, true); // Add at least one empty row
+    }
+
+    const emptyGenericContainer = document.getElementById('emptyTripGenericExpensesContainer');
+    if (emptyGenericContainer) {
+        emptyGenericContainer.innerHTML = '';
+        (lr.emptyTripData?.genericExpenses || []).forEach(exp => addExpenseRow('emptyTripGenericExpensesContainer', exp, true));
+    }
+
+    // Ensure all vendor dropdowns are populated and initialized with saved data
+    await window.renderVendorSelects();
+
+    document.getElementById('tripCgstPercentage').value = details.cgstPercentage || 9;
+    document.getElementById('tripSgstPercentage').value = details.sgstPercentage || 9;
+
+    calculateTripTotals();
+    new bootstrap.Modal(document.getElementById('tripDetailsModal')).show();
+};
+
+function collectTripExpenses(containerId) {
+    const exps = [];
+    document.querySelectorAll(`#${containerId} .expense-row`).forEach(div => {
+        const amount = parseFloat(div.querySelector('.expense-amount').value) || 0;
+        if (amount > 0) {
+            const type = div.querySelector('.expense-type').value;
+            const data = {
+                id: div.querySelector('.expense-id').value,
+                type,
+                note: div.querySelector('.expense-note').value,
+                amount,
+                date: div.querySelector('.expense-date').value,
+                accountId: div.querySelector('.expense-account').value || ''
+            };
+            if (type === 'Vehicle Work') {
+                const vs = div.querySelector('.expense-vendor');
+                if (vs) data.vendorId = vs.value || vs.getAttribute('data-selected-value') || '';
+            }
+            exps.push(data);
+        }
+    });
+    return exps;
+}
+
+function aggregateTripExpenses(exps) {
+    const agg = { tyreExpenses: 0, tollExpenses: 0, foodExpenses: 0, loadingUnloadingExpenses: 0, policeChallanExpenses: 0, tacExpenses: 0, permitExpenses: 0, brokerageExpenses: 0, vehicleWorkAmount: 0, commissionExpenses: 0, tirpalRopeExpenses: 0, otherExpenses: 0 };
+    exps.forEach(e => {
+        switch (e.type) {
+            case 'Tyre': agg.tyreExpenses += e.amount; break;
+            case 'Toll': agg.tollExpenses += e.amount; break;
+            case 'Food': agg.foodExpenses += e.amount; break;
+            case 'Loading/Unloading': agg.loadingUnloadingExpenses += e.amount; break;
+            case 'Police Challan': agg.policeChallanExpenses += e.amount; break;
+            case 'TAC': agg.tacExpenses += e.amount; break;
+            case 'Permit': agg.permitExpenses += e.amount; break;
+            case 'Brokerage': agg.brokerageExpenses += e.amount; break;
+            case 'Vehicle Work': agg.vehicleWorkAmount += e.amount; break;
+            case 'Commission': agg.commissionExpenses += e.amount; break;
+            case 'Tirpal & Rope': agg.tirpalRopeExpenses += e.amount; break;
+            case 'Other': agg.otherExpenses += e.amount; break;
+        }
+    });
+    return agg;
+}
+
+function buildTripFinancialPayload() {
+    const isMarketVehicle = !!window.currentTripIsMarket;
+    const endingKm = parseFloat(document.getElementById('tripEndingKm').value) || 0;
+    const startingKm = parseFloat(document.getElementById('tripStartingKm').value) || 0;
+    const fuelUsedLiters = parseFloat(document.getElementById('tripFuelUsedLiters').value) || 0;
+
+    if (endingKm > 0 && endingKm < startingKm) {
+        throw new Error('Ending KM cannot be less than Starting KM.');
+    }
+
+    const genericExpenses = collectTripExpenses('tripGenericExpensesContainer');
+    const emptyGenericExpenses = collectTripExpenses('emptyTripGenericExpensesContainer');
+    const tripAgg = aggregateTripExpenses(genericExpenses);
+    const emptyAgg = aggregateTripExpenses(emptyGenericExpenses);
+
+    calculateTripTotals();
+
+    const tripDetails = {
+        billingRate: parseFloat(document.getElementById('tripBillingRate').value) || 0,
+        billingAmount: parseFloat(document.getElementById('tripBillingAmount').value) || 0,
+        freightRate: parseFloat(document.getElementById('tripFreightRate').value) || 0,
+        freightAmount: parseFloat(document.getElementById('tripFreightAmount').value) || 0,
+        advance: parseFloat(document.getElementById('tripAdvance').value) || 0,
+        shortage: parseFloat(document.getElementById('tripShortage').value) || 0,
+        advanceAccountId: document.getElementById('tripAdvanceAccountId').value || '',
+        commission: parseFloat(document.getElementById('tripCommission').value) || 0,
+        startingKm,
+        endingKm,
+        totalKm: isMarketVehicle ? 0 : parseFloat(document.getElementById('tripTotalKm').value) || 0,
+        vehicleAverage: isMarketVehicle ? 0 : parseFloat(document.getElementById('tripVehicleAverage').value) || 0,
+        fuelUsedLiters: isMarketVehicle ? 0 : fuelUsedLiters,
+        dieselRatePerLiter: isMarketVehicle ? 0 : parseFloat(document.getElementById('tripDieselRatePerLiter').value) || 0,
+        ...(isMarketVehicle ? {} : tripAgg),
+        genericExpenses: isMarketVehicle ? [] : genericExpenses,
+        cgstPercentage: parseFloat(document.getElementById('tripCgstPercentage').value) || 9,
+        sgstPercentage: parseFloat(document.getElementById('tripSgstPercentage').value) || 9,
+        totalBillingAmount: parseFloat(document.getElementById('tripTotalBillingAmount').value) || 0,
+        totalExpenses: parseFloat(document.getElementById('tripTotalExpenses').value) || 0,
+        driverPayable: parseFloat(document.getElementById('tripDriverPayable').value) || 0,
+        clientBalance: parseFloat(document.getElementById('tripClientBalance').value) || 0,
+        updatedAt: new Date().toISOString()
+    };
+
+    const emptyTripData = {
+        emptyTrip: emptyGenericExpenses.length > 0,
+        ...emptyAgg,
+        genericExpenses: emptyGenericExpenses,
+        updatedAt: new Date().toISOString()
+    };
+
+    return { tripDetails, emptyTripData, endingKm, fuelUsedLiters, isMarketVehicle };
+}
+
+async function persistTripDetails(options = {}) {
+    const { silent = false, applyFuelDeduction = false, closeOnSuccess = false } = options;
+    if (!window.currentTripLRId || !window.currentCoreAccountId) return false;
+
+    let payload;
+    try {
+        payload = buildTripFinancialPayload();
+    } catch (error) {
+        if (!silent) alert(error.message);
+        return false;
+    }
+
+    const { tripDetails, emptyTripData, endingKm, fuelUsedLiters, isMarketVehicle } = payload;
+    
+    // Fetch current state for comparison
+    const lrSnap = await window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${window.currentTripLRId}`).once('value');
+    const lr = lrSnap.val();
+    if (!lr) return false;
+
+    const lrRef = window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${window.currentTripLRId}`);
+    await lrRef.update({ tripDetails, emptyTripData, emptyTrip: emptyTripData.emptyTrip });
+    
+    // Money Flow Integration: Reconcile Driver Advance and Expenses
+    if (window.MoneyFlow) {
+        // 1. Reconcile Driver Advance
+        const advRefId = window.currentTripLRId + '_advance';
+        if (tripDetails.advance > 0 && tripDetails.advanceAccountId) {
+            await window.MoneyFlow.recordPayment({
+                refId: advRefId,
+                category: 'Driver Advance',
+                amount: tripDetails.advance,
+                type: 'debit',
+                accountId: tripDetails.advanceAccountId,
+                note: `Driver Advance for LR #${lr.lrNumber} (Vehicle: ${lr.truckNumber})`,
+                date: lr.date || new Date().toISOString().split('T')[0]
+            });
+        } else {
+            await window.MoneyFlow.deletePayment(advRefId);
+        }
+
+        // 2. Reconcile Trip Expenses
+        const oldExpenses = [
+            ...(lr.tripDetails?.genericExpenses || []),
+            ...(lr.emptyTripData?.genericExpenses || [])
+        ];
+        const newExpenses = [
+            ...(tripDetails.genericExpenses || []),
+            ...(emptyTripData.genericExpenses || [])
+        ];
+        const newExpenseIds = new Set(newExpenses.map(e => e.id));
+
+        // Delete transactions for old expenses that were removed
+        for (const oldExp of oldExpenses) {
+            if (oldExp.id && !newExpenseIds.has(oldExp.id)) {
+                await window.MoneyFlow.deletePayment(window.currentTripLRId + '_' + oldExp.id);
+            }
+        }
+
+        // Record/update transactions for new/modified expenses
+        for (const newExp of newExpenses) {
+            const refId = window.currentTripLRId + '_' + newExp.id;
+            if (newExp.type === 'Vehicle Work' || newExp.type === 'Fuel') {
+                await window.MoneyFlow.deletePayment(refId);
+                continue;
+            }
+            if (newExp.amount > 0 && newExp.accountId) {
+                await window.MoneyFlow.recordPayment({
+                    refId,
+                    category: 'Trip Expense: ' + newExp.type,
+                    amount: newExp.amount,
+                    type: 'debit',
+                    accountId: newExp.accountId,
+                    note: `Trip Expense (${newExp.type}) for LR #${lr.lrNumber} - ${newExp.note || ''}`,
+                    date: newExp.date || new Date().toISOString().split('T')[0]
+                });
+            } else {
+                await window.MoneyFlow.deletePayment(refId);
+            }
+        }
+    }
+
+    const fuelAlreadyDeducted = lr.tripDetails?.fuelAlreadyDeducted || false;
+    if (applyFuelDeduction && !isMarketVehicle && endingKm > 0 && fuelUsedLiters > 0 && !fuelAlreadyDeducted) {
+        const vSnap = await window.db.ref(`users/${window.currentCoreAccountId}/vehicles`).orderByChild('vehicleNumber').equalTo(window.currentTripTruckNumber).once('value');
+        if (vSnap.exists()) {
+            const vId = Object.keys(vSnap.val())[0];
+            const vRef = window.db.ref(`users/${window.currentCoreAccountId}/vehicles/${vId}`);
+            const vData = (await vRef.once('value')).val();
+            const curFuel = parseFloat(vData.currentFuel) || 0;
+            const after = Math.max(curFuel - fuelUsedLiters, 0);
+
+            await vRef.update({ currentFuel: after, lastEndingKm: endingKm });
+            await lrRef.child('tripDetails/fuelAlreadyDeducted').set(true);
+            await window.db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).push({
+                timestamp: new Date().toISOString(), source: 'lr-detail-usage', lrNumber: lr.lrNumber,
+                usedLiters: fuelUsedLiters,
+                beforeLiters: curFuel,
+                afterLiters: after,
+                truckNumber: window.currentTripTruckNumber,
+                userId: window.auth.currentUser.uid,
+                coreAccountId: window.currentCoreAccountId,
+                fuelAlreadyDeducted: true
+            });
+        }
+    }
+
+    if (!silent) {
+        updateLastSavedUI('add');
+        alert('Trip details saved successfully!');
+        if (closeOnSuccess) {
+            bootstrap.Modal.getInstance(document.getElementById('tripDetailsModal')).hide();
+        }
+    }
+
+    return true;
+}
+
+window.scheduleTripDetailsAutosave = function () {
+    if (!window.currentTripLRId || !window.currentCoreAccountId) return;
+    if (window.tripDetailsAutosaveTimer) {
+        clearTimeout(window.tripDetailsAutosaveTimer);
+    }
+    window.tripDetailsAutosaveTimer = setTimeout(async () => {
+        try {
+            await persistTripDetails({ silent: true, applyFuelDeduction: false });
+        } catch (error) {
+            console.error('Trip financial autosave failed:', error);
+        }
+    }, 900);
+};
+
+// Save Trip Details
+const saveTripBtn = document.getElementById('saveTripDetailsBtn');
+if (saveTripBtn) {
+    saveTripBtn.addEventListener('click', async () => {
+        try {
+            if (window.tripDetailsAutosaveTimer) {
+                clearTimeout(window.tripDetailsAutosaveTimer);
+                window.tripDetailsAutosaveTimer = null;
+            }
+            await persistTripDetails({ silent: false, applyFuelDeduction: true, closeOnSuccess: true });
+        } catch (e) {
+            console.error(e);
+            alert('Error saving trip details.');
+        }
+    });
+}
+
+const tripDetailsModalEl = document.getElementById('tripDetailsModal');
+if (tripDetailsModalEl) {
+    const shouldAutosaveTripField = (target) => {
+        if (!target) return false;
+        if (target.closest('.expense-row')) return true;
+        return typeof target.id === 'string' && target.id.startsWith('trip');
+    };
+
+    tripDetailsModalEl.addEventListener('input', (event) => {
+        if (shouldAutosaveTripField(event.target)) {
+            window.scheduleTripDetailsAutosave();
+        }
+    });
+
+    tripDetailsModalEl.addEventListener('change', (event) => {
+        if (shouldAutosaveTripField(event.target)) {
+            window.scheduleTripDetailsAutosave();
+        }
+    });
+
+    tripDetailsModalEl.addEventListener('hide.bs.modal', () => {
+        if (window.tripDetailsAutosaveTimer) {
+            clearTimeout(window.tripDetailsAutosaveTimer);
+            window.tripDetailsAutosaveTimer = null;
+        }
+        persistTripDetails({ silent: true, applyFuelDeduction: false }).catch((error) => {
+            console.error('Trip financial autosave on close failed:', error);
+        });
+    });
+}
+
+// --- HELPER FUNCTIONS ---
+
+window.populateTransporterDropdowns = function (t, addSelect, editSelect) {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.vendorName || t.transporterName || t.name;
+    if (addSelect) addSelect.appendChild(opt.cloneNode(true));
+    if (editSelect) editSelect.appendChild(opt);
+};
+
+window.toggleVehicleInput = function (isMarket) {
+    const own = document.getElementById('ownVehicleFields');
+    const market = document.getElementById('marketVehicleFields');
+    const ownD = document.getElementById('ownDriverField');
+    const marketD = document.getElementById('marketDriverField');
+
+    if (isMarket) {
+        if (own) own.classList.add('d-none');
+        if (market) { market.classList.remove('d-none'); market.style.display = 'flex'; }
+        if (ownD) ownD.classList.add('d-none');
+        if (marketD) marketD.style.display = 'block';
+    } else {
+        if (own) own.classList.remove('d-none');
+        if (market) { market.classList.add('d-none'); market.style.display = 'none'; }
+        if (ownD) ownD.classList.remove('d-none');
+        if (marketD) marketD.style.display = 'none';
+    }
+
+    const tNum = document.getElementById('truckNumber');
+    const mtNum = document.getElementById('marketTruckNumber');
+    if (tNum) tNum.required = !isMarket;
+    if (mtNum) mtNum.required = isMarket;
+};
+
+window.toggleEditVehicleInput = function (isMarket) {
+    const own = document.getElementById('editOwnVehicleFields');
+    const market = document.getElementById('editMarketVehicleFields');
+    const ownD = document.getElementById('editOwnDriverField');
+    const marketD = document.getElementById('editMarketDriverField');
+
+    if (isMarket) {
+        if (own) own.classList.add('d-none');
+        if (market) { market.classList.remove('d-none'); market.style.display = 'flex'; }
+        if (ownD) ownD.classList.add('d-none');
+        if (marketD) marketD.style.display = 'block';
+    } else {
+        if (own) own.classList.remove('d-none');
+        if (market) { market.classList.add('d-none'); market.style.display = 'none'; }
+        if (ownD) ownD.classList.remove('d-none');
+        if (marketD) marketD.style.display = 'none';
+    }
+
+    const tNum = document.getElementById('editTruckNumber');
+    const mtNum = document.getElementById('editMarketTruckNumber');
+    if (tNum) tNum.required = !isMarket;
+    if (mtNum) mtNum.required = isMarket;
+};
+
+
+window.addExpenseRow = function (containerId, data = {}, suppressInit = false) {
+    const container = document.getElementById(containerId);
+    const div = document.createElement('div');
+    div.className = 'row g-3 mb-2 expense-row align-items-center';
+
+    const expenseId = data.id || 'exp_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+
+    div.innerHTML = `
+        <input type="hidden" class="expense-id" value="${expenseId}">
+        <div class="col-md-2">
+          <select class="form-select expense-type" onchange="window.toggleVendorDropdown(this)">
+            <option value="Tyre">Tyre</option><option value="Toll">Toll</option><option value="Food">Food</option>
+            <option value="Loading/Unloading">Loading/Unloading</option><option value="Police Challan">Police Challan</option>
+            <option value="TAC">TAC</option><option value="Permit">Permit</option><option value="Brokerage">Brokerage</option>
+            <option value="Vehicle Work">Vehicle Work</option><option value="Commission">Commission</option>
+            <option value="Tirpal & Rope">Tirpal & Rope</option><option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="col-md-2"><input type="number" step="0.01" class="form-control expense-amount" placeholder="Amount" value="${data.amount || ''}" oninput="calculateTripTotals()"></div>
+        <div class="col-md-2 vendor-select-container" style="display: none;">
+            <div class="input-group">
+                <select class="form-select expense-vendor"><option value="">Select Vendor</option></select>
+                <button class="btn btn-outline-success quick-add-vendor-btn" type="button" title="Add New Vendor" onclick="showQuickAddModal('vendor')"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+        <div class="col-md-2 account-select-container">
+          <select class="form-select expense-account"><option value="">Select Account</option></select>
+        </div>
+        <div class="col-md-2"><input type="date" class="form-control expense-date" value="${data.date || new Date().toISOString().split('T')[0]}"></div>
+        <div class="col-md-3 expense-note-container"><input type="text" class="form-control expense-note" placeholder="Remarks" value="${data.note || ''}"></div>
+        <div class="col-md-1 text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.expense-row').remove(); calculateTripTotals(); if (window.scheduleTripDetailsAutosave) window.scheduleTripDetailsAutosave();"><i class="fas fa-trash"></i></button></div>
+    `;
+    container.appendChild(div);
+
+    if (data.type) div.querySelector('.expense-type').value = data.type;
+    if (data.date) div.querySelector('.expense-date').value = data.date;
+    if (data.note) div.querySelector('.expense-note').value = data.note;
+
+    // Populate accounts select
+    const accountSelect = div.querySelector('.expense-account');
+    if (accountSelect) {
+        accountSelect.innerHTML = '<option value="">Select Account</option>';
+        if (window.allMoneyAccounts) {
+            const sortedAccounts = Object.entries(window.allMoneyAccounts).sort((a, b) => a[1].name.localeCompare(b[1].name));
+            sortedAccounts.forEach(([id, acc]) => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = `${acc.name} (${acc.type.toUpperCase()})`;
+                if (id === data.accountId) opt.selected = true;
+                accountSelect.appendChild(opt);
+            });
+        }
+        $(accountSelect).off('change.tripAccount').on('change.tripAccount', function () {
+            if (window.scheduleTripDetailsAutosave) window.scheduleTripDetailsAutosave();
+        });
+    }
+
+    // Pre-populate vendor options from cache so toggleVendorDropdown never needs
+    // to fire an async renderVendorSelects() fetch during bulk load (race condition fix)
+    const vendorSelect = div.querySelector('.expense-vendor');
+    if (vendorSelect) {
+        if (data.vendorId) {
+            vendorSelect.setAttribute('data-selected-value', data.vendorId);
+        }
+        // Fill options from cache if available — avoids async fetch race condition
+        if (window.allWorkVendors && window.allWorkVendors.length > 0) {
+            window.allWorkVendors.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = v.name;
+                if (v.id === data.vendorId) opt.selected = true;
+                vendorSelect.appendChild(opt);
+            });
+        }
+    }
+
+    // toggleVendorDropdown shows/hides the vendor container and inits Select2 if visible.
+    // Because we pre-populated options above, it will NOT trigger renderVendorSelects()
+    // (options.length > 1), so no race condition.
+    window.toggleVendorDropdown(div.querySelector('.expense-type'));
+
+    if (!suppressInit) {
+        window.renderVendorSelects();
+        if (window.scheduleTripDetailsAutosave) window.scheduleTripDetailsAutosave();
+    }
+};
+
+window.toggleVendorDropdown = function (el) {
+    const row = el.closest('.expense-row');
+    const v = row.querySelector('.vendor-select-container');
+    const isVehicleWork = el.value === 'Vehicle Work';
+    v.style.display = isVehicleWork ? 'block' : 'none';
+
+    const accContainer = row.querySelector('.account-select-container');
+    if (accContainer) {
+        if (isVehicleWork) {
+            accContainer.style.display = 'none';
+            const accSelect = accContainer.querySelector('.expense-account');
+            if (accSelect) accSelect.value = '';
+        } else {
+            accContainer.style.display = 'block';
+        }
+    }
+
+    const noteContainer = row.querySelector('.expense-note-container');
+    if (noteContainer) {
+        noteContainer.className = 'col-md-3 expense-note-container';
+    }
+
+    if (isVehicleWork) {
+        const select = row.querySelector('.expense-vendor');
+        const savedVal = select ? select.getAttribute('data-selected-value') : '';
+
+        if (select && select.options.length <= 1) {
+            // Cache is empty — fetch vendors then init Select2 and restore value
+            if (window.renderVendorSelects) window.renderVendorSelects();
+        } else {
+            // Options already populated — just init Select2 (it breaks when shown from hidden)
+            // and restore the saved selection
+            if ($(select).hasClass('select2-hidden-accessible')) {
+                $(select).select2('destroy');
+            }
+            $(select).select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#tripDetailsModal'),
+                placeholder: 'Select Vendor'
+            });
+            if (savedVal) {
+                $(select).val(savedVal).trigger('change');
+            }
+            // Wire change listener to keep data-selected-value in sync
+            $(select).off('change.tripVendor').on('change.tripVendor', function () {
+                if (this.options.length > 1) {
+                    this.setAttribute('data-selected-value', this.value || '');
+                }
+                if (window.scheduleTripDetailsAutosave) window.scheduleTripDetailsAutosave();
+            });
+        }
+    }
+};
+
+window.calculateTripTotals = function () {
+    const billingAmount = parseFloat(document.getElementById('tripBillingAmount').value) || 0;
+    const freightAmount = parseFloat(document.getElementById('tripFreightAmount').value) || 0;
+    const advance = parseFloat(document.getElementById('tripAdvance').value) || 0;
+    const shortage = parseFloat(document.getElementById('tripShortage').value) || 0;
+    const billingRate = window.currentTripWeight > 0 ? (billingAmount / window.currentTripWeight) : 0;
+    const isMarket = document.getElementById('commissionField').style.display !== 'none';
+
+    let genericE = 0;
+    document.querySelectorAll('#tripGenericExpensesContainer .expense-amount').forEach(i => genericE += parseFloat(i.value) || 0);
+    document.getElementById('tripTotalExpensesDisplay').textContent = `₹${genericE.toFixed(2)}`;
+
+    let emptyGenericE = 0;
+    document.querySelectorAll('#emptyTripGenericExpensesContainer .expense-amount').forEach(i => emptyGenericE += parseFloat(i.value) || 0);
+    document.getElementById('emptyTripTotalExpensesDisplay').textContent = `₹${emptyGenericE.toFixed(2)}`;
+
+    const cgst = (billingAmount * (parseFloat(document.getElementById('tripCgstPercentage').value) || 9)) / 100;
+    const sgst = (billingAmount * (parseFloat(document.getElementById('tripSgstPercentage').value) || 9)) / 100;
+
+    document.getElementById('tripTotalBillingAmount').value = (billingAmount + cgst + sgst).toFixed(2);
+
+    if (isMarket) {
+        document.getElementById('tripTotalExpenses').value = advance.toFixed(2);
+        document.getElementById('tripDriverPayable').value = (freightAmount - advance - shortage).toFixed(2);
+        document.getElementById('tripCommission').value = (billingAmount - freightAmount).toFixed(2);
+    } else {
+        document.getElementById('tripTotalExpenses').value = (genericE + emptyGenericE + advance).toFixed(2);
+        document.getElementById('tripDriverPayable').value = (freightAmount - advance).toFixed(2);
+    }
+
+    const shortageDeduction = (shortage / 1000) * billingRate;
+    document.getElementById('tripClientBalance').value = (billingAmount - advance - shortageDeduction).toFixed(2);
+
+    // Bug Fix: Trigger auto-save on calculation
+    if (window.scheduleTripDetailsAutosave) window.scheduleTripDetailsAutosave();
+};
+
+// Calculations
+window.calculateTotalKm = function () {
+    const s = parseFloat(document.getElementById('tripStartingKm').value) || 0;
+    const e = parseFloat(document.getElementById('tripEndingKm').value) || 0;
+    document.getElementById('tripTotalKm').value = Math.max(0, e - s).toFixed(2);
+    window.calculateFuelUsed();
+};
+
+window.calculateFuelUsed = function () {
+    const km = parseFloat(document.getElementById('tripTotalKm').value) || 0;
+    const avg = parseFloat(document.getElementById('tripVehicleAverage').value) || 0;
+    document.getElementById('tripFuelUsedLiters').value = (avg > 0 ? km / avg : 0).toFixed(2);
+    window.calculateFuelAmount();
+};
+
+window.calculateFuelAmount = function () {
+    window.calculateTripTotals(); // Trigger total recalc
+};
+
+window.calculateTripBillingAmount = function () {
+    document.getElementById('tripBillingAmount').value = ((window.currentTripWeight || 0) * (parseFloat(document.getElementById('tripBillingRate').value) || 0)).toFixed(2);
+    window.calculateTripTotals();
+};
+
+window.calculateTripBillingRate = function () {
+    if (window.currentTripWeight > 0) document.getElementById('tripBillingRate').value = ((parseFloat(document.getElementById('tripBillingAmount').value) || 0) / window.currentTripWeight).toFixed(2);
+    window.calculateTripTotals();
+};
+
+window.calculateTripFreightAmount = function () {
+    document.getElementById('tripFreightAmount').value = ((window.currentTripWeight || 0) * (parseFloat(document.getElementById('tripFreightRate').value) || 0)).toFixed(2);
+    window.calculateTripTotals();
+};
+
+window.calculateTripFreightRate = function () {
+    if (window.currentTripWeight > 0) document.getElementById('tripFreightRate').value = ((parseFloat(document.getElementById('tripFreightAmount').value) || 0) / window.currentTripWeight).toFixed(2);
+    window.calculateTripTotals();
+};
+
+// Fuel Entry
+
+window.calculateFuelTotalAmount = function () {
+    document.getElementById('fuelAmount').value = ((parseFloat(document.getElementById('fuelLiters').value) || 0) * (parseFloat(document.getElementById('fuelPerLiter').value) || 0)).toFixed(2);
+};
+
+async function loadCurrentFuelLevel(truckNumber) {
+    const el = document.getElementById('currentFuelLevel');
+    if (!el) return;
+    el.textContent = '...';
+    const v = window.allVehicles.find(v => (v.vehicleNo || '').toUpperCase() === truckNumber.toUpperCase());
+    if (v && window.currentCoreAccountId) {
+        const cur = parseFloat((await window.db.ref(`users/${window.currentCoreAccountId}/vehicles/${v.id}/currentFuel`).once('value')).val()) || 0;
+        el.textContent = `${cur.toFixed(2)} Liters`;
+    } else el.textContent = 'N/A';
+}
+
+async function loadRecentFuelEntries(truckNumber) {
+    const body = document.getElementById('recentFuelEntriesBody');
+    body.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
+
+    // Ensure pumps are loaded for name resolution
+    if (window.allPumps.length === 0) {
+        const pSnap = await window.db.ref(`users/${window.currentCoreAccountId}/petrolPumps`).once('value');
+        if (pSnap.exists()) {
+            pSnap.forEach(c => window.allPumps.push({ id: c.key, ...c.val() }));
+        }
+    }
+
+    // Fallback to client-side filtering if index is missing
+    const snap = await window.db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).once('value');
+
+    body.innerHTML = '';
+    const entries = [];
+    if (snap.exists()) {
+        snap.forEach(c => {
+            const val = c.val();
+            // Case-insensitive check
+            if ((val.truckNumber || '').toUpperCase() === truckNumber.toUpperCase()) {
+                entries.push({ key: c.key, ...val });
+            }
+        });
+    }
+
+    entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    entries.forEach(e => {
+        if (e.source === 'pump-fillup' || e.source === 'manual') {
+            const pname = window.allPumps.find(p => p.id === e.pumpId)?.name || 'N/A';
+            body.innerHTML += `<tr>
+                <td>${e.date}</td>
+                <td>${pname}</td>
+                <td class="text-end">${e.filledLiters}</td>
+                <td class="text-end">${e.totalAmount}</td>
+                <td>${e.remarks || '-'}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRecentFuelLog('${e.key}', ${e.filledLiters}, '${e.truckNumber}', '${e.pumpId}')"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`;
+        }
+    });
+    if (!body.innerHTML) body.innerHTML = '<tr><td colspan="6">No recent entries.</td></tr>';
+}
+
+window.deleteRecentFuelLog = async function (logKey, liters, truckNumber, pumpId) {
+    if (window.AuthManager && !window.AuthManager.hasPermission("delete_records")) { alert("You do not have permission to perform this action."); return; }
+    if (!window.currentCoreAccountId) return;
+    if (confirm('Are you sure you want to delete this fuel entry?')) {
+        try {
+            const updates = {};
+            // 1. Adjust vehicle's currentFuel
+            const v = window.allVehicles.find(v => (v.vehicleNo || '').toUpperCase() === truckNumber.toUpperCase());
+            if (v) {
+                const vRef = window.db.ref(`users/${window.currentCoreAccountId}/vehicles/${v.id}/currentFuel`);
+                const before = parseFloat((await vRef.once('value')).val()) || 0;
+                const after = before - parseFloat(liters);
+                updates[`users/${window.currentCoreAccountId}/vehicles/${v.id}/currentFuel`] = after;
+            }
+
+            // 2. Remove fuel log
+            updates[`users/${window.currentCoreAccountId}/fuelLogs/${logKey}`] = null;
+
+            // 3. Remove pump transaction link
+            if (pumpId && pumpId !== 'N/A' && pumpId !== 'undefined' && pumpId !== '') {
+                updates[`users/${window.currentCoreAccountId}/petrolPumps/${pumpId}/transactions/${logKey}`] = null;
+            }
+
+            await window.db.ref().update(updates);
+
+            // 4. Reverse Money Flow
+            if (window.MoneyFlow) {
+                await window.MoneyFlow.deletePayment('fuel_' + logKey);
+            }
+
+            alert('Fuel log deleted successfully.');
+            
+            // Reload UI
+            loadCurrentFuelLevel(truckNumber);
+            loadRecentFuelEntries(truckNumber);
+        } catch (e) {
+            console.error('Error deleting fuel log:', e);
+            alert('Error deleting fuel log.');
+        }
+    }
+};
+
+const fuelForm = document.getElementById('fuelEntryForm');
+if (fuelForm) {
+    fuelForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const liters = parseFloat(document.getElementById('fuelLiters').value);
+        const rate = parseFloat(document.getElementById('fuelPerLiter').value);
+        const amount = parseFloat(document.getElementById('fuelAmount').value);
+        const pumpId = document.getElementById('fuelPumpSelect').value;
+        const fillDate = document.getElementById('fuelFillDate').value;
+        const kmReading = document.getElementById('fuelTripKm').value;
+        const remarks = document.getElementById('fuelRemarks').value;
+        const paymentAccountId = document.getElementById('fuelPaymentAccountId').value;
+
+        const v = window.allVehicles.find(v => (v.vehicleNo || '').toUpperCase() === window.currentTripTruckNumber.toUpperCase());
+        if (!v) return alert('Vehicle not found');
+
+        try {
+            const vRef = window.db.ref(`users/${window.currentCoreAccountId}/vehicles/${v.id}`);
+            const before = parseFloat((await vRef.child('currentFuel').once('value')).val()) || 0;
+            const after = before + liters;
+
+            const logKey = window.db.ref(`users/${window.currentCoreAccountId}/fuelLogs`).push().key;
+            const updates = {};
+            updates[`users/${window.currentCoreAccountId}/vehicles/${v.id}/currentFuel`] = after;
+            updates[`users/${window.currentCoreAccountId}/fuelLogs/${logKey}`] = {
+                timestamp: new Date().toISOString(), date: fillDate, source: 'pump-fillup',
+                truckNumber: window.currentTripTruckNumber, vehicleId: v.id, filledLiters: liters,
+                perLiter: rate, totalAmount: amount, pumpId, kmReading, remarks,
+                paymentAccountId: paymentAccountId || '',
+                userId: window.auth.currentUser.uid, coreAccountId: window.currentCoreAccountId,
+                lrNumber: document.getElementById('modalLrNumber').textContent,
+                beforeLiters: before, afterLiters: after
+            };
+            updates[`users/${window.currentCoreAccountId}/petrolPumps/${pumpId}/transactions/${logKey}`] = true;
+
+            await window.db.ref().update(updates);
+
+            if (paymentAccountId && window.MoneyFlow) {
+                await window.MoneyFlow.recordPayment({
+                    refId: 'fuel_' + logKey,
+                    category: 'Fuel Purchase',
+                    amount: amount,
+                    type: 'debit',
+                    accountId: paymentAccountId,
+                    note: `Fuel Purchase (${liters} L) for Truck ${window.currentTripTruckNumber} - ${remarks || ''}`,
+                    date: fillDate
+                });
+            }
+
+            alert('Fuel recorded.');
+            e.target.reset();
+            loadCurrentFuelLevel(window.currentTripTruckNumber);
+            loadRecentFuelEntries(window.currentTripTruckNumber);
+        } catch (err) { alert('Error saving fuel.'); }
+    });
+}
+
+// --- SELECTION & INVOICE ---
+
+window.toggleLRSelection = function (lrId, checked, isMarket) {
+    const list = isMarket ? window.selectedMarketLRs : window.selectedLRs;
+    if (checked) { if (!list.includes(lrId)) list.push(lrId); }
+    else { const idx = list.indexOf(lrId); if (idx > -1) list.splice(idx, 1); }
+    updateInvoiceButtonStates();
+    updateSelectAllCheckboxes();
+};
+
+window.updateInvoiceButtonStates = function () {
+    const o = document.getElementById('generateInvoiceBtn');
+    const m = document.getElementById('generateMarketInvoiceBtn');
+    if (o) o.disabled = window.selectedLRs.length === 0;
+    if (m) m.disabled = window.selectedMarketLRs.length === 0;
+};
+
+window.updateSelectAllCheckboxes = function () {
+    const ownAll = document.getElementById('selectAllCheckbox');
+    const mAll = document.getElementById('selectAllMarketCheckbox');
+    const ownBoxes = document.querySelectorAll('.lr-checkbox');
+    const mBoxes = document.querySelectorAll('.market-lr-checkbox');
+
+    if (ownAll) {
+        const allChecked = ownBoxes.length > 0 && window.selectedLRs.length === ownBoxes.length;
+        ownAll.checked = allChecked;
+        ownAll.indeterminate = window.selectedLRs.length > 0 && !allChecked;
+    }
+    if (mAll) {
+        const allChecked = mBoxes.length > 0 && window.selectedMarketLRs.length === mBoxes.length;
+        mAll.checked = allChecked;
+        mAll.indeterminate = window.selectedMarketLRs.length > 0 && !allChecked;
+    }
+};
+
+window.toggleSelectAll = function (isMarket) {
+    const all = document.getElementById(isMarket ? 'selectAllMarketCheckbox' : 'selectAllCheckbox');
+    const checkedState = all.checked; // Capture state ONCE
+    const boxes = document.querySelectorAll(isMarket ? '.market-lr-checkbox' : '.lr-checkbox');
+
+    // Update logic for all
+    const list = isMarket ? window.selectedMarketLRs : window.selectedLRs;
+
+    boxes.forEach(b => {
+        b.checked = checkedState;
+        if (checkedState) {
+            if (!list.includes(b.value)) list.push(b.value);
+        } else {
+            const idx = list.indexOf(b.value);
+            if (idx > -1) list.splice(idx, 1);
+        }
+    });
+
+    // Update UI once at the end
+    updateInvoiceButtonStates();
+    // No need to call updateSelectAllCheckboxes as we just set the master checkbox state manually
+    // But to be safe on indeterminate state:
+    // Actually, if we selected all visible, we are good.
+    // Let's explicitly set indeterminate false since we just clicked it.
+    all.indeterminate = false;
+};
+
+window.showBankDetailsModal = function (isMarket) {
+    if ((isMarket ? window.selectedMarketLRs : window.selectedLRs).length === 0) return alert('Select LRs first.');
+    if (window.createAndSaveInvoice) window.createAndSaveInvoice(isMarket, null);
+};
+
+// --- AUTO GEN & HELPERS ---
+
+function generateSequentialNumber(el, prefix) {
+    if (!window.currentCoreAccountId) return;
+    const now = new Date();
+    const datePrefix = `${prefix}${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    window.db.ref(`users/${window.currentCoreAccountId}/counters/${prefix.toLowerCase()}_${datePrefix.slice(prefix.length)}`).transaction(c => (c || 0) + 1)
+        .then(res => { if (res.committed) el.value = `${datePrefix}${String(res.snapshot.val()).padStart(4, '0')}`; });
+}
+
+function generateRandomNumber(el, prefix) {
+    el.value = `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
+}
+
+async function getNextSequence(prefix) {
+    if (!window.currentCoreAccountId) return '';
+    try {
+        const refPath = window.db.ref(`users/${window.currentCoreAccountId}/counters/${prefix.toLowerCase()}`);
+        const res = await refPath.transaction(c => (c || 0) + 1);
+        if (res.committed) {
+            return `${prefix}${res.snapshot.val()}`;
+        }
+    } catch (e) {
+        console.error("Sequence generation error:", e);
+    }
+    return '';
+}
+
+function populateTransporterDropdowns(t, ...selects) {
+    selects.forEach(s => {
+        if (s) {
+            const o = document.createElement('option');
+            o.value = t.id;
+            o.textContent = t.name;
+            o.dataset.name = t.name;
+            s.appendChild(o);
+        }
+    });
+}
+
+function populateDriverDropdowns(snap, ...ids) {
+    const selects = ids.map(id => document.getElementById(id));
+    selects.forEach(s => { if (s) s.innerHTML = '<option value="">Select a Driver</option>'; });
+    if (snap.exists()) {
+        snap.forEach(c => {
+            const d = c.val();
+            if (d.driverName) {
+                const o = document.createElement('option');
+                o.value = d.driverName;
+                o.textContent = d.driverName;
+                selects.forEach(s => { if (s) s.appendChild(o.cloneNode(true)); });
+            }
+        });
+    }
+}
+
+window.updateConsigneeFromClient = function () {
+    const c = document.getElementById('clientId');
+    const con = document.getElementById('consigneeId');
+    if (c && con) con.value = c.value;
+};
+
+window.updateTruckFilterDropdown = function () {
+    const f = document.getElementById('truckFilter');
+    if (!f) return;
+    const cur = f.value;
+    f.innerHTML = '<option value="">All Trucks</option>';
+    const uniq = [...new Set(window.allVehicles.map(v => v.vehicleNumber))].filter(Boolean).sort();
+    uniq.forEach(v => f.innerHTML += `<option value="${v}">${v}</option>`);
+    if (cur && uniq.includes(cur)) f.value = cur;
+};
+
+window.navigateTripTabs = function (dir) {
+    const tabs = Array.from(document.querySelectorAll('#tripDetailsTabs .nav-link'));
+    const activeIdx = tabs.findIndex(t => t.classList.contains('active'));
+    let next = activeIdx + dir;
+    while (tabs[next] && tabs[next].parentElement.style.display === 'none') next += dir;
+    if (next >= tabs.length) next = 0;
+    if (next < 0) next = tabs.length - 1;
+    if (tabs[next].parentElement.style.display !== 'none') {
+        if (tabs[next].id === 'fuel-entry-tab') loadFuelPumps();
+        new bootstrap.Tab(tabs[next]).show();
+    }
+};
+
+window.calculateWeightFromPackages = function () {
+    const n = parseFloat(document.getElementById('numPackages').value) || 0;
+    const w = parseFloat(document.getElementById('weightPerPackage').value) || 0;
+    if (n > 0 && w > 0) document.getElementById('weight').value = (n * w / 1000).toFixed(3);
+};
+
+window.handleManualWeightInput = function () {
+    document.getElementById('numPackages').value = '';
+    document.getElementById('weightPerPackage').value = '';
+};
+
+window.showLRCopy = async function (lrId) {
+    const user = window.auth.currentUser;
+    if (!user) return;
+    const lr = (await window.db.ref(`users/${window.currentCoreAccountId}/lrReports/${lrId}`).once('value')).val();
+    const profile = (await window.db.ref(`users/${user.uid}/profile`).once('value')).val() || {};
+    const client = window.allClients.find(c => c.id === lr.clientId) || {};
+    const consignee = window.allClients.find(c => c.id === lr.consigneeId) || {};
+    const vehicle = window.allVehicles.find(v => (v.vehicleNo || v.vehicleNumber) === lr.truckNumber);
+    const tripDetails = lr.tripDetails || {};
+    const settings = window.autoSettings || {};
+
+    // Print Settings Toggles
+    const showLogo = document.getElementById('printLogoToggle')?.checked ?? true;
+    const showStamp = document.getElementById('printStampToggle')?.checked ?? true;
+
+    // Helper for safe dates
+    const safeDate = (d) => d ? new Date(d).toLocaleDateString('en-GB') : '';
+    const themeColor = 'purple'; // Standard stamp color
+
+    // Profile Owner Name fallback
+    const ownerName = profile.ownerName || user.displayName || 'Authorized Signatory';
+
+    const stampSvg = `
+        <svg class="company-seal" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" style="display: block; width: 100px; height: 100px; transform: rotate(-20deg); opacity: 0.8;">
+            <defs>
+                <path id="topTextPath" fill="none" d="M 30,100 a 70,70 0 1,1 140,0" />
+                <path id="bottomTextPath" fill="none" d="M 30,100 a 70,70 0 1,0 140,0" />
+            </defs>
+            <g fill="${themeColor}" stroke="${themeColor}">
+                <circle cx="100" cy="100" r="95" stroke-width="3" fill="none"/>
+                <circle cx="100" cy="100" r="88" stroke-width="1.5" fill="none"/>
+                <text font-family="'Arial Black', 'Impact', sans-serif" font-size="15" letter-spacing="1.5">
+                    <textPath xlink:href="#topTextPath" startOffset="50%" text-anchor="middle">${(profile.transportName || 'OFFICIAL').toUpperCase().substring(0, 20)}</textPath>
+                </text>
+                <text font-family="'Arial Black', 'Impact', sans-serif" font-size="12" letter-spacing="1">
+                    <textPath xlink:href="#bottomTextPath" startOffset="50%" text-anchor="middle">OFFICIAL SEAL</textPath>
+                </text>
+                <text x="100" y="125" font-family="'Arial', sans-serif" font-size="14" font-weight="bold" text-anchor="middle" letter-spacing="1">TRANSPORT</text>
+                <text x="100" y="145" font-family="'Arial', sans-serif" font-size="9" font-weight="normal" text-anchor="middle">GSTIN: ${profile.gstin || 'N/A'}</text>
+            </g>
+        </svg>
+    `;
+
+    const html = `
+      <div id="lr-pdf-content" style="font-family: Arial, sans-serif; background: #ffffff; color: #000; padding: 20px; max-width: 900px; margin: 0 auto; border: 1px solid #ccc; font-size: 11px; line-height: 1.3;">
+        
+        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
+             <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 10px; margin-bottom: 5px;">
+                <span>Subject to ${profile.city || 'Jurisdiction'} Jurisdiction</span>
+                <span>Goods Receipt</span>
+            </div>
+            
+            <div style="display: flex; align-items: center; justify-content: center; position: relative;">
+                ${showLogo && profile.companyLogoUrl ? `<img src="${profile.companyLogoUrl}" style="max-height: 60px; position: absolute; left: 0;">` : ''}
+                <div>
+                     <h1 style="font-size: 24px; font-weight: 800; text-transform: uppercase; margin: 5px 0;">${profile.transportName || 'TRANSPORT NAME'}</h1>
+                     <div style="font-size: 12px;">Authorized Transporter: ${client.clientName || 'N/A'}</div>
+                     <div style="font-size: 11px; font-weight: 700;">${profile.address || ''}, ${profile.city || ''} - ${profile.pincode || ''}</div>
+                     <div style="font-size: 11px; margin-top: 2px;">Phone: ${profile.phoneNumber || profile.phone || 'N/A'}, GSTIN: ${profile.gstin || 'N/A'}</div>
+                     <div style="font-size: 11px;">Email: ${user.email || 'N/A'}</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="font-weight: bold; margin-bottom: 15px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
+            From: ${lr.fromLocation || 'N/A'} To ${lr.toLocation || 'N/A'}
+        </div>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 10px;">
+            <div style="flex: 1;">
+                <div style="margin-bottom: 10px; border-bottom: 1px dotted #ccc; padding-bottom: 5px;">
+                    <strong>Consignor:</strong><br>
+                    <span style="font-weight: 600; font-size: 12px;">${client.clientName || 'N/A'}</span><br>
+                    ${client.billingAddress ? `Billing Addr: ${client.billingAddress}<br>` : ''}
+                    ${client.dispatchAddress ? `Dispatch Addr: ${client.dispatchAddress}<br>` : ''}
+                    ${!client.billingAddress && !client.dispatchAddress ? (client.address || '') + '<br>' : ''}
+                    ${client.city || ''}, ${client.state || ''}<br>
+                    Phone: ${client.mobile || 'N/A'} | Email: ${client.email || 'N/A'}<br>
+                    GSTIN: ${client.gstin || 'N/A'}
+                </div>
+                 <div style="margin-bottom: 10px;">
+                    <strong>Consignee:</strong><br>
+                    <span style="font-weight: 600; font-size: 12px;">${consignee.clientName || 'N/A'}</span><br>
+                    ${consignee.billingAddress ? `Billing Addr: ${consignee.billingAddress}<br>` : ''}
+                    ${consignee.dispatchAddress ? `Dispatch Addr: ${consignee.dispatchAddress}<br>` : ''}
+                    ${!consignee.billingAddress && !consignee.dispatchAddress ? (consignee.address || '') + '<br>' : ''}
+                    ${consignee.city || ''}, ${consignee.state || ''}<br>
+                     Phone: ${consignee.mobile || 'N/A'} | Email: ${consignee.email || 'N/A'}<br>
+                    GSTIN: ${consignee.gstin || 'N/A'}
+                </div>
+            </div>
+
+            <div style="flex: 1;">
+                <div style="display: grid; grid-template-columns: 140px 1fr; row-gap: 2px;">
+                    <strong>LR No:</strong> <span>${lr.lrNumber || 'N/A'}</span>
+                    <strong>Date:</strong> <span>${safeDate(lr.date)}</span>
+                    <strong>Delivery No:</strong> <span>${lr.deliveryNo || '-'}</span>
+                    <strong>Order No:</strong> <span>${lr.orderNo || '-'}</span>
+                    <strong>Shipment No:</strong> <span>${lr.shipmentNo || '-'}</span>
+                    <strong>Invoice No:</strong> <span>${lr.invoiceNumber || '-'}</span>
+                    <strong>Truck No:</strong> <span>${lr.truckNumber || 'N/A'}</span>
+                    <strong>Truck Type:</strong> <span>${vehicle ? vehicle.vehicleType : 'N/A'}</span>
+                    <strong>E-Way Bill No:</strong> <span>${lr.ewayBillNo || '-'}</span>
+                    <strong>EWB EXP:</strong> <span>${lr.ewbExp || '-'}</span>
+                </div>
+            </div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px;">
+            <thead>
+                <tr style="border-bottom: 1px solid #000; background: #eee;">
+                    <th style="border-right: 1px solid #000; padding: 5px; text-align: left;">No of Package</th>
+                    <th style="border-right: 1px solid #000; padding: 5px; text-align: left;">Goods Description</th>
+                    <th style="border-right: 1px solid #000; padding: 5px; text-align: right;">Weight (MT)</th>
+                    <th style="border-right: 1px solid #000; padding: 5px; text-align: right;">Rate</th>
+                    <th style="border-right: 1px solid #000; padding: 5px; text-align: right;">Freight</th>
+                    <th style="padding: 5px; text-align: right;">Value (Rs.)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border-right: 1px solid #000; padding: 5px; height: 60px; vertical-align: top;">${lr.numPackages > 0 ? lr.numPackages : 'Loose'}</td>
+                    <td style="border-right: 1px solid #000; padding: 5px; vertical-align: top;">${lr.item || 'N/A'}</td>
+                    <td style="border-right: 1px solid #000; padding: 5px; text-align: right; vertical-align: top;">${lr.weight || '0.000'}</td>
+                    <td style="border-right: 1px solid #000; padding: 5px; text-align: right; vertical-align: top;">${tripDetails.freightRate > 0 ? tripDetails.freightRate : '-'}</td>
+                    <td style="border-right: 1px solid #000; padding: 5px; text-align: right; vertical-align: top;">${tripDetails.freightAmount > 0 ? tripDetails.freightAmount : 'To be billed'}</td>
+                    <td style="padding: 5px; text-align: right; vertical-align: top;">${(lr.goodsValue || 0).toFixed(2)}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="display: flex; position: relative; margin-top: 20px;">
+             <div style="flex: 1.5;">
+                <div style="margin-bottom: 10px;"><strong>Remarks:</strong> ${lr.remarks || 'GST TO BE PAID BY CONSIGNOR / GOODS TRANSPORT AGENCY'}</div>
+                
+                <div style="display: grid; grid-template-columns: 150px 1fr; margin-bottom: 5px;">
+                    <span>Truck Owner:</span> <strong>${ownerName}</strong>
+                </div>
+                <div style="display: grid; grid-template-columns: 150px 1fr; margin-bottom: 5px;">
+                    <span>Driver Name:</span> <strong>${lr.driverName || 'N/A'}</strong>
+                </div>
+                 <div style="display: grid; grid-template-columns: 150px 1fr; margin-bottom: 10px;">
+                    <span>Driver Mobile:</span> <strong>${vehicle ? (vehicle.driverMobile || 'N/A') : 'N/A'}</strong>
+                </div>
+                 <div style="margin-top: 20px;">
+                    <span style="display: inline-block; width: 200px; border-top: 1px solid #000; padding-top: 5px;">Driver Signature</span>
+                </div>
+             </div>
+
+             <div style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative;">
+                ${showStamp ? `<div style="position: absolute; top: -20px; right: 80px;">${stampSvg}</div>` : ''}
+                <div style="margin-top: 60px; border-top: 1px solid #000; padding-top: 5px; width: 80%;">
+                    <div>Authorized Signatory</div>
+                    <div style="font-weight:bold; margin-top:2px;">${ownerName}</div>
+                </div>
+             </div>
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px solid #000; padding-top: 5px; font-size: 10px; color: #555;">
+            <div>Note: Damaged bags are not to be returned to Truck driver.</div>
+            <div>If acknowledgement is not submitted within 15 days, freight will not be paid.</div>
+            <div>Comments: __________________________________________________________________</div>
+        </div>
+
+        <div style="border-top: 2px dashed #000; margin-top: 20px; padding-top: 10px;">
+             <div style="text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Receipt of Goods</div>
+             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                 <span><strong>Invoice No:</strong> ${lr.invoiceNumber || 'N/A'}</span>
+                 <span><strong>Truck No:</strong> ${lr.truckNumber || 'N/A'}</span>
+                 <span><strong>LR No:</strong> ${lr.lrNumber || 'N/A'}</span>
+             </div>
+             <table style="width: 100%; font-size: 11px; border-collapse: collapse; margin-bottom: 10px;">
+                 <tr><td style="padding: 5px;">Truck received at date/time: _________________</td><td style="padding: 5px;">Quantity in bags/MT: _________________</td></tr>
+                 <tr><td style="padding: 5px;">Truck released date/time: _________________</td><td style="padding: 5px;">Short/Damage Qty: _________________</td></tr>
+             </table>
+              <div style="text-align: right; margin-top: 20px;">
+                 <span style="border-top: 1px solid #000; padding-top: 5px;">Signature and Seal of Consignee</span>
+              </div>
+        </div>
+
+      </div>
+    `;
+    document.getElementById('lrCopyContent').innerHTML = html;
+    new bootstrap.Modal(document.getElementById('lrCopyModal')).show();
+};
+
+window.downloadLRCopyPDF = async function () {
+    const content = document.getElementById('lr-pdf-content');
+    if (!content) return;
+    const { jsPDF } = window.jspdf;
+    const canvas = await html2canvas(content, { scale: 2, useCORS: true });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const props = pdf.getImageProperties(imgData);
+    const h = (props.height * (pdf.internal.pageSize.getWidth() - 20)) / props.width;
+    pdf.addImage(imgData, 'PNG', 10, 10, pdf.internal.pageSize.getWidth() - 20, h);
+    pdf.save('LR_Copy.pdf');
+};
+
+// --- QUICK ADD FUNCTIONS ---
+
+function showQuickAddModal(type) {
+    const modalMap = {
+        'vehicle': 'quickAddVehicleModal',
+        'driver': 'quickAddDriverModal',
+        'client': 'quickAddClientModal',
+        'transporter': 'quickAddTransporterModal',
+        'route': 'quickAddRouteModal',
+        'consignee': 'quickAddClientModal',
+        'pump': 'quickAddFuelPumpModal',
+        'vendor': 'quickAddVendorModal'
+    };
+
+    const modalId = modalMap[type];
+    if (modalId) {
+        const modal = new bootstrap.Modal(document.getElementById(modalId));
+        modal.show();
+    }
+}
+
+async function saveQuickAddPump() {
+    const name = document.getElementById('q_pumpName').value;
+    const location = document.getElementById('q_pumpLocation').value;
+
+    if (!name) return alert('Pump Name is required');
+
+    try {
+        const ref = window.db.ref(`users/${window.currentCoreAccountId}/petrolPumps`);
+        const newRef = ref.push();
+        await newRef.set({
+            name: name,
+            place: location, // 'place' to match route-details.html schema
+            createdAt: new Date().toISOString()
+        });
+
+        // Refresh dropdowns if necessary (listeners handle it mostly, but specific dropdowns might need reset)
+        // Fuel pump dropdown is re-rendered by loadFuelPumps on click usually
+
+        const modalEl = document.getElementById('quickAddFuelPumpModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        document.getElementById('quickAddFuelPumpForm').reset();
+
+        // If fuel pump select is visible and loaded, refresh it?
+        // loadFuelPumps check options length > 1, so we might need to clear it to force reload
+        const s = document.getElementById('fuelPumpSelect');
+        if (s) s.innerHTML = '<option value="">Select a Pump</option>';
+        // Calling loadFuelPumps manually if modal is open? 
+        if (window.loadFuelPumps) window.loadFuelPumps();
+
+    } catch (e) {
+        console.error(e);
+        alert('Error saving pump: ' + e.message);
+    }
+}
+
+async function saveQuickAddVendor() {
+    const name = document.getElementById('q_vendorName').value;
+    const contact = document.getElementById('q_vendorContact').value;
+
+    if (!name) return alert('Vendor Name is required');
+
+    try {
+        const ref = window.db.ref(`users/${window.currentCoreAccountId}/workVendors`);
+        const newRef = ref.push();
+        await newRef.set({
+            name: name,
+            mobile: contact,
+            createdAt: new Date().toISOString()
+        });
+
+        const modalEl = document.getElementById('quickAddVendorModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        document.getElementById('quickAddVendorForm').reset();
+
+        // Also refresh expense-row vendor dropdowns in case a Vehicle Work row is open
+        if (window.renderVendorSelects) window.renderVendorSelects();
+
+    } catch (e) {
+        console.error(e);
+        alert('Error saving vendor: ' + e.message);
+    }
+}
+
+async function saveQuickAddClient() {
+    // Read from the ACTUAL modal field IDs in lr-report.html
+    const name          = document.getElementById('q_clientName')?.value?.trim();
+    const contactPerson = document.getElementById('q_contactPerson')?.value?.trim();
+    const phone         = document.getElementById('q_mobile')?.value?.trim();
+    const gstin         = document.getElementById('q_gstin')?.value?.trim();
+    const address       = document.getElementById('q_billingAddress')?.value?.trim();
+
+    if (!name) {
+        alert('Client name is required');
+        return;
+    }
+
+    // Build object WITHOUT undefined values (Firebase rejects undefined)
+    const clientData = { clientName: name, createdAt: new Date().toISOString() };
+    if (contactPerson) clientData.contactPerson = contactPerson;
+    if (phone)         clientData.mobile         = phone;
+    if (gstin)         clientData.gstin          = gstin;
+    if (address)       clientData.billingAddress  = address;
+
+    try {
+        await window.db.ref(`users/${window.currentCoreAccountId}/clients`).push(clientData);
+        alert('Client added successfully!');
+        bootstrap.Modal.getInstance(document.getElementById('quickAddClientModal')).hide();
+        document.querySelector('#quickAddClientModal form').reset();
+    } catch (error) {
+        console.error('Error adding client:', error);
+        alert('Error adding client: ' + error.message);
+    }
+}
+
+async function saveQuickAddRoute() {
+    const from = document.getElementById('q_fromLocation')?.value?.trim();
+    const to = document.getElementById('q_toLocation')?.value?.trim();
+    const distance = document.getElementById('q_distance')?.value?.trim();
+
+    if (!from || !to) {
+        alert('Both From and To locations are required');
+        return;
+    }
+
+    try {
+        const routeData = {
+            from: from,
+            to: to,
+            distance: parseFloat(distance) || 0,
+            createdAt: new Date().toISOString()
+        };
+
+        await window.db.ref(`users/${window.currentCoreAccountId}/routes`).push(routeData);
+        alert('Route added successfully!');
+
+        // Close modal and reset form
+        bootstrap.Modal.getInstance(document.getElementById('quickAddRouteModal')).hide();
+        document.querySelector('#quickAddRouteModal form').reset();
+
+    } catch (error) {
+        console.error('Error adding route:', error);
+        alert('Error adding route');
+    }
+}
+
+async function saveQuickAddTransporter() {
+    const name = document.getElementById('q_transporterName')?.value?.trim();
+    const phone = document.getElementById('q_transporterPhone')?.value?.trim();
+    const address = document.getElementById('q_transporterAddress')?.value?.trim();
+    const contactPerson = document.getElementById('q_transporterContactPerson')?.value?.trim();
+
+    if (!name) {
+        alert('Transporter name is required');
+        return;
+    }
+
+    try {
+        const transporterData = {
+            name: name,
+            phone: phone,
+            address: address,
+            createdAt: new Date().toISOString()
+        };
+
+        await window.db.ref(`users/${window.currentCoreAccountId}/transporters`).push(transporterData);
+        alert('Transporter added successfully!');
+
+        // Close modal and reset form
+        bootstrap.Modal.getInstance(document.getElementById('quickAddTransporterModal')).hide();
+        document.querySelector('#quickAddTransporterModal form').reset();
+
+    } catch (error) {
+        console.error('Error adding transporter:', error);
+        alert('Error adding transporter');
+    }
+}
+
+async function saveQuickAddVehicle() {
+    const vehicleNumber = document.getElementById('q_vehicleNumber')?.value?.trim();
+    const vehicleType   = document.getElementById('q_vehicleType')?.value?.trim();
+    const capacity      = document.getElementById('q_vehicleCapacity')?.value?.trim();
+
+    if (!vehicleNumber) {
+        alert('Vehicle number is required');
+        return;
+    }
+
+    // Build data without undefined
+    const vehicleData = {
+        vehicleNumber: vehicleNumber.toUpperCase(),
+        currentFuel:   0,
+        createdAt:     new Date().toISOString()
+    };
+    if (vehicleType) vehicleData.vehicleType = vehicleType;
+    if (capacity)    vehicleData.capacity    = parseFloat(capacity) || 0;
+
+    try {
+        await window.db.ref(`users/${window.currentCoreAccountId}/vehicles`).push(vehicleData);
+        alert('Vehicle added successfully!');
+
+        // Refresh vehicle dropdown immediately (no page reload needed)
+        await window.loadAllVehicles(window.currentCoreAccountId);
+        window.updateTruckFilterDropdown && window.updateTruckFilterDropdown();
+
+        bootstrap.Modal.getInstance(document.getElementById('quickAddVehicleModal')).hide();
+        document.querySelector('#quickAddVehicleModal form').reset();
+    } catch (error) {
+        console.error('Error adding vehicle:', error);
+        alert('Error adding vehicle: ' + error.message);
+    }
+}
+
+async function saveQuickAddDriver() {
+    const name    = document.getElementById('q_driverName')?.value?.trim();
+    const license = document.getElementById('q_driverLicense')?.value?.trim();
+    const phone   = document.getElementById('q_driverContact')?.value?.trim();
+
+    if (!name) {
+        alert('Driver name is required');
+        return;
+    }
+
+    // Firebase validate rule requires 'driverName' & 'licenseNumber' as field names
+    const driverData = {
+        driverName:    name,
+        licenseNumber: license || '',   // required by validate rule
+        contactNumber: phone   || '',   // used by dropdown rendering (opt.dataset.mobile)
+        createdAt:     new Date().toISOString()
+    };
+
+    try {
+        await window.db.ref(`users/${window.currentCoreAccountId}/drivers`).push(driverData);
+        alert('Driver added successfully!');
+
+        // Refresh driver dropdowns immediately — no page reload needed
+        const driverSnap    = await window.db.ref(`users/${window.currentCoreAccountId}/drivers`).once('value');
+        const driverSel     = document.getElementById('driverSelect');
+        const editDriverSel = document.getElementById('editDriverSelect');
+        window.allDrivers   = [];
+        if (driverSel)     driverSel.innerHTML     = '<option value="">Select Driver</option>';
+        if (editDriverSel) editDriverSel.innerHTML  = '<option value="">Select Driver</option>';
+        if (driverSnap.exists()) {
+            driverSnap.forEach(child => {
+                const d = { id: child.key, ...child.val() };
+                window.allDrivers.push(d);
+                const opt = document.createElement('option');
+                opt.value           = d.driverName;
+                opt.dataset.mobile  = d.contactNumber || '';
+                opt.dataset.license = d.licenseNumber  || '';
+                opt.textContent     = `${d.driverName}${d.contactNumber ? ' (' + d.contactNumber + ')' : ''}`;
+                if (driverSel)     driverSel.appendChild(opt.cloneNode(true));
+                if (editDriverSel) editDriverSel.appendChild(opt.cloneNode(true));
+            });
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('quickAddDriverModal')).hide();
+        document.querySelector('#quickAddDriverModal form').reset();
+    } catch (error) {
+        console.error('Error adding driver:', error);
+        alert('Error adding driver: ' + error.message);
+    }
+}

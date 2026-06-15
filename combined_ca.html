@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){'use strict';if(!window.FIREBASE_CONFIG&&window.SECURE_FIREBASE_CONFIG){window.FIREBASE_CONFIG=window.SECURE_FIREBASE_CONFIG;}})();</script>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Transport Financial Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="evm.js"></script><script src="secure-api-loader.js"></script>
+<style>
+body{font-family:'Segoe UI',sans-serif;background:#F0F4F8;margin:0;padding:0;}
+.main-wrap{max-width:1300px;margin:80px auto 40px;padding:0 16px;}
+.page-header{background:linear-gradient(135deg,#1a472a,#2E8B57,#43B97F);color:#fff;padding:28px 32px;border-radius:14px;margin-bottom:20px;box-shadow:0 8px 32px rgba(46,139,87,.3);}
+.page-header h1{margin:0 0 6px;font-size:1.8rem;font-weight:700;}
+.page-header p{margin:0;opacity:.85;font-size:.95rem;}
+.global-bar{background:#fff;border-radius:12px;padding:14px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.07);display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;}
+.global-bar label{font-size:.72rem;font-weight:700;color:#555;text-transform:uppercase;display:block;margin-bottom:3px;}
+.quick-presets{display:flex;gap:5px;flex-wrap:wrap;}
+.qbtn{padding:4px 11px;border:1.5px solid #2E8B57;background:transparent;color:#2E8B57;border-radius:16px;font-size:.78rem;cursor:pointer;font-weight:600;transition:all .2s;}
+.qbtn:hover,.qbtn.active{background:#2E8B57;color:#fff;}
+.tabs-wrap{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+.tabs{display:flex;border-bottom:2px solid #e8f5ef;overflow-x:auto;padding:0 6px;gap:2px;}
+.tab{padding:13px 16px;cursor:pointer;background:transparent;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;font-weight:600;color:#777;white-space:nowrap;font-size:.85rem;transition:all .2s;display:flex;align-items:center;gap:5px;}
+.tab:hover{color:#2E8B57;background:#f8fff8;}
+.tab.active{color:#2E8B57;border-bottom-color:#2E8B57;background:#f0f8f4;}
+.tab-content{display:none;}.tab-content.active{display:block;}
+.tab-inner{padding:22px;}
+.sec-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.sec-title{font-size:1.1rem;font-weight:700;color:#1a1a1a;display:flex;align-items:center;gap:8px;}
+.sec-title i{color:#2E8B57;}
+.exp-btns{display:flex;gap:7px;}
+.ebtn{padding:6px 13px;border-radius:8px;border:none;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;}
+.ebtn.pdf{background:#dc3545;color:#fff;}.ebtn.excel{background:#198754;color:#fff;}.ebtn.prnt{background:#6c757d;color:#fff;}
+.ebtn:hover{opacity:.85;transform:translateY(-1px);}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:22px;}
+.kpi-card{background:#fff;border-radius:11px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-left:4px solid #2E8B57;}
+.kpi-card.blue{border-left-color:#0d6efd;}.kpi-card.red{border-left-color:#dc3545;}.kpi-card.orange{border-left-color:#fd7e14;}
+.kpi-card.purple{border-left-color:#6f42c1;}.kpi-card.cyan{border-left-color:#0dcaf0;}.kpi-card.teal{border-left-color:#20c997;}
+.kpi-icon{font-size:1.3rem;margin-bottom:6px;opacity:.65;}
+.kpi-val{font-size:1.5rem;font-weight:700;color:#1a1a1a;line-height:1;}
+.kpi-lbl{font-size:.73rem;color:#999;text-transform:uppercase;letter-spacing:.4px;margin-top:3px;}
+.kpi-sub{font-size:.78rem;color:#2E8B57;margin-top:3px;font-weight:500;}
+.kpi-sub.neg{color:#dc3545;}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
+.chart-card{background:#fff;border-radius:11px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.07);}
+.chart-card h5{font-weight:700;margin-bottom:14px;color:#333;font-size:.88rem;display:flex;align-items:center;gap:7px;}
+.chart-card h5 i{color:#2E8B57;}
+.chart-wrap{position:relative;height:230px;}
+.date-filter{display:flex;gap:10px;align-items:center;margin-bottom:18px;padding:14px;background:#f0f8f4;border-radius:8px;flex-wrap:wrap;}
+.date-filter div{display:flex;flex-direction:column;}
+.date-filter label{margin-bottom:4px;font-weight:bold;color:#444;font-size:.88rem;}
+.vehicles-grid{display:flex;flex-direction:column;gap:18px;max-height:600px;overflow-y:auto;padding-right:8px;}
+.vehicle-card{background:#fff;border-radius:8px;box-shadow:0 3px 8px rgba(0,0,0,.09);position:relative;overflow:hidden;border:1px solid #eee;}
+.vehicle-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:#2E8B57;}
+.vehicle-card:hover{transform:translateY(-2px);box-shadow:0 5px 12px rgba(0,0,0,.13);}
+.vehicle-card-header{padding:14px 18px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#fafafa;}
+.vehicle-card-header h3{margin:0;color:#2E8B57;font-size:1.05rem;}
+.trip-count{background:#2E8B57;color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;}
+.rotate-icon{transition:transform .3s;font-size:.95rem;color:#888;}
+.vehicle-card.expanded .rotate-icon{transform:rotate(180deg);}
+.vehicle-card-body{padding:0 18px;max-height:0;overflow:hidden;transition:max-height .4s ease-out,padding .4s ease-out;}
+.vehicle-card.expanded .vehicle-card-body{padding:18px;max-height:600px;}
+.vehicle-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:8px 0;}
+.stat-item{display:flex;flex-direction:column;padding:9px;background:#f9f9f9;border-radius:6px;border:1px solid #eee;}
+.stat-value{font-weight:700;font-size:.95rem;}.positive{color:#198754;}.negative{color:#dc3545;}
+.stat-label{font-size:10px;color:#777;text-transform:uppercase;}
+.download-btn{background:#4361ee;color:#fff;border:none;padding:9px;border-radius:4px;cursor:pointer;width:100%;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:600;}
+.download-btn:hover{background:#3a0ca3;}
+.accounting-summary{margin-top:18px;padding:18px;background:#f0f8f4;border-radius:8px;border-left:5px solid #4361ee;}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:11px;margin-top:11px;}
+.summary-card{background:#fff;padding:11px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.08);text-align:center;border-top:3px solid #3a0ca3;}
+.summary-card h3{margin-top:0;color:#444;font-size:11px;text-transform:uppercase;font-weight:600;}
+.summary-card p{font-size:18px;font-weight:700;margin:4px 0;}
+.full-range-card{background:#fff;border-radius:8px;box-shadow:0 3px 8px rgba(0,0,0,.09);padding:18px;margin-bottom:18px;position:relative;overflow:hidden;}
+.full-range-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#4361ee,#3a0ca3);}
+.full-range-card h3{margin-top:0;color:#4361ee;border-bottom:1px solid #eee;padding-bottom:8px;}
+.vtoggle{display:flex;gap:5px;background:#f0f0f0;border-radius:8px;padding:3px;}
+.vbtn{padding:5px 14px;border:none;background:transparent;border-radius:6px;cursor:pointer;font-size:.82rem;font-weight:600;color:#666;transition:all .2s;}
+.vbtn.active{background:#fff;color:#2E8B57;box-shadow:0 2px 5px rgba(0,0,0,.1);}
+.pl-section{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:18px;}
+.pl-hdr{background:linear-gradient(135deg,#1a472a,#2E8B57);color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;}
+.pl-hdr h4{margin:0;font-size:1rem;}
+.pl-tbl{width:100%;border-collapse:collapse;}
+.pl-tbl th{background:#f0f8f4;padding:10px 14px;font-size:.78rem;text-transform:uppercase;color:#555;font-weight:700;}
+.pl-tbl td{padding:9px 14px;border-bottom:1px solid #f0f0f0;font-size:.88rem;}
+.pl-tbl tr:hover td{background:#fafff8;}
+.pl-tbl .cat-hdr td{background:#f8f9fa;font-weight:700;color:#333;font-size:.82rem;text-transform:uppercase;}
+.pl-tbl .subtot td{background:#e8f5ef;font-weight:700;border-top:2px solid #2E8B57;}
+.pl-tbl .grand-tot td{background:#2E8B57;color:#fff;font-weight:700;font-size:.95rem;}
+.pl-tbl .grand-loss td{background:#dc3545;color:#fff;font-weight:700;font-size:.95rem;}
+.pl-tbl .indent td:first-child{padding-left:28px;}
+.amt{text-align:right;font-variant-numeric:tabular-nums;}
+.ledger-tbl{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);}
+.ledger-tbl th{background:#2E8B57;color:#fff;padding:11px 14px;font-size:.78rem;text-align:left;white-space:nowrap;}
+.ledger-tbl td{padding:10px 14px;border-bottom:1px solid #f0f0f0;font-size:.85rem;}
+.ledger-tbl tr:hover td{background:#f8fff8;}
+.ledger-tbl .tot-row td{background:#f0f8f4;font-weight:700;border-top:2px solid #2E8B57;}
+.bal-due{color:#dc3545;font-weight:700;}.bal-ok{color:#198754;font-weight:700;}
+.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:.72rem;font-weight:600;}
+.bdg-due{background:#fff3cd;color:#664d03;}.bdg-ok{background:#d1e7dd;color:#0a3622;}.bdg-mkt{background:#cfe2ff;color:#084298;}
+.bs-wrap{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.bs-col{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);}
+.bs-hdr{padding:14px 18px;font-weight:700;font-size:.95rem;color:#fff;}
+.bs-hdr.assets{background:#0d6efd;}.bs-hdr.liab{background:#dc3545;}
+.bs-tbl{width:100%;border-collapse:collapse;}
+.bs-tbl td{padding:9px 14px;border-bottom:1px solid #f5f5f5;font-size:.85rem;}
+.bs-tbl .bs-sec td{background:#f8f9fa;font-weight:700;text-transform:uppercase;font-size:.76rem;color:#555;}
+.bs-tbl .bs-tot td{background:#f0f8f4;font-weight:700;border-top:2px solid #dee2e6;}
+.bs-tbl .bs-grand td{background:#e8f5ef;font-weight:800;font-size:.9rem;border-top:3px double #2E8B57;}
+.bs-amt{text-align:right;}
+.bs-foot{background:#2E8B57;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;font-weight:700;}
+.no-data{text-align:center;padding:50px 30px;color:#aaa;font-style:italic;}
+.no-data i{font-size:2.5rem;display:block;margin-bottom:12px;opacity:.25;}
+.loading{display:flex;justify-content:center;padding:50px;}
+.spinner{border:4px solid rgba(0,0,0,.1);border-left-color:#2E8B57;border-radius:50%;width:32px;height:32px;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.srch{border:1px solid #ddd;border-radius:8px;padding:7px 13px;font-size:.88rem;width:260px;margin-bottom:14px;}
+#chartContainer{display:none;}
+.pdf-preview-content{background:#fff;padding:18px;border-radius:8px;}
+.report-section{margin-bottom:26px;padding-bottom:13px;border-bottom:1px dashed #ddd;}
+.report-header{color:#4361ee;font-weight:700;border-bottom:2px solid #2E8B57;padding-bottom:4px;margin-bottom:13px;font-size:1.3rem;}
+.report-stat{background:#f8f9fa;padding:9px;border-radius:6px;margin-bottom:9px;border-left:3px solid #2E8B57;}
+.report-table-container{max-height:380px;overflow-y:auto;border:1px solid #eee;border-radius:6px;}
+.report-table th{background:#2E8B57;color:#fff;position:sticky;top:0;}
+@media print{.global-bar,.tabs,.exp-btns,.download-btn,.date-filter,nav{display:none!important;}.main-wrap{margin:0;padding:0;max-width:100%;}}
+@media(max-width:768px){.charts-grid{grid-template-columns:1fr;}.bs-wrap{grid-template-columns:1fr;}.kpi-grid{grid-template-columns:repeat(2,1fr);}.vehicle-stats{grid-template-columns:1fr 1fr;}}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr;}}
+</style>
+  <script src="auth-manager.js"></script>
+  <script>
+    (async function() { if(window.AuthManager) await window.AuthManager.enforcePageAccess("combined_ca"); })();
+  </script>
+</head>
+<body>
+<script src="navbar-loader.js"></script>
+<div class="main-wrap">
+  <div class="page-header">
+    <h1><i class="fas fa-chart-line me-2"></i>Transport Financial Dashboard</h1>
+    <p>Chartered Accountant Grade Reporting & Analytics</p>
+  </div>
+  <div class="global-bar">
+    <div><label><i class="fas fa-calendar-alt me-1"></i>From Date</label><input type="date" id="gStart" class="form-control form-control-sm" style="width:148px;"></div>
+    <div><label><i class="fas fa-calendar-alt me-1"></i>To Date</label><input type="date" id="gEnd" class="form-control form-control-sm" style="width:148px;"></div>
+    <div><label>Quick Presets</label>
+      <div class="quick-presets">
+        <button class="qbtn" data-p="today">Today</button>
+        <button class="qbtn" data-p="week">This Week</button>
+        <button class="qbtn active" data-p="month">This Month</button>
+        <button class="qbtn" data-p="year">This Year</button>
+        <button class="qbtn" data-p="q1">Q1</button>
+        <button class="qbtn" data-p="q2">Q2</button>
+        <button class="qbtn" data-p="q3">Q3</button>
+        <button class="qbtn" data-p="q4">Q4</button>
+      </div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-success btn-sm" id="gApply"><i class="fas fa-filter me-1"></i>Apply</button>
+      <button class="btn btn-outline-secondary btn-sm" id="gReset"><i class="fas fa-sync me-1"></i>Reset</button>
+    </div>
+  </div>
+  <div class="tabs-wrap">
+    <div class="tabs">
+      <div class="tab active" data-tab="dashboard"><i class="fas fa-tachometer-alt"></i>Dashboard</div>
+      <div class="tab" data-tab="vehicle-reports"><i class="fas fa-truck"></i>Vehicle Reports</div>
+      <div class="tab" data-tab="monthly-reports"><i class="fas fa-calendar"></i>Monthly</div>
+      <div class="tab" data-tab="full-range-reports"><i class="fas fa-chart-line"></i>Full Range</div>
+      <div class="tab" data-tab="pl-statement"><i class="fas fa-file-invoice-dollar"></i>P&amp;L</div>
+      <div class="tab" data-tab="party-ledger"><i class="fas fa-users"></i>Party Ledger</div>
+      <div class="tab" data-tab="driver-ledger"><i class="fas fa-id-card"></i>Driver Ledger</div>
+      <div class="tab" data-tab="balance-sheet"><i class="fas fa-balance-scale"></i>Balance Sheet</div>
+    </div>
+    <!-- DASHBOARD -->
+    <div class="tab-content active" id="dashboard">
+      <div class="tab-inner">
+        <div class="sec-bar">
+          <div class="sec-title"><i class="fas fa-tachometer-alt"></i>Financial Overview</div>
+          <div class="exp-btns">
+            <button class="ebtn excel" onclick="exportDashExcel()"><i class="fas fa-file-excel"></i>Excel</button>
+          </div>
+        </div>
+        <div class="kpi-grid" id="dashKPIs"><div class="no-data"><i class="fas fa-chart-line"></i>Apply filter to load</div></div>
+        <div class="charts-grid" id="dashCharts" style="display:none;">
+          <div class="chart-card"><h5><i class="fas fa-chart-bar"></i>Revenue vs Expenses (Monthly)</h5><div class="chart-wrap"><canvas id="cMonthly"></canvas></div></div>
+          <div class="chart-card"><h5><i class="fas fa-chart-pie"></i>Expense Breakdown</h5><div class="chart-wrap"><canvas id="cDonut"></canvas></div></div>
+          <div class="chart-card"><h5><i class="fas fa-truck"></i>Vehicle Profitability</h5><div class="chart-wrap"><canvas id="cVehicle"></canvas></div></div>
+          <div class="chart-card"><h5><i class="fas fa-chart-line"></i>Monthly Profit Trend</h5><div class="chart-wrap"><canvas id="cTrend"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- VEHICLE REPORTS -->
+    <div class="tab-content" id="vehicle-reports">
+      <div class="tab-inner">
+        <div class="sec-bar">
+          <div class="sec-title"><i class="fas fa-truck"></i>Vehicle Trip Reports</div>
+          <div class="vtoggle">
+            <button class="vbtn active" data-vt="own">Own Fleet</button>
+            <button class="vbtn" data-vt="market">Market</button>
+            <button class="vbtn" data-vt="combined">Combined</button>
+          </div>
+        </div>
+        <div class="date-filter">
+          <div><label>Start Date</label><input type="date" id="startDate"></div>
+          <div><label>End Date</label><input type="date" id="endDate"></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:18px;">
+            <label style="margin:0;font-weight:700;">Show:</label>
+            <select id="entriesPerPage" class="form-select" style="width:auto;">
+              <option value="5">5</option><option value="10" selected>10</option>
+              <option value="20">20</option><option value="50">50</option>
+            </select>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:flex-end;gap:9px;">
+            <button id="applyFilter" class="btn btn-primary"><i class="fas fa-filter"></i> Apply</button>
+            <button id="resetFilter" class="btn btn-secondary"><i class="fas fa-sync-alt"></i> Reset</button>
+          </div>
+        </div>
+        <div id="vehiclesContainer" class="vehicles-grid"><div class="no-data"><i class="fas fa-truck"></i>Select date range to load</div></div>
+        <div id="accountingSummary" class="accounting-summary" style="display:none;">
+          <h2><i class="fas fa-chart-pie"></i> Overall Accounting Summary</h2>
+          <div class="summary-grid">
+            <div class="summary-card"><h3>Total Trips</h3><p id="totalTrips">0</p></div>
+            <div class="summary-card"><h3>Total Revenue</h3><p id="totalRevenue">₹0</p></div>
+            <div class="summary-card"><h3>Total Expenses</h3><p id="totalExpenses">₹0</p></div>
+            <div class="summary-card"><h3>Net Profit</h3><p id="netProfit">₹0</p></div>
+            <div class="summary-card"><h3>Profit Margin</h3><p id="profitMargin">0%</p></div>
+            <div class="summary-card"><h3>Diesel</h3><p id="dieselExpenses">₹0</p></div>
+            <div class="summary-card"><h3>Tyre</h3><p id="tyreExpenses">₹0</p></div>
+            <div class="summary-card"><h3>Total Tonnes</h3><p id="totalTonnes">0 MT</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- MONTHLY -->
+    <div class="tab-content" id="monthly-reports">
+      <div class="tab-inner">
+        <h2><i class="fas fa-calendar"></i> Monthly Reports</h2>
+        <div class="date-filter">
+          <div><label>Month</label>
+            <select id="monthSelect" class="form-select" style="width:auto;">
+              <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+              <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+              <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+              <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+            </select>
+          </div>
+          <div><label>Year</label><select id="yearSelect" class="form-select" style="width:auto;"></select></div>
+          <div style="margin-left:auto;display:flex;align-items:flex-end;gap:9px;">
+            <button id="applyMonthFilter" class="btn btn-primary"><i class="fas fa-filter"></i> Generate</button>
+            <button id="downloadMonthlyReport" class="btn btn-success"><i class="fas fa-download"></i> PDF</button>
+          </div>
+        </div>
+        <div id="monthlyReportContainer"><div class="no-data"><i class="fas fa-calendar"></i>Select month and year</div></div>
+      </div>
+    </div>
+    <!-- FULL RANGE -->
+    <div class="tab-content" id="full-range-reports">
+      <div class="tab-inner">
+        <h2><i class="fas fa-chart-line"></i> Full Range Reports</h2>
+        <div class="date-filter">
+          <div><label>Start Date</label><input type="date" id="fullRangeStartDate" class="form-control"></div>
+          <div><label>End Date</label><input type="date" id="fullRangeEndDate" class="form-control"></div>
+          <div style="margin-left:auto;display:flex;align-items:flex-end;gap:9px;">
+            <button id="applyFullRangeFilter" class="btn btn-primary"><i class="fas fa-filter"></i> Generate</button>
+            <button id="downloadFullRangeReport" class="btn btn-success"><i class="fas fa-download"></i> PDF</button>
+          </div>
+        </div>
+        <div id="fullRangeReportContainer"><div class="no-data"><i class="fas fa-chart-area"></i>Select date range</div></div>
+      </div>
+    </div>
+    <!-- P&L -->
+    <div class="tab-content" id="pl-statement">
+      <div class="tab-inner">
+        <div class="sec-bar">
+          <div class="sec-title"><i class="fas fa-file-invoice-dollar"></i>Profit &amp; Loss Statement</div>
+          <div class="exp-btns">
+            <button class="ebtn pdf" onclick="exportPLPDF()"><i class="fas fa-file-pdf"></i>PDF</button>
+            <button class="ebtn excel" onclick="exportPLExcel()"><i class="fas fa-file-excel"></i>Excel</button>
+            <button class="ebtn prnt" onclick="window.print()"><i class="fas fa-print"></i>Print</button>
+          </div>
+        </div>
+        <div id="plContainer"><div class="no-data"><i class="fas fa-file-invoice-dollar"></i>Apply date filter to generate P&amp;L</div></div>
+      </div>
+    </div>
+    <!-- PARTY LEDGER -->
+    <div class="tab-content" id="party-ledger">
+      <div class="tab-inner">
+        <div class="sec-bar">
+          <div class="sec-title"><i class="fas fa-users"></i>Party (Client) Ledger — A/R</div>
+          <div class="exp-btns">
+            <button class="ebtn excel" onclick="exportPartyExcel()"><i class="fas fa-file-excel"></i>Excel</button>
+            <button class="ebtn pdf" onclick="exportPartyPDF()"><i class="fas fa-file-pdf"></i>PDF</button>
+          </div>
+        </div>
+        <input class="srch" id="partySearch" placeholder="Search client...">
+        <div id="partyContainer"><div class="no-data"><i class="fas fa-users"></i>Apply filter to load</div></div>
+      </div>
+    </div>
+    <!-- DRIVER LEDGER -->
+    <div class="tab-content" id="driver-ledger">
+      <div class="tab-inner">
+        <div class="sec-bar">
+          <div class="sec-title"><i class="fas fa-id-card"></i>Driver Ledger — Payroll</div>
+          <div class="exp-btns">
+            <button class="ebtn excel" onclick="exportDriverExcel()"><i class="fas fa-file-excel"></i>Excel</button>
+            <button class="ebtn pdf" onclick="exportDriverPDF()"><i class="fas fa-file-pdf"></i>PDF</button>
+          </div>
+        </div>
+        <input class="srch" id="driverSearch" placeholder="Search driver...">
+        <div id="driverContainer"><div class="no-data"><i class="fas fa-id-card"></i>Apply filter to load</div></div>
+      </div>
+    </div>
+    <!-- BALANCE SHEET -->
+    <div class="tab-content" id="balance-sheet">
+      <div class="tab-inner">
+        <div class="sec-bar">
+          <div class="sec-title"><i class="fas fa-balance-scale"></i>Balance Sheet</div>
+          <div class="exp-btns">
+            <button class="ebtn prnt" onclick="window.print()"><i class="fas fa-print"></i>Print</button>
+          </div>
+        </div>
+        <div id="bsContainer"><div class="no-data"><i class="fas fa-balance-scale"></i>Apply filter to generate</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="chartContainer">
+  <canvas id="financialChart" width="800" height="300"></canvas>
+  <canvas id="expenseChart" width="800" height="300"></canvas>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="reportViewModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Vehicle Report Preview</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="pdf-preview-content">
+          <h2 class="text-center text-secondary mb-4">Report: <span id="previewVehicleNumber" class="text-primary"></span></h2>
+          <div class="row">
+            <div class="col-md-6 report-stat">Period: <span id="previewDateRange"></span></div>
+            <div class="col-md-6 report-stat">Revenue: <span id="previewTotalRevenue" class="fw-bold text-success"></span></div>
+            <div class="col-md-6 report-stat">Distance: <span id="previewTotalKM" class="fw-bold"></span></div>
+            <div class="col-md-6 report-stat">Net Profit: <span id="previewNetProfit" class="fw-bold text-primary"></span></div>
+          </div>
+          <div class="report-section">
+            <h4 class="report-header"><i class="fas fa-chart-area me-2"></i>Financial Summary</h4>
+            <div class="row"><div class="col-md-6"><canvas id="previewFinancialChart"></canvas></div><div class="col-md-6"><canvas id="previewExpenseChart"></canvas></div></div>
+          </div>
+          <div class="report-section">
+            <h4 class="report-header"><i class="fas fa-calculator me-2"></i>Cost of Ownership (TCO)</h4>
+            <table class="table table-striped table-sm"><thead><tr><th>Component</th><th class="text-end">Value (₹)</th><th class="text-end">Per Trip (₹)</th></tr></thead><tbody id="previewTcoBody"></tbody></table>
+          </div>
+          <div class="report-section">
+            <h4 class="report-header"><i class="fas fa-list me-2"></i>Trip Log</h4>
+            <div class="report-table-container">
+              <table class="table table-striped table-hover table-sm report-table">
+                <thead><tr><th>Date</th><th>Route</th><th class="text-end">Start KM</th><th class="text-end">End KM</th><th class="text-end">KM</th><th class="text-end">Tonne</th><th class="text-end">Revenue</th><th class="text-end">Profit</th></tr></thead>
+                <tbody id="previewTripLogBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" id="downloadReportFromModalBtn"><i class="fas fa-file-pdf me-2"></i>Download PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const app = initializeApp(window.FIREBASE_CONFIG);
+const db = getDatabase(app), auth = getAuth(app);
+
+let financialChartInst=null,expenseChartInst=null,prevFinChartInst=null,prevExpChartInst=null;
+let cMonthlyInst=null,cDonutInst=null,cVehicleInst=null,cTrendInst=null;
+
+let allOwnData=[],allMarketData=[],filteredData=[],coreAccountId=null;
+let vehiclesData={},driversData={},clientsData={},transportersData={};
+let driverSalaryPayments=[],paymentsData=[];
+let currentVehicleTypeFilter='own';
+
+const $ = id => document.getElementById(id);
+const today=new Date(),fom=new Date(today.getFullYear(),today.getMonth(),1),lom=new Date(today.getFullYear(),today.getMonth()+1,0);
+
+function fmtDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function fmtDisp(d){return d.toLocaleDateString('en-IN',{year:'numeric',month:'short',day:'numeric'});}
+function fmtFile(d){return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;}
+function fmtNum(n){n=n||0;if(n>=10000000)return (n/10000000).toFixed(2)+' Cr';if(n>=100000)return (n/100000).toFixed(2)+' L';return n.toLocaleString('en-IN',{maximumFractionDigits:0});}
+function fmtNum2(n){return (n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function esc(s){if(!s)return '';return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
+function showLoading(){$('vehiclesContainer').innerHTML='<div class="loading"><div class="spinner"></div></div>';}
+function cleanN(v){if(typeof v==='number')return v.toFixed(2);return (parseFloat(String(v||'0').replace(/₹|,/g,''))||0).toFixed(2);}
+
+// Init dates
+$('gStart').value=fmtDate(fom);$('gEnd').value=fmtDate(lom);
+$('startDate').value=fmtDate(fom);$('endDate').value=fmtDate(lom);
+$('fullRangeStartDate').value=fmtDate(fom);$('fullRangeEndDate').value=fmtDate(lom);
+
+function populateYears(){const cy=new Date().getFullYear();const sel=$('yearSelect');sel.innerHTML='';for(let y=cy-5;y<=cy+1;y++){const o=document.createElement('option');o.value=y;o.textContent=y;sel.appendChild(o);};}
+populateYears();$('monthSelect').value=today.getMonth();$('yearSelect').value=today.getFullYear();
+
+// Quick presets
+document.querySelectorAll('.qbtn').forEach(b=>b.addEventListener('click',function(){
+  document.querySelectorAll('.qbtn').forEach(x=>x.classList.remove('active'));this.classList.add('active');
+  const n=new Date(),p=this.dataset.p;let s,e;
+  if(p==='today'){s=e=new Date();}
+  else if(p==='week'){s=new Date(n);s.setDate(n.getDate()-n.getDay());e=new Date(s);e.setDate(s.getDate()+6);}
+  else if(p==='month'){s=new Date(n.getFullYear(),n.getMonth(),1);e=new Date(n.getFullYear(),n.getMonth()+1,0);}
+  else if(p==='year'){s=new Date(n.getFullYear(),0,1);e=new Date(n.getFullYear(),11,31);}
+  else if(p==='q1'){s=new Date(n.getFullYear(),0,1);e=new Date(n.getFullYear(),2,31);}
+  else if(p==='q2'){s=new Date(n.getFullYear(),3,1);e=new Date(n.getFullYear(),5,30);}
+  else if(p==='q3'){s=new Date(n.getFullYear(),6,1);e=new Date(n.getFullYear(),8,30);}
+  else if(p==='q4'){s=new Date(n.getFullYear(),9,1);e=new Date(n.getFullYear(),11,31);}
+  if(s&&e){$('gStart').value=fmtDate(s);$('gEnd').value=fmtDate(e);}
+}));
+
+$('gApply').addEventListener('click',applyGlobal);
+$('gReset').addEventListener('click',()=>{$('gStart').value=fmtDate(fom);$('gEnd').value=fmtDate(lom);applyGlobal();});
+
+function applyGlobal(){const at=document.querySelector('.tab.active')?.dataset?.tab;refreshTab(at);}
+function refreshTab(id){
+  const s=new Date($('gStart').value),e=new Date($('gEnd').value);e.setHours(23,59,59);
+  if(id==='dashboard')renderDashboard(s,e);
+  else if(id==='pl-statement')renderPL(s,e);
+  else if(id==='party-ledger')renderParty(s,e);
+  else if(id==='driver-ledger')renderDriver(s,e);
+  else if(id==='balance-sheet')renderBS(s,e);
+}
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  const id=t.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  try{localStorage.setItem('ca_tab',id);}catch(e){}
+  if(['dashboard','pl-statement','party-ledger','driver-ledger','balance-sheet'].includes(id))refreshTab(id);
+}));
+
+// Vehicle type toggle
+document.querySelectorAll('.vbtn').forEach(b=>b.addEventListener('click',function(){
+  document.querySelectorAll('.vbtn').forEach(x=>x.classList.remove('active'));this.classList.add('active');
+  currentVehicleTypeFilter=this.dataset.vt;applyDateFilter();
+}));
+
+// Auth
+onAuthStateChanged(auth,user=>{
+  if(!user){window.location.href='index.html';return;}
+  get(ref(db,`users/${user.uid}`)).then(snap=>{
+    coreAccountId=snap.exists()?(snap.val().coreAccountId||user.uid):user.uid;
+    try{const sv=localStorage.getItem('ca_tab');if(sv){const t=document.querySelector(`.tab[data-tab="${sv}"]`);if(t){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));t.classList.add('active');document.getElementById(sv)?.classList.add('active');}}}catch(e){}
+    showLoading();
+    onValue(ref(db,`users/${coreAccountId}/vehicles`),s=>{vehiclesData=s.exists()?s.val():{};});
+    onValue(ref(db,`users/${coreAccountId}/drivers`),s=>{driversData=s.exists()?s.val():{};});
+    onValue(ref(db,`users/${coreAccountId}/clients`),s=>{clientsData=s.exists()?s.val():{};});
+    onValue(ref(db,`users/${coreAccountId}/transporters`),s=>{transportersData=s.exists()?s.val():{};});
+    onValue(ref(db,`users/${coreAccountId}/driverSalaryPayments`),s=>{driverSalaryPayments=[];if(s.exists())s.forEach(c=>driverSalaryPayments.push({id:c.key,...c.val()}));});
+    onValue(ref(db,`users/${coreAccountId}/payments`),s=>{paymentsData=[];if(s.exists())s.forEach(c=>paymentsData.push({id:c.key,...c.val()}));});
+    listenLRs();
+  });
+});
+
+function listenLRs(){
+  if(!coreAccountId)return;
+  onValue(ref(db,`users/${coreAccountId}/lrReports`),snap=>{
+    allOwnData=[];allMarketData=[];
+    if(snap.exists()){
+      snap.forEach(child=>{
+        const lr=child.val(),d=lr.tripDetails||{},et=lr.emptyTripData||{};
+        if(lr.lrType==='market'){
+          const gain=parseFloat(d.billingAmount)||0,freight=parseFloat(d.freightAmount)||0;
+          const adv=parseFloat(d.advance)||0,brok=(parseFloat(d.brokerageExpenses)||0)+(parseFloat(d.commissionExpenses)||0);
+          const toll=parseFloat(d.tollExpenses)||0,other=parseFloat(d.otherExpenses)||0;
+          const tot=freight+adv+brok+toll+other;
+          allMarketData.push({key:child.key,date:lr.date,lrNumber:lr.lrNumber||'',vehicle:lr.truckNumber||lr.marketTruckNumber||'',transporterId:lr.transporterId||'',clientId:lr.clientId||'',consignorName:lr.consignorName||'',consigneeName:lr.consigneeName||'',fromLocation:lr.fromLocation||'',toLocation:lr.toLocation||'',weight:parseFloat(lr.weight)||0,gain,freightAmount:freight,advance:adv,brokerage:brok,toll,other,diesel:0,tyre:0,food:0,vehicleWork:0,commission:0,tirpalRope:0,shortage:0,totalTripKm:0,total:tot,profit:gain-tot,monthlyInstallment:0,driverSalary:0,startKm:0,endKm:0});
+          return;
+        }
+        if(!Object.values(vehiclesData).some(v=>v.vehicleNumber===lr.truckNumber))return;
+        const dr=parseFloat(d.dieselRatePerLiter)||0,ml=parseFloat(d.fuelUsedLiters)||0,el=parseFloat(et.fuelUsedLiters)||0;
+        const diesel=(ml+el)*dr;
+        const mk=parseFloat(d.totalKm)||0,ek=(parseFloat(et.endingKm)||0)-(parseFloat(et.startingKm)||0);
+        const ba=parseFloat(d.billingAmount)||0,brt=lr.weight>0?ba/lr.weight:0;
+        const sh=((parseFloat(d.shortage)||0)/1000)*brt;
+        const moe=(parseFloat(d.loadingUnloadingExpenses)||0)+(parseFloat(d.policeChallanExpenses)||0)+(parseFloat(d.tacExpenses)||0)+(parseFloat(d.permitExpenses)||0)+(parseFloat(d.brokerageExpenses)||0)+(parseFloat(d.otherExpenses)||0);
+        const mae=(parseFloat(d.tyreExpenses)||0)+(parseFloat(d.tollExpenses)||0)+(parseFloat(d.foodExpenses)||0)+(parseFloat(d.vehicleWorkAmount)||0)+(parseFloat(d.commissionExpenses)||0)+(parseFloat(d.tirpalRopeExpenses)||0)+moe;
+        const me=mae+(parseFloat(d.advance)||0);
+        const eoe=(parseFloat(et.loadingUnloadingExpenses)||0)+(parseFloat(et.policeChallanExpenses)||0)+(parseFloat(et.tacExpenses)||0)+(parseFloat(et.permitExpenses)||0)+(parseFloat(et.brokerageExpenses)||0)+(parseFloat(et.otherExpenses)||0);
+        const eae=(parseFloat(et.tyreExpenses)||0)+(parseFloat(et.tollExpenses)||0)+(parseFloat(et.foodExpenses)||0)+(parseFloat(et.vehicleWorkAmount)||0)+(parseFloat(et.commissionExpenses)||0)+(parseFloat(et.tirpalRopeExpenses)||0)+eoe;
+        const tot=me+eae+sh+diesel;
+        const vd=Object.values(vehiclesData).find(v=>v.vehicleNumber===lr.truckNumber)||{};
+        const dd=vd.assignedDriverKey?driversData[vd.assignedDriverKey]:{};
+        allOwnData.push({key:child.key,date:lr.date,lrNumber:lr.lrNumber||'',vehicle:lr.truckNumber,clientId:lr.clientId||'',consignorName:lr.consignorName||'',consigneeName:lr.consigneeName||'',fromLocation:lr.fromLocation,toLocation:lr.toLocation,gain:ba,weight:parseFloat(lr.weight)||0,diesel,tyre:(parseFloat(d.tyreExpenses)||0)+(parseFloat(et.tyreExpenses)||0),advance:parseFloat(d.advance)||0,toll:(parseFloat(d.tollExpenses)||0)+(parseFloat(et.tollExpenses)||0),vehicleWork:(parseFloat(d.vehicleWorkAmount)||0)+(parseFloat(et.vehicleWorkAmount)||0),commission:(parseFloat(d.commissionExpenses)||0)+(parseFloat(et.commissionExpenses)||0),tirpalRope:(parseFloat(d.tirpalRopeExpenses)||0)+(parseFloat(et.tirpalRopeExpenses)||0),food:(parseFloat(d.foodExpenses)||0)+(parseFloat(et.foodExpenses)||0),other:moe+eoe,monthlyInstallment:parseFloat(vd.monthlyInstallment)||0,driverSalary:parseFloat(dd?.monthlySalary)||0,shortage:sh,total:tot,profit:ba-tot,totalTripKm:mk+ek,startKm:parseFloat(d.startingKm)||0,endKm:parseFloat(d.endingKm)||0,...d,...et});
+      });
+    }
+    applyDateFilter();
+    const at=document.querySelector('.tab.active')?.dataset?.tab;
+    if(['dashboard','pl-statement','party-ledger','driver-ledger','balance-sheet'].includes(at))refreshTab(at);
+    else{const s=new Date($('gStart').value),e=new Date($('gEnd').value);e.setHours(23,59,59);renderDashboard(s,e);}
+  });
+}
+
+// Vehicle Reports
+$('applyFilter').addEventListener('click',applyDateFilter);
+$('resetFilter').addEventListener('click',()=>{$('startDate').value=fmtDate(fom);$('endDate').value=fmtDate(lom);applyDateFilter();});
+$('applyMonthFilter').addEventListener('click',genMonthly);
+$('downloadMonthlyReport').addEventListener('click',()=>{
+  const mo=parseInt($('monthSelect').value),yr=parseInt($('yearSelect').value);
+  const s=new Date(yr,mo,1),e=new Date(yr,mo+1,0);e.setHours(23,59,59);
+  const md=allOwnData.filter(it=>{const d=new Date(it.date);return d>=s&&d<=e;});
+  genFullRangePDF(md,s,e,`${s.toLocaleString('default',{month:'long'})}-${yr}-Report`);
+});
+$('applyFullRangeFilter').addEventListener('click',genFullRange);
+$('downloadFullRangeReport').addEventListener('click',()=>{
+  const s=new Date($('fullRangeStartDate').value),e=new Date($('fullRangeEndDate').value);e.setHours(23,59,59);
+  const rd=allOwnData.filter(it=>{const d=new Date(it.date);return d>=s&&d<=e;});
+  genFullRangePDF(rd,s,e,`Report_${fmtFile(s)}_to_${fmtFile(e)}`);
+});
+$('downloadReportFromModalBtn').addEventListener('click',function(){
+  if(this.dataset.vehicle&&this.dataset.trips)genVehiclePDF(this.dataset.vehicle,JSON.parse(decodeURIComponent(this.dataset.trips)));
+  else alert('Report data missing. Please retry.');
+});
+$('entriesPerPage').addEventListener('change',renderVehicleCards);
+$('vehiclesContainer').addEventListener('click',e=>{const h=e.target.closest('.vehicle-card-header');if(h)h.closest('.vehicle-card')?.classList.toggle('expanded');});
+
+function applyDateFilter(){
+  const s=$('startDate').value,e=$('endDate').value;if(!s||!e){alert('Select both dates');return;}
+  showLoading();
+  setTimeout(()=>{
+    const start=new Date(s),end=new Date(e);end.setHours(23,59,59);
+    let src=currentVehicleTypeFilter==='own'?allOwnData:currentVehicleTypeFilter==='market'?allMarketData:[...allOwnData,...allMarketData];
+    filteredData=src.filter(it=>{const d=new Date(it.date);return d>=start&&d<=end;});
+    renderVehicleCards();calcSummary();
+  },100);
+}
+
+function renderVehicleCards(){
+  const vc=$('vehiclesContainer');vc.innerHTML='';
+  if(filteredData.length===0){vc.innerHTML='<div class="no-data"><i class="fas fa-truck"></i>No trips found</div>';$('accountingSummary').style.display='none';return;}
+  const vmap={};filteredData.forEach(t=>{if(!vmap[t.vehicle])vmap[t.vehicle]=[];vmap[t.vehicle].push(t);});
+  const lim=parseInt($('entriesPerPage').value)||10;let cnt=0;
+  Object.keys(vmap).forEach(vn=>{
+    if(cnt>=lim)return;cnt++;
+    const trips=vmap[vn],tr=trips.reduce((s,t)=>s+(Number(t.gain)||0),0),te=trips.reduce((s,t)=>s+(Number(t.total)||0),0);
+    const np=tr-te,pm=tr>0?((np/tr)*100).toFixed(2):0;
+    const tk=trips.reduce((s,t)=>s+(Number(t.totalTripKm)||0),0),tt=trips.reduce((s,t)=>s+(Number(t.weight)||0),0);
+    const emi=Number(trips[0]?.monthlyInstallment)||0,sal=Number(trips[0]?.driverSalary)||0;
+    const card=document.createElement('div');card.className='vehicle-card';
+    card.innerHTML=`<div class="vehicle-card-header"><h3>${esc(vn)} <span class="trip-count">${trips.length} Trips</span></h3><span class="rotate-icon"><i class="fas fa-chevron-down"></i></span></div>
+    <div class="vehicle-card-body"><div class="vehicle-stats">
+      <div class="stat-item"><span class="stat-value">₹${tr.toFixed(2)}</span><span class="stat-label">Revenue</span></div>
+      <div class="stat-item"><span class="stat-value">₹${te.toFixed(2)}</span><span class="stat-label">Expenses</span></div>
+      <div class="stat-item"><span class="stat-value ${np>=0?'positive':'negative'}">₹${np.toFixed(2)}</span><span class="stat-label">Net Profit</span></div>
+      <div class="stat-item"><span class="stat-value ${pm>=0?'positive':'negative'}">${pm}%</span><span class="stat-label">Margin</span></div>
+      <div class="stat-item"><span class="stat-value">${tk.toFixed(0)}</span><span class="stat-label">Total KM</span></div>
+      <div class="stat-item"><span class="stat-value">${tt.toFixed(2)}</span><span class="stat-label">Tonnes</span></div>
+      <div class="stat-item"><span class="stat-value">₹${emi.toFixed(2)}</span><span class="stat-label">EMI</span></div>
+      <div class="stat-item"><span class="stat-value">₹${sal.toFixed(2)}</span><span class="stat-label">Driver Sal</span></div>
+    </div>
+    <button class="btn btn-primary download-btn" data-vehicle="${esc(vn)}" data-trips="${encodeURIComponent(JSON.stringify(trips))}" onclick="showReportPreview(this.getAttribute('data-vehicle'),this.getAttribute('data-trips'))">
+      <i class="fas fa-eye me-2"></i>View & Download Report
+    </button></div>`;
+    vc.appendChild(card);
+  });
+  $('accountingSummary').style.display='block';
+}
+
+function calcSummary(){
+  const tr=filteredData.reduce((s,t)=>s+(Number(t.gain)||0),0),te=filteredData.reduce((s,t)=>s+(Number(t.total)||0),0);
+  const np=tr-te,pm=tr>0?((np/tr)*100).toFixed(2):'0';
+  $('totalTrips').textContent=filteredData.length;$('totalRevenue').textContent=`₹${tr.toFixed(2)}`;
+  $('totalExpenses').textContent=`₹${te.toFixed(2)}`;$('netProfit').textContent=`₹${np.toFixed(2)}`;
+  $('profitMargin').textContent=`${pm}%`;
+  $('dieselExpenses').textContent=`₹${filteredData.reduce((s,t)=>s+(Number(t.diesel)||0),0).toFixed(2)}`;
+  $('tyreExpenses').textContent=`₹${filteredData.reduce((s,t)=>s+(Number(t.tyre)||0),0).toFixed(2)}`;
+  $('totalTonnes').textContent=`${filteredData.reduce((s,t)=>s+(Number(t.weight)||0),0).toFixed(2)} MT`;
+}
+
+window.showReportPreview=function(vn,enc){
+  const trips=JSON.parse(decodeURIComponent(enc));if(!trips.length)return;
+  const tr=trips.reduce((s,t)=>s+(Number(t.gain)||0),0),te=trips.reduce((s,t)=>s+(Number(t.total)||0),0),np=tr-te;
+  const tk=trips.reduce((s,t)=>s+(Number(t.totalTripKm)||0),0),tt=trips.reduce((s,t)=>s+(Number(t.weight)||0),0);
+  const days=Math.ceil((new Date($('endDate').value)-new Date($('startDate').value))/(86400000))+1,months=days/30;
+  const emi=Number(trips[0].monthlyInstallment)||0,sal=Number(trips[0].driverSalary)||0;
+  const tEmi=emi*months,tSal=sal*months,tWork=trips.reduce((s,t)=>s+(Number(t.vehicleWork)||0),0);
+  const tDiesel=trips.reduce((s,t)=>s+(Number(t.diesel)||0),0),tTyre=trips.reduce((s,t)=>s+(Number(t.tyre)||0),0);
+  const tToll=trips.reduce((s,t)=>s+(Number(t.toll)||0),0),tFood=trips.reduce((s,t)=>s+(Number(t.food)||0),0);
+  const tOther=trips.reduce((s,t)=>s+(Number(t.other)||0),0),tAdv=trips.reduce((s,t)=>s+(Number(t.advance)||0),0);
+  $('previewVehicleNumber').textContent=vn;
+  $('previewDateRange').textContent=`${fmtDisp(new Date($('startDate').value))} - ${fmtDisp(new Date($('endDate').value))}`;
+  $('previewTotalRevenue').textContent=`₹${tr.toFixed(2)}`;$('previewNetProfit').textContent=`₹${np.toFixed(2)}`;
+  $('previewTotalKM').textContent=`${tk.toFixed(0)} KM (${tt.toFixed(2)} MT)`;
+  $('previewTcoBody').innerHTML=`
+    <tr><td>Total Revenue</td><td class="text-end text-success fw-bold">₹${tr.toFixed(2)}</td><td class="text-end">-</td></tr>
+    <tr><td>Total Expenses</td><td class="text-end text-danger fw-bold">₹${te.toFixed(2)}</td><td class="text-end">₹${(te/trips.length).toFixed(2)}</td></tr>
+    <tr><td>EMI Installment</td><td class="text-end">₹${tEmi.toFixed(2)}</td><td class="text-end">-</td></tr>
+    <tr><td>Driver Salary</td><td class="text-end">₹${tSal.toFixed(2)}</td><td class="text-end">₹${(tSal/trips.length).toFixed(2)}</td></tr>
+    <tr><td>Vehicle Repairs</td><td class="text-end">₹${tWork.toFixed(2)}</td><td class="text-end">₹${(tWork/trips.length).toFixed(2)}</td></tr>`;
+  $('previewTripLogBody').innerHTML=trips.map(t=>`<tr><td>${fmtDisp(new Date(t.date))}</td><td>${t.fromLocation||'-'} → ${t.toLocation||'-'}</td><td class="text-end">${(t.startKm||0).toFixed(0)}</td><td class="text-end">${(t.endKm||0).toFixed(0)}</td><td class="text-end">${(t.totalTripKm||0).toFixed(0)}</td><td class="text-end">${(t.weight||0).toFixed(2)}</td><td class="text-end">₹${(t.gain||0).toFixed(2)}</td><td class="text-end"><span class="${(t.profit||0)>=0?'text-success':'text-danger'}">₹${(t.profit||0).toFixed(2)}</span></td></tr>`).join('');
+  renderChartBasic('previewFinancialChart','bar',['Revenue','Expenses','Profit'],[tr,te,np],['rgba(46,139,87,.8)','rgba(220,53,69,.8)','rgba(0,123,255,.8)'],'Financial Summary','prev-fin');
+  renderChartBasic('previewExpenseChart','bar',['Diesel','Tyre','Toll','Advance','Food','Work','Other'],[tDiesel,tTyre,tToll,tAdv,tFood,tWork,tOther],['#007bff','#28a745','#ffc107','#17a2b8','#dc3545','#6f42c1','#6c757d'],'Expense Categories','prev-exp');
+  $('downloadReportFromModalBtn').dataset.vehicle=vn;$('downloadReportFromModalBtn').dataset.trips=enc;
+  new bootstrap.Modal($('reportViewModal')).show();
+};
+
+function renderChartBasic(canvasId,type,labels,data,colors,title,storeKey){
+  if(window['__chart_'+storeKey])window['__chart_'+storeKey].destroy();
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  window['__chart_'+storeKey]=new Chart(ctx,{type,data:{labels,datasets:[{label:title,data,backgroundColor:colors,borderColor:colors,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}},plugins:{legend:{position:'right'},title:{display:true,text:title,font:{size:13}}}}});
+}
+
+// Monthly
+function genMonthly(){
+  const mo=parseInt($('monthSelect').value),yr=parseInt($('yearSelect').value);
+  const s=new Date(yr,mo,1),e=new Date(yr,mo+1,0);e.setHours(23,59,59);
+  const data=allOwnData.filter(it=>{const d=new Date(it.date);return d>=s&&d<=e;});
+  renderMonthlyReport(data,s,e);
+}
+function genFullRange(){
+  if(!$('fullRangeStartDate').value||!$('fullRangeEndDate').value){alert('Select both dates');return;}
+  const s=new Date($('fullRangeStartDate').value),e=new Date($('fullRangeEndDate').value);e.setHours(23,59,59);
+  const data=allOwnData.filter(it=>{const d=new Date(it.date);return d>=s&&d<=e;});
+  renderFullRangeReport(data,s,e);
+}
+
+function vehicleSummaryHTML(vmap){
+  return Object.keys(vmap).map(v=>{
+    const vt=vmap[v],vr=vt.reduce((s,t)=>s+(Number(t.gain)||0),0),ve=vt.reduce((s,t)=>s+(Number(t.total)||0),0),vp=vr-ve,vm=vr>0?((vp/vr)*100).toFixed(2):0;
+    return `<div class="vehicle-card"><h3 style="margin:0;padding:11px 15px;color:#2E8B57;font-size:1rem;">${esc(v)} <span class="trip-count">${vt.length} Trips</span></h3><div class="vehicle-stats" style="padding:11px 15px;"><div class="stat-item"><span class="stat-value">₹${vr.toFixed(2)}</span><span class="stat-label">Revenue</span></div><div class="stat-item"><span class="stat-value">₹${ve.toFixed(2)}</span><span class="stat-label">Expenses</span></div><div class="stat-item"><span class="stat-value ${vp>=0?'positive':'negative'}">₹${vp.toFixed(2)}</span><span class="stat-label">Profit</span></div><div class="stat-item"><span class="stat-value ${vm>=0?'positive':'negative'}">${vm}%</span><span class="stat-label">Margin</span></div></div></div>`;
+  }).join('');
+}
+
+function summaryCardSet(data){
+  const tr=data.reduce((s,t)=>s+(Number(t.gain)||0),0),te=data.reduce((s,t)=>s+(Number(t.total)||0),0),np=tr-te,pm=tr>0?((np/tr)*100).toFixed(2):0;
+  const die=data.reduce((s,t)=>s+(Number(t.diesel)||0),0),tyre=data.reduce((s,t)=>s+(Number(t.tyre)||0),0),tt=data.reduce((s,t)=>s+(Number(t.weight)||0),0);
+  const vmap={};data.forEach(t=>{if(!vmap[t.vehicle])vmap[t.vehicle]=[];vmap[t.vehicle].push(t);});
+  return `<div class="summary-grid"><div class="summary-card"><h3>Trips</h3><p>${data.length}</p></div><div class="summary-card"><h3>Revenue</h3><p>₹${tr.toFixed(2)}</p></div><div class="summary-card"><h3>Expenses</h3><p>₹${te.toFixed(2)}</p></div><div class="summary-card"><h3>Net Profit</h3><p class="${np>=0?'positive':'negative'}">₹${np.toFixed(2)}</p></div><div class="summary-card"><h3>Margin</h3><p class="${pm>=0?'positive':'negative'}">${pm}%</p></div><div class="summary-card"><h3>Diesel</h3><p>₹${die.toFixed(2)}</p></div><div class="summary-card"><h3>Tyre</h3><p>₹${tyre.toFixed(2)}</p></div><div class="summary-card"><h3>Tonnes</h3><p>${tt.toFixed(2)} MT</p></div></div><h3 style="margin-top:18px;">Vehicles</h3><div class="vehicles-grid" style="max-height:380px;">${vehicleSummaryHTML(vmap)}</div>`;
+}
+
+function renderMonthlyReport(data,s,e){
+  const mrc=$('monthlyReportContainer');
+  if(!data.length){mrc.innerHTML='<div class="no-data"><i class="fas fa-calendar"></i>No trips found</div>';return;}
+  const mn=s.toLocaleString('default',{month:'long'}),yr=s.getFullYear();
+  const tr=data.reduce((a,t)=>a+(Number(t.gain)||0),0),te=data.reduce((a,t)=>a+(Number(t.total)||0),0),np=tr-te,pm=tr>0?((np/tr)*100).toFixed(2):0,tt=data.reduce((a,t)=>a+(Number(t.weight)||0),0);
+  const vmap={};data.forEach(t=>{if(!vmap[t.vehicle])vmap[t.vehicle]=[];vmap[t.vehicle].push(t);});
+  mrc.innerHTML=`<div class="full-range-card"><h3>${mn} ${yr} <span class="trip-count">${data.length} Trips</span></h3><div class="vehicle-stats"><div class="stat-item"><span class="stat-value">₹${tr.toFixed(2)}</span><span class="stat-label">Revenue</span></div><div class="stat-item"><span class="stat-value">₹${te.toFixed(2)}</span><span class="stat-label">Expenses</span></div><div class="stat-item"><span class="stat-value ${np>=0?'positive':'negative'}">₹${np.toFixed(2)}</span><span class="stat-label">Profit</span></div><div class="stat-item"><span class="stat-value ${pm>=0?'positive':'negative'}">${pm}%</span><span class="stat-label">Margin</span></div><div class="stat-item"><span class="stat-value">${Object.keys(vmap).length}</span><span class="stat-label">Vehicles</span></div><div class="stat-item"><span class="stat-value">${tt.toFixed(2)} MT</span><span class="stat-label">Tonnes</span></div></div></div><div class="accounting-summary"><h2><i class="fas fa-chart-pie"></i> Breakdown</h2>${summaryCardSet(data)}</div>`;
+}
+
+function renderFullRangeReport(data,s,e){
+  const frc=$('fullRangeReportContainer');
+  if(!data.length){frc.innerHTML='<div class="no-data"><i class="fas fa-chart-area"></i>No trips found</div>';return;}
+  const tr=data.reduce((a,t)=>a+(Number(t.gain)||0),0),te=data.reduce((a,t)=>a+(Number(t.total)||0),0),np=tr-te,pm=tr>0?((np/tr)*100).toFixed(2):0,tt=data.reduce((a,t)=>a+(Number(t.weight)||0),0);
+  const vmap={};data.forEach(t=>{if(!vmap[t.vehicle])vmap[t.vehicle]=[];vmap[t.vehicle].push(t);});
+  frc.innerHTML=`<div class="full-range-card"><h3>${fmtDisp(s)} to ${fmtDisp(e)} <span class="trip-count">${data.length} Trips</span></h3><div class="vehicle-stats"><div class="stat-item"><span class="stat-value">₹${tr.toFixed(2)}</span><span class="stat-label">Revenue</span></div><div class="stat-item"><span class="stat-value">₹${te.toFixed(2)}</span><span class="stat-label">Expenses</span></div><div class="stat-item"><span class="stat-value ${np>=0?'positive':'negative'}">₹${np.toFixed(2)}</span><span class="stat-label">Profit</span></div><div class="stat-item"><span class="stat-value ${pm>=0?'positive':'negative'}">${pm}%</span><span class="stat-label">Margin</span></div><div class="stat-item"><span class="stat-value">${Object.keys(vmap).length}</span><span class="stat-label">Vehicles</span></div><div class="stat-item"><span class="stat-value">${tt.toFixed(2)} MT</span><span class="stat-label">Tonnes</span></div></div></div><div class="accounting-summary"><h2><i class="fas fa-chart-pie"></i> Breakdown</h2>${summaryCardSet(data)}</div>`;
+}
+
+// ===================== DASHBOARD =====================
+function renderDashboard(s,e){
+  const own=allOwnData.filter(d=>{const dt=new Date(d.date);return dt>=s&&dt<=e;});
+  const mkt=allMarketData.filter(d=>{const dt=new Date(d.date);return dt>=s&&dt<=e;});
+  const all=[...own,...mkt];
+  if(!all.length){$('dashKPIs').innerHTML='<div class="no-data"><i class="fas fa-chart-line"></i>No data for period</div>';$('dashCharts').style.display='none';return;}
+  const tr=all.reduce((a,t)=>a+(Number(t.gain)||0),0),te=all.reduce((a,t)=>a+(Number(t.total)||0),0),np=tr-te,pm=tr>0?((np/tr)*100).toFixed(1):0;
+  const tk=own.reduce((a,t)=>a+(Number(t.totalTripKm)||0),0),tt=all.reduce((a,t)=>a+(Number(t.weight)||0),0);
+  const rcvd=paymentsData.filter(p=>{const pd=new Date(p.date||p.createdAt||0);return pd>=s&&pd<=e;}).reduce((a,p)=>a+(Number(p.amount)||0),0);
+  const out=Math.max(0,tr-rcvd);
+  $('dashKPIs').innerHTML=`
+    <div class="kpi-card"><div class="kpi-icon" style="color:#2E8B57;"><i class="fas fa-rupee-sign"></i></div><div class="kpi-val">₹${fmtNum(tr)}</div><div class="kpi-lbl">Total Revenue</div><div class="kpi-sub">${all.length} trips</div></div>
+    <div class="kpi-card red"><div class="kpi-icon" style="color:#dc3545;"><i class="fas fa-receipt"></i></div><div class="kpi-val">₹${fmtNum(te)}</div><div class="kpi-lbl">Total Expenses</div><div class="kpi-sub">${tr>0?((te/tr)*100).toFixed(1):0}% of revenue</div></div>
+    <div class="kpi-card ${np>=0?'':'red'}"><div class="kpi-icon" style="color:${np>=0?'#2E8B57':'#dc3545'};"><i class="fas fa-chart-line"></i></div><div class="kpi-val ${np>=0?'positive':'negative'}">₹${fmtNum(np)}</div><div class="kpi-lbl">Net Profit</div><div class="kpi-sub ${np>=0?'':'neg'}">Margin: ${pm}%</div></div>
+    <div class="kpi-card blue"><div class="kpi-icon" style="color:#0d6efd;"><i class="fas fa-file-invoice"></i></div><div class="kpi-val">${all.length}</div><div class="kpi-lbl">Total Trips</div><div class="kpi-sub">${own.length} own + ${mkt.length} market</div></div>
+    <div class="kpi-card purple"><div class="kpi-icon" style="color:#6f42c1;"><i class="fas fa-road"></i></div><div class="kpi-val">${tk.toFixed(0)}</div><div class="kpi-lbl">Total KM</div><div class="kpi-sub">Own fleet distance</div></div>
+    <div class="kpi-card cyan"><div class="kpi-icon" style="color:#0dcaf0;"><i class="fas fa-weight-hanging"></i></div><div class="kpi-val">${tt.toFixed(1)} MT</div><div class="kpi-lbl">Tonnage Carried</div><div class="kpi-sub">${all.length>0?(tt/all.length).toFixed(2):0} MT/trip</div></div>
+    <div class="kpi-card orange"><div class="kpi-icon" style="color:#fd7e14;"><i class="fas fa-hand-holding-usd"></i></div><div class="kpi-val">₹${fmtNum(out)}</div><div class="kpi-lbl">Outstanding A/R</div><div class="kpi-sub">₹${fmtNum(rcvd)} collected</div></div>
+    <div class="kpi-card teal"><div class="kpi-icon" style="color:#20c997;"><i class="fas fa-tachometer-alt"></i></div><div class="kpi-val">${tr>0&&tk>0?'₹'+(tr/tk).toFixed(2):'—'}</div><div class="kpi-lbl">Revenue / KM</div><div class="kpi-sub">Operational efficiency</div></div>`;
+  $('dashCharts').style.display='grid';
+  // Monthly bar
+  const mm={};all.forEach(t=>{const d=new Date(t.date),k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;if(!mm[k])mm[k]={r:0,e:0,p:0};mm[k].r+=Number(t.gain)||0;mm[k].e+=Number(t.total)||0;mm[k].p+=(Number(t.gain)||0)-(Number(t.total)||0);});
+  const mk=Object.keys(mm).sort(),ml=mk.map(k=>{const[y,m]=k.split('-');return new Date(y,m-1).toLocaleString('default',{month:'short',year:'2-digit'});});
+  if(cMonthlyInst)cMonthlyInst.destroy();
+  cMonthlyInst=new Chart($('cMonthly').getContext('2d'),{type:'bar',data:{labels:ml,datasets:[{label:'Revenue',data:mk.map(k=>mm[k].r),backgroundColor:'rgba(46,139,87,.7)'},{label:'Expenses',data:mk.map(k=>mm[k].e),backgroundColor:'rgba(220,53,69,.7)'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{callback:v=>'₹'+fmtNum(v)}}},plugins:{legend:{position:'top'}}}});
+  // Donut
+  const die=own.reduce((a,t)=>a+(Number(t.diesel)||0),0),tyre=all.reduce((a,t)=>a+(Number(t.tyre)||0),0),toll=all.reduce((a,t)=>a+(Number(t.toll)||0),0),food=all.reduce((a,t)=>a+(Number(t.food)||0),0),work=all.reduce((a,t)=>a+(Number(t.vehicleWork)||0),0),brok=all.reduce((a,t)=>a+(Number(t.brokerage)||0),0),adv=all.reduce((a,t)=>a+(Number(t.advance)||0),0),oth=all.reduce((a,t)=>a+(Number(t.other)||0),0);
+  if(cDonutInst)cDonutInst.destroy();
+  cDonutInst=new Chart($('cDonut').getContext('2d'),{type:'doughnut',data:{labels:['Diesel','Tyre','Toll','Food','Repairs','Brokerage','Advance','Other'],datasets:[{data:[die,tyre,toll,food,work,brok,adv,oth],backgroundColor:['#007bff','#28a745','#ffc107','#17a2b8','#dc3545','#6f42c1','#fd7e14','#6c757d'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10}}}}}});
+  // Vehicle comparison
+  const vm={};all.forEach(t=>{if(!vm[t.vehicle])vm[t.vehicle]={r:0,p:0};vm[t.vehicle].r+=Number(t.gain)||0;vm[t.vehicle].p+=(Number(t.gain)||0)-(Number(t.total)||0);});
+  const vk=Object.keys(vm).slice(0,10);
+  if(cVehicleInst)cVehicleInst.destroy();
+  cVehicleInst=new Chart($('cVehicle').getContext('2d'),{type:'bar',data:{labels:vk,datasets:[{label:'Revenue',data:vk.map(k=>vm[k].r),backgroundColor:'rgba(46,139,87,.7)'},{label:'Profit',data:vk.map(k=>vm[k].p),backgroundColor:vk.map(k=>vm[k].p>=0?'rgba(0,123,255,.7)':'rgba(220,53,69,.7)')}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{beginAtZero:true,ticks:{callback:v=>'₹'+fmtNum(v)}}},plugins:{legend:{position:'top'}}}});
+  // Profit trend
+  if(cTrendInst)cTrendInst.destroy();
+  cTrendInst=new Chart($('cTrend').getContext('2d'),{type:'line',data:{labels:ml,datasets:[{label:'Net Profit',data:mk.map(k=>mm[k].p),borderColor:'#2E8B57',backgroundColor:'rgba(46,139,87,.1)',tension:.4,fill:true,pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{ticks:{callback:v=>'₹'+fmtNum(v)}}},plugins:{legend:{display:false}}}});
+}
+
+// ===================== P&L =====================
+function renderPL(s,e){
+  const own=allOwnData.filter(d=>{const dt=new Date(d.date);return dt>=s&&dt<=e;});
+  const mkt=allMarketData.filter(d=>{const dt=new Date(d.date);return dt>=s&&dt<=e;});
+  const c=$('plContainer');
+  if(!own.length&&!mkt.length){c.innerHTML='<div class="no-data"><i class="fas fa-file-invoice-dollar"></i>No data for selected period</div>';return;}
+  const ownRev=own.reduce((a,t)=>a+(Number(t.gain)||0),0),mktRev=mkt.reduce((a,t)=>a+(Number(t.gain)||0),0),totInc=ownRev+mktRev;
+  const die=own.reduce((a,t)=>a+(Number(t.diesel)||0),0),tyre=own.reduce((a,t)=>a+(Number(t.tyre)||0),0),toll=own.reduce((a,t)=>a+(Number(t.toll)||0),0),food=own.reduce((a,t)=>a+(Number(t.food)||0),0),adv=own.reduce((a,t)=>a+(Number(t.advance)||0),0),sh=own.reduce((a,t)=>a+(Number(t.shortage)||0),0);
+  const mFr=mkt.reduce((a,t)=>a+(Number(t.freightAmount)||0),0),mAdv=mkt.reduce((a,t)=>a+(Number(t.advance)||0),0),mToll=mkt.reduce((a,t)=>a+(Number(t.toll)||0),0);
+  const dirExp=die+tyre+toll+food+adv+sh+mFr+mAdv+mToll;const gpf=totInc-dirExp;
+  const days=Math.ceil((e-s)/86400000)+1,months=days/30;
+  const uvn=[...new Set(own.map(t=>t.vehicle))];
+  let totEMI=0,totSal=0;
+  uvn.forEach(vn=>{const vd=Object.values(vehiclesData).find(v=>v.vehicleNumber===vn)||{};totEMI+=(parseFloat(vd.monthlyInstallment)||0)*months;const dk=vd.assignedDriverKey,dd=dk?driversData[dk]:null;totSal+=(parseFloat(dd?.monthlySalary)||0)*months;});
+  const work=own.reduce((a,t)=>a+(Number(t.vehicleWork)||0),0),comm=own.reduce((a,t)=>a+(Number(t.commission)||0),0),brok=[...own,...mkt].reduce((a,t)=>a+(Number(t.brokerage)||0),0),tirpal=own.reduce((a,t)=>a+(Number(t.tirpalRope)||0),0),oth=own.reduce((a,t)=>a+(Number(t.other)||0),0),mOth=mkt.reduce((a,t)=>a+(Number(t.other)||0),0);
+  const indExp=totEMI+totSal+work+comm+brok+tirpal+oth+mOth,np=gpf-indExp,nm=totInc>0?((np/totInc)*100).toFixed(2):0;
+  const f=v=>`₹${fmtNum2(v)}`;
+  window._plData={s,e,totInc,ownRev,mktRev,dirExp,gpf,indExp,np,nm,die,tyre,toll,food,adv,sh,mFr,mAdv,mToll,totEMI,totSal,work,comm,brok,tirpal,oth,mOth,days};
+  c.innerHTML=`
+  <div class="pl-section">
+    <div class="pl-hdr"><div><h4><i class="fas fa-file-invoice-dollar me-2"></i>Profit &amp; Loss Statement</h4><small style="opacity:.8;">${fmtDisp(s)} — ${fmtDisp(e)}</small></div><div style="text-align:right;"><div style="font-size:1.4rem;font-weight:800;">${np>=0?'✅ PROFIT':'❌ LOSS'}</div><div>₹${fmtNum2(Math.abs(np))}</div></div></div>
+    <table class="pl-tbl"><thead><tr><th>Particulars</th><th class="amt">Amount (₹)</th><th class="amt">Sub-Total (₹)</th></tr></thead><tbody>
+      <tr class="cat-hdr"><td colspan="3">A. INCOME</td></tr>
+      <tr class="indent"><td>Own Fleet Trip Revenue</td><td class="amt">${f(ownRev)}</td><td></td></tr>
+      <tr class="indent"><td>Market Vehicle Revenue</td><td class="amt">${f(mktRev)}</td><td></td></tr>
+      <tr class="subtot"><td>TOTAL INCOME (A)</td><td></td><td class="amt">${f(totInc)}</td></tr>
+      <tr class="cat-hdr"><td colspan="3">B. DIRECT / VARIABLE EXPENSES</td></tr>
+      <tr class="indent"><td>Fuel / Diesel</td><td class="amt">${f(die)}</td><td></td></tr>
+      <tr class="indent"><td>Tyre Expenses</td><td class="amt">${f(tyre)}</td><td></td></tr>
+      <tr class="indent"><td>Toll Expenses</td><td class="amt">${f(toll+mToll)}</td><td></td></tr>
+      <tr class="indent"><td>Food &amp; Refreshment</td><td class="amt">${f(food)}</td><td></td></tr>
+      <tr class="indent"><td>Advance to Drivers</td><td class="amt">${f(adv)}</td><td></td></tr>
+      <tr class="indent"><td>Market Lorry Hire (Freight)</td><td class="amt">${f(mFr)}</td><td></td></tr>
+      <tr class="indent"><td>Market Vehicle Advance</td><td class="amt">${f(mAdv)}</td><td></td></tr>
+      <tr class="indent"><td>Shortage Deductions</td><td class="amt">${f(sh)}</td><td></td></tr>
+      <tr class="subtot"><td>TOTAL DIRECT EXPENSES (B)</td><td></td><td class="amt">${f(dirExp)}</td></tr>
+      <tr style="background:#e8f0fe;"><td colspan="2" style="font-weight:700;">GROSS PROFIT (A - B)</td><td class="amt ${gpf>=0?'positive':'negative'}" style="font-weight:700;">${f(gpf)}</td></tr>
+      <tr class="cat-hdr"><td colspan="3">C. INDIRECT / FIXED EXPENSES</td></tr>
+      <tr class="indent"><td>Driver Salaries (${days} days allocated)</td><td class="amt">${f(totSal)}</td><td></td></tr>
+      <tr class="indent"><td>EMI Installments (${days} days allocated)</td><td class="amt">${f(totEMI)}</td><td></td></tr>
+      <tr class="indent"><td>Vehicle Repairs &amp; Maintenance</td><td class="amt">${f(work)}</td><td></td></tr>
+      <tr class="indent"><td>Commission Expenses</td><td class="amt">${f(comm)}</td><td></td></tr>
+      <tr class="indent"><td>Brokerage Expenses</td><td class="amt">${f(brok)}</td><td></td></tr>
+      <tr class="indent"><td>Tirpal / Rope Expenses</td><td class="amt">${f(tirpal)}</td><td></td></tr>
+      <tr class="indent"><td>Other Expenses</td><td class="amt">${f(oth+mOth)}</td><td></td></tr>
+      <tr class="subtot"><td>TOTAL INDIRECT EXPENSES (C)</td><td></td><td class="amt">${f(indExp)}</td></tr>
+      <tr class="${np>=0?'grand-tot':'grand-loss'}"><td>NET PROFIT / (LOSS) [A - B - C]</td><td></td><td class="amt">₹${fmtNum2(np)} (${nm}%)</td></tr>
+    </tbody></table>
+  </div>
+  <div class="pl-section">
+    <div class="pl-hdr"><h4><i class="fas fa-truck me-2"></i>Vehicle-wise Profit Breakdown</h4></div>
+    <div style="overflow-x:auto;"><table class="pl-tbl"><thead><tr><th>Vehicle</th><th class="amt">Revenue</th><th class="amt">Direct Exp</th><th class="amt">Fixed Exp</th><th class="amt">Net Profit</th><th class="amt">Margin</th><th class="amt">Trips</th></tr></thead><tbody>
+      ${uvn.map(vn=>{const vt=own.filter(t=>t.vehicle===vn),vr=vt.reduce((a,t)=>a+(Number(t.gain)||0),0),ve=vt.reduce((a,t)=>a+(Number(t.total)||0),0),vd=Object.values(vehiclesData).find(v=>v.vehicleNumber===vn)||{},dk=vd.assignedDriverKey,dd=dk?driversData[dk]:null,vEMI=(parseFloat(vd.monthlyInstallment)||0)*months,vSal=(parseFloat(dd?.monthlySalary)||0)*months,vFixed=vEMI+vSal,vNP=(vr-ve)-vFixed,vNM=vr>0?((vNP/vr)*100).toFixed(1):0;
+        return `<tr><td class="fw-bold">${esc(vn)}</td><td class="amt text-success">₹${fmtNum2(vr)}</td><td class="amt text-danger">₹${fmtNum2(ve)}</td><td class="amt" style="color:#fd7e14;">₹${fmtNum2(vFixed)}</td><td class="amt fw-bold ${vNP>=0?'text-success':'text-danger'}">₹${fmtNum2(vNP)}</td><td class="amt ${parseFloat(vNM)>=0?'text-success':'text-danger'}">${vNM}%</td><td class="amt">${vt.length}</td></tr>`;}).join('')}
+      ${mkt.length>0?`<tr><td class="fw-bold"><span class="bdg bdg-mkt">Market</span></td><td class="amt text-success">₹${fmtNum2(mktRev)}</td><td class="amt text-danger">₹${fmtNum2(mFr+mAdv+mToll)}</td><td class="amt">—</td><td class="amt fw-bold ${mktRev-(mFr+mAdv+mToll)>=0?'text-success':'text-danger'}">₹${fmtNum2(mktRev-(mFr+mAdv+mToll))}</td><td class="amt">${mktRev>0?(((mktRev-(mFr+mAdv+mToll))/mktRev)*100).toFixed(1)+'%':'—'}</td><td class="amt">${mkt.length}</td></tr>`:''}
+      <tr class="tot-row"><td class="fw-bold">TOTAL</td><td class="amt fw-bold text-success">₹${fmtNum2(totInc)}</td><td class="amt fw-bold text-danger">₹${fmtNum2(dirExp)}</td><td class="amt fw-bold">₹${fmtNum2(indExp)}</td><td class="amt fw-bold ${np>=0?'text-success':'text-danger'}">₹${fmtNum2(np)}</td><td class="amt fw-bold ${parseFloat(nm)>=0?'text-success':'text-danger'}">${nm}%</td><td class="amt fw-bold">${own.length+mkt.length}</td></tr>
+    </tbody></table></div>
+  </div>`;
+}
+
+// ===================== PARTY LEDGER =====================
+function renderParty(s,e){
+  const all=[...allOwnData.filter(d=>{const dt=new Date(d.date);return dt>=s&&dt<=e;}),...allMarketData.filter(d=>{const dt=new Date(d.date);return dt>=s&&dt<=e;})];
+  const c=$('partyContainer');
+  if(!all.length){c.innerHTML='<div class="no-data"><i class="fas fa-users"></i>No data found</div>';return;}
+  const cm={};
+  all.forEach(lr=>{const cid=lr.clientId||'unknown';if(!cm[cid]){const ci=clientsData[cid]||{};cm[cid]={name:ci.clientName||ci.name||lr.consignorName||'Unknown',billed:0,trips:0,lastDate:'',paid:0};}cm[cid].billed+=Number(lr.gain)||0;cm[cid].trips++;if(!cm[cid].lastDate||lr.date>cm[cid].lastDate)cm[cid].lastDate=lr.date;});
+  paymentsData.forEach(p=>{const pd=new Date(p.date||p.createdAt||0);if(pd<s||pd>e)return;const cid=p.clientId||'unknown';if(!cm[cid]){const ci=clientsData[cid]||{};cm[cid]={name:ci.clientName||ci.name||p.companyName||'Unknown',billed:0,trips:0,lastDate:'',paid:0};}cm[cid].paid+=Number(p.amount)||0;});
+  const clients=Object.entries(cm).map(([id,cc])=>({id,...cc,balance:(cc.billed||0)-(cc.paid||0)})).sort((a,b)=>b.balance-a.balance);
+  const tb=clients.reduce((a,cc)=>a+cc.billed,0),tp=clients.reduce((a,cc)=>a+cc.paid,0),tbal=clients.reduce((a,cc)=>a+cc.balance,0);
+  window._partyData=clients;
+  c.innerHTML=`<div style="overflow-x:auto;"><table class="ledger-tbl" id="partyTbl"><thead><tr><th>#</th><th>Client Name</th><th class="text-end">Trips</th><th class="text-end">Freight Billed</th><th class="text-end">Payments Received</th><th class="text-end">Outstanding</th><th>Status</th><th>Last Date</th></tr></thead><tbody>
+  ${clients.map((cc,i)=>`<tr><td>${i+1}</td><td class="fw-bold">${esc(cc.name)}</td><td class="text-end">${cc.trips}</td><td class="text-end text-success fw-bold">₹${fmtNum2(cc.billed)}</td><td class="text-end text-primary">₹${fmtNum2(cc.paid)}</td><td class="text-end ${cc.balance>0?'bal-due':'bal-ok'}">₹${fmtNum2(Math.abs(cc.balance))} ${cc.balance>0?'DR':'CR'}</td><td><span class="bdg ${cc.balance>0?'bdg-due':'bdg-ok'}">${cc.balance>0?'Outstanding':'Clear'}</span></td><td>${cc.lastDate||'—'}</td></tr>`).join('')}
+  <tr class="tot-row"><td colspan="3" class="fw-bold">TOTAL</td><td class="text-end fw-bold text-success">₹${fmtNum2(tb)}</td><td class="text-end fw-bold text-primary">₹${fmtNum2(tp)}</td><td class="text-end fw-bold ${tbal>0?'bal-due':'bal-ok'}">₹${fmtNum2(Math.abs(tbal))} ${tbal>0?'DR':'CR'}</td><td colspan="2"></td></tr>
+  </tbody></table></div>`;
+  $('partySearch').oninput=function(){const q=this.value.toLowerCase();document.querySelectorAll('#partyTbl tbody tr:not(.tot-row)').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?'':'none');};
+}
+
+// ===================== DRIVER LEDGER =====================
+function renderDriver(s,e){
+  const c=$('driverContainer');
+  if(!Object.keys(driversData).length){c.innerHTML='<div class="no-data"><i class="fas fa-id-card"></i>No drivers found</div>';return;}
+  const days=Math.ceil((e-s)/86400000)+1,months=days/30;
+  const rows=Object.entries(driversData).map(([did,d])=>{
+    const sal=parseFloat(d.monthlySalary)||0,pay=sal*months;
+    const paid=driverSalaryPayments.filter(p=>{const pd=new Date(p.date||p.createdAt||0);return pd>=s&&pd<=e&&(p.driverId===did||p.driverName===d.driverName);}).reduce((a,p)=>a+(Number(p.amount)||0),0);
+    const bal=pay-paid,vns=Object.values(vehiclesData).filter(v=>v.assignedDriverKey===did).map(v=>v.vehicleNumber);
+    const tc=allOwnData.filter(t=>{const dt=new Date(t.date);return dt>=s&&dt<=e&&vns.includes(t.vehicle);}).length;
+    return {name:d.driverName||'Driver',sal,pay,paid,bal,trips:tc,vehicles:vns.join(', ')||'—'};
+  }).sort((a,b)=>b.bal-a.bal);
+  const tPay=rows.reduce((a,d)=>a+d.pay,0),tPaid=rows.reduce((a,d)=>a+d.paid,0),tBal=rows.reduce((a,d)=>a+d.bal,0);
+  window._driverData=rows;
+  c.innerHTML=`<div style="overflow-x:auto;"><table class="ledger-tbl" id="driverTbl"><thead><tr><th>#</th><th>Driver Name</th><th>Vehicle(s)</th><th class="text-end">Monthly Salary</th><th class="text-end">Total Payable</th><th class="text-end">Total Paid</th><th class="text-end">Balance Due</th><th class="text-end">Trips</th></tr></thead><tbody>
+  ${rows.map((d,i)=>`<tr><td>${i+1}</td><td class="fw-bold">${esc(d.name)}</td><td><code>${esc(d.vehicles)}</code></td><td class="text-end">₹${fmtNum2(d.sal)}</td><td class="text-end fw-bold">₹${fmtNum2(d.pay)}</td><td class="text-end text-primary">₹${fmtNum2(d.paid)}</td><td class="text-end fw-bold ${d.bal>0?'bal-due':'bal-ok'}">₹${fmtNum2(Math.abs(d.bal))} ${d.bal>0?'Due':'Clear'}</td><td class="text-end">${d.trips}</td></tr>`).join('')}
+  <tr class="tot-row"><td colspan="4" class="fw-bold">TOTAL</td><td class="text-end fw-bold">₹${fmtNum2(tPay)}</td><td class="text-end fw-bold text-primary">₹${fmtNum2(tPaid)}</td><td class="text-end fw-bold ${tBal>0?'bal-due':'bal-ok'}">₹${fmtNum2(Math.abs(tBal))}</td><td></td></tr>
+  </tbody></table></div>`;
+  $('driverSearch').oninput=function(){const q=this.value.toLowerCase();document.querySelectorAll('#driverTbl tbody tr:not(.tot-row)').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?'':'none');};
+}
+
+// ===================== BALANCE SHEET =====================
+function renderBS(s,e){
+  const own=allOwnData.filter(d=>{const dt=new Date(d.date);return dt>=s&&dt<=e;});
+  const mkt=allMarketData.filter(d=>{const dt=new Date(d.date);return dt>=s&&dt<=e;});
+  const all=[...own,...mkt];
+  const tb=all.reduce((a,t)=>a+(Number(t.gain)||0),0);
+  const rcvd=paymentsData.filter(p=>{const pd=new Date(p.date||p.createdAt||0);return pd>=s&&pd<=e;}).reduce((a,p)=>a+(Number(p.amount)||0),0);
+  const ar=Math.max(0,tb-rcvd);
+  let vbv=0;Object.values(vehiclesData).forEach(v=>{vbv+=parseFloat(v.marketValue||v.purchaseValue||0)||0;});
+  const totAssets=ar+vbv;
+  let emiOut=0;Object.values(vehiclesData).forEach(v=>{emiOut+=(parseInt(v.remainingEmis)||0)*(parseFloat(v.monthlyInstallment)||0);});
+  const days=Math.ceil((e-s)/86400000)+1,months=days/30;
+  let totSalPay=0,totSalPaid=0;
+  Object.entries(driversData).forEach(([did,d])=>{const sal=(parseFloat(d.monthlySalary)||0)*months;totSalPay+=sal;const paid=driverSalaryPayments.filter(p=>{const pd=new Date(p.date||p.createdAt||0);return pd>=s&&pd<=e&&(p.driverId===did||p.driverName===d.driverName);}).reduce((a,p)=>a+(Number(p.amount)||0),0);totSalPaid+=paid;});
+  const dsp=Math.max(0,totSalPay-totSalPaid);
+  let mktPay=mkt.reduce((a,t)=>{const fr=Number(t.freightAmount)||0,adv=Number(t.advance)||0;return a+Math.max(0,fr-adv);},0);
+  const totLiab=emiOut+dsp+mktPay;
+  // Net earnings
+  const dirE=own.reduce((a,t)=>a+(Number(t.diesel)||0)+(Number(t.tyre)||0)+(Number(t.toll)||0)+(Number(t.food)||0)+(Number(t.advance)||0)+(Number(t.shortage)||0),0)+mkt.reduce((a,t)=>a+(Number(t.freightAmount)||0)+(Number(t.advance)||0)+(Number(t.toll)||0),0);
+  let emi2=0;Object.values(vehiclesData).forEach(v=>{emi2+=(parseFloat(v.monthlyInstallment)||0)*months;});
+  const indE=totSalPay+emi2+own.reduce((a,t)=>a+(Number(t.vehicleWork)||0)+(Number(t.commission)||0)+(Number(t.other)||0),0);
+  const netP=tb-dirE-indE,totEq=netP,totLE=totLiab+totEq;
+  const f=v=>`₹${fmtNum2(v)}`;
+  $('bsContainer').innerHTML=`
+  <div style="margin-bottom:10px;text-align:center;font-size:.88rem;color:#666;">As of period: <strong>${fmtDisp(s)} to ${fmtDisp(e)}</strong></div>
+  <div class="bs-wrap">
+    <div class="bs-col">
+      <div class="bs-hdr assets"><i class="fas fa-landmark me-2"></i>ASSETS</div>
+      <table class="bs-tbl">
+        <tr class="bs-sec"><td colspan="2">Current Assets</td></tr>
+        <tr><td>Trade Receivables (A/R Outstanding)</td><td class="bs-amt">${f(ar)}</td></tr>
+        <tr><td style="padding-left:20px;font-size:.78rem;color:#888;">Billed: ${f(tb)} / Collected: ${f(rcvd)}</td><td></td></tr>
+        <tr class="bs-tot"><td>Total Current Assets</td><td class="bs-amt">${f(ar)}</td></tr>
+        <tr class="bs-sec"><td colspan="2">Fixed Assets</td></tr>
+        <tr><td>Vehicles — Book Value</td><td class="bs-amt">${f(vbv)}</td></tr>
+        <tr><td style="padding-left:20px;font-size:.78rem;color:#888;">${Object.keys(vehiclesData).length} vehicle(s) registered</td><td></td></tr>
+        <tr class="bs-tot"><td>Total Fixed Assets</td><td class="bs-amt">${f(vbv)}</td></tr>
+        <tr class="bs-grand"><td>TOTAL ASSETS</td><td class="bs-amt">${f(totAssets)}</td></tr>
+      </table>
+      <div class="bs-foot"><span>TOTAL ASSETS</span><span>${f(totAssets)}</span></div>
+    </div>
+    <div class="bs-col">
+      <div class="bs-hdr liab"><i class="fas fa-file-invoice me-2"></i>LIABILITIES &amp; EQUITY</div>
+      <table class="bs-tbl">
+        <tr class="bs-sec"><td colspan="2">Current Liabilities</td></tr>
+        <tr><td>Market Vehicle Payable (A/P)</td><td class="bs-amt">${f(mktPay)}</td></tr>
+        <tr><td>Driver Salary Payable</td><td class="bs-amt">${f(dsp)}</td></tr>
+        <tr class="bs-tot"><td>Total Current Liabilities</td><td class="bs-amt">${f(mktPay+dsp)}</td></tr>
+        <tr class="bs-sec"><td colspan="2">Long-Term Liabilities</td></tr>
+        <tr><td>EMI Outstanding (All Vehicles)</td><td class="bs-amt">${f(emiOut)}</td></tr>
+        <tr class="bs-tot"><td>Total Long-Term Liabilities</td><td class="bs-amt">${f(emiOut)}</td></tr>
+        <tr class="bs-grand"><td>TOTAL LIABILITIES</td><td class="bs-amt">${f(totLiab)}</td></tr>
+        <tr class="bs-sec"><td colspan="2">Owner's Equity</td></tr>
+        <tr><td>Net Retained Earnings (Period)</td><td class="bs-amt ${netP>=0?'text-success':'text-danger'}">${f(netP)}</td></tr>
+        <tr class="bs-tot"><td>Total Equity</td><td class="bs-amt">${f(totEq)}</td></tr>
+        <tr class="bs-grand"><td>TOTAL LIABILITIES + EQUITY</td><td class="bs-amt">${f(totLE)}</td></tr>
+      </table>
+      <div class="bs-foot"><span>TOTAL L + E</span><span>${f(totLE)}</span></div>
+    </div>
+  </div>
+  <div style="margin-top:14px;padding:11px 18px;background:${Math.abs(totAssets-totLE)<1?'#d1e7dd':'#fff3cd'};border-radius:8px;text-align:center;font-weight:700;">
+    ${Math.abs(totAssets-totLE)<1?'✅ Balance Sheet is BALANCED':'⚠️ Add vehicle market value in vehicle records for accurate balance. Difference: '+f(Math.abs(totAssets-totLE))}
+  </div>`;
+}
+
+// ===================== EXPORTS =====================
+function csvDL(rows,filename){const csv=rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=filename;a.click();}
+function xlsxOrCSV(rows,fname){if(window.XLSX){const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(rows);XLSX.utils.book_append_sheet(wb,ws,'Report');XLSX.writeFile(wb,fname);}else csvDL(rows,fname.replace('.xlsx','.csv'));}
+
+window.exportPLExcel=function(){const p=window._plData;if(!p){alert('Generate P&L first');return;}xlsxOrCSV([['Particulars','Amount'],['INCOME',''],['Own Fleet Revenue',p.ownRev.toFixed(2)],['Market Revenue',p.mktRev.toFixed(2)],['TOTAL INCOME',p.totInc.toFixed(2)],['',''],['DIRECT EXPENSES',''],['Diesel',p.die.toFixed(2)],['Tyre',p.tyre.toFixed(2)],['Toll',(p.toll+p.mToll).toFixed(2)],['Food',p.food.toFixed(2)],['Advance',(p.adv+p.mAdv).toFixed(2)],['Market Lorry Hire',p.mFr.toFixed(2)],['Shortage',p.sh.toFixed(2)],['TOTAL DIRECT',p.dirExp.toFixed(2)],['GROSS PROFIT',p.gpf.toFixed(2)],['',''],['INDIRECT EXPENSES',''],['Driver Salaries',p.totSal.toFixed(2)],['EMI',p.totEMI.toFixed(2)],['Vehicle Repairs',p.work.toFixed(2)],['Commission',p.comm.toFixed(2)],['Brokerage',p.brok.toFixed(2)],['Other',(p.oth+p.mOth).toFixed(2)],['TOTAL INDIRECT',p.indExp.toFixed(2)],['NET PROFIT',p.np.toFixed(2)],['Margin %',p.nm+'%']],'PL_Statement.xlsx');};
+window.exportPartyExcel=function(){if(!window._partyData?.length){alert('Generate ledger first');return;}xlsxOrCSV([['#','Client','Trips','Billed','Paid','Balance','Status'],...window._partyData.map((c,i)=>[i+1,c.name,c.trips,c.billed.toFixed(2),c.paid.toFixed(2),c.balance.toFixed(2),c.balance>0?'Outstanding':'Clear'])],'Party_Ledger.xlsx');};
+window.exportDriverExcel=function(){if(!window._driverData?.length){alert('Generate ledger first');return;}xlsxOrCSV([['#','Driver','Vehicles','Monthly Sal','Payable','Paid','Balance','Trips'],...window._driverData.map((d,i)=>[i+1,d.name,d.vehicles,d.sal.toFixed(2),d.pay.toFixed(2),d.paid.toFixed(2),d.bal.toFixed(2),d.trips])],'Driver_Ledger.xlsx');};
+window.exportDashExcel=function(){const s=new Date($('gStart').value),e=new Date($('gEnd').value);e.setHours(23,59,59);const all=[...allOwnData,...allMarketData].filter(d=>{const dt=new Date(d.date);return dt>=s&&dt<=e;});if(!all.length){alert('No data');return;}xlsxOrCSV([['Date','LR No','Vehicle','Client','From','To','Weight MT','Revenue','Expenses','Profit','KM','Type'],...all.map(t=>[t.date,t.lrNumber||'',t.vehicle,t.clientId||'',t.fromLocation||'',t.toLocation||'',(t.weight||0).toFixed(2),(t.gain||0).toFixed(2),(t.total||0).toFixed(2),((t.gain||0)-(t.total||0)).toFixed(2),(t.totalTripKm||0).toFixed(0),allMarketData.includes(t)?'Market':'Own'])],'Dashboard_Export.xlsx');};
+
+window.exportPLPDF=function(){
+  const p=window._plData;if(!p){alert('Generate P&L first');return;}
+  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),dw=doc.internal.pageSize.getWidth(),dm=14;
+  doc.setFontSize(18);doc.setFont('helvetica','bold');doc.setTextColor(46,139,87);doc.text('PROFIT & LOSS STATEMENT',dw/2,14,{align:'center'});
+  doc.setFontSize(9);doc.setTextColor(80,80,80);doc.text(`Period: ${fmtDisp(p.s)} to ${fmtDisp(p.e)}`,dw/2,20,{align:'center'});
+  doc.setDrawColor(46,139,87);doc.line(dm,23,dw-dm,23);
+  doc.autoTable({startY:27,head:[['Particulars','Amount (Rs.)','Sub-Total (Rs.)']],theme:'grid',headStyles:{fillColor:[46,139,87],textColor:255},body:[
+    [{content:'A. INCOME',colSpan:3,styles:{fontStyle:'bold',fillColor:[240,248,244]}}],['  Own Fleet Revenue',`Rs.${p.ownRev.toFixed(2)}`,''],[' Market Revenue',`Rs.${p.mktRev.toFixed(2)}`,''],[{content:'TOTAL INCOME (A)',styles:{fontStyle:'bold',fillColor:[220,240,230]}},'',`Rs.${p.totInc.toFixed(2)}`],
+    [{content:'B. DIRECT EXPENSES',colSpan:3,styles:{fontStyle:'bold',fillColor:[240,248,244]}}],['  Diesel',`Rs.${p.die.toFixed(2)}`,''],[' Tyre',`Rs.${p.tyre.toFixed(2)}`,''],[' Toll',`Rs.${(p.toll+p.mToll).toFixed(2)}`,''],[' Food',`Rs.${p.food.toFixed(2)}`,''],[' Advance',`Rs.${(p.adv+p.mAdv).toFixed(2)}`,''],[' Market Freight',`Rs.${p.mFr.toFixed(2)}`,''],[' Shortage',`Rs.${p.sh.toFixed(2)}`,''],[{content:'TOTAL DIRECT (B)',styles:{fontStyle:'bold',fillColor:[255,240,240]}},'',`Rs.${p.dirExp.toFixed(2)}`],[{content:`GROSS PROFIT: Rs.${p.gpf.toFixed(2)}`,colSpan:3,styles:{fontStyle:'bold',fillColor:[200,230,215],halign:'center'}}],
+    [{content:'C. INDIRECT EXPENSES',colSpan:3,styles:{fontStyle:'bold',fillColor:[240,248,244]}}],['  Driver Salaries',`Rs.${p.totSal.toFixed(2)}`,''],[' EMI',`Rs.${p.totEMI.toFixed(2)}`,''],[' Repairs',`Rs.${p.work.toFixed(2)}`,''],[' Commission',`Rs.${p.comm.toFixed(2)}`,''],[' Brokerage',`Rs.${p.brok.toFixed(2)}`,''],[' Other',`Rs.${(p.oth+p.mOth).toFixed(2)}`,''],[{content:'TOTAL INDIRECT (C)',styles:{fontStyle:'bold',fillColor:[255,240,240]}},'',`Rs.${p.indExp.toFixed(2)}`],
+    [{content:`NET PROFIT/(LOSS): Rs.${p.np.toFixed(2)} (${p.nm}%)`,colSpan:3,styles:{fontStyle:'bold',fillColor:p.np>=0?[46,139,87]:[220,53,69],textColor:[255,255,255],halign:'center',fontSize:12}}]
+  ],margin:{left:dm,right:dm}});
+  const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(120,120,120);doc.text(`Page ${i} of ${pc}`,dw/2,doc.internal.pageSize.height-7,{align:'center'});}
+  doc.save(`PL_Statement_${fmtFile(p.s)}_${fmtFile(p.e)}.pdf`);
+};
+
+window.exportPartyPDF=function(){
+  if(!window._partyData?.length){alert('Generate ledger first');return;}
+  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),dw=doc.internal.pageSize.getWidth(),dm=14;
+  doc.setFontSize(16);doc.setFont('helvetica','bold');doc.setTextColor(46,139,87);doc.text('PARTY (CLIENT) LEDGER',dw/2,13,{align:'center'});
+  doc.setFontSize(9);doc.setTextColor(100,100,100);doc.text(`${$('gStart').value} to ${$('gEnd').value}`,dw/2,19,{align:'center'});
+  doc.autoTable({startY:23,head:[['#','Client Name','Trips','Billed (Rs.)','Paid (Rs.)','Outstanding (Rs.)','Status']],body:window._partyData.map((c,i)=>[i+1,c.name,c.trips,c.billed.toFixed(2),c.paid.toFixed(2),Math.abs(c.balance).toFixed(2),c.balance>0?'Due':'Clear']),theme:'striped',headStyles:{fillColor:[46,139,87],textColor:255},margin:{left:dm,right:dm}});
+  const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(120,120,120);doc.text(`Page ${i} of ${pc}`,dw/2,doc.internal.pageSize.height-7,{align:'center'});}
+  doc.save('Party_Ledger.pdf');
+};
+
+window.exportDriverPDF=function(){
+  if(!window._driverData?.length){alert('Generate ledger first');return;}
+  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),dw=doc.internal.pageSize.getWidth(),dm=14;
+  doc.setFontSize(16);doc.setFont('helvetica','bold');doc.setTextColor(46,139,87);doc.text('DRIVER PAYROLL LEDGER',dw/2,13,{align:'center'});
+  doc.autoTable({startY:20,head:[['#','Driver','Vehicles','Monthly Sal (Rs.)','Payable (Rs.)','Paid (Rs.)','Balance (Rs.)','Trips']],body:window._driverData.map((d,i)=>[i+1,d.name,d.vehicles,d.sal.toFixed(2),d.pay.toFixed(2),d.paid.toFixed(2),d.bal.toFixed(2),d.trips]),theme:'striped',headStyles:{fillColor:[46,139,87],textColor:255},margin:{left:dm,right:dm}});
+  const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(120,120,120);doc.text(`Page ${i} of ${pc}`,dw/2,doc.internal.pageSize.height-7,{align:'center'});}
+  doc.save('Driver_Ledger.pdf');
+};
+
+// ===================== VEHICLE PDF (existing) =====================
+window.genVehiclePDF=async function(vn,trips){
+  if(!trips.length)return;
+  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),dw=doc.internal.pageSize.getWidth(),dm=10;let y=dm;
+  const tr=trips.reduce((a,t)=>a+(Number(t.gain)||0),0),te=trips.reduce((a,t)=>a+(Number(t.total)||0),0),np=tr-te,pm=tr>0?((np/tr)*100).toFixed(2):0;
+  const tt=trips.reduce((a,t)=>a+(Number(t.weight)||0),0),tk=trips.reduce((a,t)=>a+(Number(t.totalTripKm)||0),0);
+  const die=trips.reduce((a,t)=>a+(Number(t.diesel)||0),0),tyre=trips.reduce((a,t)=>a+(Number(t.tyre)||0),0),toll=trips.reduce((a,t)=>a+(Number(t.toll)||0),0),food=trips.reduce((a,t)=>a+(Number(t.food)||0),0),oth=trips.reduce((a,t)=>a+(Number(t.other)||0),0),adv=trips.reduce((a,t)=>a+(Number(t.advance)||0),0),work=trips.reduce((a,t)=>a+(Number(t.vehicleWork)||0),0);
+  const days=Math.ceil((new Date($('endDate').value)-new Date($('startDate').value))/86400000)+1,months=days/30;
+  const emi=Number(trips[0].monthlyInstallment)||0,sal=Number(trips[0].driverSalary)||0;
+  const tEmi=emi*months,tSal=sal*months;
+  const fch=$('financialChart'),ech=$('expenseChart');
+  if(financialChartInst)financialChartInst.destroy();if(expenseChartInst)expenseChartInst.destroy();
+  financialChartInst=new Chart(fch,{type:'bar',data:{labels:['Revenue','Expenses','Profit'],datasets:[{data:[tr,te,np],backgroundColor:['#2E8B57','#DC3545','#007BFF']}]},options:{responsive:false,maintainAspectRatio:true,plugins:{legend:{display:false},title:{display:true,text:'Financial Summary'}}}});
+  expenseChartInst=new Chart(ech,{type:'pie',data:{labels:['Diesel','Tyre','Toll','Advance','Food','Work','Other'],datasets:[{data:[die,tyre,toll,adv,food,work,oth],backgroundColor:['#007bff','#28a745','#ffc107','#17a2b8','#dc3545','#6f42c1','#6c757d']}]},options:{responsive:false,maintainAspectRatio:true,plugins:{legend:{position:'right'},title:{display:true,text:'Expense Breakdown'}}}});
+  await new Promise(r=>setTimeout(r,500));
+  const fi=fch.toDataURL('image/jpeg',1.0),ei=ech.toDataURL('image/jpeg',1.0);
+  doc.setFontSize(22);doc.setFont('helvetica','bold');doc.setTextColor(46,139,87);doc.text('PROFESSIONAL TRIP REPORT',dw/2,y+5,{align:'center'});
+  doc.setFontSize(12);doc.setTextColor(68,68,68);y+=14;doc.text(`Vehicle: ${vn}`,dw/2,y,{align:'center'});y+=6;
+  doc.text(`Period: ${fmtDisp(new Date($('startDate').value))} - ${fmtDisp(new Date($('endDate').value))}`,dw/2,y,{align:'center'});
+  y+=5;doc.setDrawColor(46,139,87);doc.setLineWidth(.5);doc.line(dm,y,dw-dm,y);y+=5;
+  doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(46,139,87);doc.text('I. Executive Summary',dm,y+2);y+=5;
+  doc.autoTable({startY:y+4,head:[['Metric','Value','Details']],body:[['Total Revenue',`Rs.${cleanN(tr)}`,"All LR billing"],['Total Expenses',`Rs.${cleanN(te)}`,'Trip costs+fuel+shortage'],['Net Profit',`Rs.${cleanN(np)}`,`Margin: ${pm}%`],['Total Trips',`${trips.length}`,'In period'],['Distance',`${tk.toFixed(0)} KM`,`${tt.toFixed(2)} MT carried`]],theme:'striped',headStyles:{fillColor:[46,139,87],textColor:255,fontStyle:'bold'},bodyStyles:{fontSize:9},margin:{left:dm,right:dm}});
+  y=doc.lastAutoTable.finalY+5;
+  doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(46,139,87);doc.text('II. Visualization',dm,y+5);y+=10;
+  doc.addImage(fi,'JPEG',dm,y,90,60);doc.addImage(ei,'JPEG',dm+95,y,90,60);y+=70;
+  doc.addPage();y=dm;
+  doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(46,139,87);doc.text('III. Fixed & Operational Costs',dm,y+5);y+=10;
+  doc.autoTable({startY:y,head:[['Component','Total (Rs.)','Per Trip (Rs.)']],body:[['EMI',`Rs.${cleanN(tEmi)}`,'-'],['Driver Salary',`Rs.${cleanN(tSal)}`,`Rs.${cleanN(tSal/trips.length)}`],['Repairs',`Rs.${cleanN(work)}`,`Rs.${cleanN(work/trips.length)}`],['Diesel',`Rs.${cleanN(die)}`,`Rs.${cleanN(die/trips.length)}`],['TOTAL TCO',`Rs.${cleanN(tEmi+tSal+work+die)}`,'-']],theme:'grid',headStyles:{fillColor:[67,97,238],textColor:255},bodyStyles:{fontSize:8.5},margin:{left:dm,right:dm}});
+  y=doc.lastAutoTable.finalY+8;
+  doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(46,139,87);doc.text('IV. Trip-by-Trip Log',dm,y);y+=5;
+  doc.autoTable({startY:y+4,head:[['Date','LR','Route','Start KM','End KM','Trip KM','Tonne','Revenue','Expenses','Profit']],body:trips.map(t=>{const pc=t.profit>=0?{textColor:[40,167,69]}:{textColor:[220,53,69]};return[fmtFile(new Date(t.date)),t.lrNumber||'-',`${t.fromLocation||'-'}->${t.toLocation||'-'}`,(t.startKm||0).toFixed(0),(t.endKm||0).toFixed(0),(t.totalTripKm||0).toFixed(0),(t.weight||0).toFixed(2),`Rs.${cleanN(t.gain)}`,`Rs.${cleanN(t.total)}`,{content:`Rs.${cleanN(t.profit)}`,styles:pc}];}),theme:'striped',headStyles:{fillColor:[46,139,87],textColor:255,fontStyle:'bold',fontSize:7,halign:'center'},bodyStyles:{fontSize:6.5},columnStyles:{0:{cellWidth:14},1:{cellWidth:14},2:{cellWidth:32},3:{cellWidth:14,halign:'right'},4:{cellWidth:14,halign:'right'},5:{cellWidth:14,halign:'right'},6:{cellWidth:13,halign:'right'},7:{cellWidth:17,halign:'right'},8:{cellWidth:17,halign:'right'},9:{cellWidth:17,halign:'right',fontStyle:'bold'}},margin:{left:dm,right:dm}});
+  const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(100,100,100);doc.text(`Page ${i} of ${pc}`,dw/2,doc.internal.pageSize.height-5,{align:'center'});doc.text('Transport Financial Dashboard',dw-10,doc.internal.pageSize.height-5,{align:'right'});}
+  doc.save(`Trip_Report_${vn}_${fmtFile(new Date())}.pdf`);
+  if(financialChartInst){financialChartInst.destroy();financialChartInst=null;}if(expenseChartInst){expenseChartInst.destroy();expenseChartInst=null;}
+};
+
+function genFullRangePDF(data,s,e,fname){
+  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'portrait'}),dm=14,dw=doc.internal.pageSize.getWidth();
+  doc.setFontSize(18);doc.setTextColor(46,139,87);doc.text('COMPREHENSIVE TRIP REPORT',dm,14);
+  doc.setFontSize(9);doc.setTextColor(100,100,100);doc.text(`${fmtDisp(s)} to ${fmtDisp(e)}`,dm,20);doc.text(`Generated: ${fmtDisp(new Date())}`,dm,25);
+  doc.setDrawColor(46,139,87);doc.line(dm,28,196,28);
+  const tr=data.reduce((a,t)=>a+(Number(t.gain)||0),0),te=data.reduce((a,t)=>a+(Number(t.total)||0),0),np=tr-te,pm=tr>0?((np/tr)*100).toFixed(2):0;
+  const die=data.reduce((a,t)=>a+(Number(t.diesel)||0),0),tyre=data.reduce((a,t)=>a+(Number(t.tyre)||0),0),tt=data.reduce((a,t)=>a+(Number(t.weight)||0),0),tk=data.reduce((a,t)=>a+(Number(t.totalTripKm)||0),0),toll=data.reduce((a,t)=>a+(Number(t.toll)||0),0),work=data.reduce((a,t)=>a+(Number(t.vehicleWork)||0),0),adv=data.reduce((a,t)=>a+(Number(t.advance)||0),0),food=data.reduce((a,t)=>a+(Number(t.food)||0),0),oth=data.reduce((a,t)=>a+(Number(t.other)||0),0);
+  doc.setFontSize(14);doc.setTextColor(46,139,87);doc.text('FINANCIAL SUMMARY',dm,37);doc.setDrawColor(46,139,87);doc.line(dm,39,100,39);
+  doc.autoTable({startY:42,body:[['Total Trips',data.length],['Total Tonnes',`${tt.toFixed(2)} MT`],['Total Distance',`${tk.toFixed(0)} KM`],['Total Revenue',`Rs.${cleanN(tr)}`],['Total Expenses',`Rs.${cleanN(te)}`],['Net Profit',`Rs.${cleanN(np)}`],['Profit Margin',`${pm}%`],['',''],['Diesel',`Rs.${cleanN(die)}`],['Tyre',`Rs.${cleanN(tyre)}`],['Toll',`Rs.${cleanN(toll)}`],['Vehicle Work',`Rs.${cleanN(work)}`],['Advance',`Rs.${cleanN(adv)}`],['Food & Other',`Rs.${cleanN(food+oth)}`]],theme:'grid',tableLineWidth:.1,tableLineColor:[200,200,200],styles:{fontSize:10,cellPadding:3},columnStyles:{0:{fontStyle:'bold',cellWidth:70},1:{cellWidth:40,halign:'right'}}});
+  const vmap={};data.forEach(t=>{if(!vmap[t.vehicle])vmap[t.vehicle]=[];vmap[t.vehicle].push(t);});
+  let fy=doc.lastAutoTable.finalY+10;if(fy>doc.internal.pageSize.height-40){doc.addPage();fy=15;}
+  doc.setFontSize(14);doc.setTextColor(46,139,87);doc.text('VEHICLE SUMMARY',dm,fy);doc.setDrawColor(46,139,87);doc.line(dm,fy+2,100,fy+2);
+  doc.autoTable({startY:fy+5,head:[['Vehicle','Trips','Revenue','Expenses','Profit','Margin']],body:Object.keys(vmap).map(v=>{const vt=vmap[v],vr=vt.reduce((a,t)=>a+(Number(t.gain)||0),0),ve=vt.reduce((a,t)=>a+(Number(t.total)||0),0),vp=vr-ve,vm=vr>0?((vp/vr)*100).toFixed(2):0;return[v,vt.length,`Rs.${cleanN(vr)}`,`Rs.${cleanN(ve)}`,`Rs.${cleanN(vp)}`,`${vm}%`];}),theme:'grid',headStyles:{fillColor:[46,139,87],textColor:255,fontStyle:'bold'},alternateRowStyles:{fillColor:[240,248,244]},styles:{fontSize:9,cellPadding:3}});
+  const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(100,100,100);doc.text(`Page ${i} of ${pc}`,doc.internal.pageSize.width/2,doc.internal.pageSize.height-10,{align:'center'});doc.text('Transport Dashboard',doc.internal.pageSize.width-dm,doc.internal.pageSize.height-10,{align:'right'});}
+  doc.save(`${fname}.pdf`);
+}
+
+window.logout=function(){auth.signOut().then(()=>window.location.href='index.html');};
+window.toggleMenu=function(){const el=$('navLinks');if(el)el.classList.toggle('show');};
+</script>
+</body>
+</html>

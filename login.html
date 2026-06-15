@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+<!-- 🔐 Secure .env Configuration Loader -->
+    <!-- 🔐 Secure Configuration - Loaded from .env -->
+    <script>
+        // Configuration loaded from .env file (server-side)
+        (function() {
+            'use strict';
+            
+            // Firebase configuration from .env
+            if (!window.FIREBASE_CONFIG) {
+                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
+            }
+            
+            // Cloudinary configuration from .env
+            if (!window.CLOUDINARY_CONFIG) {
+                window.CLOUDINARY_CONFIG = {
+                    cloudName: "doqapn15f",
+                    uploadPreset: "vehicle-driver",
+                    presets: {
+                        vehicleDriver: "vehicle-driver",
+                        paymentBilling: "payment-billing",
+                        profilePic: "profile-pic",
+                        documents: "documents",
+                        receipts: "receipts",
+                        expenses: "expenses",
+                        tyres: "tyres",
+                        vehicles: "vehicles",
+                        drivers: "drivers",
+                        invoices: "invoices",
+                        lrReports: "lr-reports",
+                        tripExpenses: "trip-expenses"
+                    },
+                    folders: {
+                        vehicles: "transport/vehicles",
+                        drivers: "transport/drivers", 
+                        documents: "transport/documents",
+                        profiles: "transport/profiles",
+                        receipts: "transport/receipts",
+                        expenses: "transport/expenses",
+                        tyres: "transport/tyres",
+                        invoices: "transport/invoices",
+                        lrReports: "transport/lr-reports",
+                        tripExpenses: "transport/trip-expenses"
+                    },
+                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
+                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
+                };
+            }
+            
+            // Environment configuration from .env
+            if (!window.ENVIRONMENT) {
+                window.ENVIRONMENT = {
+                    name: "production",
+                    debug: false,
+                    apiBaseUrl: "https://transvortex.online",
+                    version: "1.0.0",
+                    corsOrigin: "https://transvortex.online",
+                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
+                    apiRateLimit: 100
+                };
+            }
+            
+            // Security configuration from .env
+            if (!window.SECURITY_CONFIG) {
+                window.SECURITY_CONFIG = {
+                    sessionSecret: "transvortex-session-secret-2024",
+                    jwtSecret: "transvortex-jwt-secret-2024",
+                    encryptionKey: "transvortex-encryption-key-2024"
+                };
+            }
+            
+            // Optional API configurations from .env
+            if (!window.API_CONFIG) {
+                window.API_CONFIG = {
+                    email: {
+                        provider: "sendgrid",
+                        apiKey: "your-sendgrid-api-key-here",
+                        from: "noreply@transvortex.online",
+                        fromName: "TransVortex Transport"
+                    },
+                    payment: {
+                        provider: "stripe",
+                        publicKey: "your-stripe-public-key-here"
+                    },
+                    sms: {
+                        provider: "twilio",
+                        accountSid: "your-twilio-account-sid-here",
+                        phoneNumber: "your-twilio-phone-number-here"
+                    },
+                    maps: {
+                        googleMapsApiKey: "your-google-maps-api-key-here",
+                        googlePlacesApiKey: "your-google-places-api-key-here"
+                    },
+                    analytics: {
+                        googleAnalyticsId: "GA-XXXXXXXXX",
+                        facebookPixelId: "your-facebook-pixel-id-here",
+                        hotjarId: "your-hotjar-id-here"
+                    }
+                };
+            }
+            
+            // Log successful loading (only in debug mode)
+            if (window.ENVIRONMENT.debug) {
+                console.log('✅ Secure configuration loaded from .env');
+                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
+                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
+                console.log('🌍 Environment:', window.ENVIRONMENT.name);
+                console.log('🔐 Security: Loaded');
+            }
+            
+            // Dispatch event when configuration is ready
+            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
+                detail: {
+                    firebase: window.FIREBASE_CONFIG,
+                    cloudinary: window.CLOUDINARY_CONFIG,
+                    environment: window.ENVIRONMENT,
+                    security: window.SECURITY_CONFIG,
+                    apis: window.API_CONFIG
+                }
+            }));
+        })();
+    </script>
+
+
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Transport Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- EmailJS SDK for sending OTP emails -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    /* Color Variables */
+    :root {
+      --primary-color: #2E8B57;
+      --secondary-color: #43B97F;
+      --accent-color: #3CB371;
+      --text-color: #1F1F1F;
+      --light-bg: #f8f9fa;
+      --white: #FFFFFF;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+      --radius: 12px;
+      --input-border: #ced4da;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--white) 0%, #f0f8f4 100%);
+      overflow: hidden;
+      display: flex;
+    }
+
+    .split-screen { display: flex; width: 100%; height: 100vh; }
+
+    .left-pane {
+      width: 50%;
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+      padding: 3rem; color: var(--white);
+      animation: fadeInFromLeft 0.8s ease-out forwards;
+    }
+    .left-content { position: relative; z-index: 10; max-width: 80%; }
+    .left-content h1 { font-size: 2.5rem; font-weight: 700; line-height: 1.2; margin-bottom: 1rem; }
+    .left-content p  { font-size: 1.2rem; font-weight: 300; opacity: 0.9; }
+
+    .road-animation {
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 300px;
+      background: #3c3c3c; border-top: 10px solid #5c5c5c; z-index: 5;
+    }
+    .road-line {
+      position: absolute; top: 50%; left: 0; width: 100%; height: 5px;
+      background: transparent; overflow: hidden; transform: translateY(-50%);
+    }
+    .road-line::after {
+      content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%;
+      background: repeating-linear-gradient(to right, #fff 0, #fff 50px, transparent 50px, transparent 100px);
+      animation: move-line 2s linear infinite;
+    }
+    .vehicle {
+      position: absolute; bottom: 10px; animation: drive 10s linear infinite;
+      z-index: 6; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .truck { width:120px;height:60px;background:var(--secondary-color);border-radius:10px 10px 0 0;left:-150px;animation-duration:12s; }
+    .truck::before { content:'';position:absolute;right:-30px;top:10px;width:40px;height:40px;background:var(--accent-color);border-radius:5px; }
+    .truck::after  { content:'';position:absolute;bottom:-10px;left:5px;right:5px;height:10px;background:#111;border-radius:5px; }
+    .car  { width:80px;height:40px;background:var(--accent-color);border-radius:20px 20px 0 0;left:-100px;animation-duration:8s;animation-delay:-4s; }
+    .car::after   { content:'';position:absolute;bottom:-10px;left:5px;right:5px;height:10px;background:#111;border-radius:5px; }
+
+    @keyframes move-line { from{background-position:0 0} to{background-position:-100px 0} }
+    @keyframes drive { from{transform:translateX(-150px)} to{transform:translateX(110vw)} }
+    @keyframes fadeInFromLeft  { from{opacity:0;transform:translateX(-50px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes fadeInFromRight { from{opacity:0;transform:translateX(50px)}  to{opacity:1;transform:translateX(0)} }
+
+    .right-pane {
+      width: 50%; display: flex; align-items: center; justify-content: center;
+      padding: 2rem; animation: fadeInFromRight 0.8s ease-out forwards;
+    }
+    .auth-container {
+      width: 100%; max-width: 420px; background: var(--white);
+      padding: 2.5rem; border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .logo-placeholder { text-align: center; margin-bottom: 2rem; }
+    .logo-placeholder img { max-width: 180px; height: auto; }
+    .auth-header { text-align: center; margin-bottom: 2rem; }
+    .auth-header h1 { font-size: 1.8rem; font-weight: 700; color: var(--text-color); margin-bottom: 0.5rem; }
+    .auth-header p  { margin: 0; color: #6c757d; font-size: 1rem; }
+
+    .form-group { margin-bottom: 1.25rem; }
+    .form-control {
+      width: 100%; padding: 0.9rem 1rem;
+      border: 1px solid var(--input-border); border-radius: 8px; font-size: 1rem;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus {
+      outline: none; border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(46,139,87,0.2);
+    }
+    .forgot-password {
+      display: block; margin-top: -0.75rem; margin-bottom: 1.5rem;
+      font-size: 0.9rem; color: #6c757d; text-decoration: none;
+      text-align: right; font-weight: 500;
+    }
+    .forgot-password:hover { color: var(--primary-color); text-decoration: underline; }
+    .btn {
+      width: 100%; padding: 0.9rem 1rem; border: none; border-radius: 8px;
+      font-size: 17px; font-weight: 600; cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 6px 15px rgba(46,139,87,0.2);
+    }
+    .btn-primary { background: var(--primary-color); color: var(--white); }
+    .btn-primary:hover { background-color: var(--accent-color); transform: translateY(-1px); box-shadow: 0 8px 18px rgba(46,139,87,0.3); }
+    .btn-primary:active { transform: translateY(0); }
+    .auth-footer { text-align: center; margin-top: 2rem; font-size: 0.95rem; color: #6c757d; }
+    .auth-footer a { color: var(--primary-color); font-weight: 600; text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+    #user-status { margin-top: 1rem; text-align: center; font-size: 0.9rem; min-height: 1.2rem; }
+    .error-message   { color: #dc3545; }
+    .success-message { color: #198754; }
+
+    @media (max-width: 992px) {
+      .left-pane { display: none; }
+      .right-pane { width: 100%; animation: none; }
+      .auth-container { max-width: 380px; }
+      body { background: var(--white); }
+    }
+
+    /* ── OTP Verification Overlay ──────────────────────── */
+    #otpOverlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000;
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    #otpOverlay.show {
+      display: flex; opacity: 1;
+    }
+    .otp-card {
+      background: var(--white); width: 100%; max-width: 400px;
+      padding: 2.5rem 2rem; border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      text-align: center;
+      transform: translateY(20px); transition: transform 0.3s ease;
+    }
+    #otpOverlay.show .otp-card { transform: translateY(0); }
+    
+    .otp-icon {
+      width: 60px; height: 60px; background: #e8f5e9;
+      color: var(--primary-color); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin: 0 auto 1.5rem;
+    }
+    .otp-card h2 { font-size: 1.5rem; color: var(--text-color); margin-bottom: 0.5rem; }
+    .otp-card p { color: #6c757d; font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.5; }
+    .otp-card p strong { color: var(--text-color); }
+    
+    .otp-inputs { display: flex; justify-content: center; gap: 8px; margin-bottom: 1.5rem; }
+    .otp-digit {
+      width: 45px; height: 55px;
+      border: 2px solid var(--input-border); border-radius: 8px;
+      font-size: 1.5rem; font-weight: 700; text-align: center;
+      color: var(--text-color); background: #f8f9fa;
+      transition: all 0.2s;
+    }
+    .otp-digit:focus {
+      outline: none; border-color: var(--primary-color);
+      background: var(--white); box-shadow: 0 0 0 3px rgba(46,139,87,0.15);
+    }
+    
+    .btn-verify {
+      width: 100%; padding: 0.9rem; border: none; border-radius: 8px;
+      background: var(--primary-color); color: white;
+      font-size: 1.1rem; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; box-shadow: 0 4px 12px rgba(46,139,87,0.2);
+    }
+    .btn-verify:hover { background: var(--accent-color); transform: translateY(-1px); }
+    
+    .otp-resend { margin-top: 1.5rem; font-size: 0.9rem; color: #6c757d; }
+    .otp-resend a {
+      color: var(--primary-color); font-weight: 600; text-decoration: none; cursor: pointer;
+    }
+    .otp-resend a:hover { text-decoration: underline; }
+    .otp-resend a.disabled { color: #adb5bd; cursor: not-allowed; text-decoration: none; }
+    
+    #otpError { color: #dc3545; font-size: 0.9rem; margin-bottom: 1rem; min-height: 20px; font-weight: 500; }
+  </style>
+
+    <!-- 🔥 Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <!-- 🔐 Configuration Loading -->
+    <script src="evm.js"></script>
+    <script src="secure-api-loader.js"></script>
+</head>
+<body>
+  <div class="split-screen">
+    <div class="left-pane">
+      <div class="left-content">
+        <h1>An integrated platform</h1>
+        <p>to improve sustainability, effectiveness, and safety.</p>
+      </div>
+      <div class="road-animation">
+        <div class="road-line"></div>
+        <div class="vehicle truck"></div>
+        <div class="vehicle car"></div>
+      </div>
+    </div>
+    <div class="right-pane">
+      <div class="auth-container">
+        <div class="logo-placeholder">
+          <img src="logo1.jpg" alt="TransVortex Logo">
+        </div>
+        <div class="auth-header">
+          <h1>Sign in</h1>
+          <p>to access your transport dashboard</p>
+        </div>
+        <form id="login-form">
+          <div class="form-group">
+            <input type="email" id="login-email" class="form-control" placeholder="Email address" autocomplete="email" required>
+          </div>
+          <div class="form-group">
+            <input type="password" id="login-password" class="form-control" placeholder="Password" autocomplete="current-password" required>
+          </div>
+          <a href="#" class="forgot-password" onclick="resetPassword(); return false;">Forgot password?</a>
+          <button type="submit" class="btn btn-primary" id="login-button">Login</button>
+          <div id="user-status"></div>
+        </form>
+        <div class="auth-footer">
+          Don't have an account? <a href="signup.html">Sign up</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── OTP Verification Overlay ──────────────────────── -->
+  <div id="otpOverlay">
+    <div class="otp-card">
+      <div class="otp-icon"><i class="fas fa-shield-alt"></i></div>
+      <h2>Two-Step Verification</h2>
+      <p>We've sent a 6-digit code to<br><strong id="otpEmailDisplay"></strong><br>Enter it below to continue.</p>
+      <div class="otp-inputs">
+        <input class="otp-digit" id="d1" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" id="d2" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" id="d3" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" id="d4" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" id="d5" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" id="d6" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      </div>
+      <div id="otpError"></div>
+      <button class="btn-verify" id="verifyOtpBtn" onclick="verifyOtp()"><i class="fas fa-check-circle me-2"></i>Verify Code</button>
+      <div class="otp-resend">
+        Didn't receive it? <a id="resendLink" onclick="resendOtp()">Resend</a> &nbsp;·&nbsp;
+        Expires in <span id="otpTimer">5:00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load secure configuration first -->
+  <!-- EmailJS init -->
+  <script>
+    // ── EMAILJS CONFIG ────────────────────────────────────────────────────
+    const EMAILJS_SERVICE_ID  = 'service_nicgzk6';
+    const EMAILJS_TEMPLATE_ID = 'template_ocp4g4h';
+    const EMAILJS_PUBLIC_KEY  = '-1x65K5GaVIMgxR4i';
+    // ─────────────────────────────────────────────────────────────────────
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+
+    // ── OTP STATE ─────────────────────────────────────────────────────────
+    let _otpCode        = null;  // generated OTP
+    let _otpExpiry      = null;  // Date when OTP expires
+    let _otpTimerInt    = null;  // countdown interval
+    let _pendingAction  = null;  // function to call after OTP verified
+
+    // ── GENERATE + SEND OTP ───────────────────────────────────────────────
+    async function sendOtp(email, name) {
+      _otpCode   = String(Math.floor(100000 + Math.random() * 900000));
+      _otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+      // Format expiry time for display in email e.g. "11:35 AM"
+      const timeStr = _otpExpiry.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      // Send via EmailJS — variables match your template
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: email,
+        to_name:  name || email.split('@')[0],
+        passcode: _otpCode,   // matches {{passcode}} in your template
+        time:     timeStr     // matches {{time}} in your template
+      });
+    }
+
+    // ── SHOW OTP OVERLAY ──────────────────────────────────────────────────
+    function showOtpOverlay(email, name, onSuccess) {
+      _pendingAction = onSuccess;
+      document.getElementById('otpEmailDisplay').textContent = email;
+      // Clear inputs
+      ['d1','d2','d3','d4','d5','d6'].forEach(id => {
+        const el = document.getElementById(id);
+        el.value = '';
+        el.classList.remove('filled');
+      });
+      document.getElementById('otpError').textContent = '';
+      document.getElementById('verifyOtpBtn').disabled = false;
+      document.getElementById('otpOverlay').classList.add('show');
+      document.getElementById('d1').focus();
+      startOtpTimer();
+      setupOtpInputs();
+    }
+
+    // ── OTP DIGIT INPUTS ──────────────────────────────────────────────────
+    function setupOtpInputs() {
+      const ids = ['d1','d2','d3','d4','d5','d6'];
+      ids.forEach((id, i) => {
+        const el = document.getElementById(id);
+        el.oninput = function() {
+          this.value = this.value.replace(/[^0-9]/g,'').slice(-1);
+          this.classList.toggle('filled', this.value !== '');
+          if (this.value && i < 5) document.getElementById(ids[i+1]).focus();
+          if (i === 5 && this.value) verifyOtp();
+        };
+        el.onkeydown = function(e) {
+          if (e.key === 'Backspace' && !this.value && i > 0) {
+            document.getElementById(ids[i-1]).focus();
+          }
+        };
+      });
+    }
+
+    // ── VERIFY OTP ────────────────────────────────────────────────────────
+    function verifyOtp() {
+      const entered = ['d1','d2','d3','d4','d5','d6']
+        .map(id => document.getElementById(id).value).join('');
+      const errEl = document.getElementById('otpError');
+
+      if (entered.length < 6) {
+        errEl.textContent = 'Please enter all 6 digits.';
+        return;
+      }
+      if (new Date() > _otpExpiry) {
+        errEl.textContent = '⏰ OTP expired. Please request a new one.';
+        return;
+      }
+      if (entered !== _otpCode) {
+        errEl.textContent = '❌ Incorrect code. Please try again.';
+        ['d1','d2','d3','d4','d5','d6'].forEach(id => {
+          const el = document.getElementById(id);
+          el.style.borderColor = '#ef4444';
+          setTimeout(() => el.style.borderColor = '', 1000);
+        });
+        return;
+      }
+
+      // ✅ OTP correct
+      clearInterval(_otpTimerInt);
+      document.getElementById('otpOverlay').classList.remove('show');
+      if (_pendingAction) _pendingAction();
+    }
+
+    // ── RESEND OTP ────────────────────────────────────────────────────────
+    async function resendOtp() {
+      const email = document.getElementById('otpEmailDisplay').textContent;
+      const link  = document.getElementById('resendLink');
+      link.classList.add('disabled');
+      link.textContent = 'Sending...';
+      try {
+        await sendOtp(email, email.split('@')[0]);
+        document.getElementById('otpError').textContent = '✅ New code sent!';
+        startOtpTimer();
+      } catch(e) {
+        document.getElementById('otpError').textContent = 'Failed to resend. Check your EmailJS config.';
+      }
+      setTimeout(() => {
+        link.classList.remove('disabled');
+        link.textContent = 'Resend';
+      }, 30000);
+    }
+
+    // ── COUNTDOWN TIMER ───────────────────────────────────────────────────
+    function startOtpTimer() {
+      clearInterval(_otpTimerInt);
+      const timerEl = document.getElementById('otpTimer');
+      const resend   = document.getElementById('resendLink');
+      resend.classList.add('disabled');
+      let secs = 300; // 5 min
+      timerEl.textContent = '5:00';
+      _otpTimerInt = setInterval(() => {
+        secs--;
+        const m = Math.floor(secs / 60);
+        const s = String(secs % 60).padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
+        if (secs <= 0) {
+          clearInterval(_otpTimerInt);
+          timerEl.textContent = 'Expired';
+          resend.classList.remove('disabled');
+        }
+        if (secs === 240) resend.classList.remove('disabled'); // Allow resend after 1 min
+      }, 1000);
+    }
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      sendPasswordResetEmail,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      get,
+      update,
+      query,
+      orderByChild,
+      equalTo
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // Load Firebase configuration securely from EVM
+    let firebaseConfig;
+    
+    try {
+        if (!window.FIREBASE_CONFIG) {
+            throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
+        }
+        firebaseConfig = window.FIREBASE_CONFIG;
+    } catch (error) {
+        console.error('❌ Failed to load Firebase configuration:', error);
+        firebaseConfig = window.FIREBASE_CONFIG;
+    }
+
+    const app = initializeApp(window.FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // Show success message if redirected from signup
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('signup') === 'success') {
+      const successMessage = document.createElement('div');
+      successMessage.className = 'success-message';
+      successMessage.textContent = 'Account created successfully! Please log in to continue.';
+      successMessage.style.textAlign = 'center'; // Keep this style
+      successMessage.style.marginBottom = '20px';
+      document.querySelector('.auth-container').insertBefore(successMessage, document.querySelector('.auth-header'));
+      
+      // Remove the signup success parameter from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Function to show the subscription expired message
+    function showSubscriptionExpiredCard() {
+      const authContainer = document.querySelector('.auth-container');
+      authContainer.innerHTML = `
+        <div class="auth-header">
+          <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: #ffc107; margin-bottom: 1rem;"></i>
+          <h2>Subscription Expired</h2>
+          <p>Your subscription is over. To continue accessing your dashboard, please subscribe to an active plan.</p>
+        </div>
+        <button class="btn btn-primary" onclick="window.location.href = 'subscribe.html'" style="margin-top: 20px;">
+          Go to Subscription Page
+        </button>
+      `;
+    }
+
+    // Login function
+    window.login = async function() {
+      
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value.trim();
+      const loginButton = document.getElementById("login-button");
+      
+      // Store original button HTML at the beginning
+      const originalButtonHTML = loginButton.innerHTML;
+      
+      // Store email and password in session (This is needed for auto-login features, even if the branch logic is gone)
+      sessionStorage.setItem('coreEmail', email);
+      sessionStorage.setItem('corePassword', password);
+      const statusElement = document.getElementById("user-status");
+      
+      if (!loginButton) {
+        console.error('Login button not found');
+        return;
+      }
+      
+      // Basic validation (omitted for brevity, assume valid)
+      if (!email || !password || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showError('Please enter a valid email and password');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        loginButton.disabled = true;
+        loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+        
+        // 1. Sign in with email and password
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // 2. Get user data from database
+        const userRef = ref(db, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        
+        if (!snapshot.exists()) {
+          await update(ref(db, `users/${user.uid}`), { lastLogin: new Date().toISOString() });
+          window.location.href = 'home.html';
+          return;
+        }
+
+        const userData = snapshot.val();
+
+        // **3. Check Admin Role**
+        const isAdmin = (userData.role === 'admin') ||
+                       (userData.profile && userData.profile.role === 'admin') ||
+                       (email === 'transvortex@gmail.com');
+
+        if (isAdmin) {
+          await update(ref(db, `users/${user.uid}`), { 
+            role: 'admin',
+            lastLogin: new Date().toISOString()
+          });
+          window.location.href = 'admin-payments.html';
+          return;
+        }
+
+        // **4. Check if this is a TEAM MEMBER (sub-user) account**
+        const coreAccountId = userData.coreAccountId;
+        const isTeamMember  = !!coreAccountId && coreAccountId !== user.uid;
+
+        if (isTeamMember) {
+          // Check if this sub-user account is disabled
+          if (userData.status === 'disabled') {
+            showError('Your account has been disabled. Please contact your manager.');
+            return;
+          }
+
+          // Check owner's subscription instead of the sub-user's
+          const ownerSnap = await get(ref(db, `users/${coreAccountId}`));
+          if (!ownerSnap.exists()) {
+            showError('Account configuration error. Please contact support.');
+            return;
+          }
+          const ownerData = ownerSnap.val();
+          const ownerSub  = ownerData.subscription;
+          const now       = new Date();
+          let isOwnerSubActive = false;
+
+          if (ownerSub) {
+            const trialEnd  = ownerSub.trialEnd  ? new Date(ownerSub.trialEnd)  : null;
+            const endDate   = ownerSub.endDate   ? new Date(ownerSub.endDate)   : null;
+            const isTrial   = ownerSub.status === 'trial'  && trialEnd  && trialEnd  > now;
+            const isPaid    = ownerSub.status === 'active' && endDate   && endDate   > now;
+            isOwnerSubActive = isTrial || isPaid;
+          }
+
+          if (!isOwnerSubActive) {
+            // Fallback to check coreSubscriptions
+            const coreSubSnap = await get(ref(db, `coreSubscriptions/${coreAccountId}`));
+            if (coreSubSnap.exists()) {
+              const coreSub = coreSubSnap.val();
+              const coreEndDate = coreSub.endDate ? new Date(coreSub.endDate) : null;
+              if (coreEndDate && coreEndDate > now) {
+                isOwnerSubActive = true;
+              }
+            }
+          }
+
+          if (!isOwnerSubActive) {
+            showError('The main account subscription has expired. Please contact the account owner.');
+            return;
+          }
+
+          // Update last login timestamps
+          const loginTs = now.toISOString();
+          await update(ref(db, `users/${user.uid}`), { lastLogin: loginTs });
+          try {
+            await update(ref(db, `users/${coreAccountId}/teamMembers/${user.uid}`), { lastLogin: loginTs });
+          } catch(_) {}
+
+          // Store user context in sessionStorage
+          sessionStorage.setItem('tv_user_context', JSON.stringify({
+            uid:           user.uid,
+            name:          userData.name || user.email.split('@')[0],
+            email:         user.email,
+            role:          userData.role || 'employee',
+            coreAccountId: coreAccountId,
+            isSubUser:     true,
+            accountType:   'team_member',
+            permissions:   (window.AuthManager && window.AuthManager.ROLE_PERMISSIONS[userData.role || 'employee']) || [],
+          }));
+
+          // 🔐 MFA Step — send OTP before redirecting
+          const userName = userData.name || user.email.split('@')[0];
+          try {
+            loginButton.innerHTML = '<i class="fas fa-paper-plane"></i> Sending OTP...';
+            await sendOtp(user.email, userName);
+            showOtpOverlay(user.email, userName, () => {
+              window.location.href = 'home.html';
+            });
+          } catch (otpErr) {
+            console.error('OTP send failed:', otpErr);
+            showError('Could not send OTP. Check your EmailJS config or try again.');
+          } finally {
+            loginButton.disabled = false;
+            loginButton.innerHTML = originalButtonHTML;
+          }
+          return;
+        }
+
+        // **5. Regular owner account — Check Subscription Status**
+        const subscription = userData.subscription;
+        const now = new Date();
+        let isSubscriptionActive = false;
+
+        if (subscription) {
+          let trialEnd = subscription.trialEnd ? new Date(subscription.trialEnd) : null;
+          
+          // Fallback: if trialEnd is missing but status is 'trial', compute it from startDate
+          if (!trialEnd && subscription.status === 'trial') {
+            const startDate = subscription.startDate ? new Date(subscription.startDate) : new Date();
+            trialEnd = new Date(startDate);
+            trialEnd.setDate(trialEnd.getDate() + (subscription.trialDays || 14));
+            
+            // Patch the database so this is computed only once
+            try {
+              await update(ref(db, `users/${user.uid}/subscription`), {
+                trialEnd: trialEnd.toISOString()
+              });
+            } catch(_) {}
+          }
+
+          const endDate = subscription.endDate ? new Date(subscription.endDate) : null;
+          const isTrialActive = subscription.status === 'trial' && trialEnd && trialEnd > now;
+          const isPaidActive = subscription.status === 'active' && endDate && endDate > now;
+          isSubscriptionActive = isTrialActive || isPaidActive;
+        }
+
+        if (!isSubscriptionActive) {
+          // Fallback to check coreSubscriptions
+          const coreSubSnap = await get(ref(db, `coreSubscriptions/${user.uid}`));
+          if (coreSubSnap.exists()) {
+            const coreSub = coreSubSnap.val();
+            const coreEndDate = coreSub.endDate ? new Date(coreSub.endDate) : null;
+            if (coreEndDate && coreEndDate > now) {
+              isSubscriptionActive = true;
+            }
+          }
+        }
+
+        if (isSubscriptionActive) {
+          await update(ref(db, `users/${user.uid}`), { lastLogin: now.toISOString() });
+
+          // Store owner context in sessionStorage
+          const ownerContext = JSON.stringify({
+            uid:           user.uid,
+            name:          (userData.profile && userData.profile.ownerName) || user.displayName || user.email.split('@')[0],
+            email:         user.email,
+            role:          'owner',
+            coreAccountId: user.uid,
+            isSubUser:     false,
+            accountType:   'core',
+            permissions:   (window.AuthManager && window.AuthManager.ROLE_PERMISSIONS['owner']) || [],
+          });
+          sessionStorage.setItem('tv_user_context', ownerContext);
+
+          // 🔐 MFA Step — send OTP before redirecting
+          const ownerName = (userData.profile && userData.profile.ownerName) || user.displayName || user.email.split('@')[0];
+          try {
+            loginButton.innerHTML = '<i class="fas fa-paper-plane"></i> Sending OTP...';
+            await sendOtp(user.email, ownerName);
+            showOtpOverlay(user.email, ownerName, () => {
+              window.location.href = 'home.html';
+            });
+          } catch (otpErr) {
+            console.error('OTP send failed:', otpErr);
+            showError('Could not send OTP. Check your EmailJS config or try again.');
+          } finally {
+            loginButton.disabled = false;
+            loginButton.innerHTML = originalButtonHTML;
+          }
+          return;
+        } else {
+          showSubscriptionExpiredCard();
+          return;
+        }
+
+      } catch (error) {
+        console.error("Login error:", error);
+        let errorMessage = "An error occurred. Please try again.";
+        
+        // Handle specific error cases
+        if (error && error.code) {
+          switch (error.code) {
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+              errorMessage = "Incorrect email or password.";
+              document.getElementById("login-email").focus();
+              break;
+            case 'auth/too-many-requests':
+              errorMessage = "Too many failed attempts. Please try again later or reset your password.";
+              break;
+            case 'auth/invalid-email':
+              errorMessage = "Please enter a valid email address.";
+              document.getElementById("login-email").focus();
+              break;
+            case 'auth/user-disabled':
+              errorMessage = "This account has been disabled. Please contact support.";
+              break;
+            case 'auth/network-request-failed':
+              errorMessage = "Network error. Please check your connection and try again.";
+              break;
+          }
+        }
+        
+        showError(errorMessage);
+      } finally {
+        // Reset button state
+        if (loginButton) {
+          loginButton.disabled = false;
+          loginButton.innerHTML = originalButtonHTML;
+        }
+      }
+    };
+    
+    // Password reset function
+    window.resetPassword = async function() {
+      const email = document.getElementById("login-email").value.trim();
+      const statusElement = document.getElementById("user-status");
+      
+      if (!email) {
+        showError("Please enter your email address to reset your password.");
+        return;
+      }
+      
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showError("Password reset email sent. Please check your inbox.", 'success');
+      } catch (error) {
+        console.error("Password reset error:", error);
+        showError("Error sending password reset email. Please try again.");
+      }
+    };
+    
+    // Helper function to show error/success messages
+    function showError(message, type = 'error') {
+      const statusElement = document.getElementById("user-status");
+      if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.className = type === 'error' ? 'error-message' : 'success-message';
+        statusElement.style.display = 'block';
+        
+        // Hide the message after 5 seconds
+        setTimeout(() => {
+          statusElement.style.display = 'none';
+        }, 5000);
+      }
+    }
+    
+    // Attach event listener to the form for submission
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      window.login();
+    });
+
+    // Expose login function to the global scope so inline onsubmit can find it if needed elsewhere.
+    document.addEventListener('DOMContentLoaded', function() {
+      window.login = login;
+    });
+    
+    // Focus and prefill email field on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const emailField = document.getElementById('login-email');
+      const params = new URLSearchParams(window.location.search);
+      const prefill = params.get('email');
+      if (emailField) {
+        if (prefill) {
+          emailField.value = prefill;
+        }
+        emailField.focus();
+      }
+    });
+
+    // Removed Auto-login for branch switching logic since the structure is eliminated.
+    document.addEventListener('DOMContentLoaded', function() {
+      const params = new URLSearchParams(window.location.search);
+      // Remove obsolete branch autologin check
+      if (params.get('autologin') === 'branch') {
+        sessionStorage.removeItem('targetBranchEmail');
+      }
+    });
+  </script>
+</body>
+</html>

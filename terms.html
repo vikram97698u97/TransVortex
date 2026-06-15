@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service - TransVortex</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #2E8B57; /* Sea Green */
+      --secondary-color: #43B97F; /* Mint Green */
+      --accent-color: #3CB371; /* Lighter Green */
+      --text-color: #1F1F1F; /* Charcoal */
+      --light-bg: #F4FFF8; /* Very light green-white */
+      --white: #FFFFFF;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
+      --radius: 16px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; line-height: 1.7; color: var(--text-color); background-color: var(--light-bg); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    header { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0, 0, 0, 0.05); position: fixed; width: 100%; top: 0; z-index: 1000; transition: background 0.3s ease; }
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; }
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo {
+      height: 45px;
+      width: auto;
+      transition: transform 0.3s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.03);
+    }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--text-color); text-decoration: none; font-weight: 600; transition: color 0.3s ease; font-size: 0.95rem; }
+    .nav-links a:hover, .nav-links a.active { color: var(--primary-color); }
+    .cta-button { display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%); color: white; border-radius: 50px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(46, 139, 87, 0.2); }
+    .cta-button:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(46, 139, 87, 0.25); background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%); }
+    .page-hero { padding: 10rem 0 6rem; text-align: center; background-color: var(--white); }
+    .page-hero h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); font-weight: 800; margin-bottom: 1.5rem; color: var(--primary-color); letter-spacing: -1px; }
+    .content-section { padding: 6rem 0; }
+    .content-container { max-width: 800px; margin: 0 auto; background: var(--white); padding: 3rem; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid #e2e8f0; }
+    .content-container h2 { color: var(--text-color); font-weight: 700; margin-bottom: 1.5rem; }
+    .content-container p { margin-bottom: 1.5rem; color: #4a5568; }
+    .content-container ul { padding-left: 20px; margin-bottom: 1.5rem; color: #4a5568; }
+    footer { background-color: var(--text-color); color: #aaa; padding: 3rem 0; text-align: center; }
+    .footer-content { max-width: 800px; margin: 0 auto; padding: 0 1rem; }
+    .footer-links { display: flex; justify-content: center; gap: 1.5rem; margin: 1.5rem 0; flex-wrap: wrap; }
+    .footer-links a { color: #aaa; text-decoration: none; transition: color 0.3s ease; font-size: 0.9rem; }
+    .footer-links a:hover { color: var(--secondary-color); }
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .page-hero h1 { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav>
+        <div class="logo-container">
+          <img src="logo1.jpg" alt="TransVortex Logo" class="logo">
+        </div>
+        <div class="nav-links">
+          <a href="index.html">Home</a>
+          <a href="about.html">About</a>
+          <a href="services.html">Services</a>
+          <a href="contact.html">Contact</a>
+          <a href="login.html" class="cta-button">Login</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <section class="page-hero">
+    <div class="container">
+      <h1>Terms of Service</h1>
+    </div>
+  </section>
+
+  <section class="content-section">
+    <div class="content-container">
+      <h2>1. Acceptance of Terms</h2>
+      <p>By accessing and using our services, you accept and agree to be bound by the terms and provision of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.</p>
+      
+      <h2>2. Description of Service</h2>
+      <p>Our service provides a platform for managing transport-related data, including vehicle information, trip reports, and financial records. The service is provided "as is" and we assume no responsibility for the timeliness, deletion, or failure to store any user data.</p>
+      
+      <h2>3. User Responsibilities</h2>
+      <p>You are responsible for maintaining the confidentiality of your password and account, and are fully responsible for all activities that occur under your password or account. You agree to immediately notify us of any unauthorized use of your password or account or any other breach of security.</p>
+      
+      <h2>4. Termination</h2>
+      <p>We may terminate or suspend your access to our service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms.</p>
+      
+      <h2>5. Governing Law</h2>
+      <p>These Terms shall be governed and construed in accordance with the laws of our country, without regard to its conflict of law provisions.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-content">
+      <h3>TransVortex</h3>
+      <p>Empowering businesses with innovative solutions</p>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html">Services</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms & Conditions</a>
+      </div>
+      <p>&copy; 2025 TransVortex. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
