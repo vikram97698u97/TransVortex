@@ -298,7 +298,7 @@
             </li>
             <li class="nav-item" role="presentation">
               <button class="nav-link" id="empty-expenses-tab" data-bs-toggle="tab"
-                data-bs-target="#empty-expenses-content" type="button" role="tab">5. Empty Trip Expenses</button>
+                data-bs-target="#empty-expenses-content" type="button" role="tab">5. Empty Trip</button>
             </li>
           </ul>
 
@@ -522,20 +522,33 @@
 
             <div class="tab-pane fade" id="empty-expenses-content" role="tabpanel">
               <div class="card">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                  <h5 class="mb-0">Empty Return Expense Log</h5>
-                  <button type="button" class="btn btn-sm btn-outline-success"
-                    onclick="addExpenseRow('emptyTripGenericExpensesContainer')">
-                    <i class="fas fa-plus me-1"></i>Add Expense
-                  </button>
+                <div class="card-header bg-light">
+                  <h5 class="mb-0"><i class="fas fa-route me-2"></i>Empty Trip Details</h5>
                 </div>
                 <div class="card-body">
-                  <div id="emptyTripGenericExpensesContainer" class="d-flex flex-column gap-2">
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">From</label>
+                      <input type="text" class="form-control" id="emptyTripFrom" placeholder="Enter starting location">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">To</label>
+                      <input type="text" class="form-control" id="emptyTripTo" placeholder="Enter destination location">
+                    </div>
                   </div>
-                  <hr>
-                  <div class="text-end">
-                    <h5 class="mb-0">Total Empty Trip Expenses: <span id="emptyTripTotalExpensesDisplay"
-                        class="fw-bold text-danger">₹0.00</span></h5>
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Distance (KM)</label>
+                      <input type="number" step="0.1" class="form-control" id="emptyTripKm" placeholder="Enter KM" oninput="window.calculateEmptyTripFuelUsed()">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Fuel Average (km/l)</label>
+                      <input type="number" step="0.01" class="form-control" id="emptyTripAvg" placeholder="Enter average" oninput="window.calculateEmptyTripFuelUsed()">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Fuel Usage (Liters)</label>
+                      <input type="number" step="0.01" class="form-control bg-light" id="emptyTripFuelUsage" placeholder="Fuel used" readonly>
+                    </div>
                   </div>
                 </div>
               </div>

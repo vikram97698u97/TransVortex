@@ -676,7 +676,7 @@
           (parseFloat(emptyTripData.tirpalRopeExpenses) || 0) +
           emptyOtherGenericExpenses;
 
-        const emptyDieselForCalc = (parseFloat(emptyTripData.fuelUsedLiters) || 0) * (parseFloat(emptyTripData.dieselRatePerLiter) || 0);
+        const emptyDieselForCalc = (parseFloat(emptyTripData.fuelUsedLiters) || 0) * (parseFloat(emptyTripData.dieselRatePerLiter || details.dieselRatePerLiter) || 0);
         const totalEmptyExpenses = emptyTripAggregatedExpenses + emptyDieselForCalc;
 
         return {
@@ -708,6 +708,11 @@
           hasEmptyTrip: lr.emptyTrip || false,
           emptyTripData: {
             ...emptyTripData,
+            from: emptyTripData.from || '',
+            to: emptyTripData.to || '',
+            km: parseFloat(emptyTripData.km) || 0,
+            average: parseFloat(emptyTripData.average) || 0,
+            fuelUsedLiters: parseFloat(emptyTripData.fuelUsedLiters) || 0,
             totalEmptyExpenses: totalEmptyExpenses,
             emptyTyreExpenses: parseFloat(emptyTripData.tyreExpenses) || 0,
             emptyTollExpenses: parseFloat(emptyTripData.tollExpenses) || 0,
@@ -975,22 +980,47 @@
         const emptyData = expense.emptyTripData || {};
         const totalEmptyExpenses = emptyData.totalEmptyExpenses || 0;
 
-        const vendorName = emptyData.vehicleWorkVendorName || (emptyData.vehicleWorkVendorId ? allWorkVendors[emptyData.vehicleWorkVendorId]?.name : 'N/A');
-        const workNotes = emptyData.vehicleWorkNotes || '—';
+        const isNewEmptyTrip = (emptyData.from || emptyData.to || emptyData.km > 0);
+        const hasLegacyExpenses = (totalEmptyExpenses > (emptyData.emptyDieselExpenses || 0));
 
-        // Sum up the Other Expenses that go into the 'Other Exp' column for display in the child row
-        const otherCombined =
-          (emptyData.emptyOtherExpenses || 0) +
-          (emptyData.loadingUnloadingExpenses || 0) +
-          (emptyData.policeChallanExpenses || 0) +
-          (emptyData.tacExpenses || 0) +
-          (emptyData.permitExpenses || 0) +
-          // **NOTE**: Commission and Tirpal/Rope are now separate columns, so they are NOT in "Other"
-          (emptyData.brokerageExpenses || 0);
+        let routeAndFuelHtml = '';
+        if (isNewEmptyTrip) {
+          routeAndFuelHtml = `
+            <h6 class="mb-2"><i class="fas fa-route me-2"></i>Empty Trip Details</h6>
+            <table class="child-row-table mb-3">
+              <tr>
+                <th>Route (From - To)</th>
+                <th>Distance (KM)</th>
+                <th>Fuel Average (km/l)</th>
+                <th>Calculated Fuel Usage</th>
+                <th>Fuel Cost</th>
+              </tr>
+              <tr>
+                <td>${emptyData.from || 'N/A'} - ${emptyData.to || 'N/A'}</td>
+                <td>${emptyData.km ? emptyData.km + ' km' : '0 km'}</td>
+                <td>${emptyData.average ? emptyData.average + ' km/l' : 'N/A'}</td>
+                <td>${emptyData.fuelUsedLiters ? emptyData.fuelUsedLiters.toFixed(2) + ' L' : '0.00 L'}</td>
+                <td>₹${formatCurrency(emptyData.emptyDieselExpenses || 0)}</td>
+              </tr>
+            </table>
+          `;
+        }
 
-        const childHtml = `
-          <div class="child-row-container">
-            <h6 class="mb-3">Empty Return Trip Expenses</h6>
+        let legacyExpensesHtml = '';
+        if (hasLegacyExpenses || !isNewEmptyTrip) {
+          const vendorName = emptyData.vehicleWorkVendorName || (emptyData.vehicleWorkVendorId ? allWorkVendors[emptyData.vehicleWorkVendorId]?.name : 'N/A');
+          const workNotes = emptyData.vehicleWorkNotes || '—';
+
+          const otherCombined =
+            (emptyData.emptyOtherExpenses || 0) +
+            (emptyData.loadingUnloadingExpenses || 0) +
+            (emptyData.policeChallanExpenses || 0) +
+            (emptyData.tacExpenses || 0) +
+            (emptyData.permitExpenses || 0) +
+            (emptyData.brokerageExpenses || 0);
+
+          legacyExpensesHtml = `
+            <h6 class="mb-2"><i class="fas fa-wallet me-2"></i>Empty Return Trip Expenses (Legacy)</h6>
             <table class="child-row-table">
               <tr>
                 <th>Expense Type</th>
@@ -1002,11 +1032,12 @@
                 <td>₹${formatCurrency(emptyData.emptyTyreExpenses || 0)}</td>
                 <td>-</td>
               </tr>
+              ${!isNewEmptyTrip ? `
               <tr>
                 <td>Diesel Expenses</td>
                 <td>₹${formatCurrency(emptyData.emptyDieselExpenses || 0)}</td>
                 <td>${(emptyData.fuelUsedLiters || 0).toFixed(2)} L @ ₹${(emptyData.dieselRatePerLiter || 0).toFixed(2)}/L (Route: ${emptyData.routeDistanceKm || 0} km, Avg: ${emptyData.vehicleAverage || 0} km/l)</td>
-              </tr>
+              </tr>` : ''}
               <tr>
                 <td>Toll Expenses</td>
                 <td>₹${formatCurrency(emptyData.emptyTollExpenses || 0)}</td>
@@ -1043,6 +1074,13 @@
                 <td>-</td>
               </tr>
             </table>
+          `;
+        }
+
+        const childHtml = `
+          <div class="child-row-container">
+            ${routeAndFuelHtml}
+            ${legacyExpensesHtml}
           </div>
         `;
 

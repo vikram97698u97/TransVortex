@@ -911,7 +911,7 @@
             $('#toDate').val(formatDateForInput(today));
 
             // Load all payment data and trigger initial rendering
-            loadAllPayments();
+            listenToPayments(coreAccountId);
           });
 
           // Initialize DataTable
@@ -1303,20 +1303,6 @@
                              
             totalExpenses += lrTripExpenses;
 
-            // Fuel Usage Deduction 
-            const fuelUsedAmount = (parseFloat(details.fuelUsedLiters) || 0) * (parseFloat(details.dieselRatePerLiter) || 0);
-            if (!details.fuelAlreadyDeducted) { // Only count if this LR trip hasn't had the fuel deducted yet
-                totalExpenses += fuelUsedAmount;
-            }
-
-            // Driver Advance (treated as an expense)
-            const driverAdvance = (parseFloat(details.advance) || 0);
-            totalExpenses += driverAdvance; 
-
-            // Shortage Deduction (revenue loss)
-            const shortageDeduction = ((parseFloat(details.shortage) || 0) / 1000) * (parseFloat(details.billingRate) || 0);
-            totalExpenses += shortageDeduction;
-
             // Empty Trip Expenses
             const emptyDetails = lr.emptyTripData || {};
             const lrEmptyExpenses = (parseFloat(emptyDetails.tyreExpenses) || 0) + 
@@ -1333,11 +1319,27 @@
                                     
             totalExpenses += lrEmptyExpenses;
 
+            // Fuel Usage Deduction (includes empty trip fuel)
+            const fuelUsedAmount = (parseFloat(details.fuelUsedLiters) || 0) * (parseFloat(details.dieselRatePerLiter) || 0);
+            const emptyFuelUsedAmount = (parseFloat(emptyDetails.fuelUsedLiters) || 0) * (parseFloat(emptyDetails.dieselRatePerLiter || details.dieselRatePerLiter) || 0);
+            const totalFuelUsedAmount = fuelUsedAmount + emptyFuelUsedAmount;
+
+            if (!details.fuelAlreadyDeducted) { // Only count if this LR trip hasn't had the fuel deducted yet
+                totalExpenses += totalFuelUsedAmount;
+            }
+
+            // Driver Advance (treated as an expense)
+            const driverAdvance = (parseFloat(details.advance) || 0);
+            totalExpenses += driverAdvance; 
+
+            // Shortage Deduction (revenue loss)
+            const shortageDeduction = ((parseFloat(details.shortage) || 0) / 1000) * (parseFloat(details.billingRate) || 0);
+            totalExpenses += shortageDeduction;
 
             // **RAW EXPENSE LIST POPULATION (TRIP - ADVANCE/USAGE IS DEDUCTED ONCE PER TRIP)**
             if(lrTripExpenses > 0) rawExpenseList.push({date: lrDateStr, type: 'trip', amount: lrTripExpenses, description: `LR ${lr.lrNumber} - Trip Expenses (Toll, Food, etc.)`, mode: 'Cash', sort: 1});
             if(lrEmptyExpenses > 0) rawExpenseList.push({date: lrDateStr, type: 'trip', amount: lrEmptyExpenses, description: `LR ${lr.lrNumber} - Empty Return Expenses`, mode: 'Cash', sort: 2});
-            if(fuelUsedAmount > 0 && !details.fuelAlreadyDeducted) rawExpenseList.push({date: lrDateStr, type: 'fuel', amount: fuelUsedAmount, description: `LR ${lr.lrNumber} - Fuel Usage (Estimated)`, mode: 'System (Deduction)', sort: 3});
+            if(totalFuelUsedAmount > 0 && !details.fuelAlreadyDeducted) rawExpenseList.push({date: lrDateStr, type: 'fuel', amount: totalFuelUsedAmount, description: `LR ${lr.lrNumber} - Fuel Usage (Estimated)`, mode: 'System (Deduction)', sort: 3});
             
             if(driverAdvance > 0) {
                  rawExpenseList.push({date: lrDateStr, type: 'driver', amount: driverAdvance, description: `LR ${lr.lrNumber} - Driver Advance`, mode: details.advancePaymentMode || 'Cash', sort: 4});

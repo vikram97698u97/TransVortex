@@ -454,7 +454,7 @@
         const rev = parseFloat(dt.billingAmount)||0;
         // diesel
         const dieselMain = (parseFloat(dt.fuelUsedLiters)||0) * (parseFloat(dt.dieselRatePerLiter)||0);
-        const dieselEmpty = (parseFloat(e.fuelUsedLiters)||0) * (parseFloat(e.dieselRatePerLiter)||0);
+        const dieselEmpty = (parseFloat(e.fuelUsedLiters)||0) * (parseFloat(e.dieselRatePerLiter || dt.dieselRatePerLiter)||0);
         // expenses main
         const mainAgg = (parseFloat(dt.tyreExpenses)||0) + (parseFloat(dt.tollExpenses)||0) + (parseFloat(dt.foodExpenses)||0) + (parseFloat(dt.vehicleWorkAmount)||0) + (parseFloat(dt.commissionExpenses)||0) + (parseFloat(dt.tirpalRopeExpenses)||0) + (parseFloat(dt.loadingUnloadingExpenses)||0) + (parseFloat(dt.policeChallanExpenses)||0) + (parseFloat(dt.tacExpenses)||0) + (parseFloat(dt.permitExpenses)||0) + (parseFloat(dt.brokerageExpenses)||0) + (parseFloat(dt.otherExpenses)||0);
         const mainExp = mainAgg + dieselMain + (parseFloat(dt.advance)||0);
@@ -467,7 +467,7 @@
         const exp = mainExp + emptyExp + shortageDeduct;
 
         totalRevenue += rev; totalExpenses += exp;
-        totalKm += (parseFloat(dt.totalKm)||0) + (parseFloat(e.totalKm)||0);
+        totalKm += (parseFloat(dt.totalKm)||0) + (parseFloat(e.km)||parseFloat(e.totalKm)||0);
 
         const month = lr.date ? new Date(lr.date).getMonth() : null;
         if(month!=null) { monthly[month].revenue += rev; monthly[month].expenses += exp; }

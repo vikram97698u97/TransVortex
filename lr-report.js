@@ -1509,11 +1509,12 @@ window.showTripDetailsModal = async function (lrId, lrNumber, weight, truckNumbe
         else addExpenseRow('tripGenericExpensesContainer', {}, true); // Add at least one empty row
     }
 
-    const emptyGenericContainer = document.getElementById('emptyTripGenericExpensesContainer');
-    if (emptyGenericContainer) {
-        emptyGenericContainer.innerHTML = '';
-        (lr.emptyTripData?.genericExpenses || []).forEach(exp => addExpenseRow('emptyTripGenericExpensesContainer', exp, true));
-    }
+    const emptyDetails = lr.emptyTripData || {};
+    setElementValue('emptyTripFrom', emptyDetails.from || '');
+    setElementValue('emptyTripTo', emptyDetails.to || '');
+    setElementValue('emptyTripKm', emptyDetails.km || '');
+    setElementValue('emptyTripAvg', emptyDetails.average || '');
+    setElementValue('emptyTripFuelUsage', emptyDetails.fuelUsedLiters || emptyDetails.fuelUsage || '');
 
     // Ensure all vendor dropdowns are populated and initialized with saved data
     await window.renderVendorSelects();
@@ -1581,9 +1582,7 @@ function buildTripFinancialPayload() {
     }
 
     const genericExpenses = collectTripExpenses('tripGenericExpensesContainer');
-    const emptyGenericExpenses = collectTripExpenses('emptyTripGenericExpensesContainer');
     const tripAgg = aggregateTripExpenses(genericExpenses);
-    const emptyAgg = aggregateTripExpenses(emptyGenericExpenses);
 
     calculateTripTotals();
 
@@ -1613,10 +1612,19 @@ function buildTripFinancialPayload() {
         updatedAt: new Date().toISOString()
     };
 
+    const emptyFrom = document.getElementById('emptyTripFrom')?.value || '';
+    const emptyTo = document.getElementById('emptyTripTo')?.value || '';
+    const emptyKm = parseFloat(document.getElementById('emptyTripKm')?.value) || 0;
+    const emptyAvg = parseFloat(document.getElementById('emptyTripAvg')?.value) || 0;
+    const emptyFuel = parseFloat(document.getElementById('emptyTripFuelUsage')?.value) || 0;
+
     const emptyTripData = {
-        emptyTrip: emptyGenericExpenses.length > 0,
-        ...emptyAgg,
-        genericExpenses: emptyGenericExpenses,
+        emptyTrip: (emptyFrom !== '' || emptyTo !== '' || emptyKm > 0),
+        from: emptyFrom,
+        to: emptyTo,
+        km: emptyKm,
+        average: emptyAvg,
+        fuelUsedLiters: emptyFuel,
         updatedAt: new Date().toISOString()
     };
 
@@ -2015,10 +2023,6 @@ window.calculateTripTotals = function () {
     document.querySelectorAll('#tripGenericExpensesContainer .expense-amount').forEach(i => genericE += parseFloat(i.value) || 0);
     document.getElementById('tripTotalExpensesDisplay').textContent = `₹${genericE.toFixed(2)}`;
 
-    let emptyGenericE = 0;
-    document.querySelectorAll('#emptyTripGenericExpensesContainer .expense-amount').forEach(i => emptyGenericE += parseFloat(i.value) || 0);
-    document.getElementById('emptyTripTotalExpensesDisplay').textContent = `₹${emptyGenericE.toFixed(2)}`;
-
     const cgst = (billingAmount * (parseFloat(document.getElementById('tripCgstPercentage').value) || 9)) / 100;
     const sgst = (billingAmount * (parseFloat(document.getElementById('tripSgstPercentage').value) || 9)) / 100;
 
@@ -2029,7 +2033,7 @@ window.calculateTripTotals = function () {
         document.getElementById('tripDriverPayable').value = (freightAmount - advance - shortage).toFixed(2);
         document.getElementById('tripCommission').value = (billingAmount - freightAmount).toFixed(2);
     } else {
-        document.getElementById('tripTotalExpenses').value = (genericE + emptyGenericE + advance).toFixed(2);
+        document.getElementById('tripTotalExpenses').value = (genericE + advance).toFixed(2);
         document.getElementById('tripDriverPayable').value = (freightAmount - advance).toFixed(2);
     }
 
@@ -2053,6 +2057,13 @@ window.calculateFuelUsed = function () {
     const avg = parseFloat(document.getElementById('tripVehicleAverage').value) || 0;
     document.getElementById('tripFuelUsedLiters').value = (avg > 0 ? km / avg : 0).toFixed(2);
     window.calculateFuelAmount();
+};
+
+window.calculateEmptyTripFuelUsed = function () {
+    const km = parseFloat(document.getElementById('emptyTripKm').value) || 0;
+    const avg = parseFloat(document.getElementById('emptyTripAvg').value) || 0;
+    document.getElementById('emptyTripFuelUsage').value = (avg > 0 ? km / avg : 0).toFixed(2);
+    if (window.scheduleTripDetailsAutosave) window.scheduleTripDetailsAutosave();
 };
 
 window.calculateFuelAmount = function () {
