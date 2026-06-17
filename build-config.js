@@ -72,7 +72,7 @@ function generateEVMJS(envVars) {
     const environment = {
         name: envVars.ENVIRONMENT || 'production',
         debug: envVars.DEBUG === 'true',
-        apiBaseUrl: envVars.API_BASE_URL || window.location.origin,
+        apiBaseUrl: envVars.API_BASE_URL || '',
         version: envVars.VERSION || '1.0.0',
         corsOrigin: envVars.CORS_ORIGIN || '',
         allowedOrigins: envVars.ALLOWED_ORIGINS ? envVars.ALLOWED_ORIGINS.split(',') : []

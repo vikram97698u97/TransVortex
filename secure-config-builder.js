@@ -50,7 +50,7 @@ function generateConfigFromSecrets() {
     const environment = {
         name: process.env.ENVIRONMENT || 'production',
         debug: process.env.DEBUG === 'true',
-        apiBaseUrl: process.env.API_BASE_URL || window.location.origin,
+        apiBaseUrl: process.env.API_BASE_URL || '',
         version: process.env.VERSION || '1.0.0',
         corsOrigin: process.env.CORS_ORIGIN || '',
         allowedOrigins: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []
