@@ -314,9 +314,16 @@
       if (file.type.startsWith("image")) {
         file = await resizeImage(file, 800);
       }
-      const cloudName = window.CLOUDINARY_CONFIG?.cloudName || "doqapn15f";
+      const cloudName = window.CLOUDINARY_CONFIG?.cloudName;
+      const preset = window.CLOUDINARY_CONFIG?.presets?.paymentBilling;
+
+      if (!cloudName || !preset) {
+        console.error("❌ Cloudinary configuration missing");
+        alert("Configuration Error: Cloudinary cloudName or upload preset is not set.");
+        throw new Error("Cloudinary configuration missing");
+      }
+
       const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
-      const preset = window.CLOUDINARY_CONFIG?.presets?.paymentBilling || "payment-billing";
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", preset);
