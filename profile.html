@@ -1,130 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
-<!-- 🔐 Secure .env Configuration Loader -->
-    <!-- 🔐 Secure Configuration - Loaded from .env -->
-    <script>
-        // Configuration loaded from .env file (server-side)
-        (function() {
-            'use strict';
-            
-            // Firebase configuration from .env
-            if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-            }
-            
-            // Cloudinary configuration from .env
-            if (!window.CLOUDINARY_CONFIG) {
-                window.CLOUDINARY_CONFIG = {
-                    cloudName: "doqapn15f",
-                    uploadPreset: "vehicle-driver",
-                    presets: {
-                        vehicleDriver: "vehicle-driver",
-                        paymentBilling: "payment-billing",
-                        profilePic: "profile-pic",
-                        documents: "documents",
-                        receipts: "receipts",
-                        expenses: "expenses",
-                        tyres: "tyres",
-                        vehicles: "vehicles",
-                        drivers: "drivers",
-                        invoices: "invoices",
-                        lrReports: "lr-reports",
-                        tripExpenses: "trip-expenses"
-                    },
-                    folders: {
-                        vehicles: "transport/vehicles",
-                        drivers: "transport/drivers", 
-                        documents: "transport/documents",
-                        profiles: "transport/profiles",
-                        receipts: "transport/receipts",
-                        expenses: "transport/expenses",
-                        tyres: "transport/tyres",
-                        invoices: "transport/invoices",
-                        lrReports: "transport/lr-reports",
-                        tripExpenses: "transport/trip-expenses"
-                    },
-                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-                };
-            }
-            
-            // Environment configuration from .env
-            if (!window.ENVIRONMENT) {
-                window.ENVIRONMENT = {
-                    name: "production",
-                    debug: false,
-                    apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0",
-                    corsOrigin: "https://transvortex.online",
-                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
-                    apiRateLimit: 100
-                };
-            }
-            
-            // Security configuration from .env
-            if (!window.SECURITY_CONFIG) {
-                window.SECURITY_CONFIG = {
-                    sessionSecret: "transvortex-session-secret-2024",
-                    jwtSecret: "transvortex-jwt-secret-2024",
-                    encryptionKey: "transvortex-encryption-key-2024"
-                };
-            }
-            
-            // Optional API configurations from .env
-            if (!window.API_CONFIG) {
-                window.API_CONFIG = {
-                    email: {
-                        provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-                        from: "noreply@transvortex.online",
-                        fromName: "TransVortex Transport"
-                    },
-                    payment: {
-                        provider: "stripe",
-                        publicKey: "your-stripe-public-key-here"
-                    },
-                    sms: {
-                        provider: "twilio",
-                        accountSid: "your-twilio-account-sid-here",
-                        phoneNumber: "your-twilio-phone-number-here"
-                    },
-                    maps: {
-                        googleMapsApiKey: "your-google-maps-api-key-here",
-                        googlePlacesApiKey: "your-google-places-api-key-here"
-                    },
-                    analytics: {
-                        googleAnalyticsId: "GA-XXXXXXXXX",
-                        facebookPixelId: "your-facebook-pixel-id-here",
-                        hotjarId: "your-hotjar-id-here"
-                    }
-                };
-            }
-            
-            // Log successful loading (only in debug mode)
-            if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
-                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-                console.log('🌍 Environment:', window.ENVIRONMENT.name);
-                console.log('🔐 Security: Loaded');
-            }
-            
-            // Dispatch event when configuration is ready
-            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-                detail: {
-                    firebase: window.FIREBASE_CONFIG,
-                    cloudinary: window.CLOUDINARY_CONFIG,
-                    environment: window.ENVIRONMENT,
-                    security: window.SECURITY_CONFIG,
-                    apis: window.API_CONFIG
-                }
-            }));
-        })();
-    </script>
-
-
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -148,14 +24,21 @@
             justify-content: center;
             align-items: flex-start;
         }
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+            margin-bottom: 50px;
+        }
         .profile-card {
             background: white;
             border-radius: 12px;
             padding: 30px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             width: 100%;
-            max-width: 600px;
-            margin-top: 50px;
         }
         .profile-header {
             text-align: center;
@@ -332,7 +215,6 @@
             border: 1px solid #f5c6cb;
         }
     </style>
-
     <!-- 🔥 Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -345,9 +227,9 @@
 </head>
 <body>
     <div id="navbar-placeholder"></div>
-
     <div class="main-content">
-        <div class="profile-card">
+        <div class="profile-container">
+            <div class="profile-card">
             <div class="profile-header">
                 <div class="profile-avatar-large" id="profileAvatarContainer">
                     <img id="profileAvatar" src="" alt="Profile Picture" style="display: none;">
@@ -360,7 +242,6 @@
                 <div class="profile-name-display" id="displayName">Loading...</div>
                 <div class="profile-role-display" id="displayRole">Loading...</div>
             </div>
-
             <div class="profile-details view-mode" id="profileDetailsContainer">
                 <div class="detail-item">
                     <div class="detail-icon"><i class="fas fa-user"></i></div>
@@ -434,7 +315,6 @@
                         <input type="text" id="editPincode" placeholder="Enter pincode">
                     </div>
                 </div>
-
                 <!-- **NEW**: Bank Details Section -->
                 <div class="detail-item">
                     <div class="detail-icon"><i class="fas fa-university"></i></div>
@@ -473,7 +353,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="profile-actions">
                 <button class="btn btn-secondary" id="cancelEditBtn" style="display: none;">Cancel</button>
                 <button class="btn btn-primary" id="editProfileBtn">Edit Profile</button>
@@ -481,65 +360,62 @@
             </div>
             <div id="profileMessage" style="display: none;"></div>
         </div>
+        <!-- Account Security Card -->
+        <div class="profile-card" id="securityCard">
+            <div class="profile-header" style="text-align: left; margin-bottom: 20px;">
+                <div class="profile-name-display" style="font-size: 22px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-shield-alt"></i> Account Security
+                </div>
+                <div class="profile-role-display">Update your email address or password</div>
+            </div>
+            <!-- Update Email Form -->
+            <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #333; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-envelope-open-text" style="color: #2E8B57;"></i> Change Email Address
+                </h4>
+                <div class="form-group">
+                    <label for="securityNewEmail">New Email Address</label>
+                    <input type="email" id="securityNewEmail" placeholder="Enter new email address">
+                </div>
+                <div class="form-group">
+                    <label for="securityEmailPassword">Current Password (Required)</label>
+                    <input type="password" id="securityEmailPassword" placeholder="Enter password to confirm change">
+                </div>
+                <button class="btn btn-primary" id="updateEmailBtn" style="margin-left: 0;">Update Email</button>
+            </div>
+            <!-- Update Password Form -->
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #333; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-key" style="color: #2E8B57;"></i> Change Password
+                </h4>
+                <div class="form-group">
+                    <label for="securityCurrentPassword">Current Password</label>
+                    <input type="password" id="securityCurrentPassword" placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label for="securityNewPassword">New Password</label>
+                    <input type="password" id="securityNewPassword" placeholder="Enter new password (min. 6 characters)">
+                </div>
+                <div class="form-group">
+                    <label for="securityConfirmPassword">Confirm New Password</label>
+                    <input type="password" id="securityConfirmPassword" placeholder="Re-type new password">
+                </div>
+                <button class="btn btn-primary" id="updatePasswordBtn" style="margin-left: 0;">Update Password</button>
+            </div>
+            <div id="securityMessage" style="margin-top: 20px; padding: 10px; border-radius: 8px; text-align: center; display: none;"></div>
+        </div>
     </div>
-
+</div>
     <!-- **NEW**: Hidden file input for logo upload -->
     <input type="file" id="logoUploadInput" accept="image/*" style="display: none;">
-
       <!-- Load secure configuration first -->
-  
-  
 
   <script src="navbar-loader.js"></script>
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, updateProfile, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-        // Firebase configuration (replace with your actual config)
-        // Load Firebase configuration securely from EVM
-    let firebaseConfig;
-    
-    try {
-      // Get Firebase configuration from secure EVM system
-      // Initialize Firebase with proper error handling
-    try {
-        if (!window.FIREBASE_CONFIG) {
-            throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
-        }
-        
-        if (!window.FIREBASE_CONFIG.databaseURL) {
-            throw new Error('Firebase databaseURL not found in configuration.');
-        }
-        
-        if (!window.FIREBASE_CONFIG.projectId) {
-            throw new Error('Firebase projectId not found in configuration.');
-        }
-        
-        firebaseConfig = window.FIREBASE_CONFIG;
-        
-        // Check if we're using fallback values
-        if (false) { // Condition is always false in the final logic, keeping as per original structure
-            
-        } else {
-            
-            
-            
-        }
-    } catch (error) {
-        console.error('❌ Failed to load Firebase configuration:', error);
-        
-        // Use fallback configuration to prevent complete failure
-        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig();
-        
-    }} catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = window.FIREBASE_CONFIG;
-    }
-
-        // Initialize Firebase
+        // Initialize Firebase directly from secure config
         let app;
         if (!getApps().length) {
             app = initializeApp(window.FIREBASE_CONFIG);
@@ -548,7 +424,6 @@
         }
         const auth = getAuth(app);
         const db = getDatabase(app);
-
         const profileDetailsContainer = document.getElementById('profileDetailsContainer');
         const profileAvatarImg = document.getElementById('profileAvatar');
         const avatarInitial = document.getElementById('avatarInitial');
@@ -564,7 +439,6 @@
         const viewAddress = document.getElementById('viewAddress');
         const viewCity = document.getElementById('viewCity');
         const viewPincode = document.getElementById('viewPincode');
-
         // Edit elements (updated to new fields)
         const editOwnerName = document.getElementById('editOwnerName');
         const editTransportName = document.getElementById('editTransportName');
@@ -579,15 +453,12 @@
         const editAccountNumber = document.getElementById('editAccountNumber');
         const editAccountHolder = document.getElementById('editAccountHolder');
         const editIfscCode = document.getElementById('editIfscCode');
-
-
         const editProfileBtn = document.getElementById('editProfileBtn');
         const saveProfileBtn = document.getElementById('saveProfileBtn');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const profileMessage = document.getElementById('profileMessage');
-
         let currentUser = null;
-
+        let currentOwnerUid = null; // tracks the owner's UID (same as user.uid for owners, coreAccountId for sub-users)
         // Function to display messages
         function showMessage(message, type) {
             profileMessage.textContent = message;
@@ -598,23 +469,50 @@
                 profileMessage.style.display = 'none';
             }, 5000);
         }
-
-        // Function to load user data (UPDATED)
+        // Function to load user data
         async function loadUserProfile(user) {
             currentUser = user;
             if (user) {
-                // Fetch additional data from Realtime Database
-                const userRef = ref(db, 'users/' + user.uid);
-                const snapshot = await get(userRef);
-                const userData = snapshot.val() || {};
-                const profileData = userData.profile || {};
-
-                // Use 'ownername' or Firebase displayName for avatar/header, Transport Name for role display
-                // **FIX**: Use ownerName (camelCase)
-                const ownerName = profileData.ownerName || user.displayName || 'N/A';
-                const transportName = profileData.transportName || 'N/A';
-
-                // **FIX**: Avatar and Logo logic
+                // Fetch the logged-in user's own node
+                 const userRef = ref(db, 'users/' + user.uid);
+                 const snapshot = await get(userRef);
+                 let userData = snapshot.val() || {};
+                 // Auto-sync email in database if it doesn't match authenticated user's email
+                 if (user.email && userData.email !== user.email) {
+                     try {
+                         await update(userRef, { email: user.email });
+                         userData.email = user.email;
+                     } catch (err) {
+                         console.error('Error syncing email to database:', err);
+                     }
+                 }
+                 // Determine owner vs sub-user
+                const coreAccountId = userData.coreAccountId || user.uid;
+                const isOwner = !userData.coreAccountId || coreAccountId === user.uid;
+                currentOwnerUid = coreAccountId; // store for save operations
+                // Always load the OWNER's profile data for company details
+                // (team members share the same company profile as their owner)
+                let profileData = userData.profile || {};
+                if (!isOwner) {
+                    const ownerSnap = await get(ref(db, `users/${coreAccountId}/profile`));
+                    if (ownerSnap.exists()) {
+                        profileData = ownerSnap.val();
+                    }
+                }
+                // Map registration fields → profile display:
+                // Registration saves: name, phone, company
+                // Profile expects: ownerName, phoneNumber, transportName
+                const ownerName = profileData.ownerName
+                                  || profileData.name
+                                  || user.displayName
+                                  || 'N/A';
+                const transportName = profileData.transportName
+                                      || profileData.company
+                                      || 'N/A';
+                const phoneNumber   = profileData.phoneNumber
+                                      || profileData.phone
+                                      || 'N/A';
+                // Avatar / Logo
                 if (profileData.companyLogoUrl) {
                     profileAvatarImg.src = profileData.companyLogoUrl;
                     profileAvatarImg.style.display = 'block';
@@ -626,50 +524,55 @@
                     document.getElementById('removeLogoBtn').style.display = 'none';
                     avatarInitial.style.display = 'flex';
                 }
-
                 displayName.textContent = ownerName;
-                // Use Transport Name as the main "role" display under the name
                 displayRole.textContent = transportName === 'N/A' ? 'Transport User' : transportName;
-
-                // Display data
-                viewOwnerName.textContent = ownerName;
+                // Display values
+                viewOwnerName.textContent    = ownerName;
                 viewTransportName.textContent = transportName;
-                viewEmail.textContent = user.email || 'N/A';
-                viewPhone.textContent = profileData.phoneNumber || 'N/A';
-                viewGSTIN.textContent = profileData.gstin || 'N/A';
-                viewAddress.textContent = profileData.address || 'N/A';
-                viewCity.textContent = profileData.city || 'N/A';
-                viewPincode.textContent = profileData.pincode || 'N/A';
-                // **NEW**: Display bank details
-                document.getElementById('viewBankName').textContent = profileData.bankName || 'N/A';
+                viewEmail.textContent         = user.email || 'N/A';
+                viewPhone.textContent         = phoneNumber;
+                viewGSTIN.textContent         = profileData.gstin    || 'N/A';
+                viewAddress.textContent       = profileData.address   || 'N/A';
+                viewCity.textContent          = profileData.city      || 'N/A';
+                viewPincode.textContent       = profileData.pincode   || 'N/A';
+                document.getElementById('viewBankName').textContent      = profileData.bankName      || 'N/A';
                 document.getElementById('viewAccountNumber').textContent = profileData.accountNumber || 'N/A';
                 document.getElementById('viewAccountHolder').textContent = profileData.accountHolder || 'N/A';
-                document.getElementById('viewIfscCode').textContent = profileData.ifscCode || 'N/A';
-
+                document.getElementById('viewIfscCode').textContent      = profileData.ifscCode      || 'N/A';
                 // Populate edit fields
-                editOwnerName.value = profileData.ownerName || user.displayName || ''; // **FIX**
-                editTransportName.value = profileData.transportName || ''; // **FIX**
-                editEmail.value = user.email || '';
-                editPhone.value = profileData.phoneNumber || '';
-                editGSTIN.value = profileData.gstin || '';
-                editAddress.value = profileData.address || '';
-                editCity.value = profileData.city || '';
-                editPincode.value = profileData.pincode || '';
-                // **NEW**: Populate bank detail edit fields
-                editBankName.value = profileData.bankName || '';
-                editAccountNumber.value = profileData.accountNumber || '';
-                editAccountHolder.value = profileData.accountHolder || '';
-                editIfscCode.value = profileData.ifscCode || '';
-
-                // Ensure email is not editable via this form
+                editOwnerName.value      = ownerName    !== 'N/A' ? ownerName    : '';
+                editTransportName.value  = transportName !== 'N/A' ? transportName : '';
+                editEmail.value          = user.email || '';
+                editPhone.value          = phoneNumber  !== 'N/A' ? phoneNumber  : '';
+                editGSTIN.value          = profileData.gstin    || '';
+                editAddress.value        = profileData.address   || '';
+                editCity.value           = profileData.city      || '';
+                editPincode.value        = profileData.pincode   || '';
+                editBankName.value       = profileData.bankName      || '';
+                editAccountNumber.value  = profileData.accountNumber || '';
+                editAccountHolder.value  = profileData.accountHolder || '';
+                editIfscCode.value       = profileData.ifscCode      || '';
                 editEmail.disabled = true;
-
+                // --- Owner-only edit restriction ---
+                const editBtn = document.getElementById('editProfileBtn');
+                if (!isOwner) {
+                    editBtn.style.display = 'none';
+                    // Show a read-only notice instead
+                    let notice = document.getElementById('viewOnlyNotice');
+                    if (!notice) {
+                        notice = document.createElement('p');
+                        notice.id = 'viewOnlyNotice';
+                        notice.style.cssText = 'text-align:center;color:#6b7280;font-size:0.88rem;margin-top:12px;';
+                        notice.innerHTML = '<i class="fas fa-lock" style="margin-right:6px;"></i>Only the account owner can edit this profile.';
+                        document.querySelector('.profile-actions').appendChild(notice);
+                    }
+                } else {
+                    editBtn.style.display = 'inline-block';
+                }
             } else {
-                // Redirect to login if not authenticated
-                window.location.href = 'login.html'; // Assuming you have a login page
+                window.location.href = 'login.html';
             }
         }
-
         // Toggle edit mode
         function toggleEditMode(isEdit) {
             if (isEdit) {
@@ -688,11 +591,9 @@
                 if (currentUser) loadUserProfile(currentUser);
             }
         }
-
         // Save profile changes (UPDATED)
         async function saveProfileChanges() {
             if (!currentUser) return;
-
             const newOwnerName = editOwnerName.value.trim();
             const newTransportName = editTransportName.value.trim();
             const newPhone = editPhone.value.trim();
@@ -704,33 +605,28 @@
             const newAccountNumber = editAccountNumber.value.trim();
             const newAccountHolder = editAccountHolder.value.trim();
             const newIfscCode = editIfscCode.value.trim();
-
             try {
                 // Update Firebase Authentication profile (displayName)
-                // Use Owner Name as the display name for Auth if it changed
                 if (newOwnerName && newOwnerName !== currentUser.displayName) {
-                    await updateProfile(currentUser, {
-                        displayName: newOwnerName
-                    });
+                    await updateProfile(currentUser, { displayName: newOwnerName });
                 }
-
-                // Update Realtime Database
-                const profileRef = ref(db, 'users/' + currentUser.uid + '/profile');
+                // Always save to the OWNER's profile node
+                // (currentOwnerUid is set during load; for owners it equals their own uid)
+                const saveUid = currentOwnerUid || currentUser.uid;
+                const profileRef = ref(db, `users/${saveUid}/profile`);
                 await update(profileRef, {
-                    ownerName: newOwnerName, // **FIX**: Use ownerName (camelCase)
-                    transportName: newTransportName, // **FIX**: Save transportName under profile
+                    ownerName: newOwnerName,
+                    transportName: newTransportName,
                     phoneNumber: newPhone,
                     gstin: newGSTIN,
                     address: newAddress,
                     city: newCity,
                     pincode: newPincode,
-                    // Bank details
                     bankName: newBankName,
                     accountNumber: newAccountNumber,
                     accountHolder: newAccountHolder,
                     ifscCode: newIfscCode
                 });
-
                 showMessage('Profile updated successfully!', 'success');
                 toggleEditMode(false); // Switch back to view mode
                 loadUserProfile(currentUser); // Reload updated data
@@ -739,60 +635,49 @@
                 showMessage('Error updating profile: ' + error.message, 'error');
             }
         }
-
         // **NEW**: Cloudinary upload logic
         async function uploadToCloudinary(file) {
             const CLOUDINARY_CLOUD_NAME = (window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.cloudName);
             const CLOUDINARY_UPLOAD_PRESET = (window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.uploadPreset);
             const url = (window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.apiUrl);
-
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
             const response = await fetch(url, { method: 'POST', body: formData });
             if (!response.ok) throw new Error('Cloudinary upload failed.');
             
             const data = await response.json();
             return data.secure_url;
         }
-
         // **NEW**: Handle logo upload
         async function handleLogoUpload(event) {
             const file = event.target.files[0];
             if (!file || !currentUser) return;
-
             showMessage('Uploading logo...', 'info');
-
             try {
                 const imageUrl = await uploadToCloudinary(file);
                 
                 // Save the URL to the user's profile
                 const profileRef = ref(db, `users/${currentUser.uid}/profile`);
                 await update(profileRef, { companyLogoUrl: imageUrl });
-
                 // Update the UI
                 profileAvatarImg.src = imageUrl;
                 profileAvatarImg.style.display = 'block';
                 avatarInitial.style.display = 'none';
-
                 showMessage('Logo updated successfully!', 'success');
             } catch (error) {
                 console.error('Error uploading logo:', error);
                 showMessage('Failed to upload logo. Please try again.', 'error');
             }
         }
-
         // **NEW**: Event listener for logo upload
         const logoUploadInput = document.getElementById('logoUploadInput');
         const profileAvatarContainer = document.getElementById('profileAvatarContainer');
-
         // **MODIFIED**: Use specific button for changing logo
         document.getElementById('changeLogoBtn').addEventListener('click', () => {
             logoUploadInput.click();
         });
         logoUploadInput.addEventListener('change', handleLogoUpload);
-
         // **NEW**: Event listener for removing logo
         document.getElementById('removeLogoBtn').addEventListener('click', async (e) => {
             e.stopPropagation(); // Prevent triggering the change logo click
@@ -800,24 +685,141 @@
                 return;
             }
             if (!currentUser) return;
-
             try {
                 const profileRef = ref(db, `users/${currentUser.uid}/profile`);
                 await update(profileRef, { companyLogoUrl: null });
-
                 // Update UI
                 profileAvatarImg.src = '';
                 profileAvatarImg.style.display = 'none';
                 document.getElementById('removeLogoBtn').style.display = 'none';
                 avatarInitial.style.display = 'flex';
-
                 showMessage('Logo removed successfully!', 'success');
             } catch (error) {
                 console.error('Error removing logo:', error);
                 showMessage('Failed to remove logo. Please try again.', 'error');
             }
         });
-
+        // Reauthenticate user before critical operations
+        async function reauthenticate(currentPassword) {
+            if (!currentUser || !currentUser.email) {
+                throw new Error("User session not found.");
+            }
+            const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
+            return reauthenticateWithCredential(currentUser, credential);
+        }
+        // Handle Email Change
+        async function handleEmailChange() {
+            const newEmail = document.getElementById('securityNewEmail').value.trim();
+            const currentPassword = document.getElementById('securityEmailPassword').value;
+            const securityMessage = document.getElementById('securityMessage');
+            function showSecurityMessage(msg, type) {
+                securityMessage.textContent = msg;
+                securityMessage.className = '';
+                securityMessage.classList.add('message-' + type);
+                securityMessage.style.display = 'block';
+                setTimeout(() => { securityMessage.style.display = 'none'; }, 5000);
+            }
+            if (!newEmail) {
+                showSecurityMessage('Please enter a new email address.', 'error');
+                return;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(newEmail)) {
+                showSecurityMessage('Please enter a valid email address format (e.g., name@example.com).', 'error');
+                return;
+            }
+            if (!currentPassword) {
+                showSecurityMessage('Please enter your current password to authenticate.', 'error');
+                return;
+            }
+            if (newEmail === currentUser.email) {
+                showSecurityMessage('New email address must be different from current email.', 'error');
+                return;
+            }
+            const updateEmailBtn = document.getElementById('updateEmailBtn');
+            const originalText = updateEmailBtn.textContent;
+            updateEmailBtn.disabled = true;
+            updateEmailBtn.textContent = 'Updating...';
+            try {
+                // 1. Reauthenticate user
+                await reauthenticate(currentPassword);
+                // 2. Send verification email to the new address
+                await verifyBeforeUpdateEmail(currentUser, newEmail);
+                showSecurityMessage('Verification email sent to ' + newEmail + '! Please click the link in the email to complete the change.', 'success');
+                document.getElementById('securityNewEmail').value = '';
+                document.getElementById('securityEmailPassword').value = '';
+            } catch (error) {
+                console.error('Error changing email:', error);
+                let errMsg = error.message;
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                    errMsg = 'Incorrect password. Please try again.';
+                } else if (error.code === 'auth/invalid-email' || error.code === 'auth/invalid-new-email') {
+                    errMsg = 'Invalid email address format.';
+                } else if (error.code === 'auth/email-already-in-use') {
+                    errMsg = 'This email is already in use by another account.';
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    errMsg = 'Email updates are restricted in this Firebase environment. Please check console settings.';
+                }
+                showSecurityMessage(errMsg, 'error');
+            } finally {
+                updateEmailBtn.disabled = false;
+                updateEmailBtn.textContent = originalText;
+            }
+        }
+        // Handle Password Change
+        async function handlePasswordChange() {
+            const currentPassword = document.getElementById('securityCurrentPassword').value;
+            const newPassword = document.getElementById('securityNewPassword').value;
+            const confirmPassword = document.getElementById('securityConfirmPassword').value;
+            const securityMessage = document.getElementById('securityMessage');
+            function showSecurityMessage(msg, type) {
+                securityMessage.textContent = msg;
+                securityMessage.className = '';
+                securityMessage.classList.add('message-' + type);
+                securityMessage.style.display = 'block';
+                setTimeout(() => { securityMessage.style.display = 'none'; }, 5000);
+            }
+            if (!currentPassword) {
+                showSecurityMessage('Please enter your current password.', 'error');
+                return;
+            }
+            if (!newPassword) {
+                showSecurityMessage('Please enter your new password.', 'error');
+                return;
+            }
+            if (newPassword.length < 6) {
+                showSecurityMessage('New password must be at least 6 characters long.', 'error');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showSecurityMessage('New passwords do not match.', 'error');
+                return;
+            }
+            const updatePasswordBtn = document.getElementById('updatePasswordBtn');
+            const originalText = updatePasswordBtn.textContent;
+            updatePasswordBtn.disabled = true;
+            updatePasswordBtn.textContent = 'Updating...';
+            try {
+                // 1. Reauthenticate user
+                await reauthenticate(currentPassword);
+                // 2. Update Firebase Auth password
+                await updatePassword(currentUser, newPassword);
+                showSecurityMessage('Password updated successfully!', 'success');
+                document.getElementById('securityCurrentPassword').value = '';
+                document.getElementById('securityNewPassword').value = '';
+                document.getElementById('securityConfirmPassword').value = '';
+            } catch (error) {
+                console.error('Error changing password:', error);
+                let errMsg = error.message;
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                    errMsg = 'Incorrect current password. Please try again.';
+                }
+                showSecurityMessage(errMsg, 'error');
+            } finally {
+                updatePasswordBtn.disabled = false;
+                updatePasswordBtn.textContent = originalText;
+            }
+        }
         // Event Listeners
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -826,11 +828,11 @@
                 window.location.href = 'login.html'; // Redirect to login if not authenticated
             }
         });
-
         editProfileBtn.addEventListener('click', () => toggleEditMode(true));
         cancelEditBtn.addEventListener('click', () => toggleEditMode(false));
         saveProfileBtn.addEventListener('click', saveProfileChanges);
-
+        document.getElementById('updateEmailBtn').addEventListener('click', handleEmailChange);
+        document.getElementById('updatePasswordBtn').addEventListener('click', handlePasswordChange);
     </script>
 </body>
 </html>

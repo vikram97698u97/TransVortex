@@ -23,10 +23,10 @@ const styleTemplates = {
  * @param {boolean} isMarket - Whether this is a market invoice
  * @param {string|null} singleLrId - Optional single LR ID to invoice
  */
-window.createAndSaveInvoice = async function (isMarket = false, singleLrId = null) {
+window.createAndSaveInvoice = async function (singleLrId = null) {
     const user = auth.currentUser;
     // Use global selected lists or single ID
-    const lrsToProcess = singleLrId ? [singleLrId] : (isMarket ? (window.selectedMarketLRs || []) : (window.selectedLRs || []));
+    const lrsToProcess = singleLrId ? [singleLrId] : (window.selectedLRs || []);
 
     if (!user || !currentCoreAccountId) {
         alert('Authentication error. Please log in again.');
@@ -81,53 +81,26 @@ window.createAndSaveInvoice = async function (isMarket = false, singleLrId = nul
                 return;
             }
 
-            const isMarketLR = lr.lrType === 'market_company';
-
-            if (marketMode === null) marketMode = isMarketLR;
-            if (marketMode !== isMarketLR) {
-                alert('Error: Mixed LR types selected. Please select LRs of the same type.');
+            if (!firstClientId) firstClientId = lr.clientId;
+            if (lr.clientId !== firstClientId) {
+                alert('Error: All selected LRs must belong to the same client.');
                 return;
-            }
-
-            if (marketMode) {
-                if (!firstTransporterId) firstTransporterId = lr.transporterId;
-                if (lr.transporterId !== firstTransporterId) {
-                    alert('Error: All selected market LRs must belong to the same transporter/market company.');
-                    return;
-                }
-            } else {
-                if (!firstClientId) firstClientId = lr.clientId;
-                if (lr.clientId !== firstClientId) {
-                    alert('Error: All selected LRs must belong to the same client.');
-                    return;
-                }
             }
 
             const billingAmount = lr.tripDetails?.billingAmount || 0;
             subtotal += billingAmount;
-
-            // Helper to find client name safely
-            const findClientName = (id) => {
-                if (!window.allClients) return 'N/A';
-                const c = window.allClients.find(c => c.id === id);
-                return c ? (c.clientName || c.name) : 'N/A';
-            };
-
-            const consignor = findClientName(lr.clientId);
-            const consignee = findClientName(lr.consigneeId) || consignor;
 
             invoiceItems.push({
                 lrId: snap.key,
                 date: lr.date,
                 lrNumber: lr.lrNumber,
                 truckNumber: lr.truckNumber,
-                consignor: consignor,
-                consignee: consignee,
+                consignor: lr.consignorName || 'N/A',
+                consignee: lr.consigneeName || 'N/A',
                 from: lr.fromLocation,
                 to: lr.toLocation,
                 weight: lr.weight,
-                amount: billingAmount,
-                marketCompanyName: lr.transporterCompany || ''
+                amount: billingAmount
             });
         }
 
@@ -138,12 +111,8 @@ window.createAndSaveInvoice = async function (isMarket = false, singleLrId = nul
         const sgstAmount = (subtotal * sgstPercentage) / 100;
         let grandTotal = subtotal + cgstAmount + sgstAmount;
 
-        // 4. Check outstanding balance
         let entityOutstanding = 0;
-        if (marketMode && firstTransporterId) {
-            const transporterSnap = await db.ref(`users/${currentCoreAccountId}/transporters/${firstTransporterId}`).once('value');
-            if (transporterSnap.exists()) entityOutstanding = transporterSnap.val().outstanding || 0;
-        } else if (!marketMode && firstClientId) {
+        if (firstClientId) {
             const clientSnap = await db.ref(`users/${currentCoreAccountId}/clients/${firstClientId}`).once('value');
             if (clientSnap.exists()) entityOutstanding = clientSnap.val().outstanding || 0;
         }
@@ -166,9 +135,9 @@ window.createAndSaveInvoice = async function (isMarket = false, singleLrId = nul
         const invoiceData = {
             invoiceNumber: invoiceNumber,
             createdAt: new Date().toISOString(),
-            transporterId: marketMode ? firstTransporterId : null,
-            clientId: marketMode ? null : firstClientId,
-            invoiceType: marketMode ? 'market_company' : 'client',
+            transporterId: null,
+            clientId: firstClientId,
+            invoiceType: 'client',
             companyDetails: companyDetails,
             bankDetails: bankDetails,
             items: invoiceItems,
@@ -191,13 +160,8 @@ window.createAndSaveInvoice = async function (isMarket = false, singleLrId = nul
             updates[`/users/${currentCoreAccountId}/lrReports/${lrId}/invoiceId`] = newInvoiceKey;
         });
 
-        if (marketMode) {
-            const newOutstanding = entityOutstanding + grandTotal;
-            updates[`/users/${currentCoreAccountId}/transporters/${firstTransporterId}/outstanding`] = newOutstanding;
-        } else {
-            const newOutstanding = entityOutstanding + grandTotal;
-            updates[`/users/${currentCoreAccountId}/clients/${firstClientId}/outstanding`] = newOutstanding;
-        }
+        const newOutstanding = entityOutstanding + grandTotal;
+        updates[`/users/${currentCoreAccountId}/clients/${firstClientId}/outstanding`] = newOutstanding;
 
         await db.ref().update(updates);
 
@@ -361,18 +325,7 @@ window.viewInvoice = async function (invoiceId) {
         let billToLabel = 'Client Company';
         const lrs = invoice.items || [];
 
-        if (invoice.invoiceType === 'market' || invoice.invoiceType === 'market_company') {
-            billToLabel = 'Transporter Company';
-            if (invoice.transporterId) {
-                const transporterSnap = await db.ref(`users/${currentCoreAccountId}/transporters/${invoice.transporterId}`).once('value');
-                if (transporterSnap.exists()) {
-                    const t = transporterSnap.val();
-                    billedToName = t.name || 'Market Company';
-                    billedToGstin = t.gstin || 'N/A';
-                    billedToAddress = t.address || t.billingAddress || 'N/A';
-                }
-            }
-        } else if (invoice.clientId) {
+        if (invoice.clientId) {
             const clientSnap = await db.ref(`users/${currentCoreAccountId}/clients/${invoice.clientId}`).once('value');
             if (clientSnap.exists()) {
                 const c = clientSnap.val();

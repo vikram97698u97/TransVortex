@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Management — TransVortex</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2E8B57;
+      --primary-light: rgba(46,139,87,0.1);
+      --mint: #43B97F;
+      --bg: #F5F7FA;
+      --card: #ffffff;
+      --text: #1a1a2e;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 4px 20px rgba(0,0,0,0.07);
+      --radius: 14px;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); font-family: 'Inter', sans-serif; color: var(--text); }
+
+    .main-content { padding: 28px; }
+
+    /* Page Header */
+    .page-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--mint) 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+    }
+    .page-header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 4px; }
+    .page-header p { opacity: 0.9; font-size: 0.95rem; }
+    .team-badge {
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 50px;
+      padding: 8px 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    /* Tabs */
+    .tv-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--card);
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      width: fit-content;
+    }
+    .tv-tab {
+      padding: 10px 22px;
+      border-radius: 9px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tv-tab.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(46,139,87,0.3);
+    }
+    .tv-tab:hover:not(.active) { background: var(--primary-light); color: var(--primary); }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Cards */
+    .card-panel {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .card-panel h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--primary-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-panel h2 i { color: var(--primary); }
+
+    /* Form Styles */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-weight: 600; font-size: 0.88rem; color: var(--text); }
+    .form-control, .form-select {
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+      background: var(--card);
+    }
+    .form-control:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(46,139,87,0.15);
+    }
+    .form-group .input-icon-wrap { position: relative; }
+    .form-group .input-icon-wrap .form-control { padding-left: 38px; }
+    .form-group .input-icon-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; }
+
+    /* Role Cards */
+    .role-card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+
+    /* Custom Permission Matrix */
+    .perm-matrix { display: none; background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 8px; }
+    .perm-matrix.visible { display: block; animation: fadeIn 0.3s ease; }
+    .perm-module { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .perm-module:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .perm-module-title { font-weight: 700; font-size: 0.88rem; color: var(--text); margin-bottom: 10px; display:flex; align-items: center; gap: 6px; }
+    .perm-checks { display: flex; gap: 14px; flex-wrap: wrap; }
+    .perm-check-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--muted); cursor: pointer; }
+    .perm-check-item input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; }
+    .perm-check-item label { cursor: pointer; }
+    .perm-select-all-btn { font-size: 0.78rem; color: var(--primary); cursor: pointer; text-decoration: underline; margin-left: auto; border: none; background: none; font-family: inherit; }
+
+    /* Permissions Detail Modal */
+    .perm-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .perm-modal-item { display:flex; align-items:center; gap:8px; padding: 8px 10px; border-radius: 8px; font-size: 0.85rem; }
+    .perm-modal-item.ok { background: #d1fae5; color: #065f46; }
+    .perm-modal-item.no { background: #f3f4f6; color: #9ca3af; }
+    @media (max-width: 600px) { .perm-modal-grid { grid-template-columns: 1fr; } }
+    .role-card {
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-align: center;
+      position: relative;
+    }
+    .role-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+    .role-card.selected { border-color: var(--primary); background: var(--primary-light); }
+    .role-card .role-icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .role-card .role-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .role-card .role-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+    .role-card .role-checkmark {
+      position: absolute; top: 8px; right: 8px;
+      width: 22px; height: 22px;
+      background: var(--primary); color: white;
+      border-radius: 50%; display: none;
+      align-items: center; justify-content: center;
+      font-size: 0.7rem;
+    }
+    .role-card.selected .role-checkmark { display: flex; }
+
+    /* Permissions Preview */
+    .permissions-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 16px;
+      background: var(--bg);
+      border-radius: 10px;
+      margin-top: 16px;
+    }
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: white;
+    }
+    .perm-item.granted { color: #166534; }
+    .perm-item.denied { color: var(--muted); }
+    .perm-item.granted i { color: var(--primary); }
+    .perm-item.denied i { color: #d1d5db; }
+
+    /* Buttons */
+    .btn-primary-tv {
+      background: linear-gradient(135deg, var(--primary), var(--mint));
+      color: white;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.25s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(46,139,87,0.3);
+    }
+    .btn-primary-tv:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(46,139,87,0.4); }
+    .btn-primary-tv:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .btn-danger-tv {
+      background: transparent;
+      color: var(--danger);
+      border: 1.5px solid var(--danger);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.83rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-danger-tv:hover { background: var(--danger); color: white; }
+
+    .btn-outline-tv {
+      background: transparent;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.83rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-outline-tv:hover { background: var(--primary-light); }
+
+    /* Team Members Table */
+    .team-table { width: 100%; border-collapse: collapse; }
+    .team-table th {
+      background: var(--bg);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--border);
+    }
+    .team-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+    .team-table tr:hover td { background: var(--bg); }
+
+    .user-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .role-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 0.78rem; font-weight: 700;
+    }
+    .role-badge.owner   { background: #fef3c7; color: #92400e; }
+    .role-badge.manager { background: #dbeafe; color: #1e40af; }
+    .role-badge.employee{ background: #d1fae5; color: #065f46; }
+    .role-badge.viewer  { background: #f3e8ff; color: #6b21a8; }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 11px; border-radius: 20px;
+      font-size: 0.78rem; font-weight: 600;
+    }
+    .status-badge.active   { background: #d1fae5; color: #065f46; }
+    .status-badge.disabled { background: #fee2e2; color: #991b1b; }
+
+    /* Activity Log */
+    .activity-list { display: flex; flex-direction: column; gap: 10px; }
+    .activity-item {
+      display: flex; gap: 14px;
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      align-items: flex-start;
+    }
+    .activity-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .activity-info { flex: 1; }
+    .activity-info .actor { font-weight: 600; font-size: 0.9rem; }
+    .activity-info .detail { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+    .activity-info .time   { font-size: 0.78rem; color: #9ca3af; margin-top: 4px; }
+
+    /* Limit bar */
+    .limit-bar-wrap {
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 14px 20px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; gap: 16px;
+    }
+    .limit-bar {
+      flex: 1; height: 8px; border-radius: 999px; background: var(--border);
+      overflow: hidden; position: relative;
+    }
+    .limit-bar-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--primary), var(--mint));
+      transition: width 0.5s ease;
+    }
+    .limit-bar-fill.at-limit { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+
+    /* Access denied overlay */
+    .access-denied {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 60px 20px; text-align: center;
+    }
+    .access-denied .icon { font-size: 3rem; color: #fbbf24; margin-bottom: 16px; }
+    .access-denied h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+    .access-denied p { color: var(--muted); }
+
+    /* Toast */
+    .tv-toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: var(--text); color: white;
+      padding: 14px 22px; border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      font-weight: 600; font-size: 0.9rem;
+      z-index: 9999; display: none;
+      animation: slideUp 0.3s ease;
+      max-width: 340px;
+    }
+    .tv-toast.success { background: var(--primary); }
+    .tv-toast.error   { background: var(--danger); }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Password toggle */
+    .password-wrap { position: relative; }
+    .password-wrap .form-control { padding-right: 42px; }
+    .password-toggle {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer; color: var(--muted); font-size: 0.9rem;
+    }
+
+    .no-members {
+      text-align: center; padding: 50px 20px; color: var(--muted);
+    }
+    .no-members i { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .role-card-grid { grid-template-columns: 1fr 1fr; }
+      .permissions-list { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; gap: 14px; align-items: flex-start; }
+      .tv-tabs { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <div class="main-content">
+    <!-- Access Denied (shown for non-owners) -->
+    <div id="accessDeniedSection" style="display:none;">
+      <div class="card-panel access-denied">
+        <i class="fas fa-shield-alt icon"></i>
+        <h3>Access Restricted</h3>
+        <p>Only the account owner can manage team members.</p>
+      </div>
+    </div>
+
+    <!-- Main Content (shown for owners) -->
+    <div id="mainSection" style="display:none;">
+
+      <!-- Header -->
+      <div class="page-header">
+        <div>
+          <h1><i class="fas fa-users-cog me-2"></i>Team Management</h1>
+          <p>Create and manage sub-user accounts for your team members</p>
+        </div>
+        <div class="team-badge">
+          <i class="fas fa-users me-1"></i>
+          <span id="headerMemberCount">0 / 10</span> Members
+        </div>
+      </div>
+
+      <!-- Member Limit Bar -->
+      <div class="limit-bar-wrap mb-4">
+        <i class="fas fa-users" style="color: var(--primary);"></i>
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-weight:600; font-size:0.9rem;">Team Member Slots</span>
+            <span id="limitText" style="font-size:0.9rem; color:var(--muted);">0 / 10 used</span>
+          </div>
+          <div class="limit-bar">
+            <div class="limit-bar-fill" id="limitBarFill" style="width:0%"></div>
+          </div>
+        </div>
+        <span style="font-size:0.85rem; color:var(--muted);">Max 10</span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tv-tabs">
+        <button class="tv-tab active" onclick="switchTab('create')" id="tab-create">
+          <i class="fas fa-user-plus"></i> Add Member
+        </button>
+        <button class="tv-tab" onclick="switchTab('members')" id="tab-members">
+          <i class="fas fa-list"></i> Team Members
+        </button>
+        <button class="tv-tab" onclick="switchTab('activity')" id="tab-activity">
+          <i class="fas fa-history"></i> Activity Log
+        </button>
+      </div>
+
+      <!-- ── TAB: CREATE ──────────────────────────── -->
+      <div class="tab-pane active" id="pane-create">
+        <div class="card-panel">
+          <h2><i class="fas fa-user-plus"></i> Create New Team Member</h2>
+
+          <!-- Role Selection Cards -->
+          <p style="font-weight:600; margin-bottom:12px;">Select Role</p>
+          <div class="role-card-grid">
+            <div class="role-card selected" data-role="manager" onclick="selectRole(this, 'manager')">
+              <div class="role-checkmark"><i class="fas fa-check"></i></div>
+              <div class="role-icon">👔</div>
+              <div class="role-name">Manager</div>
+              <div class="role-desc">Full access, no team management</div>
+            </div>
+            <div class="role-card" data-role="employee" onclick="selectRole(this, 'employee')">
+              <div class="role-checkmark"><i class="fas fa-check"></i></div>
+              <div class="role-icon">🧑‍💼</div>
+              <div class="role-name">Employee</div>
+              <div class="role-desc">Create records only, no edit/delete</div>
+            </div>
+            <div class="role-card" data-role="viewer" onclick="selectRole(this, 'viewer')">
+              <div class="role-checkmark"><i class="fas fa-check"></i></div>
+              <div class="role-icon">👁️</div>
+              <div class="role-name">Viewer</div>
+              <div class="role-desc">Read-only access to all data</div>
+            </div>
+            <div class="role-card" data-role="custom" onclick="selectRole(this, 'custom')" style="border-style:dashed;">
+              <div class="role-checkmark"><i class="fas fa-check"></i></div>
+              <div class="role-icon">⚙️</div>
+              <div class="role-name">Custom</div>
+              <div class="role-desc">Pick exact permissions</div>
+            </div>
+          </div>
+
+          <!-- Standard Permissions Preview (for manager/employee/viewer) -->
+          <div class="permissions-list" id="permissionsPreview"></div>
+
+          <!-- Custom Permission Matrix (for custom role) -->
+          <div class="perm-matrix" id="customPermMatrix">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+              <p style="font-weight:700; font-size:0.95rem; color:var(--text); margin:0;">⚙️ Custom Permission Matrix</p>
+              <button class="perm-select-all-btn" onclick="toggleAllCustomPerms(true)">Select All</button>
+              <button class="perm-select-all-btn" style="margin-left:8px;" onclick="toggleAllCustomPerms(false)">Clear All</button>
+            </div>
+            <div id="customPermModules">
+              <!-- filled by renderCustomPermMatrix() -->
+            </div>
+          </div>
+
+          <!-- Form -->
+          <div class="form-grid mt-4">
+            <div class="form-group">
+              <label for="memberName">Full Name <span style="color:var(--danger)">*</span></label>
+              <div class="input-icon-wrap">
+                <i class="fas fa-user"></i>
+                <input type="text" class="form-control" id="memberName" placeholder="e.g. Rahul Sharma" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="memberContact">Contact Number</label>
+              <div class="input-icon-wrap">
+                <i class="fas fa-phone"></i>
+                <input type="tel" class="form-control" id="memberContact" placeholder="+91 99999 99999">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="memberEmail">Email Address <span style="color:var(--danger)">*</span></label>
+              <div class="input-icon-wrap">
+                <i class="fas fa-envelope"></i>
+                <input type="email" class="form-control" id="memberEmail" placeholder="eg. rahul@gmail.com" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="memberPassword">Temporary Password <span style="color:var(--danger)">*</span></label>
+              <div class="input-icon-wrap password-wrap">
+                <i class="fas fa-lock"></i>
+                <input type="password" class="form-control" id="memberPassword" placeholder="Min 6 characters">
+                <i class="fas fa-eye password-toggle" onclick="togglePassword('memberPassword', this)"></i>
+              </div>
+            </div>
+          </div>
+
+          <div id="createError" style="display:none; background:#fee2e2; color:#991b1b; padding:12px 16px; border-radius:9px; margin-top:16px; font-size:0.9rem;"></div>
+
+          <div style="margin-top:24px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            <button class="btn-primary-tv" onclick="createTeamMember()" id="createBtn">
+              <i class="fas fa-user-plus"></i> Create Account
+            </button>
+            <span style="color:var(--muted); font-size:0.85rem;">
+              <i class="fas fa-info-circle"></i> The member will login with their email &amp; password
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: MEMBERS ─────────────────────────── -->
+      <div class="tab-pane" id="pane-members">
+        <div class="card-panel">
+          <h2><i class="fas fa-users"></i> Team Members</h2>
+          <div id="membersContainer">
+            <div class="no-members">
+              <i class="fas fa-users d-block"></i>
+              <p>No team members yet. Create your first one!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: ACTIVITY ────────────────────────── -->
+      <div class="tab-pane" id="pane-activity">
+        <div class="card-panel">
+          <h2><i class="fas fa-history"></i> Recent Activity Log</h2>
+
+          <!-- Filters -->
+          <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+            <select class="form-select" id="activityUserFilter" style="max-width:200px;" onchange="loadActivityLog()">
+              <option value="">All Members</option>
+            </select>
+            <select class="form-select" id="activityTypeFilter" style="max-width:200px;" onchange="loadActivityLog()">
+              <option value="">All Actions</option>
+              <option value="created_lr">Created LR</option>
+              <option value="added_tyre">Added Tyre</option>
+              <option value="added_vehicle">Added Vehicle</option>
+              <option value="added_client">Added Client</option>
+              <option value="created_invoice">Created Invoice</option>
+              <option value="added_expense">Added Expense</option>
+            </select>
+            <input type="date" class="form-control" id="activityDateFilter" style="max-width:180px;" onchange="loadActivityLog()">
+          </div>
+
+          <div id="activityContainer">
+            <div class="no-members">
+              <i class="fas fa-history d-block"></i>
+              <p>No activity logged yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /mainSection -->
+  </div><!-- /main-content -->
+
+  <!-- Edit Role Modal -->
+  <div class="modal fade" id="editRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:14px; border:none;">
+        <div class="modal-header" style="border-bottom:1px solid var(--border);">
+          <h5 class="modal-title" style="font-weight:700;"><i class="fas fa-user-cog me-2" style="color:var(--primary);"></i>Edit Member</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <input type="hidden" id="editMemberId">
+          <div class="form-group mb-3">
+            <label style="font-weight:600; margin-bottom:6px; display:block;">Name</label>
+            <input type="text" class="form-control" id="editMemberName">
+          </div>
+          <div class="form-group mb-3">
+            <label style="font-weight:600; margin-bottom:6px; display:block;">Role</label>
+            <select class="form-select" id="editMemberRole">
+              <option value="manager">Manager</option>
+              <option value="employee">Employee</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-weight:600; margin-bottom:6px; display:block;">Status</label>
+            <select class="form-select" id="editMemberStatus">
+              <option value="active">Active</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--border);">
+          <button type="button" class="btn-primary-tv" onclick="saveEditMember()">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="tv-toast" id="tvToast"></div>
+
+  <!-- Firebase + Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="evm.js"></script>
+  <script src="auth-manager.js"></script>
+  <script src="navbar-loader.js"></script>
+
+  <script>
+    // ──────────────────────────────────────────
+    // FIREBASE INIT
+    // ──────────────────────────────────────────
+    const firebaseConfig = window.FIREBASE_CONFIG;
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+    // Secondary app instance (to create sub-users without signing out owner)
+    let secondaryApp;
+    try {
+      secondaryApp = firebase.app('secondary');
+    } catch (e) {
+      secondaryApp = firebase.initializeApp(firebaseConfig, 'secondary');
+    }
+
+    const db            = firebase.database();
+    const auth          = firebase.auth();
+    const secondaryAuth = secondaryApp.auth();
+
+    // ──────────────────────────────────────────
+    // STATE
+    // ──────────────────────────────────────────
+    let currentOwnerUid = null;
+    let selectedRole    = 'manager';
+    let teamMembers     = {};
+
+    const ROLE_LABELS = { owner:'Owner', manager:'Manager', employee:'Employee', viewer:'Viewer' };
+    const ROLE_COLORS = { owner:'#92400e', manager:'#1e40af', employee:'#065f46', viewer:'#6b21a8' };
+    const ROLE_BG     = { owner:'#fef3c7', manager:'#dbeafe', employee:'#d1fae5', viewer:'#f3e8ff' };
+    const ROLE_AVATARS= { owner:'#f59e0b', manager:'#3b82f6', employee:'#10b981', viewer:'#8b5cf6' };
+
+    const PERMS_DISPLAY = [
+      { key:'view_all',        label:'View All Records',   icon:'fa-eye' },
+      { key:'create_records',  label:'Create Records',     icon:'fa-plus' },
+      { key:'edit_records',    label:'Edit Records',       icon:'fa-pen' },
+      { key:'delete_records',  label:'Delete Records',     icon:'fa-trash' },
+      { key:'access_finance',  label:'Finance Access',     icon:'fa-coins' },
+      { key:'access_reports',  label:'View Reports',       icon:'fa-chart-bar' },
+      { key:'manage_team',     label:'Manage Team',        icon:'fa-users-cog' },
+    ];
+
+    const ROLE_PERMS = {
+      manager:  ['view_all','create_records','edit_records','delete_records','access_finance','access_reports'],
+      employee: ['view_all','create_records'],
+      viewer:   ['view_all','access_reports'],
+      custom:   [],
+    };
+
+    // ──────────────────────────────────────────
+    // BOOT
+    // ──────────────────────────────────────────
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) { window.location.href = 'login.html'; return; }
+
+      const snap = await db.ref(`users/${user.uid}`).once('value');
+      const data = snap.val() || {};
+      const role = data.role || 'owner';
+
+      if (role !== 'owner' && !data.coreAccountId) {
+        // Treat no coreAccountId users as owners
+      }
+
+      // Block sub-users (team members) — only actual owners can manage the team
+      // An owner's coreAccountId == their own uid, so we allow that
+      const isSubUser = data.coreAccountId && data.coreAccountId !== user.uid;
+      if (isSubUser) {
+        document.getElementById('accessDeniedSection').style.display = 'block';
+        return;
+      }
+
+      currentOwnerUid = user.uid;
+      document.getElementById('mainSection').style.display = 'block';
+
+      // Initialize auth manager
+      await window.AuthManager.getCurrentUserContext();
+
+      renderPermissionsPreview('manager');
+      loadTeamMembers();
+      loadActivityLog();
+    });
+
+    // ──────────────────────────────────────────
+    // TABS
+    // ──────────────────────────────────────────
+    function switchTab(tab) {
+      document.querySelectorAll('.tv-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      document.getElementById(`pane-${tab}`).classList.add('active');
+      if (tab === 'members') loadTeamMembers();
+      if (tab === 'activity') loadActivityLog();
+    }
+
+    // ──────────────────────────────────────────
+    // ROLE SELECTION
+    // ──────────────────────────────────────────
+    function selectRole(card, role) {
+      document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedRole = role;
+      const matrix = document.getElementById('customPermMatrix');
+      const preview = document.getElementById('permissionsPreview');
+      if (role === 'custom') {
+        preview.style.display = 'none';
+        matrix.classList.add('visible');
+        renderCustomPermMatrix();
+      } else {
+        preview.style.display = '';
+        matrix.classList.remove('visible');
+        renderPermissionsPreview(role);
+      }
+    }
+
+    function renderPermissionsPreview(role) {
+      const perms = ROLE_PERMS[role] || [];
+      const html = PERMS_DISPLAY.map(p => `
+        <div class="perm-item ${perms.includes(p.key) ? 'granted' : 'denied'}">
+          <i class="fas ${perms.includes(p.key) ? p.icon : 'fa-times-circle'}"></i>
+          <span>${p.label}</span>
+        </div>
+      `).join('');
+      document.getElementById('permissionsPreview').innerHTML = html;
+    }
+
+    // ── CUSTOM PERMISSION MATRIX ──────────────────────────────────
+    const CUSTOM_PERM_MODULES = [
+      { label: '📂 LR Reports',         icon: 'fa-file-alt',       perms: [
+          { id: 'access_lr',          label: 'View' },
+          { id: 'create_records_lr',  label: 'Create' },
+          { id: 'edit_records',       label: 'Edit' },
+          { id: 'delete_records',     label: 'Delete' },
+        ]},
+      { label: '🧾 Invoices',           icon: 'fa-file-invoice',   perms: [
+          { id: 'access_invoices',    label: 'View' },
+          { id: 'create_invoices',    label: 'Create' },
+          { id: 'edit_invoices',      label: 'Edit' },
+          { id: 'delete_invoices',    label: 'Delete' },
+        ]},
+      { label: '🚛 Vehicles',           icon: 'fa-truck',          perms: [
+          { id: 'access_vehicles',    label: 'View' },
+          { id: 'create_vehicles',    label: 'Create' },
+          { id: 'edit_vehicles',      label: 'Edit' },
+          { id: 'delete_vehicles',    label: 'Delete' },
+        ]},
+      { label: '🛞 Tyre Management',    icon: 'fa-circle-dot',     perms: [
+          { id: 'access_tyre',        label: 'View' },
+          { id: 'create_tyre',        label: 'Add Tyre' },
+          { id: 'edit_tyre',          label: 'Edit/Move' },
+          { id: 'delete_tyre',        label: 'Dispose' },
+        ]},
+      { label: '💰 Finance / Payments', icon: 'fa-coins',          perms: [
+          { id: 'access_finance',     label: 'View Finance' },
+        ]},
+      { label: '📊 Analytics & Reports', icon: 'fa-chart-bar',    perms: [
+          { id: 'access_reports',     label: 'View Reports' },
+        ]},
+      { label: '🗂️ Bookings',          icon: 'fa-calendar-check', perms: [
+          { id: 'access_bookings',    label: 'View' },
+          { id: 'create_bookings',    label: 'Create' },
+        ]},
+      { label: '👷 Employees',          icon: 'fa-id-badge',       perms: [
+          { id: 'access_employees',   label: 'View' },
+          { id: 'create_employees',   label: 'Add' },
+          { id: 'edit_employees',     label: 'Edit' },
+          { id: 'delete_employees',   label: 'Delete' },
+        ]},
+      { label: '🚐 Transporters',       icon: 'fa-bus',            perms: [
+          { id: 'access_transporters',label: 'View' },
+          { id: 'create_transporters',label: 'Add' },
+        ]},
+      { label: '🗺️ Routes',            icon: 'fa-route',          perms: [
+          { id: 'access_routes',      label: 'View' },
+          { id: 'create_routes',      label: 'Add' },
+        ]},
+      { label: '💸 Trip Expenses',      icon: 'fa-receipt',        perms: [
+          { id: 'access_trips',       label: 'View' },
+          { id: 'create_trips',       label: 'Create' },
+          { id: 'edit_trips',         label: 'Edit' },
+          { id: 'delete_trips',       label: 'Delete' },
+        ]},
+      { label: '📋 Work Management',    icon: 'fa-tasks',          perms: [
+          { id: 'access_work',        label: 'View' },
+          { id: 'create_work',        label: 'Create' },
+          { id: 'edit_work',          label: 'Edit' },
+        ]},
+    ];
+
+    function renderCustomPermMatrix() {
+      const container = document.getElementById('customPermModules');
+      container.innerHTML = CUSTOM_PERM_MODULES.map(mod => `
+        <div class="perm-module">
+          <div class="perm-module-title">
+            <i class="fas ${mod.icon}" style="color:var(--primary); width:16px;"></i>
+            ${mod.label}
+            <button class="perm-select-all-btn ms-auto" onclick="toggleModulePerms(event, '${mod.label}')">Select All</button>
+          </div>
+          <div class="perm-checks" data-module="${mod.label}">
+            ${mod.perms.map(p => `
+              <label class="perm-check-item">
+                <input type="checkbox" class="custom-perm-check" value="${p.id}" id="cp_${p.id}">
+                <span>${p.label}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleModulePerms(e, moduleLabel) {
+      e.preventDefault();
+      const container = document.querySelector(`[data-module="${moduleLabel}"]`);
+      if (!container) return;
+      const checks = container.querySelectorAll('input[type=checkbox]');
+      const anyChecked = [...checks].some(c => c.checked);
+      checks.forEach(c => c.checked = !anyChecked);
+    }
+
+    function toggleAllCustomPerms(val) {
+      document.querySelectorAll('.custom-perm-check').forEach(c => c.checked = val);
+    }
+
+    function getCustomPermissions() {
+      const checked = document.querySelectorAll('.custom-perm-check:checked');
+      const perms = new Set([...checked].map(c => c.value));
+      // Always include view_all if any view permission is granted
+      const viewPerms = ['access_lr','access_invoices','access_vehicles','access_tyre',
+                         'access_employees','access_transporters','access_routes',
+                         'access_trips','access_bookings','access_finance','access_reports','access_work'];
+      if (viewPerms.some(p => perms.has(p))) perms.add('view_all');
+      // Map specific create/edit/delete to generic ones
+      const editPerms = ['edit_records','edit_invoices','edit_vehicles','edit_tyre',
+                         'edit_employees','edit_trips','edit_work'];
+      const createPerms = ['create_records','create_records_lr','create_invoices','create_vehicles',
+                           'create_tyre','create_employees','create_transporters',
+                           'create_routes','create_trips','create_bookings','create_work'];
+      const deletePerms = ['delete_records','delete_invoices','delete_vehicles','delete_tyre',
+                           'delete_employees','delete_trips'];
+      if (editPerms.some(p => perms.has(p))) perms.add('edit_records');
+      if (createPerms.some(p => perms.has(p))) perms.add('create_records');
+      if (deletePerms.some(p => perms.has(p))) perms.add('delete_records');
+      return [...perms];
+    }
+
+    // ── PERMISSIONS DETAIL MODAL ────────────────────────────────────
+    window.showPermissionsModal = function(uid) {
+      const m = teamMembers[uid];
+      if (!m) return;
+
+      let modal = document.getElementById('permDetailsModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'permDetailsModal';
+        modal.style.cssText = 'display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;';
+        modal.innerHTML = `
+          <div style="background:#fff; border-radius:16px; padding:28px; width:90%; max-width:540px; max-height:85vh; overflow-y:auto; position:relative; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <button onclick="document.getElementById('permDetailsModal').style.display='none'" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:1.3rem;color:#9ca3af;cursor:pointer;">&#x2715;</button>
+            <h3 id="permModalTitle" style="font-weight:700; color:#1a1a2e; margin-bottom:4px;"></h3>
+            <p id="permModalRole" style="color:#6b7280; font-size:0.88rem; margin-bottom:16px;"></p>
+            <hr style="margin-bottom:16px;">
+            <div id="permModalContent" class="perm-modal-grid"></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+
+      const ALL_PERM_LABELS = [
+        { id:'view_all',            label:'View All Records',    icon:'fa-eye' },
+        { id:'create_records',      label:'Create Records',      icon:'fa-plus' },
+        { id:'edit_records',        label:'Edit Records',        icon:'fa-pen' },
+        { id:'delete_records',      label:'Delete Records',      icon:'fa-trash' },
+        { id:'access_finance',      label:'Finance Access',      icon:'fa-coins' },
+        { id:'access_reports',      label:'View Reports',        icon:'fa-chart-bar' },
+        { id:'access_tyre',         label:'Tyre Management',     icon:'fa-circle-dot' },
+        { id:'access_employees',    label:'Employees Module',    icon:'fa-id-badge' },
+        { id:'access_transporters', label:'Transporters Module', icon:'fa-bus' },
+        { id:'access_bookings',     label:'Bookings Module',     icon:'fa-calendar-check' },
+        { id:'access_routes',       label:'Routes Module',       icon:'fa-route' },
+        { id:'access_trips',        label:'Trip Expenses',       icon:'fa-receipt' },
+        { id:'access_lr',           label:'LR Reports',          icon:'fa-file-alt' },
+        { id:'access_invoices',     label:'Invoices Module',     icon:'fa-file-invoice' },
+        { id:'access_vehicles',     label:'Vehicles Module',     icon:'fa-truck' },
+      ];
+
+      // Get permissions from Firebase stored customPermissions or default role
+      const defaultPerms = window.AuthManager ? (window.AuthManager.ROLE_PERMISSIONS[m.role] || []) : [];
+      const perms = m.customPermissions || defaultPerms;
+
+      document.getElementById('permModalTitle').textContent = `🔐 Permissions — ${m.name}`;
+      document.getElementById('permModalRole').innerHTML = `Role: <span class="role-badge ${m.role}">${ROLE_LABELS[m.role] || m.role}</span>`;
+
+      document.getElementById('permModalContent').innerHTML = ALL_PERM_LABELS.map(p => {
+        const has = perms.includes(p.id);
+        return `<div class="perm-modal-item ${has ? 'ok' : 'no'}">
+          <i class="fas ${has ? p.icon : 'fa-times-circle'}"></i>
+          <span>${p.label}</span>
+        </div>`;
+      }).join('');
+
+      modal.style.display = 'flex';
+    };
+
+    // ──────────────────────────────────────────
+    // CREATE TEAM MEMBER
+    // ──────────────────────────────────────────
+    async function createTeamMember() {
+      const name     = document.getElementById('memberName').value.trim();
+      const email    = document.getElementById('memberEmail').value.trim();
+      const password = document.getElementById('memberPassword').value;
+      const contact  = document.getElementById('memberContact').value.trim();
+      const errEl    = document.getElementById('createError');
+      const btn      = document.getElementById('createBtn');
+
+      errEl.style.display = 'none';
+
+      // Validation
+      if (!name || !email || !password) {
+        errEl.textContent = 'Please fill in Name, Email and Password.';
+        errEl.style.display = 'block'; return;
+      }
+      if (password.length < 6) {
+        errEl.textContent = 'Password must be at least 6 characters.';
+        errEl.style.display = 'block'; return;
+      }
+
+      // Check limit
+      const MAX_MEMBERS = window.AuthManager ? window.AuthManager.MAX_TEAM_MEMBERS : 10;
+      const existingSnap = await db.ref(`users/${currentOwnerUid}/teamMembers`).once('value');
+      const existingCount = existingSnap.exists() ? Object.keys(existingSnap.val()).length : 0;
+      if (existingCount >= MAX_MEMBERS) {
+        errEl.textContent = `You have reached the maximum of ${MAX_MEMBERS} team members.`;
+        errEl.style.display = 'block'; return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+      try {
+        // Create Firebase Auth account using secondary app (doesn't sign out owner)
+        const credential = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+        const newUid = credential.user.uid;
+
+        // Immediately sign out from secondary auth
+        await secondaryAuth.signOut();
+
+        // Gather custom permissions if custom role
+        const now = new Date().toISOString();
+        let customPermissionsArr = null;
+        if (selectedRole === 'custom') {
+          customPermissionsArr = getCustomPermissions();
+          if (customPermissionsArr.length === 0) {
+            errEl.textContent = 'Please select at least one permission for the Custom role.';
+            errEl.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+            return;
+          }
+        }
+
+        // Store sub-user profile in Firebase DB
+        const userProfile = {
+          email,
+          name,
+          contact: contact || '',
+          role:          selectedRole,
+          coreAccountId: currentOwnerUid,
+          accountType:   'team_member',
+          status:        'active',
+          createdAt:     now,
+          lastLogin:     null,
+        };
+        if (customPermissionsArr) userProfile.customPermissions = customPermissionsArr;
+        await db.ref(`users/${newUid}`).set(userProfile);
+
+        // Store in owner's teamMembers node
+        const memberRecord = {
+          uid:    newUid,
+          name,
+          email,
+          contact: contact || '',
+          role:    selectedRole,
+          status:  'active',
+          createdAt: now,
+          lastLogin: null,
+        };
+        if (customPermissionsArr) memberRecord.customPermissions = customPermissionsArr;
+        await db.ref(`users/${currentOwnerUid}/teamMembers/${newUid}`).set(memberRecord);
+
+        // Log activity
+        await window.AuthManager.logActivity(
+          'team_member_created',
+          `Created ${selectedRole} account for ${name} (${email})`,
+          'team',
+          newUid
+        );
+
+        // Reset form
+        ['memberName','memberEmail','memberPassword','memberContact'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+
+        showToast(`✅ Account created for ${name}!`, 'success');
+        loadTeamMembers();
+        switchTab('members');
+      } catch (err) {
+        let msg = 'Failed to create account. Please try again.';
+        if (err.code === 'auth/email-already-in-use') msg = 'This email is already in use.';
+        if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+      }
+    }
+
+    // ──────────────────────────────────────────
+    // LOAD TEAM MEMBERS
+    // ──────────────────────────────────────────
+    async function loadTeamMembers() {
+      if (!currentOwnerUid) return;
+      const snap = await db.ref(`users/${currentOwnerUid}/teamMembers`).once('value');
+      teamMembers = snap.exists() ? snap.val() : {};
+      renderMembersTable();
+      updateLimitBar();
+    }
+
+    function renderMembersTable() {
+      const container = document.getElementById('membersContainer');
+      const members   = Object.values(teamMembers);
+
+      if (!members.length) {
+        container.innerHTML = `<div class="no-members"><i class="fas fa-users d-block"></i><p>No team members yet. Create your first one!</p></div>`;
+        return;
+      }
+
+      const rows = members.map(m => {
+        const initials = (m.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+        const avatarBg = ROLE_AVATARS[m.role] || '#6b7280';
+        const lastLogin = m.lastLogin ? new Date(m.lastLogin).toLocaleDateString('en-IN') : 'Never';
+        return `
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div class="user-avatar" style="background:${avatarBg}15; color:${avatarBg};">${initials}</div>
+                <div>
+                  <div style="font-weight:600;">${m.name}</div>
+                  <div style="font-size:0.82rem; color:var(--muted);">${m.email}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="role-badge ${m.role}">${ROLE_LABELS[m.role] || m.role}</span></td>
+            <td><span class="status-badge ${m.status}">
+              <i class="fas fa-circle" style="font-size:6px;"></i>
+              ${m.status === 'active' ? 'Active' : 'Disabled'}
+            </span></td>
+            <td style="color:var(--muted); font-size:0.85rem;">${lastLogin}</td>
+            <td>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn-outline-tv" onclick="openEditModal('${m.uid}')" title="Edit member"><i class="fas fa-edit"></i> Edit</button>
+                <button class="btn-outline-tv" onclick="showPermissionsModal('${m.uid}')" title="View permissions" style="color:#6b21a8; border-color:#6b21a8;"><i class="fas fa-shield-alt"></i> Perms</button>
+                <button class="btn-danger-tv" onclick="deleteMember('${m.uid}', '${m.name}')" title="Remove member"><i class="fas fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="table-responsive">
+          <table class="team-table">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    function updateLimitBar() {
+      const MAX = window.AuthManager ? window.AuthManager.MAX_TEAM_MEMBERS : 10;
+      const count = Object.keys(teamMembers).length;
+      const pct   = (count / MAX) * 100;
+      document.getElementById('limitText').textContent = `${count} / ${MAX} used`;
+      document.getElementById('headerMemberCount').textContent = `${count} / ${MAX}`;
+      document.getElementById('limitText').closest('.limit-bar-wrap').querySelector('span:last-child').textContent = `Max ${MAX}`;
+      const fill = document.getElementById('limitBarFill');
+      fill.style.width = `${Math.min(pct, 100)}%`;
+      fill.className = `limit-bar-fill ${count >= MAX ? 'at-limit' : ''}`;
+    }
+
+    // ──────────────────────────────────────────
+    // EDIT MEMBER
+    // ──────────────────────────────────────────
+    function openEditModal(uid) {
+      const m = teamMembers[uid];
+      if (!m) return;
+      document.getElementById('editMemberId').value   = uid;
+      document.getElementById('editMemberName').value = m.name;
+      document.getElementById('editMemberRole').value = m.role;
+      document.getElementById('editMemberStatus').value = m.status || 'active';
+      new bootstrap.Modal(document.getElementById('editRoleModal')).show();
+    }
+
+    async function saveEditMember() {
+      const uid    = document.getElementById('editMemberId').value;
+      const name   = document.getElementById('editMemberName').value.trim();
+      const role   = document.getElementById('editMemberRole').value;
+      const status = document.getElementById('editMemberStatus').value;
+
+      if (!uid || !name) return;
+
+      try {
+        const updates = { name, role, status };
+        // If role changed to non-custom, clear customPermissions
+        if (role !== 'custom') { updates.customPermissions = null; }
+        await db.ref(`users/${currentOwnerUid}/teamMembers/${uid}`).update(updates);
+        await db.ref(`users/${uid}`).update(updates);
+
+        bootstrap.Modal.getInstance(document.getElementById('editRoleModal')).hide();
+        showToast('Member updated successfully!', 'success');
+
+        // Update cached teamMembers
+        if (teamMembers[uid]) { teamMembers[uid] = { ...teamMembers[uid], ...updates }; }
+
+        await window.AuthManager.logActivity('team_member_updated',`Updated ${name}'s role to ${role}`,'team', uid);
+        loadTeamMembers();
+      } catch (err) {
+        showToast('Failed to update member.', 'error');
+      }
+    }
+
+    // ──────────────────────────────────────────
+    // DELETE MEMBER
+    // ──────────────────────────────────────────
+    async function deleteMember(uid, name) {
+      if (!confirm(`Remove ${name} from your team? They will lose access to the portal.`)) return;
+      try {
+        await db.ref(`users/${currentOwnerUid}/teamMembers/${uid}`).remove();
+        // Mark sub-user as disabled in their profile (can't delete Firebase Auth accounts client-side)
+        await db.ref(`users/${uid}`).update({ status: 'disabled', disabledAt: new Date().toISOString() });
+        await window.AuthManager.logActivity('team_member_removed',`Removed ${name} from team`,'team',uid);
+        showToast(`${name} removed from team.`, 'success');
+        loadTeamMembers();
+      } catch (err) {
+        showToast('Failed to remove member.', 'error');
+      }
+    }
+
+    // ──────────────────────────────────────────
+    // ACTIVITY LOG
+    // ──────────────────────────────────────────
+    async function loadActivityLog() {
+      if (!currentOwnerUid) return;
+
+      const userFilter = document.getElementById('activityUserFilter').value;
+      const typeFilter = document.getElementById('activityTypeFilter').value;
+      const dateFilter = document.getElementById('activityDateFilter').value;
+
+      const snap = await db.ref(`users/${currentOwnerUid}/activityLog`)
+                           .orderByChild('timestamp')
+                           .limitToLast(100)
+                           .once('value');
+
+      let logs = [];
+      if (snap.exists()) {
+        snap.forEach(child => { logs.push({ id: child.key, ...child.val() }); });
+        logs.reverse();
+      }
+
+      // Apply filters
+      if (userFilter) logs = logs.filter(l => l.userId === userFilter);
+      if (typeFilter) logs = logs.filter(l => l.action === typeFilter);
+      if (dateFilter) logs = logs.filter(l => l.timestamp && l.timestamp.startsWith(dateFilter));
+
+      renderActivityLog(logs);
+      populateActivityUserFilter();
+    }
+
+    function renderActivityLog(logs) {
+      const container = document.getElementById('activityContainer');
+      if (!logs.length) {
+        container.innerHTML = `<div class="no-members"><i class="fas fa-history d-block"></i><p>No activity found.</p></div>`;
+        return;
+      }
+
+      const ACTION_ICONS = {
+        created_lr:          { icon:'fa-file-alt',     bg:'#dbeafe', color:'#1e40af' },
+        added_tyre:          { icon:'fa-circle',        bg:'#d1fae5', color:'#065f46' },
+        added_vehicle:       { icon:'fa-truck',         bg:'#fef3c7', color:'#92400e' },
+        added_client:        { icon:'fa-handshake',     bg:'#f3e8ff', color:'#6b21a8' },
+        created_invoice:     { icon:'fa-file-invoice',  bg:'#fce7f3', color:'#9d174d' },
+        added_expense:       { icon:'fa-receipt',       bg:'#fee2e2', color:'#991b1b' },
+        team_member_created: { icon:'fa-user-plus',     bg:'#d1fae5', color:'#065f46' },
+        team_member_updated: { icon:'fa-user-edit',     bg:'#dbeafe', color:'#1e40af' },
+        team_member_removed: { icon:'fa-user-minus',    bg:'#fee2e2', color:'#991b1b' },
+      };
+
+      const html = logs.map(log => {
+        const conf = ACTION_ICONS[log.action] || { icon:'fa-circle', bg:'#f3f4f6', color:'#6b7280' };
+        const timeAgo = formatTimeAgo(log.timestamp);
+        const initials = (log.userName || 'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+
+        return `<div class="activity-item">
+          <div class="activity-icon" style="background:${conf.bg}; color:${conf.color};">
+            <i class="fas ${conf.icon}"></i>
+          </div>
+          <div class="activity-info">
+            <div class="actor">
+              <span style="background:${conf.bg}; color:${conf.color}; padding:2px 8px; border-radius:10px; font-size:0.78rem; margin-right:6px;">${initials}</span>
+              ${log.userName || 'Unknown'}
+              <span class="role-badge ${log.userRole}" style="margin-left:6px; font-size:0.72rem;">${ROLE_LABELS[log.userRole] || log.userRole}</span>
+            </div>
+            <div class="detail">${log.details || log.action}</div>
+            <div class="time"><i class="fas fa-clock me-1"></i>${timeAgo}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+      container.innerHTML = `<div class="activity-list">${html}</div>`;
+    }
+
+    async function populateActivityUserFilter() {
+      const select    = document.getElementById('activityUserFilter');
+      const current   = select.value;
+      const membersArr = Object.values(teamMembers);
+
+      select.innerHTML = '<option value="">All Members</option>' +
+        membersArr.map(m => `<option value="${m.uid}" ${current===m.uid?'selected':''}>${m.name}</option>`).join('');
+    }
+
+    // ──────────────────────────────────────────
+    // UTILITIES
+    // ──────────────────────────────────────────
+    function formatTimeAgo(isoString) {
+      if (!isoString) return 'Unknown';
+      const diff = Date.now() - new Date(isoString).getTime();
+      const mins  = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days  = Math.floor(diff / 86400000);
+      if (mins < 1)   return 'Just now';
+      if (mins < 60)  return `${mins}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      return `${days}d ago`;
+    }
+
+    function togglePassword(inputId, icon) {
+      const inp = document.getElementById(inputId);
+      if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fas fa-eye-slash password-toggle'; }
+      else { inp.type = 'password'; icon.className = 'fas fa-eye password-toggle'; }
+    }
+
+    let _toastTimer;
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('tvToast');
+      t.textContent = msg;
+      t.className   = `tv-toast ${type}`;
+      t.style.display = 'block';
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => { t.style.display = 'none'; }, 3500);
+    }
+  </script>
+</body>
+</html>

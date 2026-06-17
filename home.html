@@ -851,21 +851,13 @@
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   
   <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "transport-dashboard-ad69a",
-      storageBucket: "transport-dashboard-ad69a.appspot.com",
-      messagingSenderId: "526889676196",
-      appId: "1:526889676196:web:66032c80a4aede690ae531",
-      measurementId: "G-7F9R7HJYDH"
-    };
-
-    // Initialize Firebase
+    // Initialize Firebase securely using window.FIREBASE_CONFIG from evm.js
     if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+      if (!window.FIREBASE_CONFIG) {
+        console.error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
+      } else {
+        firebase.initializeApp(window.FIREBASE_CONFIG);
+      }
     }
 
     const db = firebase.database();
@@ -911,7 +903,7 @@
             $('#toDate').val(formatDateForInput(today));
 
             // Load all payment data and trigger initial rendering
-            loadAllPayments();
+            listenToPayments(coreAccountId);
           });
 
           // Initialize DataTable
@@ -948,8 +940,15 @@
     function loadPumpsList() {
         if (!coreAccountId) return;
         // NOTE: We check the current user's path for pumps based on route-details.html logic
-        db.ref(`users/${currentUser.uid}/petrolPumps`).on('value', (snap) => {
-            allPumps = snap.val() || {};
+        db.ref(`users/${coreAccountId}/petrolPumps`).on('value', (snap) => {
+            const rawPumps = snap.val() || {};
+            allPumps = {};
+            Object.entries(rawPumps).forEach(([id, pump]) => {
+                allPumps[id] = {
+                    ...pump,
+                    name: pump.name || pump.pumpName || 'Unnamed Pump'
+                };
+            });
         });
     }
 
@@ -980,10 +979,7 @@
       const userProfileRef = db.ref(`users/${user.uid}`);
       userProfileRef.once('value').then((userProfileSnap) => {
         const userData = userProfileSnap.exists() ? userProfileSnap.val() : {};
-        const accountType = userData.accountType || 'core';
-        const effectiveCoreAccountId = accountType === 'branch' 
-          ? userData.coreAccountId 
-          : user.uid;
+        const effectiveCoreAccountId = userData.coreAccountId || user.uid;
 
         if (!effectiveCoreAccountId) {
           console.error("Could not determine core account ID for business summary.");
@@ -1045,8 +1041,7 @@
       const userProfileRef = db.ref(`users/${user.uid}`);
       userProfileRef.once('value').then((userProfileSnap) => {
         const userData = userProfileSnap.exists() ? userProfileSnap.val() : {};
-        const accountType = userData.accountType || 'core';
-        const effectiveCoreAccountId = accountType === 'branch' ? userData.coreAccountId : user.uid;
+        const effectiveCoreAccountId = userData.coreAccountId || user.uid;
 
         // Latest Vehicles
         db.ref(`users/${effectiveCoreAccountId}/vehicles`).limitToLast(3).on('value', (snap) => {
@@ -1070,7 +1065,7 @@
             const fuelPaymentsRef = db.ref(`users/${effectiveCoreAccountId}/fuelPayments`);
             const driverPaymentsRef = db.ref(`users/${effectiveCoreAccountId}/driverSalaryPayments`);
             const workPaymentsRef = db.ref(`users/${effectiveCoreAccountId}/workPayments`);
-            const pumpPaymentsRef = db.ref(`users/${currentUser.uid}/pumpPayments`);
+            const pumpPaymentsRef = db.ref(`users/${effectiveCoreAccountId}/pumpPayments`);
 
             const [rootSnap, fuelSnap, driverSnap, workSnap, pumpSnap] = await Promise.all([
                 rootPaymentsRef.once('value'),
@@ -1127,37 +1122,27 @@
     // Load and display subscription status
     function loadSubscriptionStatus(user) {
       const statusEl = document.getElementById('subscriptionStatusText');
-      
-      const userProfileRef = db.ref(`users/${user.uid}`);
-      userProfileRef.once('value').then((userProfileSnap) => {
-        if (!userProfileSnap.exists()) {
-          statusEl.textContent = 'User profile not found.';
-          return;
-        }
+      // Use the global coreAccountId which is already resolved correctly
+      const effectiveCoreAccountId = typeof coreAccountId !== 'undefined' && coreAccountId ? coreAccountId : user.uid;
 
-        const userData = userProfileSnap.val();
-        const accountType = userData.accountType || 'core';
-        const effectiveCoreAccountId = accountType === 'branch' ? userData.coreAccountId : user.uid;
-
-        if (accountType !== 'core') {
-          const coreSubRef = db.ref(`coreSubscriptions/${effectiveCoreAccountId}`);
-          coreSubRef.once('value').then((coreSubSnap) => {
-            if (coreSubSnap.exists()) {
-              const coreSub = coreSubSnap.val();
-              const endDate = new Date(coreSub.endDate);
-              const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
-              statusEl.textContent = daysLeft > 0 ? `Active (${daysLeft} days left)` : 'Expired';
-              return;
-            }
-            checkRegularSubscription(effectiveCoreAccountId, statusEl);
-          });
-        } else {
+      if (effectiveCoreAccountId !== user.uid) {
+        const coreSubRef = db.ref(`coreSubscriptions/${effectiveCoreAccountId}`);
+        coreSubRef.once('value').then((coreSubSnap) => {
+          if (coreSubSnap.exists()) {
+            const coreSub = coreSubSnap.val();
+            const endDate = new Date(coreSub.endDate);
+            const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+            statusEl.textContent = daysLeft > 0 ? `Active (${daysLeft} days left)` : 'Expired';
+            return;
+          }
           checkRegularSubscription(effectiveCoreAccountId, statusEl);
-        }
-      }).catch((error) => {
-        console.error("Error loading subscription status:", error);
-        document.getElementById('subscriptionStatusText').textContent = 'Error';
-      });
+        }).catch((err) => {
+          console.warn("Could not read coreSubscriptions, falling back:", err);
+          checkRegularSubscription(effectiveCoreAccountId, statusEl);
+        });
+      } else {
+        checkRegularSubscription(effectiveCoreAccountId, statusEl);
+      }
     }
 
     function checkRegularSubscription(accountId, statusEl) {
@@ -1171,6 +1156,9 @@
         } else {
           statusEl.textContent = 'No Subscription';
         }
+      }).catch(err => {
+        console.error("Error reading regular subscription:", err);
+        statusEl.textContent = 'No Subscription';
       });
     }
 
@@ -1258,7 +1246,7 @@
       const driverPaymentsRef = db.ref(`users/${accountId}/driverSalaryPayments`);
       const expensesRef = db.ref(`users/${accountId}/expenses`); // General expenses
       const workPaymentsRef = db.ref(`users/${accountId}/workPayments`); // Vendor Payments
-      const pumpPaymentsRef = db.ref(`users/${currentUser.uid}/pumpPayments`); 
+      const pumpPaymentsRef = db.ref(`users/${accountId}/pumpPayments`); 
       
       try {
         const [lrReportsSnap, fuelPaymentsSnap, driverPaymentsSnap, expensesSnap, workPaymentsSnap, pumpPaymentsSnap] = await Promise.all([
@@ -1307,20 +1295,6 @@
                              
             totalExpenses += lrTripExpenses;
 
-            // Fuel Usage Deduction 
-            const fuelUsedAmount = (parseFloat(details.fuelUsedLiters) || 0) * (parseFloat(details.dieselRatePerLiter) || 0);
-            if (!details.fuelAlreadyDeducted) { // Only count if this LR trip hasn't had the fuel deducted yet
-                totalExpenses += fuelUsedAmount;
-            }
-
-            // Driver Advance (treated as an expense)
-            const driverAdvance = (parseFloat(details.advance) || 0);
-            totalExpenses += driverAdvance; 
-
-            // Shortage Deduction (revenue loss)
-            const shortageDeduction = ((parseFloat(details.shortage) || 0) / 1000) * (parseFloat(details.billingRate) || 0);
-            totalExpenses += shortageDeduction;
-
             // Empty Trip Expenses
             const emptyDetails = lr.emptyTripData || {};
             const lrEmptyExpenses = (parseFloat(emptyDetails.tyreExpenses) || 0) + 
@@ -1337,11 +1311,27 @@
                                     
             totalExpenses += lrEmptyExpenses;
 
+            // Fuel Usage Deduction (includes empty trip fuel)
+            const fuelUsedAmount = (parseFloat(details.fuelUsedLiters) || 0) * (parseFloat(details.dieselRatePerLiter) || 0);
+            const emptyFuelUsedAmount = (parseFloat(emptyDetails.fuelUsedLiters) || 0) * (parseFloat(emptyDetails.dieselRatePerLiter || details.dieselRatePerLiter) || 0);
+            const totalFuelUsedAmount = fuelUsedAmount + emptyFuelUsedAmount;
+
+            if (!details.fuelAlreadyDeducted) { // Only count if this LR trip hasn't had the fuel deducted yet
+                totalExpenses += totalFuelUsedAmount;
+            }
+
+            // Driver Advance (treated as an expense)
+            const driverAdvance = (parseFloat(details.advance) || 0);
+            totalExpenses += driverAdvance; 
+
+            // Shortage Deduction (revenue loss)
+            const shortageDeduction = ((parseFloat(details.shortage) || 0) / 1000) * (parseFloat(details.billingRate) || 0);
+            totalExpenses += shortageDeduction;
 
             // **RAW EXPENSE LIST POPULATION (TRIP - ADVANCE/USAGE IS DEDUCTED ONCE PER TRIP)**
             if(lrTripExpenses > 0) rawExpenseList.push({date: lrDateStr, type: 'trip', amount: lrTripExpenses, description: `LR ${lr.lrNumber} - Trip Expenses (Toll, Food, etc.)`, mode: 'Cash', sort: 1});
             if(lrEmptyExpenses > 0) rawExpenseList.push({date: lrDateStr, type: 'trip', amount: lrEmptyExpenses, description: `LR ${lr.lrNumber} - Empty Return Expenses`, mode: 'Cash', sort: 2});
-            if(fuelUsedAmount > 0 && !details.fuelAlreadyDeducted) rawExpenseList.push({date: lrDateStr, type: 'fuel', amount: fuelUsedAmount, description: `LR ${lr.lrNumber} - Fuel Usage (Estimated)`, mode: 'System (Deduction)', sort: 3});
+            if(totalFuelUsedAmount > 0 && !details.fuelAlreadyDeducted) rawExpenseList.push({date: lrDateStr, type: 'fuel', amount: totalFuelUsedAmount, description: `LR ${lr.lrNumber} - Fuel Usage (Estimated)`, mode: 'System (Deduction)', sort: 3});
             
             if(driverAdvance > 0) {
                  rawExpenseList.push({date: lrDateStr, type: 'driver', amount: driverAdvance, description: `LR ${lr.lrNumber} - Driver Advance`, mode: details.advancePaymentMode || 'Cash', sort: 4});
@@ -1513,17 +1503,14 @@
     }
 
     // Load all payments from multiple sources for the dashboard
-    function loadAllPayments() {
-        const effectiveCoreAccountId = coreAccountId || (currentUser && currentUser.uid);
-        if (!effectiveCoreAccountId) return;
-
+    function listenToPayments(effectiveCoreAccountId) {
         const refsToListen = [
             db.ref('payments').orderByChild('userId').equalTo(effectiveCoreAccountId),
             db.ref(`users/${effectiveCoreAccountId}/fuelPayments`), 
             db.ref(`users/${effectiveCoreAccountId}/driverSalaryPayments`), 
             db.ref(`users/${effectiveCoreAccountId}/workPayments`), 
             db.ref(`users/${effectiveCoreAccountId}/expenses`), 
-            db.ref(`users/${currentUser.uid}/pumpPayments`) 
+            db.ref(`users/${effectiveCoreAccountId}/pumpPayments`) 
         ];
         
         refsToListen.forEach(ref => ref.on('value', () => combineAllPayments(effectiveCoreAccountId)));
@@ -1536,7 +1523,7 @@
             db.ref(`users/${accountId}/driverSalaryPayments`).once('value'),
             db.ref(`users/${accountId}/workPayments`).once('value'),
             db.ref(`users/${accountId}/expenses`).once('value'),
-            db.ref(`users/${currentUser.uid}/pumpPayments`).once('value')
+            db.ref(`users/${accountId}/pumpPayments`).once('value')
         ]);
 
         allPayments = [];

@@ -3,128 +3,6 @@
 
 <head>
 
-  <!-- 🔐 Secure .env Configuration Loader -->
-  <!-- 🔐 Secure Configuration - Loaded from .env -->
-  <script>
-    // Configuration loaded from .env file (server-side)
-    (function () {
-      'use strict';
-
-      // Firebase configuration from .env
-      if (!window.FIREBASE_CONFIG) {
-        apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-      }
-
-      // Cloudinary configuration from .env
-      if (!window.CLOUDINARY_CONFIG) {
-        window.CLOUDINARY_CONFIG = {
-          cloudName: "doqapn15f",
-          uploadPreset: "vehicle-driver",
-          presets: {
-            vehicleDriver: "vehicle-driver",
-            paymentBilling: "payment-billing",
-            profilePic: "profile-pic",
-            documents: "documents",
-            receipts: "receipts",
-            expenses: "expenses",
-            tyres: "tyres",
-            vehicles: "vehicles",
-            drivers: "drivers",
-            invoices: "invoices",
-            lrReports: "lr-reports",
-            tripExpenses: "trip-expenses"
-          },
-          folders: {
-            vehicles: "transport/vehicles",
-            drivers: "transport/drivers",
-            documents: "transport/documents",
-            profiles: "transport/profiles",
-            receipts: "transport/receipts",
-            expenses: "transport/expenses",
-            tyres: "transport/tyres",
-            invoices: "transport/invoices",
-            lrReports: "transport/lr-reports",
-            tripExpenses: "transport/trip-expenses"
-          },
-          apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-          baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-        };
-      }
-
-      // Environment configuration from .env
-      if (!window.ENVIRONMENT) {
-        window.ENVIRONMENT = {
-          name: "production",
-          debug: false,
-          apiBaseUrl: "https://transvortex.online",
-          version: "1.0.0",
-          corsOrigin: "https://transvortex.online",
-          allowedOrigins: "https://transvortex.online,http://localhost:3000",
-          apiRateLimit: 100
-        };
-      }
-
-      // Security configuration from .env
-      if (!window.SECURITY_CONFIG) {
-        window.SECURITY_CONFIG = {
-          sessionSecret: "transvortex-session-secret-2024",
-          jwtSecret: "transvortex-jwt-secret-2024",
-          encryptionKey: "transvortex-encryption-key-2024"
-        };
-      }
-
-      // Optional API configurations from .env
-      if (!window.API_CONFIG) {
-        window.API_CONFIG = {
-          email: {
-            provider: "sendgrid",
-            window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-            from: "noreply@transvortex.online",
-            fromName: "TransVortex Transport"
-          },
-          payment: {
-            provider: "stripe",
-            publicKey: "your-stripe-public-key-here"
-          },
-          sms: {
-            provider: "twilio",
-            accountSid: "your-twilio-account-sid-here",
-            phoneNumber: "your-twilio-phone-number-here"
-          },
-          maps: {
-            googleMapsApiKey: "your-google-maps-api-key-here",
-            googlePlacesApiKey: "your-google-places-api-key-here"
-          },
-          analytics: {
-            googleAnalyticsId: "GA-XXXXXXXXX",
-            facebookPixelId: "your-facebook-pixel-id-here",
-            hotjarId: "your-hotjar-id-here"
-          }
-        };
-      }
-
-      // Log successful loading (only in debug mode)
-      if (window.ENVIRONMENT.debug) {
-        console.log('✅ Secure configuration loaded from .env');
-        console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-        console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-        console.log('🌍 Environment:', window.ENVIRONMENT.name);
-        console.log('🔐 Security: Loaded');
-      }
-
-      // Dispatch event when configuration is ready
-      window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-        detail: {
-          firebase: window.FIREBASE_CONFIG,
-          cloudinary: window.CLOUDINARY_CONFIG,
-          environment: window.ENVIRONMENT,
-          security: window.SECURITY_CONFIG,
-          apis: window.API_CONFIG
-        }
-      }));
-    })();
-  </script>
-
 
 
   <meta charset="UTF-8" />
@@ -465,6 +343,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 
   <!-- 🔐 Configuration Loading -->
+  
+  <script src="auth-manager.js"></script>
   <script src="evm.js"></script>
   <script src="secure-api-loader.js"></script>
 </head>
@@ -473,24 +353,12 @@
   <!-- Load secure configuration first -->
 
 
-
   <script src="navbar-loader.js"></script>
 
   <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Generated Invoices</h2>
     </div>
-
-    <ul class="nav nav-pills mb-3" id="invoiceViewTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="client-invoices-tab" data-bs-toggle="tab"
-          data-bs-target="#client-invoices-content" type="button" role="tab">Client Invoices</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="market-invoices-tab" data-bs-toggle="tab" data-bs-target="#market-invoices-content"
-          type="button" role="tab">Market Invoices</button>
-      </li>
-    </ul>
 
     <div class="tab-content" id="invoiceViewTabsContent">
       <div class="tab-pane fade show active" id="client-invoices-content" role="tabpanel">
@@ -511,27 +379,8 @@
           </table>
         </div>
       </div>
-      <div class="tab-pane fade" id="market-invoices-content" role="tabpanel">
-        <div class="table-responsive">
-          <table id="marketInvoicesTable" class="table table-striped">
-            <thead>
-              <tr>
-                <th>Invoice #</th>
-                <th>Date</th>
-                <th>Company Name</th>
-                <th class="text-end">Total Amount</th>
-                <th class="text-center">Status</th>
-                <th class="text-center">LRs</th>
-                <th class="text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="marketInvoicesTableBody"></tbody>
-          </table>
-        </div>
-      </div>
     </div>
   </div>
-
 
   <div class="modal fade" id="invoiceDetailModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-fullscreen-sm-down">
@@ -673,7 +522,6 @@
         if (false) { // Condition is always false in the final logic, keeping as per original structure
 
         } else {
-
 
 
         }
@@ -873,7 +721,6 @@
       }
     }
 
-
     window.saveStyleSettings = function () {
       // Save the currently selected live values to the global object
       invoiceStyle = {
@@ -884,7 +731,6 @@
       localStorage.setItem('invoiceStyleSettings', JSON.stringify(invoiceStyle));
       alert('Invoice style settings saved! New style will be used for all future prints/PDFs.');
     }
-
 
     function initializePage(user) {
       invoicesTable = $('#invoicesTable').DataTable({ order: [[1, 'desc']] });
@@ -955,13 +801,8 @@
 
           // Determine company name based on invoice type and stored ID
           let companyName = 'N/A';
-          if (inv.invoiceType === 'market' || inv.invoiceType === 'market_company') {
-            const transporter = allTransporters.find(t => t.id === inv.transporterId);
-            companyName = transporter?.name || 'Market Company';
-          } else {
-            const client = allClients.find(c => c.id === inv.clientId);
-            companyName = client?.clientName || 'Client Company';
-          }
+          const client = allClients.find(c => c.id === inv.clientId);
+          companyName = client?.clientName || 'Client Company';
 
           const displayTotal = total || inv.grandTotal || 0;
           const rowData = [
@@ -975,15 +816,10 @@
              <button class="btn btn-sm btn-outline-warning ms-1" onclick="undoInvoice('${inv.id}')" title="Undo Invoice"><i class="fas fa-undo"></i> Undo</button>`
           ];
 
-          if (inv.invoiceType === 'market' || inv.invoiceType === 'market_company') {
-            if (marketInvoicesTable) marketInvoicesTable.row.add(rowData);
-          } else {
-            if (invoicesTable) invoicesTable.row.add(rowData);
-          }
+          if (invoicesTable) invoicesTable.row.add(rowData);
         }
       }
       if (invoicesTable) invoicesTable.draw();
-      if (marketInvoicesTable) marketInvoicesTable.draw();
     }
 
     function numberToWords(num) {
@@ -1037,29 +873,15 @@
         const lrs = invoice.items || [];
 
         // 2. Fetch Billed To Details (Same logic as before)
-        if (invoice.invoiceType === 'market' || invoice.invoiceType === 'market_company') {
-          billToLabel = 'Transporter Company';
-          if (invoice.transporterId) {
-            const t = allTransporters.find(t => t.id === invoice.transporterId);
-            // FIX: Check if 't' is defined before accessing properties
-            if (t) {
-              billedToName = t.name || 'N/A';
-              billedToGstin = t.gstin || 'N/A';
-              billedToAddress = t.address || t.billingAddress || 'N/A';
-              billedToMobile = t.mobile || 'N/A';
-            }
-          }
-        } else {
-          billToLabel = 'Client Company';
-          if (invoice.clientId) {
-            const c = allClients.find(c => c.id === invoice.clientId);
-            // FIX: Check if 'c' is defined before accessing properties
-            if (c) {
-              billedToName = c.clientName || 'N/A';
-              billedToGstin = c.gstin || 'N/A';
-              billedToAddress = c.billingAddress || 'N/A';
-              billedToMobile = c.mobile || 'N/A';
-            }
+        billToLabel = 'Client Company';
+        if (invoice.clientId) {
+          const c = allClients.find(c => c.id === invoice.clientId);
+          // FIX: Check if 'c' is defined before accessing properties
+          if (c) {
+            billedToName = c.clientName || 'N/A';
+            billedToGstin = c.gstin || 'N/A';
+            billedToAddress = c.billingAddress || 'N/A';
+            billedToMobile = c.mobile || 'N/A';
           }
         }
 
@@ -1380,15 +1202,8 @@
         }
         updates[`/users/${dataRoot}/invoices/${invoiceId}`] = null;
 
-        // **MODIFIED**: Handle both client and transporter outstanding balances
-        if (invoiceData.invoiceType === 'market' && invoiceData.transporterId && invoiceData.grandTotal) {
-          // For market invoices, update transporter's outstanding
-          const transporterOutstandingRef = ref(db, `users/${dataRoot}/transporters/${invoiceData.transporterId}/outstanding`);
-          await runTransaction(transporterOutstandingRef, (currentValue) => {
-            // Subtract the grand total (which includes GST). This may result in a negative balance (credit).
-            return (currentValue || 0) - invoiceData.grandTotal;
-          });
-        } else if (invoiceData.clientId && invoiceData.grandTotal) {
+        // **MODIFIED**: Handle client balances
+        if (invoiceData.clientId && invoiceData.grandTotal) {
           // For client invoices, update client's outstanding
           const clientOutstandingRef = ref(db, `users/${dataRoot}/clients/${invoiceData.clientId}/outstanding`);
           await runTransaction(clientOutstandingRef, (currentValue) => {
@@ -1412,6 +1227,16 @@
         signOut(auth).then(() => { window.location.href = "index.html"; });
       }
     }
+  </script>
+
+  <script>
+    // RBAC Page Guard
+    document.addEventListener('DOMContentLoaded', async function() {
+      if (window.AuthManager) {
+        await window.AuthManager.enforcePageAccess('invoice');
+        window.AuthManager.applyUIPermissions();
+      }
+    });
   </script>
 </body>
 

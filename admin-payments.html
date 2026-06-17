@@ -1,128 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
-<!-- 🔐 Secure .env Configuration Loader -->
-    <!-- 🔐 Secure Configuration - Loaded from .env -->
-    <script>
-        // Configuration loaded from .env file (server-side)
-        (function() {
-            'use strict';
-            
-            // Firebase configuration from .env
-            if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-            }
-            
-            // Cloudinary configuration from .env
-            if (!window.CLOUDINARY_CONFIG) {
-                window.CLOUDINARY_CONFIG = {
-                    cloudName: "doqapn15f",
-                    uploadPreset: "vehicle-driver",
-                    presets: {
-                        vehicleDriver: "vehicle-driver",
-                        paymentBilling: "payment-billing",
-                        profilePic: "profile-pic",
-                        documents: "documents",
-                        receipts: "receipts",
-                        expenses: "expenses",
-                        tyres: "tyres",
-                        vehicles: "vehicles",
-                        drivers: "drivers",
-                        invoices: "invoices",
-                        lrReports: "lr-reports",
-                        tripExpenses: "trip-expenses"
-                    },
-                    folders: {
-                        vehicles: "transport/vehicles",
-                        drivers: "transport/drivers", 
-                        documents: "transport/documents",
-                        profiles: "transport/profiles",
-                        receipts: "transport/receipts",
-                        expenses: "transport/expenses",
-                        tyres: "transport/tyres",
-                        invoices: "transport/invoices",
-                        lrReports: "transport/lr-reports",
-                        tripExpenses: "transport/trip-expenses"
-                    },
-                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-                };
-            }
-            
-            // Environment configuration from .env
-            if (!window.ENVIRONMENT) {
-                window.ENVIRONMENT = {
-                    name: "production",
-                    debug: false,
-                    apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0",
-                    corsOrigin: "https://transvortex.online",
-                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
-                    apiRateLimit: 100
-                };
-            }
-            
-            // Security configuration from .env
-            if (!window.SECURITY_CONFIG) {
-                window.SECURITY_CONFIG = {
-                    sessionSecret: "transvortex-session-secret-2024",
-                    jwtSecret: "transvortex-jwt-secret-2024",
-                    encryptionKey: "transvortex-encryption-key-2024"
-                };
-            }
-            
-            // Optional API configurations from .env
-            if (!window.API_CONFIG) {
-                window.API_CONFIG = {
-                    email: {
-                        provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-                        from: "noreply@transvortex.online",
-                        fromName: "TransVortex Transport"
-                    },
-                    payment: {
-                        provider: "stripe",
-                        publicKey: "your-stripe-public-key-here"
-                    },
-                    sms: {
-                        provider: "twilio",
-                        accountSid: "your-twilio-account-sid-here",
-                        phoneNumber: "your-twilio-phone-number-here"
-                    },
-                    maps: {
-                        googleMapsApiKey: "your-google-maps-api-key-here",
-                        googlePlacesApiKey: "your-google-places-api-key-here"
-                    },
-                    analytics: {
-                        googleAnalyticsId: "GA-XXXXXXXXX",
-                        facebookPixelId: "your-facebook-pixel-id-here",
-                        hotjarId: "your-hotjar-id-here"
-                    }
-                };
-            }
-            
-            // Log successful loading (only in debug mode)
-            if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
-                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-                console.log('🌍 Environment:', window.ENVIRONMENT.name);
-                console.log('🔐 Security: Loaded');
-            }
-            
-            // Dispatch event when configuration is ready
-            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-                detail: {
-                    firebase: window.FIREBASE_CONFIG,
-                    cloudinary: window.CLOUDINARY_CONFIG,
-                    environment: window.ENVIRONMENT,
-                    security: window.SECURITY_CONFIG,
-                    apis: window.API_CONFIG
-                }
-            }));
-        })();
-    </script>
 
 
 
@@ -209,7 +87,6 @@
         }
         html[data-theme="dark"] .theme-switch-wrapper .fa-sun { color: #6c757d; }
         html[data-theme="dark"] .theme-switch-wrapper .fa-moon { color: var(--warning-color); }
-
 
         .header {
             display: flex;
@@ -810,6 +687,12 @@
     <!-- 🔐 Configuration Loading -->
     <script src="evm.js"></script>
     <script src="secure-api-loader.js"></script>
+  <script src="auth-manager.js"></script>
+  <script>
+    window.addEventListener('load', async function() { 
+        if(window.AuthManager) await window.AuthManager.enforcePageAccess("admin-payments"); 
+    });
+  </script>
 </head>
 <body>
     <div class="container">
@@ -955,6 +838,9 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone</th>
+                        <th>Company</th>
+                        <th>Vehicles</th>
+                        <th>Plan (Est.)</th>
                         <th>Date</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -962,7 +848,7 @@
                 </thead>
                 <tbody id="demoRequestsBody">
                     <tr>
-                        <td colspan="6" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading demo requests...</td>
+                        <td colspan="9" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading demo requests...</td>
                     </tr>
                 </tbody>
             </table>
@@ -992,8 +878,7 @@
 
     // ... (omitted HTML structure and CSS) ...
       <!-- Load secure configuration first -->
-  
-  
+
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -1002,7 +887,8 @@
         import {
             getAuth,
             onAuthStateChanged,
-            signOut
+            signOut,
+            createUserWithEmailAndPassword
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
         import {
@@ -1013,50 +899,21 @@
             onValue,
             push,
             update,
-            remove
+            remove,
+            onChildAdded
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
         // Your Firebase configuration
         // Load Firebase configuration securely from EVM
     let firebaseConfig;
-    
-    try {
-      // Get Firebase configuration from secure EVM system
-      // Initialize Firebase with proper error handling
     try {
         if (!window.FIREBASE_CONFIG) {
             throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
         }
-        
-        if (!window.FIREBASE_CONFIG.databaseURL) {
-            throw new Error('Firebase databaseURL not found in configuration.');
-        }
-        
-        if (!window.FIREBASE_CONFIG.projectId) {
-            throw new Error('Firebase projectId not found in configuration.');
-        }
-        
         firebaseConfig = window.FIREBASE_CONFIG;
-        
-        // Check if we're using fallback values
-        if (false) { // Condition is always false in the final logic, keeping as per original structure
-            
-        } else {
-            
-            
-            
-        }
     } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
-        
-        // Use fallback configuration to prevent complete failure
-        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig();
-        
-    }} catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = window.FIREBASE_CONFIG;
+        firebaseConfig = window.FIREBASE_CONFIG;
     }
 
         // Initialize Firebase
@@ -1094,7 +951,6 @@
         const itemsPerPageUsers = 10;
         let totalPagesUsers = 1;
         const userSearchInput = document.getElementById('userSearchInput');
-
 
         // Pagination state
         let currentPage = 1;
@@ -1267,8 +1123,7 @@
                             subscription: subscriptionData,
                             lastLogin: now.toISOString()
                         });
-                        
-                        
+
                     }
                 }
                 
@@ -1386,19 +1241,110 @@
             }
         }
 
-        // --- NEW: Demo Request Logic ---
-        async function approveDemoRequest(requestId) {
-            if (!confirm('Are you sure you want to approve this demo request and create a new user account?')) return;
+        // Secondary App for creating users without logging out admin
+        const secondaryApp = initializeApp(window.FIREBASE_CONFIG, "Secondary");
+        const secondaryAuth = getAuth(secondaryApp);
+        const secondaryDb = getDatabase(secondaryApp);
 
-            const createDemoUserFn = httpsCallable(functions, 'createDemoUser');
+        // --- Demo Request Approval Logic ---
+        
+        // Maps vehicle count to subscription plan
+        function getSubscriptionPlan(vehicleCount) {
+            const count = parseInt(vehicleCount) || 0;
+            if (count <= 25)  return { planId: 'starter',    planName: 'Starter',    price: 1999,  vehicleLimit: 25  };
+            if (count <= 50)  return { planId: 'business',   planName: 'Business',   price: 3999,  vehicleLimit: 50  };
+            if (count <= 100) return { planId: 'enterprise', planName: 'Enterprise', price: 6999,  vehicleLimit: 100 };
+            return            { planId: 'ultimate',   planName: 'Ultimate',   price: 14999, vehicleLimit: 999 };
+        }
+
+        async function approveDemoRequest(requestId) {
+            if (!confirm('Are you sure you want to approve this request and create the user account?')) return;
+
             try {
                 showNotification('Creating user account...', 'info');
-                const result = await createDemoUserFn({ requestId: requestId });
-                showNotification(result.data.message, 'success');
-                loadDemoRequests(); // Refresh the list
+                
+                // Get request details
+                const requestRef = ref(database, `demoRequests/${requestId}`);
+                const snapshot = await get(requestRef);
+                if (!snapshot.exists()) throw new Error("Request not found");
+                const reqData = snapshot.val();
+                
+                if (reqData.status === 'approved') {
+                    showNotification('Request is already approved.', 'warning');
+                    return;
+                }
+                
+                // Phone number IS the password
+                const password = reqData.phone;
+                if (!password || password.length < 6) {
+                    showNotification('Phone number is too short to use as a password (need 6+ digits). Please update the request manually.', 'error');
+                    return;
+                }
+                
+                // Determine subscription plan from vehicle count
+                const plan = getSubscriptionPlan(reqData.vehicleCount);
+                
+                // Create user using secondary app auth (does not affect current admin session)
+                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, reqData.email, password);
+                const newUserId = userCredential.user.uid;
+                
+                // Initialize user profile in database using SECONDARY instance (authenticated as new user)
+                const userUpdates = {};
+                userUpdates[`profile`] = {
+                    name: reqData.name,
+                    email: reqData.email,
+                    phone: reqData.phone || '',
+                    company: reqData.company || '',
+                    vehicleCount: reqData.vehicleCount || 0,
+                    role: 'owner',
+                    createdAt: new Date().toISOString()
+                };
+                userUpdates[`role`] = 'owner';
+                userUpdates[`coreAccountId`] = newUserId;
+                const trialStartDate = new Date();
+                const trialEndDate = new Date(trialStartDate);
+                trialEndDate.setDate(trialEndDate.getDate() + 14);
+
+                userUpdates[`subscription`] = {
+                    planId: plan.planId,
+                    planName: plan.planName,
+                    price: plan.price,
+                    vehicleLimit: plan.vehicleLimit,
+                    status: 'trial',
+                    startDate: trialStartDate.toISOString(),
+                    trialEnd: trialEndDate.toISOString(),
+                    trialDays: 14
+                };
+                
+                await update(ref(secondaryDb, `users/${newUserId}`), userUpdates);
+                
+                // Mark request as approved using MAIN instance (authenticated as Admin)
+                await update(ref(database, `demoRequests/${requestId}`), {
+                    status: 'approved',
+                    approvedAt: new Date().toISOString(),
+                    assignedPlan: plan.planId
+                });
+                
+                showNotification(`✅ Account created! Plan: ${plan.planName}`, 'success');
+                alert(`Account created successfully for ${reqData.name}!\n\nEmail: ${reqData.email}\nPassword: ${password} (their phone number)\nPlan: ${plan.planName} (₹${plan.price}/month)\nVehicle Limit: ${plan.vehicleLimit}\n\nPlease share these credentials securely with the client.`);
+                loadDemoRequests();
             } catch (error) {
                 console.error('Error approving demo request:', error);
-                showNotification(`Failed to approve request: ${error.message}`, 'error');
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    const markAsApproved = confirm('This email is already registered in the system (likely from a previous attempt). Would you like to just mark this request as Approved?');
+                    if (markAsApproved) {
+                        try {
+                            await update(ref(database, `demoRequests/${requestId}`), { status: 'approved' });
+                            showNotification('Request marked as approved.', 'success');
+                            loadDemoRequests();
+                        } catch (updateError) {
+                            showNotification(`Failed to update request: ${updateError.message}`, 'error');
+                        }
+                    }
+                } else {
+                    showNotification(`Failed to approve request: ${error.message}`, 'error');
+                }
             }
         }
 
@@ -1626,7 +1572,7 @@
             if (!demoBody) return;
 
             if (!requests || requests.length === 0) {
-                demoBody.innerHTML = '<tr><td colspan="6" class="no-data">No demo requests found.</td></tr>';
+                demoBody.innerHTML = '<tr><td colspan="9" class="no-data">No demo requests found.</td></tr>';
                 return;
             }
 
@@ -1645,10 +1591,16 @@
                     actions = `<span class="text-muted">${req.status}</span>`;
                 }
 
+                const plan = getSubscriptionPlan(req.vehicleCount);
+                const planBadge = `<span style="font-size:0.78rem;background:#e8f4fd;color:#1a73e8;padding:2px 7px;border-radius:10px;">${plan.planName} ₹${plan.price.toLocaleString()}</span>`;
+
                 row.innerHTML = `
                     <td>${req.name || 'N/A'}</td>
                     <td>${req.email || 'N/A'}</td>
                     <td>${req.phone || 'N/A'}</td>
+                    <td>${req.company || 'N/A'}</td>
+                    <td style="text-align:center;"><strong>${req.vehicleCount || '?'}</strong></td>
+                    <td>${req.status === 'approved' ? `<span style="font-size:0.78rem;background:#e8f7ef;color:#28a745;padding:2px 7px;border-radius:10px;">${req.assignedPlan || plan.planName}</span>` : planBadge}</td>
                     <td>${formatDate(req.timestamp)}</td>
                     <td>${statusBadge}</td>
                     <td class="action-buttons">${actions}</td>
@@ -2101,8 +2053,7 @@
 
         // Initialize event listeners
         function initEventListeners() {
-            
-            
+
             // Get references to DOM elements
             const searchInput = document.getElementById('searchInput');
             const filterButtons = document.querySelectorAll('.filter-btn');
@@ -2182,8 +2133,7 @@
         
         // Apply all active filters and search
         function applyFilters() {
-            
-            
+
             if (!allPayments || allPayments.length === 0) {
                 
                 return;
@@ -2191,8 +2141,7 @@
             
             const searchEl = document.getElementById('searchInput');
             const searchTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
-            
-            
+
             // Filter by status
             let filtered = [...allPayments];
             if (currentFilter && currentFilter !== 'all') {
@@ -2427,6 +2376,24 @@
                 else if (branchPaymentsTab.classList.contains('active')) loadBranchPayments();
                 else if (usersTab.classList.contains('active')) loadUsers();
                 else if (demoRequestsTab.classList.contains('active')) loadDemoRequests();
+                
+                // Real-time listener for new demo requests
+                let initialDemoLoad = true;
+                const requestsRef = ref(database, 'demoRequests');
+                
+                // Set initial load to false after fetching existing items
+                get(requestsRef).then(() => { initialDemoLoad = false; });
+                
+                onChildAdded(requestsRef, (snapshot) => {
+                    if (initialDemoLoad) return;
+                    
+                    const reqData = snapshot.val();
+                    showNotification(`New Access Request from ${reqData.name} (${reqData.company})!`, 'info');
+                    
+                    if (demoRequestsTab.classList.contains('active')) {
+                        loadDemoRequests();
+                    }
+                });
             } else {
                 // If still not admin after retry, deny access.
                 showNotification('Access Denied: Admin privileges required.', 'error');

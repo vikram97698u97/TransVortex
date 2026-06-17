@@ -3,128 +3,6 @@
 
 <head>
 
-  <!-- 🔐 Secure .env Configuration Loader -->
-  <!-- 🔐 Secure Configuration - Loaded from .env -->
-  <script>
-    // Configuration loaded from .env file (server-side)
-    (function () {
-      'use strict';
-
-      // Firebase configuration from .env
-      if (!window.FIREBASE_CONFIG) {
-        apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-      }
-
-      // Cloudinary configuration from .env
-      if (!window.CLOUDINARY_CONFIG) {
-        window.CLOUDINARY_CONFIG = {
-          cloudName: "doqapn15f",
-          uploadPreset: "vehicle-driver",
-          presets: {
-            vehicleDriver: "vehicle-driver",
-            paymentBilling: "payment-billing",
-            profilePic: "profile-pic",
-            documents: "documents",
-            receipts: "receipts",
-            expenses: "expenses",
-            tyres: "tyres",
-            vehicles: "vehicles",
-            drivers: "drivers",
-            invoices: "invoices",
-            lrReports: "lr-reports",
-            tripExpenses: "trip-expenses"
-          },
-          folders: {
-            vehicles: "transport/vehicles",
-            drivers: "transport/drivers",
-            documents: "transport/documents",
-            profiles: "transport/profiles",
-            receipts: "transport/receipts",
-            expenses: "transport/expenses",
-            tyres: "transport/tyres",
-            invoices: "transport/invoices",
-            lrReports: "transport/lr-reports",
-            tripExpenses: "transport/trip-expenses"
-          },
-          apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-          baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-        };
-      }
-
-      // Environment configuration from .env
-      if (!window.ENVIRONMENT) {
-        window.ENVIRONMENT = {
-          name: "production",
-          debug: false,
-          apiBaseUrl: "https://transvortex.online",
-          version: "1.0.0",
-          corsOrigin: "https://transvortex.online",
-          allowedOrigins: "https://transvortex.online,http://localhost:3000",
-          apiRateLimit: 100
-        };
-      }
-
-      // Security configuration from .env
-      if (!window.SECURITY_CONFIG) {
-        window.SECURITY_CONFIG = {
-          sessionSecret: "transvortex-session-secret-2024",
-          jwtSecret: "transvortex-jwt-secret-2024",
-          encryptionKey: "transvortex-encryption-key-2024"
-        };
-      }
-
-      // Optional API configurations from .env
-      if (!window.API_CONFIG) {
-        window.API_CONFIG = {
-          email: {
-            provider: "sendgrid",
-            apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "",
-            from: "noreply@transvortex.online",
-            fromName: "TransVortex Transport"
-          },
-          payment: {
-            provider: "stripe",
-            publicKey: "your-stripe-public-key-here"
-          },
-          sms: {
-            provider: "twilio",
-            accountSid: "your-twilio-account-sid-here",
-            phoneNumber: "your-twilio-phone-number-here"
-          },
-          maps: {
-            googleMapsApiKey: "your-google-maps-api-key-here",
-            googlePlacesApiKey: "your-google-places-api-key-here"
-          },
-          analytics: {
-            googleAnalyticsId: "GA-XXXXXXXXX",
-            facebookPixelId: "your-facebook-pixel-id-here",
-            hotjarId: "your-hotjar-id-here"
-          }
-        };
-      }
-
-      // Log successful loading (only in debug mode)
-      if (window.ENVIRONMENT.debug) {
-        console.log('✅ Secure configuration loaded from .env');
-        console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-        console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-        console.log('🌍 Environment:', window.ENVIRONMENT.name);
-        console.log('🔐 Security: Loaded');
-      }
-
-      // Dispatch event when configuration is ready
-      window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-        detail: {
-          firebase: window.FIREBASE_CONFIG,
-          cloudinary: window.CLOUDINARY_CONFIG,
-          environment: window.ENVIRONMENT,
-          security: window.SECURITY_CONFIG,
-          apis: window.API_CONFIG
-        }
-      }));
-    })();
-  </script>
-
 
 
   <meta charset="UTF-8">
@@ -138,7 +16,6 @@
   <link rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
   <!-- Load secure configuration first -->
-
 
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -198,6 +75,7 @@
   <!-- 🔐 Configuration Loading -->
   <script src="evm.js"></script>
   <script src="secure-api-loader.js"></script>
+  <script src="money-flow-utils.js"></script>
 </head>
 
 <body>
@@ -312,14 +190,22 @@
                   </div>
                 </div>
                 <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="date"><i class="fas fa-calendar-alt me-1"></i> Date:</label>
-                    <input type="date" id="date" class="form-control" required />
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="date"><i class="fas fa-calendar-alt me-1"></i> Date:</label>
+                      <input type="date" id="date" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                      <label for="vendorPaymentAccountId"><i class="fas fa-wallet me-1"></i> Payment Account:</label>
+                      <select id="vendorPaymentAccountId" class="form-select" required>
+                        <option value="">Select Account</option>
+                      </select>
+                    </div>
                   </div>
                   <div class="col-md-6 mb-3">
                     <label for="paymentNotes"><i class="fas fa-sticky-note me-1"></i> Notes:</label>
                     <textarea id="paymentNotes" class="form-control" placeholder="Add any notes about this payment"
-                      rows="3"></textarea>
+                      rows="4"></textarea>
                   </div>
                 </div>
               </div>
@@ -461,9 +347,20 @@
         <div class="tab-pane fade show active p-3" id="work-history-content" role="tabpanel">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0">Work History</h5>
-            <button class="btn btn-sm btn-success" onclick="downloadVendorWorkHistoryPDF()">
-              <i class="fas fa-file-pdf me-1"></i> Download PDF
-            </button>
+            <div class="d-flex gap-2 align-items-center">
+              <select id="workTypeFilter" class="form-select form-select-sm" style="width: auto;">
+                <option value="all">All Work Types</option>
+                <option value="tyre">Tyre Purchases & Work</option>
+                <option value="other">Other / Vehicle Work</option>
+              </select>
+              <select id="workSortOrder" class="form-select form-select-sm" style="width: auto;">
+                <option value="desc">Newest First</option>
+                <option value="asc">Oldest First</option>
+              </select>
+              <button class="btn btn-sm btn-success" onclick="downloadVendorWorkHistoryPDF()">
+                <i class="fas fa-file-pdf me-1"></i> Download PDF
+              </button>
+            </div>
           </div>
           <div class="table-responsive">
             <table id="vendorWorkHistoryTable" class="table table-striped table-bordered" style="width:100%">
@@ -549,7 +446,6 @@
         } else {
 
 
-
         }
       } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
@@ -579,6 +475,7 @@
     let vendorPaymentHistoryTable;
     let currentEditingPaymentId = null;
     let allVehicles = []; // Store loaded vehicles
+    let allMoneyAccounts = {};
 
     // Auth Check
     onAuthStateChanged(auth, user => {
@@ -590,13 +487,68 @@
         get(userProfileRef).then(snapshot => {
           // Determine coreAccountId for shared data access
           coreAccountId = (snapshot.exists() && snapshot.val().coreAccountId) || user.uid;
-
+          if (window.MoneyFlow) {
+              window.MoneyFlow.coreAccountId = coreAccountId;
+              window.MoneyFlow.recordedBy = user.displayName || user.email || 'System';
+          }
 
           // Load data
           loadVendors();
           loadVendorsForPaymentDropdown();
           loadVendorPayments();
-          loadVehicles(); // Load vehicles for Work form
+          loadVehicles();
+          populateVendorPaymentAccounts();
+      if (window.AuthManager) window.AuthManager.applyUIPermissions(); // Load vehicles for Work form
+
+          // Add Draft status elements
+          document.querySelectorAll('form.form-section').forEach(f => {
+             const status = document.createElement('div');
+             status.className = 'draft-status';
+             status.style.cssText = 'font-size: 0.8rem; color: #888; margin-top: 5px; text-align: right;';
+             f.appendChild(status);
+          });
+
+          // --- DRAFT PERSISTENCE ---
+          const forms = [
+            { id: 'vendorForm', fields: ['vendorName', 'contactPerson', 'mobile', 'gstin'] },
+            { id: 'paymentForm', fields: ['vendorSelect', 'amount', 'date', 'paymentNotes'] },
+            { id: 'vehicleWorkForm', fields: ['workVendorSelect', 'workVehicleSelect', 'workAmount', 'workDate', 'workNotes'] }
+          ];
+          
+          forms.forEach(f => {
+            const el = document.getElementById(f.id);
+            if (!el) return;
+            
+            const save = () => {
+              const draft = {};
+              f.fields.forEach(fid => { 
+                const input = document.getElementById(fid);
+                if (input) draft[fid] = input.value;
+              });
+              localStorage.setItem(`tv_draft_${f.id}_${coreAccountId}`, JSON.stringify(draft));
+              const status = el.querySelector('.draft-status');
+              if (status) status.textContent = 'Draft last saved: ' + new Date().toLocaleTimeString();
+            };
+            
+            const restore = () => {
+              const raw = localStorage.getItem(`tv_draft_${f.id}_${coreAccountId}`);
+              if (!raw) return;
+              try {
+                const draft = JSON.parse(raw);
+                f.fields.forEach(fid => {
+                  const input = document.getElementById(fid);
+                  if (input && draft[fid] !== undefined) {
+                    input.value = draft[fid];
+                    if ($(input).hasClass('select2-hidden-accessible')) $(input).trigger('change');
+                  }
+                });
+              } catch(e) {}
+            };
+            
+            el.addEventListener('input', save);
+            el.addEventListener('change', save);
+            restore();
+          });
 
 
           // Check if we have parameters from LR report
@@ -663,11 +615,13 @@
       if (currentEditingVendorId) {
         await update(ref(db, `users/${coreAccountId}/workVendors/${currentEditingVendorId}`), vendorData);
         alert('Vendor updated successfully!');
+        localStorage.removeItem(`tv_draft_vendorForm_${coreAccountId}`);
         cancelVendorEdit();
       } else {
         vendorData.createdAt = new Date().toISOString();
         await push(ref(db, `users/${coreAccountId}/workVendors`), vendorData);
         alert('Vendor added successfully!');
+        localStorage.removeItem(`tv_draft_vendorForm_${coreAccountId}`);
         e.target.reset();
       }
       e.target.reset();
@@ -703,6 +657,7 @@
       try {
         await push(ref(db, `users/${coreAccountId}/vehicleWork`), workData);
         alert('Vehicle Work Entry added successfully!');
+        localStorage.removeItem(`tv_draft_vehicleWorkForm_${coreAccountId}`);
         e.target.reset();
         // Reset dropdowns explicitly if needed
         document.getElementById("workVendorSelect").value = "";
@@ -787,8 +742,14 @@
       });
 
       // Process Direct Vehicle Work
+      const seenTyres = new Set();
       Object.values(vehicleWorkData).forEach(work => {
         if (work.vendorId) {
+          if (work.source === 'tyre_management' && work.notes && work.notes.startsWith('Tyre No:')) {
+            const tyreKey = `${work.vendorId}_${work.vehicleNumber || 'N/A'}_${work.notes}`;
+            if (seenTyres.has(tyreKey)) return;
+            seenTyres.add(tyreKey);
+          }
           const vId = work.vendorId;
           const amount = parseFloat(work.amount) || 0;
           workByVendor[vId] = (workByVendor[vId] || 0) + amount;
@@ -823,8 +784,8 @@
           `<span class="fw-bold text-end d-block ${outstanding > 0 ? 'text-danger' : 'text-success'}">₹${outstanding.toFixed(2)}</span>`,
           `<div class="action-btns text-center">
               <button class="btn btn-sm btn-outline-primary me-1" onclick="viewVendorHistory('${vendorId}')" title="View History"><i class="fas fa-eye"></i></button>
-              <button class="btn btn-sm btn-outline-secondary me-1" onclick="editVendor('${vendorId}')" title="Edit"><i class="fas fa-edit"></i></button>
-              <button class="btn btn-sm btn-outline-danger" onclick="deleteVendor('${vendorId}')" title="Delete"><i class="fas fa-trash"></i></button>
+              <button class="btn btn-sm btn-outline-secondary me-1" onclick="editVendor('${vendorId}')" title="Edit" data-permission="edit_records"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteVendor('${vendorId}')" title="Delete" data-permission="delete_records"><i class="fas fa-trash"></i></button>
             </div>`
         ]);
       });
@@ -870,19 +831,28 @@
       // 2. Listen for LR Changes
       onValue(lrReportsRef, (snapshot) => {
         lrData = snapshot.exists() ? snapshot.val() : {};
-        if (Object.keys(vendorsData).length > 0) renderVendorTable();
+        if (Object.keys(vendorsData).length > 0) {
+          renderVendorTable();
+          if (currentViewingVendorId) viewVendorHistory(currentViewingVendorId);
+        }
       });
 
       // 3. Listen for Payment Changes
       onValue(workPaymentsRef, (snapshot) => {
         paymentsData = snapshot.exists() ? snapshot.val() : {};
-        if (Object.keys(vendorsData).length > 0) renderVendorTable();
+        if (Object.keys(vendorsData).length > 0) {
+          renderVendorTable();
+          if (currentViewingVendorId) viewVendorHistory(currentViewingVendorId);
+        }
       });
 
       // 4. Listen for Direct Vehicle Work Changes
       onValue(vehicleWorkRef, (snapshot) => {
         vehicleWorkData = snapshot.exists() ? snapshot.val() : {};
-        if (Object.keys(vendorsData).length > 0) renderVendorTable();
+        if (Object.keys(vendorsData).length > 0) {
+          renderVendorTable();
+          if (currentViewingVendorId) viewVendorHistory(currentViewingVendorId);
+        }
       });
     }
 
@@ -908,11 +878,13 @@
 
       const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
       const workPaymentsRef = ref(db, `users/${coreAccountId}/workPayments`);
-      const vehicleWorkRef = ref(db, `users/${coreAccountId}/vehicleWork`);
 
-      const [lrSnap, paymentSnap, vehicleWorkSnap] = await Promise.all([get(lrReportsRef), get(workPaymentsRef), get(vehicleWorkRef)]);
+      const [lrSnap, paymentSnap] = await Promise.all([get(lrReportsRef), get(workPaymentsRef)]);
       let totalWork = 0;
       let totalPaid = 0;
+
+      const filterSelect = document.getElementById('workTypeFilter');
+      const selectedFilter = filterSelect ? filterSelect.value : 'all';
 
       if (vendorWorkHistoryTable) vendorWorkHistoryTable.clear();
 
@@ -926,13 +898,21 @@
                 if (expense.type === 'Vehicle Work' && expense.vendorId === vendorId) {
                   const workAmount = parseFloat(expense.amount) || 0;
                   totalWork += workAmount;
-                  if (vendorWorkHistoryTable) vendorWorkHistoryTable.row.add([
-                    expense.date || lr.date || 'N/A',
-                    `<a href="lr-report.html?view=${child.key}" target="_blank">${lr.lrNumber || 'N/A'}</a> ${tripType === 'Empty' ? '(Return)' : ''}`,
-                    lr.truckNumber || 'N/A',
-                    expense.note || '—',
-                    `₹${workAmount.toFixed(2)}`
-                  ]);
+
+                  const isTyre = expense.note && (expense.note.trim().toUpperCase().startsWith('TYRE NO') || expense.note.trim().toUpperCase().includes('TYRE'));
+                  const matchesFilter = (selectedFilter === 'all') || 
+                                        (selectedFilter === 'tyre' && isTyre) || 
+                                        (selectedFilter === 'other' && !isTyre);
+
+                  if (matchesFilter && vendorWorkHistoryTable) {
+                    vendorWorkHistoryTable.row.add([
+                      expense.date || lr.date || 'N/A',
+                      `<a href="lr-report.html?view=${child.key}" target="_blank">${lr.lrNumber || 'N/A'}</a> ${tripType === 'Empty' ? '(Return)' : ''}`,
+                      lr.truckNumber || 'N/A',
+                      expense.note || '—',
+                      `₹${workAmount.toFixed(2)}`
+                    ]);
+                  }
                 }
               });
             }
@@ -942,25 +922,42 @@
         });
       }
 
-      // Process Direct Vehicle Work
-      if (vehicleWorkSnap.exists()) {
-        vehicleWorkSnap.forEach(child => {
-          const work = child.val();
-          if (work.vendorId === vendorId) {
-            const workAmount = parseFloat(work.amount) || 0;
-            totalWork += workAmount;
-            if (vendorWorkHistoryTable) vendorWorkHistoryTable.row.add([
+      // Process Direct Vehicle Work (use in-memory vehicleWorkData — kept live by onValue listener)
+      // This includes entries from tyre.html (source: 'tyre_management') and manual entries
+      const seenTyresHistory = new Set();
+      Object.values(vehicleWorkData).forEach(work => {
+        if (work.vendorId === vendorId) {
+          if (work.source === 'tyre_management' && work.notes && work.notes.startsWith('Tyre No:')) {
+            const tyreKey = `${work.vendorId}_${work.vehicleNumber || 'N/A'}_${work.notes}`;
+            if (seenTyresHistory.has(tyreKey)) return;
+            seenTyresHistory.add(tyreKey);
+          }
+          const workAmount = parseFloat(work.amount) || 0;
+          totalWork += workAmount;
+
+          const isTyre = work.source === 'tyre_management' || 
+                         (work.notes && (work.notes.trim().toUpperCase().startsWith('TYRE NO') || work.notes.trim().toUpperCase().includes('TYRE')));
+          const matchesFilter = (selectedFilter === 'all') || 
+                                (selectedFilter === 'tyre' && isTyre) || 
+                                (selectedFilter === 'other' && !isTyre);
+
+          if (matchesFilter && vendorWorkHistoryTable) {
+            vendorWorkHistoryTable.row.add([
               work.date || 'N/A',
-              'Direct Entry',
+              work.lrNo !== undefined ? work.lrNo : 'Direct Entry',
               work.vehicleNumber || 'N/A',
               work.notes || '—',
               `₹${workAmount.toFixed(2)}`
             ]);
           }
-        });
-      }
+        }
+      });
 
-      if (vendorWorkHistoryTable) vendorWorkHistoryTable.draw();
+      if (vendorWorkHistoryTable) {
+        const sortSelect = document.getElementById('workSortOrder');
+        const selectedSort = sortSelect ? sortSelect.value : 'desc';
+        vendorWorkHistoryTable.order([0, selectedSort]).draw();
+      }
 
       if (vendorPaymentHistoryTable) vendorPaymentHistoryTable.clear();
       if (paymentSnap.exists()) {
@@ -992,12 +989,16 @@
       // --- 1. Fetch Data ---
       const lrReportsRef = ref(db, `users/${coreAccountId}/lrReports`);
       const paymentRef = ref(db, `users/${coreAccountId}/workPayments`);
+      const vehicleWorkPdfRef = ref(db, `users/${coreAccountId}/vehicleWork`);
 
-      const [lrSnap, paymentSnap] = await Promise.all([get(lrReportsRef), get(paymentRef)]);
+      const [lrSnap, paymentSnap, vehicleWorkPdfSnap] = await Promise.all([get(lrReportsRef), get(paymentRef), get(vehicleWorkPdfRef)]);
 
       const workHistoryData = [];
       let totalWork = 0;
       let totalPaid = 0;
+
+      const filterSelect = document.getElementById('workTypeFilter');
+      const selectedFilter = filterSelect ? filterSelect.value : 'all';
 
       if (lrSnap.exists()) {
         lrSnap.forEach(child => {
@@ -1007,20 +1008,61 @@
               expenses.forEach(expense => {
                 if (expense.type === 'Vehicle Work' && expense.vendorId === currentViewingVendorId) {
                   const workAmount = parseFloat(expense.amount) || 0;
-                  totalWork += workAmount;
-                  workHistoryData.push([
-                    expense.date || lr.date || 'N/A',
-                    `${lr.lrNumber || 'N/A'} ${tripType === 'Empty' ? '(Return)' : ''}`,
-                    lr.truckNumber || 'N/A',
-                    expense.note || '—',
-                    workAmount.toFixed(2)
-                  ]);
+
+                  const isTyre = expense.note && (expense.note.trim().toUpperCase().startsWith('TYRE NO') || expense.note.trim().toUpperCase().includes('TYRE'));
+                  const matchesFilter = (selectedFilter === 'all') || 
+                                        (selectedFilter === 'tyre' && isTyre) || 
+                                        (selectedFilter === 'other' && !isTyre);
+
+                  if (matchesFilter) {
+                    totalWork += workAmount;
+                    workHistoryData.push([
+                      expense.date || lr.date || 'N/A',
+                      `${lr.lrNumber || 'N/A'} ${tripType === 'Empty' ? '(Return)' : ''}`,
+                      lr.truckNumber || 'N/A',
+                      expense.note || '—',
+                      workAmount.toFixed(2)
+                    ]);
+                  }
                 }
               });
             }
           };
           if (lr.tripDetails) processExpensesForPDF(lr.tripDetails.genericExpenses, 'Main');
           if (lr.emptyTripData) processExpensesForPDF(lr.emptyTripData.genericExpenses, 'Empty');
+        });
+      }
+
+      // Process Direct Vehicle Work for PDF
+      if (vehicleWorkPdfSnap.exists()) {
+        const seenTyresPdf = new Set();
+        vehicleWorkPdfSnap.forEach(child => {
+          const work = child.val();
+          if (work.vendorId === currentViewingVendorId) {
+            if (work.source === 'tyre_management' && work.notes && work.notes.startsWith('Tyre No:')) {
+              const tyreKey = `${work.vendorId}_${work.vehicleNumber || 'N/A'}_${work.notes}`;
+              if (seenTyresPdf.has(tyreKey)) return;
+              seenTyresPdf.add(tyreKey);
+            }
+            const workAmount = parseFloat(work.amount) || 0;
+
+            const isTyre = work.source === 'tyre_management' || 
+                           (work.notes && (work.notes.trim().toUpperCase().startsWith('TYRE NO') || work.notes.trim().toUpperCase().includes('TYRE')));
+            const matchesFilter = (selectedFilter === 'all') || 
+                                  (selectedFilter === 'tyre' && isTyre) || 
+                                  (selectedFilter === 'other' && !isTyre);
+
+            if (matchesFilter) {
+              totalWork += workAmount;
+              workHistoryData.push([
+                work.date || 'N/A',
+                work.lrNo !== undefined ? work.lrNo : 'Direct Entry',
+                work.vehicleNumber || 'N/A',
+                work.notes || '—',
+                workAmount.toFixed(2)
+              ]);
+            }
+          }
         });
       }
 
@@ -1033,9 +1075,21 @@
         });
       }
 
+      // Sort PDF data by Date matching chosen sort order
+      const sortSelect = document.getElementById('workSortOrder');
+      const selectedSort = sortSelect ? sortSelect.value : 'desc';
+      workHistoryData.sort((a, b) => {
+        const dateA = a[0] || '';
+        const dateB = b[0] || '';
+        return selectedSort === 'asc' ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+      });
+
       // --- 2. Build PDF ---
       doc.setFontSize(18);
-      doc.text(`Work History for: ${currentViewingVendorName}`, 14, 22);
+      let filterText = '';
+      if (selectedFilter === 'tyre') filterText = ' (Tyre Work)';
+      if (selectedFilter === 'other') filterText = ' (Other / Vehicle Work)';
+      doc.text(`Work History for: ${currentViewingVendorName}${filterText}`, 14, 22);
       doc.setFontSize(11);
       doc.setTextColor(100);
       doc.text(`Total Work: ₹${totalWork.toFixed(2)} | Total Paid: ₹${totalPaid.toFixed(2)} | Outstanding: ₹${(totalWork - totalPaid).toFixed(2)}`, 14, 30);
@@ -1097,6 +1151,37 @@
       document.getElementById('vendorDetailView').classList.add('hidden');
     });
 
+    document.getElementById('workTypeFilter').addEventListener('change', () => {
+      if (currentViewingVendorId) {
+        viewVendorHistory(currentViewingVendorId);
+      }
+    });
+
+    document.getElementById('workSortOrder').addEventListener('change', () => {
+      if (currentViewingVendorId) {
+        viewVendorHistory(currentViewingVendorId);
+      }
+    });
+
+    async function populateVendorPaymentAccounts() {
+      const select = document.getElementById('vendorPaymentAccountId');
+      if (!select) return;
+      try {
+        const accounts = await window.MoneyFlow.getAccounts();
+        allMoneyAccounts = accounts;
+        const sorted = Object.entries(accounts).sort((a,b) => a[1].name.localeCompare(b[1].name));
+        select.innerHTML = '<option value="">Select Account</option>';
+        sorted.forEach(([id, acc]) => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = `${acc.name} (${acc.type.toUpperCase()})`;
+          select.appendChild(opt);
+        });
+      } catch(e) {
+        console.error('[MoneyFlow] Failed to load accounts in work-management:', e);
+      }
+    }
+
     function loadVendorsForPaymentDropdown() {
       if (!coreAccountId) return;
       const vendorsRef = ref(db, `users/${coreAccountId}/workVendors`);
@@ -1123,25 +1208,59 @@
       const amount = parseFloat(document.getElementById("amount").value);
       const date = document.getElementById("date").value;
       const notes = document.getElementById("paymentNotes").value;
+      const paymentAccountId = document.getElementById("vendorPaymentAccountId").value;
 
-      if (!vendorId || !amount || !date) {
+      if (!vendorId || !amount || !date || !paymentAccountId) {
         alert("Please fill all required fields.");
         return;
       }
 
-      const paymentData = { vendorId, amount, date, notes, userId: currentUser.uid, createdAt: new Date().toISOString() };
+      const paymentData = { 
+        vendorId, 
+        amount, 
+        date, 
+        notes, 
+        paymentAccountId, 
+        userId: currentUser.uid, 
+        createdAt: new Date().toISOString() 
+      };
 
-      if (currentEditingPaymentId) {
-        await update(ref(db, `users/${coreAccountId}/workPayments/${currentEditingPaymentId}`), paymentData);
-        alert('Payment updated successfully!');
-        currentEditingPaymentId = null;
-      } else {
-        await push(ref(db, `users/${coreAccountId}/workPayments`), paymentData);
-        alert('Payment added successfully!');
+      try {
+        let paymentId = currentEditingPaymentId;
+        if (currentEditingPaymentId) {
+          await update(ref(db, `users/${coreAccountId}/workPayments/${currentEditingPaymentId}`), paymentData);
+          alert('Payment updated successfully!');
+          localStorage.removeItem(`tv_draft_paymentForm_${coreAccountId}`);
+          currentEditingPaymentId = null;
+        } else {
+          const newRef = push(ref(db, `users/${coreAccountId}/workPayments`));
+          paymentId = newRef.key;
+          await set(newRef, paymentData);
+          alert('Payment added successfully!');
+          localStorage.removeItem(`tv_draft_paymentForm_${coreAccountId}`);
+        }
+
+        // Record in MoneyFlow
+        if (window.MoneyFlow) {
+          const vSnap = await get(ref(db, `users/${coreAccountId}/workVendors/${vendorId}`));
+          const vendorName = vSnap.exists() ? vSnap.val().name : 'Vendor';
+          await window.MoneyFlow.recordPayment({
+            refId: 'vendor_pay_' + paymentId,
+            category: 'Vendor Payment',
+            amount: amount,
+            type: 'debit',
+            accountId: paymentAccountId,
+            note: `Payment to Vendor: ${vendorName} (${notes || ''})`,
+            date: date
+          });
+        }
+
+        e.target.reset();
+        document.querySelector('#paymentForm button[type="submit"]').innerHTML = '<i class="fas fa-plus me-2"></i>Add Payment';
+      } catch (error) {
+        console.error('Error saving payment:', error);
+        alert('Error saving payment: ' + error.message);
       }
-
-      e.target.reset();
-      document.querySelector('#paymentForm button[type="submit"]').innerHTML = '<i class="fas fa-plus me-2"></i>Add Payment';
     });
 
     function loadVendorPayments() {
@@ -1166,8 +1285,8 @@
               payment.date,
               payment.notes || '—',
               `<div class="action-btns text-center">
-                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editVendorPayment('${child.key}')"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteVendorPayment('${child.key}')"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editVendorPayment('${child.key}')" data-permission="edit_records"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteVendorPayment('${child.key}')" data-permission="delete_records"><i class="fas fa-trash"></i></button>
                </div>`
             ]);
           });
@@ -1192,6 +1311,7 @@
         document.getElementById('vendorSelect').value = payment.vendorId;
         document.getElementById('amount').value = payment.amount;
         document.getElementById('date').value = payment.date;
+        document.getElementById('vendorPaymentAccountId').value = payment.paymentAccountId || '';
         document.getElementById('paymentNotes').value = payment.notes || '';
 
         document.querySelector('#paymentForm button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i>Update Payment';
@@ -1199,10 +1319,19 @@
       }
     };
 
-    window.deleteVendorPayment = (paymentId) => {
+    window.deleteVendorPayment = async (paymentId) => {
       if (!coreAccountId) return;
       if (confirm("Are you sure you want to delete this payment?")) {
-        remove(ref(db, `users/${coreAccountId}/workPayments/${paymentId}`));
+        try {
+          await remove(ref(db, `users/${coreAccountId}/workPayments/${paymentId}`));
+          if (window.MoneyFlow) {
+            await window.MoneyFlow.deletePayment('vendor_pay_' + paymentId);
+          }
+          alert('Payment deleted successfully!');
+        } catch (error) {
+          console.error('Error deleting payment:', error);
+          alert('Failed to delete payment: ' + error.message);
+        }
       }
     };
 

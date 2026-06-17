@@ -1,0 +1,15 @@
+# CODEOWNERS Configuration
+#
+# Define individuals or teams that are responsible for code in this repository.
+# These owners will be automatically requested for review on Pull Requests.
+
+# Global owners (default reviewers)
+*       @vikram97698u97
+
+# Security configurations and workflows
+/.github/workflows/    @vikram97698u97
+/.github/dependabot.yml @vikram97698u97
+/secure-api-loader.js   @vikram97698u97
+/secure-config-server.js @vikram97698u97
+/rules.txt              @vikram97698u97
+/package.json           @vikram97698u97

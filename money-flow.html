@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Flow Management — TransVortex</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2E8B57;
+            --primary-hover: #24704a;
+            --primary-light: rgba(46, 139, 87, 0.1);
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 5px 15px -5px rgba(0, 0, 0, 0.02);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            background: var(--bg);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-main);
+        }
+        .main-content {
+            padding: 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .header-title h2 {
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.08);
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+        }
+        .stat-card.bank::before { background: #3B82F6; }
+        .stat-card.cash::before { background: #10B981; }
+        .stat-card.combined::before { background: var(--primary); }
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .card-title-sub {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .owner-only {
+            display: none;
+        }
+        .account-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .account-item:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+        .badge-type {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 30px;
+        }
+        .badge-bank { background: #EFF6FF; color: #1D4ED8; }
+        .badge-cash { background: #ECFDF5; color: #047857; }
+        .table-custom {
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        .table-custom tr {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            border-radius: 8px;
+        }
+        .table-custom td, .table-custom th {
+            padding: 16px;
+            vertical-align: middle;
+            border: none !important;
+        }
+        .table-custom tbody tr {
+            transition: var(--transition);
+        }
+        .table-custom tbody tr:hover {
+            transform: scale(1.01);
+            box-shadow: var(--shadow);
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 10px 20px;
+            transition: var(--transition);
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 10px 20px;
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+            padding: 24px;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .modal-footer {
+            border-top: 1px solid var(--border);
+            padding: 24px;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+    </style>
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="evm.js"></script>
+    <script src="secure-api-loader.js"></script>
+    <script src="auth-manager.js"></script>
+    <script src="navbar-loader.js"></script>
+    <script src="money-flow-utils.js"></script>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div class="header-title">
+                <h2><i class="fas fa-money-bill-transfer text-success me-2"></i>Money Flow Management</h2>
+                <p class="text-muted mb-0">Track cash balances, bank accounts, and real-time financial logs</p>
+            </div>
+            <div class="owner-only d-flex gap-2" id="ownerActions">
+                <button class="btn btn-warning text-dark shadow-sm" onclick="runReconciliationAudit()"><i class="fas fa-calculator me-1"></i> Reconciliation Audit</button>
+                <button class="btn btn-primary shadow-sm" onclick="showAddAccountModal()"><i class="fas fa-plus me-1"></i> Add Account</button>
+                <button class="btn btn-outline-primary shadow-sm" onclick="showManageFundsModal()"><i class="fas fa-wallet me-1"></i> Manage Funds</button>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card bank">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="card-title-sub">TOTAL BANK BALANCE</div>
+                            <div class="stat-value text-primary" id="totalBankBalance">₹0.00</div>
+                        </div>
+                        <div class="fs-1 text-primary-light"><i class="fas fa-university"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card cash">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="card-title-sub">TOTAL CASH (GALLA)</div>
+                            <div class="stat-value text-success" id="totalCashBalance">₹0.00</div>
+                        </div>
+                        <div class="fs-1 text-success-light"><i class="fas fa-wallet"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card combined" style="background: linear-gradient(135deg, #2E8B57 0%, #1a5c3a 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="card-title-sub text-white opacity-75">COMBINED FUNDS</div>
+                            <div class="stat-value text-white" id="combinedFunds">₹0.00</div>
+                        </div>
+                        <div class="fs-1 text-white opacity-25"><i class="fas fa-chart-line"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0" style="border-radius:16px; overflow:hidden;">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h5 class="mb-0 fw-bold">Transaction Ledger</h5>
+                        <div class="d-flex gap-2 align-items-center">
+                            <select id="filterLimit" class="form-select form-select-sm" style="max-width:110px;">
+                                <option value="10">Show 10</option>
+                                <option value="20">Show 20</option>
+                                <option value="30">Show 30</option>
+                                <option value="40">Show 40</option>
+                                <option value="all" selected>Show All</option>
+                            </select>
+                            <input type="date" id="filterDate" class="form-control form-control-sm" style="max-width:150px;">
+                            <select id="filterAccount" class="form-select form-select-sm" style="max-width:180px;">
+                                <option value="">All Accounts</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-custom mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="px-4">Date</th>
+                                        <th>Type</th>
+                                        <th>Account</th>
+                                        <th>Details</th>
+                                        <th class="text-end px-4">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">No transactions found</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 mb-4" style="border-radius:16px;">
+                    <div class="card-header bg-white py-3 border-0"><h5 class="mb-0 fw-bold">Account Summary</h5></div>
+                    <div class="card-body pt-0" id="accountSummary">
+                        <div class="text-muted text-center py-3">Loading accounts...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add/Edit Account Modal -->
+    <div class="modal fade" id="accountModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="accountForm">
+                    <input type="hidden" id="editAccountId">
+                    <div class="modal-header"><h5 class="fw-bold" id="accountModalTitle">Add New Account</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <div class="mb-3"><label class="form-label fw-semibold">Account Name</label><input type="text" id="accName" class="form-control" required placeholder="e.g. HDFC Bank, Office Cash"></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Type</label><select id="accType" class="form-select"><option value="bank">Bank Account</option><option value="cash">Cash (Galla)</option></select></div>
+                        <div class="mb-3"><label class="form-label fw-semibold" id="balanceLabel">Opening Balance (₹)</label><input type="number" step="0.01" id="accBalance" class="form-control" value="0" required></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="saveAccountBtn">Save Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reconciliation Audit Modal -->
+    <div class="modal fade" id="reconciliationModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="fw-bold"><i class="fas fa-calculator text-primary me-2"></i>Reconciliation Audit Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted text-start">This auditor dynamically reviews the transaction ledger for all accounts and calculates whether the starting balance plus all credits minus all debits is equal to the current database balance.</p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Account Name</th>
+                                    <th class="text-end">Opening Balance</th>
+                                    <th class="text-end">Credits (+)</th>
+                                    <th class="text-end">Debits (-)</th>
+                                    <th class="text-end">Calculated Balance</th>
+                                    <th class="text-end">Database Balance</th>
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reconciliationTableBody">
+                                <!-- Dynamic entries -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Funds Modal (Deposit, Withdraw, Transfer) -->
+    <div class="modal fade" id="manageFundsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="fundsForm">
+                    <div class="modal-header"><h5 class="fw-bold">Manage Funds</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Action</label>
+                            <select id="fundAction" class="form-select" onchange="toggleFundFields()">
+                                <option value="deposit">Deposit Money</option>
+                                <option value="withdraw">Withdraw Money</option>
+                                <option value="transfer">Transfer Money</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="singleAccountField">
+                            <label class="form-label fw-semibold">Account</label>
+                            <select id="fundAccount" class="form-select"></select>
+                        </div>
+                        <div id="transferFields" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">From Account</label>
+                                <select id="fundFromAccount" class="form-select"></select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">To Account</label>
+                                <select id="fundToAccount" class="form-select"></select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Amount (₹)</label>
+                                <input type="number" step="0.01" min="0.01" id="fundAmount" class="form-control" required placeholder="0.00">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Date</label>
+                                <input type="date" id="fundDate" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Notes</label>
+                            <input type="text" id="fundNotes" class="form-control" placeholder="e.g. Opening fund deposit, Salary withdrawal">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap & jQuery JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script type="module">
+        const fb = firebase;
+        if (!fb.apps.length) {
+            fb.initializeApp(window.FIREBASE_CONFIG);
+        }
+        const db = fb.database();
+        let coreId, userRole, accountsData = {};
+
+        fb.auth().onAuthStateChanged(async (user) => {
+            if (!user) return;
+            const ctx = await window.AuthManager.getCurrentUserContext();
+            coreId = ctx.coreAccountId;
+            userRole = ctx.role;
+
+            if (userRole === 'owner') {
+                document.querySelectorAll('.owner-only').forEach(el => el.style.display = 'block');
+                document.querySelectorAll('.owner-only-flex').forEach(el => el.style.display = 'flex');
+            }
+
+            document.getElementById('fundDate').valueAsDate = new Date();
+            document.getElementById('filterDate').addEventListener('change', loadTransactions);
+            document.getElementById('filterAccount').addEventListener('change', loadTransactions);
+            document.getElementById('filterLimit').addEventListener('change', loadTransactions);
+
+            loadAccounts();
+            loadTransactions();
+        });
+
+        async function loadAccounts() {
+            try {
+                const snap = await db.ref(`users/${coreId}/money_accounts`).once('value');
+                accountsData = snap.val() || {};
+                let bankTotal = 0, cashTotal = 0;
+                
+                const summaryEl = document.getElementById('accountSummary');
+                const filterSel = document.getElementById('filterAccount');
+                const fundAccSel = document.getElementById('fundAccount');
+                const fundFromAccSel = document.getElementById('fundFromAccount');
+                const fundToAccSel = document.getElementById('fundToAccount');
+                
+                summaryEl.innerHTML = '';
+                filterSel.innerHTML = '<option value="">All Accounts</option>';
+                fundAccSel.innerHTML = '<option value="">Select Account</option>';
+                fundFromAccSel.innerHTML = '<option value="">Select From Account</option>';
+                fundToAccSel.innerHTML = '<option value="">Select To Account</option>';
+
+                const sortedAccounts = Object.entries(accountsData).sort((a,b) => a[1].name.localeCompare(b[1].name));
+
+                if (sortedAccounts.length === 0) {
+                    summaryEl.innerHTML = '<div class="text-muted text-center py-3">No accounts configured yet.</div>';
+                }
+
+                sortedAccounts.forEach(([id, acc]) => {
+                    const bal = parseFloat(acc.balance) || 0;
+                    if (acc.type === 'bank') bankTotal += bal; else cashTotal += bal;
+
+                    const typeBadge = acc.type === 'bank' ? 'badge-bank' : 'badge-cash';
+                    const icon = acc.type === 'bank' ? 'fa-university text-primary' : 'fa-wallet text-success';
+                    
+                    const actions = userRole === 'owner' ? `
+                        <div class="ms-2">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="showEditAccountModal('${id}', '${acc.name}', '${acc.type}', ${bal})" title="Edit"><i class="fas fa-edit small"></i></button>
+                            <button class="btn btn-sm btn-outline-danger py-0 px-2 ms-1" onclick="deleteAccount('${id}')" title="Delete"><i class="fas fa-trash small"></i></button>
+                        </div>` : '';
+
+                    summaryEl.innerHTML += `
+                        <div class="d-flex justify-content-between align-items-center account-item">
+                            <div class="d-flex align-items-center">
+                                <div class="fs-4 me-3"><i class="fas ${icon}"></i></div>
+                                <div>
+                                    <strong class="text-dark">${acc.name}</strong>
+                                    <div class="mt-1"><span class="badge-type ${typeBadge}">${acc.type.toUpperCase()}</span></div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="fw-bold fs-5 ${bal >= 0 ? 'text-success' : 'text-danger'}">₹${bal.toFixed(2)}</div>
+                                ${actions}
+                            </div>
+                        </div>`;
+                    
+                    const opt = `<option value="${id}">${acc.name}</option>`;
+                    filterSel.innerHTML += opt;
+                    fundAccSel.innerHTML += opt;
+                    fundFromAccSel.innerHTML += opt;
+                    fundToAccSel.innerHTML += opt;
+                });
+
+                document.getElementById('totalBankBalance').textContent = `₹${bankTotal.toFixed(2)}`;
+                document.getElementById('totalCashBalance').textContent = `₹${cashTotal.toFixed(2)}`;
+                document.getElementById('combinedFunds').textContent = `₹${(bankTotal + cashTotal).toFixed(2)}`;
+            } catch (e) {
+                console.error("Error loading accounts:", e);
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                const dateVal = document.getElementById('filterDate').value;
+                const accVal = document.getElementById('filterAccount').value;
+                const limitVal = document.getElementById('filterLimit').value;
+                const snap = await db.ref(`users/${coreId}/money_transactions`).orderByChild('timestamp').limitToLast(300).once('value');
+                const tbody = document.getElementById('transactionBody');
+                tbody.innerHTML = '';
+                
+                let logs = [];
+                snap.forEach(c => {
+                    const t = c.val();
+                    if (dateVal && t.date !== dateVal) return;
+                    if (accVal && t.accountId !== accVal) return;
+                    logs.push(t);
+                });
+                
+                if (logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">No transactions found matching the filters.</td></tr>';
+                    return;
+                }
+
+                // Sort descending (latest first)
+                logs.reverse();
+
+                // Apply limit slicing
+                if (limitVal !== 'all') {
+                    const limitCount = parseInt(limitVal) || 10;
+                    logs = logs.slice(0, limitCount);
+                }
+
+                logs.forEach(t => {
+                    const color = t.type === 'credit' ? 'text-success' : 'text-danger';
+                    const prefix = t.type === 'credit' ? '+' : '-';
+                    const userText = t.recordedBy ? `<br><small class="text-muted">By: ${t.recordedBy}</small>` : '';
+                    tbody.innerHTML += `
+                        <tr class="align-middle">
+                            <td class="px-4">${t.date}</td>
+                            <td><span class="badge ${t.type === 'credit' ? 'bg-success' : 'bg-danger'}">${t.type.toUpperCase()}</span></td>
+                            <td><strong>${t.accountName || 'Unknown Account'}</strong></td>
+                            <td>
+                                <div class="fw-bold text-dark">${t.category}</div>
+                                <div class="small text-muted">${t.note || ''}</div>
+                            </td>
+                            <td class="text-end px-4 fw-bold fs-5 ${color}">${prefix}₹${Math.abs(t.amount).toFixed(2)}${userText}</td>
+                        </tr>`;
+                });
+            } catch (e) {
+                console.error("Error loading transactions:", e);
+            }
+        }
+
+        // Add account helper
+        window.showAddAccountModal = () => {
+            document.getElementById('accountForm').reset();
+            document.getElementById('editAccountId').value = '';
+            document.getElementById('accountModalTitle').textContent = 'Add New Account';
+            document.getElementById('saveAccountBtn').textContent = 'Save Account';
+            document.getElementById('balanceLabel').textContent = 'Opening Balance (₹)';
+            new bootstrap.Modal(document.getElementById('accountModal')).show();
+        };
+
+        // Edit account helper
+        window.showEditAccountModal = (id, name, type, balance) => {
+            document.getElementById('editAccountId').value = id;
+            document.getElementById('accName').value = name;
+            document.getElementById('accType').value = type;
+            document.getElementById('accBalance').value = balance;
+            document.getElementById('accountModalTitle').textContent = 'Edit Account Details';
+            document.getElementById('saveAccountBtn').textContent = 'Update Account';
+            document.getElementById('balanceLabel').textContent = 'Current Balance (₹)';
+            new bootstrap.Modal(document.getElementById('accountModal')).show();
+        };
+
+        // Delete account helper
+        window.deleteAccount = async (id) => {
+            if (confirm("Are you sure you want to delete this account? Any linked transactions will remain, but the account itself will be removed.")) {
+                try {
+                    await db.ref(`users/${coreId}/money_accounts/${id}`).remove();
+                    loadAccounts();
+                } catch (e) {
+                    alert('Error deleting account: ' + e.message);
+                }
+            }
+        };
+
+        // Handle Add/Edit Account Submit
+        document.getElementById('accountForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('editAccountId').value;
+            const newAcc = {
+                name: document.getElementById('accName').value.trim(),
+                type: document.getElementById('accType').value,
+                balance: parseFloat(document.getElementById('accBalance').value) || 0,
+                updatedAt: new Date().toISOString()
+            };
+
+            try {
+                if (editId) {
+                    const oldAccSnap = await db.ref(`users/${coreId}/money_accounts/${editId}`).once('value');
+                    const oldAcc = oldAccSnap.val();
+                    newAcc.openingBalance = (oldAcc && typeof oldAcc.openingBalance !== 'undefined') ? oldAcc.openingBalance : (oldAcc ? oldAcc.balance : newAcc.balance);
+                    newAcc.createdAt = (oldAcc && oldAcc.createdAt) || new Date().toISOString();
+                    await db.ref(`users/${coreId}/money_accounts/${editId}`).set(newAcc);
+                } else {
+                    newAcc.openingBalance = newAcc.balance;
+                    newAcc.createdAt = new Date().toISOString();
+                    await db.ref(`users/${coreId}/money_accounts`).push(newAcc);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('accountModal')).hide();
+                loadAccounts();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
+
+        // Manage Funds UI helpers
+        window.showManageFundsModal = () => {
+            document.getElementById('fundsForm').reset();
+            document.getElementById('fundDate').valueAsDate = new Date();
+            toggleFundFields();
+            new bootstrap.Modal(document.getElementById('manageFundsModal')).show();
+        };
+
+        window.toggleFundFields = () => {
+            const action = document.getElementById('fundAction').value;
+            const single = document.getElementById('singleAccountField');
+            const transfer = document.getElementById('transferFields');
+            if (action === 'transfer') {
+                single.style.display = 'none';
+                transfer.style.display = 'block';
+                document.getElementById('fundAccount').required = false;
+                document.getElementById('fundFromAccount').required = true;
+                document.getElementById('fundToAccount').required = true;
+            } else {
+                single.style.display = 'block';
+                transfer.style.display = 'none';
+                document.getElementById('fundAccount').required = true;
+                document.getElementById('fundFromAccount').required = false;
+                document.getElementById('fundToAccount').required = false;
+            }
+        };
+
+        // Handle Funds Deposit/Withdraw/Transfer Submit
+        document.getElementById('fundsForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const action = document.getElementById('fundAction').value;
+            const amount = parseFloat(document.getElementById('fundAmount').value) || 0;
+            const date = document.getElementById('fundDate').value;
+            const notes = document.getElementById('fundNotes').value.trim();
+
+            if (amount <= 0) return alert('Please enter a valid amount');
+
+            try {
+                const refId = 'mf_' + Date.now();
+                if (action === 'deposit') {
+                    const accId = document.getElementById('fundAccount').value;
+                    await window.MoneyFlow.recordPayment({
+                        refId, category: 'Deposit', amount, type: 'credit', accountId: accId, note: notes, date
+                    });
+                } else if (action === 'withdraw') {
+                    const accId = document.getElementById('fundAccount').value;
+                    
+                    // Verify sufficient balance if needed
+                    const currentBal = parseFloat(accountsData[accId]?.balance) || 0;
+                    if (currentBal < amount && !confirm("Warning: Account has insufficient balance. Do you want to continue?")) {
+                        return;
+                    }
+
+                    await window.MoneyFlow.recordPayment({
+                        refId, category: 'Withdrawal', amount, type: 'debit', accountId: accId, note: notes, date
+                    });
+                } else if (action === 'transfer') {
+                    const fromAccId = document.getElementById('fundFromAccount').value;
+                    const toAccId = document.getElementById('fundToAccount').value;
+                    if (fromAccId === toAccId) return alert('From and To accounts must be different');
+
+                    const currentBal = parseFloat(accountsData[fromAccId]?.balance) || 0;
+                    if (currentBal < amount && !confirm("Warning: Source account has insufficient balance. Do you want to continue?")) {
+                        return;
+                    }
+
+                    // 1. Log debit from source account
+                    await window.MoneyFlow.recordPayment({
+                        refId: refId + '_src',
+                        category: 'Fund Transfer (Out)',
+                        amount, type: 'debit', accountId: fromAccId,
+                        note: `Transfer to ${accountsData[toAccId]?.name}. ${notes}`,
+                        date
+                    });
+
+                    // 2. Log credit to destination account
+                    await window.MoneyFlow.recordPayment({
+                        refId: refId + '_dest',
+                        category: 'Fund Transfer (In)',
+                        amount, type: 'credit', accountId: toAccId,
+                        note: `Transfer from ${accountsData[fromAccId]?.name}. ${notes}`,
+                        date
+                    });
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('manageFundsModal')).hide();
+                loadAccounts();
+                loadTransactions();
+            } catch (error) {
+                alert('Error carrying out transaction: ' + error.message);
+            }
+        };
+
+        // Redefine backward-compatible legacy function inside window context
+        window.logGlobalTransaction = async function(data) {
+             console.log('[MoneyFlowCompat] Redirecting transaction to new window.MoneyFlow.recordPayment:', data);
+             return window.MoneyFlow.recordPayment({
+                 refId: data.refId || 'manual_' + Date.now(),
+                 category: data.category,
+                 amount: data.amount,
+                 type: data.type,
+                 accountId: data.accountId,
+                 note: data.note,
+                 date: data.date
+             });
+        };
+
+        window.runReconciliationAudit = async () => {
+            const tableBody = document.getElementById('reconciliationTableBody');
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Running audit calculations...</td></tr>';
+            const modal = new bootstrap.Modal(document.getElementById('reconciliationModal'));
+            modal.show();
+
+            try {
+                // 1. Fetch all accounts
+                const accountsSnap = await db.ref(`users/${coreId}/money_accounts`).once('value');
+                const accounts = [];
+                if (accountsSnap.exists()) {
+                    accountsSnap.forEach(snap => {
+                        accounts.push({ id: snap.key, ...snap.val() });
+                    });
+                }
+
+                // 2. Fetch all transactions
+                const transactionsSnap = await db.ref(`users/${coreId}/money_transactions`).once('value');
+                const transactions = [];
+                if (transactionsSnap.exists()) {
+                    transactionsSnap.forEach(snap => {
+                        transactions.push(snap.val());
+                    });
+                }
+
+                // 3. Compute calculated balances
+                tableBody.innerHTML = '';
+                if (accounts.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No accounts found to audit.</td></tr>';
+                    return;
+                }
+
+                accounts.forEach(acc => {
+                    const openingBal = parseFloat(acc.openingBalance) || 0;
+                    
+                    // Filter transactions for this account
+                    const accTrans = transactions.filter(t => t.accountId === acc.id);
+                    
+                    let credits = 0;
+                    let debits = 0;
+                    accTrans.forEach(t => {
+                        const amt = parseFloat(t.amount) || 0;
+                        if (t.type === 'credit') {
+                            credits += amt;
+                        } else if (t.type === 'debit') {
+                            debits += amt;
+                        }
+                    });
+
+                    const calculatedBal = openingBal + credits - debits;
+                    const dbBal = parseFloat(acc.balance) || 0;
+                    const diff = Math.abs(calculatedBal - dbBal);
+                    const isOk = diff < 0.01;
+
+                    const statusBadge = isOk 
+                        ? '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Reconciled</span>'
+                        : `<span class="badge bg-danger" title="Difference: ₹${diff.toFixed(2)}"><i class="fas fa-times-circle me-1"></i>Mismatch</span>`;
+
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td class="fw-semibold">${acc.name}</td>
+                            <td class="text-end">₹${openingBal.toFixed(2)}</td>
+                            <td class="text-end text-success">+₹${credits.toFixed(2)}</td>
+                            <td class="text-end text-danger">-₹${debits.toFixed(2)}</td>
+                            <td class="text-end fw-bold">₹${calculatedBal.toFixed(2)}</td>
+                            <td class="text-end">₹${dbBal.toFixed(2)}</td>
+                            <td class="text-center">${statusBadge}</td>
+                        </tr>
+                    `;
+                });
+
+            } catch (e) {
+                console.error("Audit error:", e);
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Error running audit: ${e.message}</td></tr>`;
+            }
+        };
+    </script>
+</body>
+</html>

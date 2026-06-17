@@ -143,6 +143,9 @@
       overflow-x: auto;
     }
   </style>
+  <script src="evm.js"></script>
+  <script src="secure-api-loader.js"></script>
+  <script src="money-flow-utils.js"></script>
 </head>
 <body>
   <div id="navbar-placeholder"></div>
@@ -277,11 +280,11 @@
             <form id="paymentForm" class="form-section">
                 <input type="hidden" id="paymentIdHidden">
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <label for="paymentEmployeeId" class="form-label">Employee <span class="text-danger">*</span></label>
                         <select id="paymentEmployeeId" class="form-select rounded" required>
                             <option value="">Select Employee</option>
-                            </select>
+                        </select>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="paymentDate" class="form-label">Date <span class="text-danger">*</span></label>
@@ -291,11 +294,17 @@
                         <label for="paymentAmount" class="form-label">Amount (₹) <span class="text-danger">*</span></label>
                         <input type="number" id="paymentAmount" class="form-control rounded" required step="100" min="1">
                     </div>
-                    <div class="col-md-2 mb-3 d-flex align-items-end">
-                        <button type="submit" class="btn text-white rounded shadow-md w-100" style="background-color: var(--primary-color);" id="savePaymentBtn">
-                            <i class="fas fa-plus me-2"></i>Record Payment
-                        </button>
+                    <div class="col-md-3 mb-3">
+                        <label for="paymentAccountId" class="form-label">Payment Account <span class="text-danger">*</span></label>
+                        <select id="paymentAccountId" class="form-select rounded" required>
+                            <option value="">Select Account</option>
+                        </select>
                     </div>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn text-white rounded shadow-md" style="background-color: var(--primary-color);" id="savePaymentBtn">
+                        <i class="fas fa-plus me-2"></i>Record Payment
+                    </button>
                 </div>
             </form>
 
@@ -350,8 +359,8 @@
                     <p><strong>Monthly Salary:</strong> <span id="modalSalary"></span></p>
                     <hr>
                     <div class="d-flex gap-2">
-                         <button class="btn btn-sm btn-outline-primary" onclick="editEmployeeFromModal()"><i class="fas fa-edit"></i> Edit Details</button>
-                         <button class="btn btn-sm btn-outline-danger" onclick="deleteEmployeeFromModal()"><i class="fas fa-trash"></i> Delete Employee</button>
+                         <button class="btn btn-sm btn-outline-primary" onclick="editEmployeeFromModal()" data-permission="edit_records"><i class="fas fa-edit"></i> Edit Details</button>
+                         <button class="btn btn-sm btn-outline-danger" onclick="deleteEmployeeFromModal()" data-permission="delete_records"><i class="fas fa-trash"></i> Delete Employee</button>
                     </div>
                 </div>
 
@@ -394,21 +403,13 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
   <script>
-    // Firebase configuration - (Configuration remains the same)
-    const firebaseConfig = {
-      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "transport-dashboard-ad69a",
-      storageBucket: "transport-dashboard-ad69a.appspot.com",
-      messagingSenderId: "526889676196",
-      appId: "1:526889676196:web:66032c80a4aede690ae531",
-      measurementId: "G-7F9R7HJYDH"
-    };
-
-    // Initialize Firebase
+    // Initialize Firebase securely using window.FIREBASE_CONFIG from evm.js
     if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+      if (!window.FIREBASE_CONFIG) {
+        console.error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
+      } else {
+        firebase.initializeApp(window.FIREBASE_CONFIG);
+      }
     }
     const db = firebase.database();
     const auth = firebase.auth();
@@ -490,6 +491,7 @@
         loadLRsForRanking();
         loadPaymentData();
         populatePaymentEmployeeSelect(); 
+        populatePaymentAccounts();
         renderAttendanceCalendar(); 
         
         // Set initial ranking filter dates (Current Month)
@@ -746,8 +748,8 @@
             const actions = `
                 <div class="d-flex flex-column align-items-center gap-1">
                     <button class="btn btn-sm btn-outline-primary" onclick="viewEmployeeDetails('${emp.id}')" title="View Details/Salary"><i class="fas fa-eye"></i></button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="editEmployee('${emp.id}')" title="Edit"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteEmployee('${emp.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="editEmployee('${emp.id}')" title="Edit" data-permission="edit_records"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteEmployee('${emp.id}')" title="Delete" data-permission="delete_records"><i class="fas fa-trash"></i></button>
                 </div>`;
 
             return [
@@ -838,7 +840,7 @@
                 return [
                     pay.date,
                     formatCurrency(pay.amount),
-                    `<button class="btn btn-sm btn-outline-danger" onclick="deletePayment('${pay.id}', true)"><i class="fas fa-trash"></i></button>`
+                    `<button class="btn btn-sm btn-outline-danger" onclick="deletePayment('${pay.id}', true)" data-permission="delete_records"><i class="fas fa-trash"></i></button>`
                 ];
             });
 
@@ -960,6 +962,27 @@
         });
     }
 
+    async function populatePaymentAccounts() {
+        const select = document.getElementById('paymentAccountId');
+        if (!select) return;
+        while (select.options.length > 1) {
+            select.remove(1);
+        }
+        try {
+            if (window.MoneyFlow) {
+                const accounts = await window.MoneyFlow.getAccounts();
+                accounts.forEach(acc => {
+                    const opt = document.createElement('option');
+                    opt.value = acc.id;
+                    opt.textContent = `${acc.name} (Balance: ₹${acc.balance})`;
+                    select.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            console.error('Error loading payment accounts:', e);
+        }
+    }
+
     document.getElementById('paymentForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!isAuthReady || !currentCoreAccountId) return;
@@ -967,8 +990,9 @@
         const employeeId = document.getElementById('paymentEmployeeId').value;
         const date = document.getElementById('paymentDate').value;
         const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+        const paymentAccountId = document.getElementById('paymentAccountId').value;
 
-        if (!employeeId || !date || amount <= 0) {
+        if (!employeeId || !date || amount <= 0 || !paymentAccountId) {
             alert('Please fill in all required payment fields correctly.');
             return;
         }
@@ -977,16 +1001,32 @@
             employeeId, 
             date, 
             amount, 
+            paymentAccountId,
             timestamp: new Date().toISOString() 
         };
         
         try {
             const newPaymentRef = db.ref(`users/${currentCoreAccountId}/payments`).push();
-            await newPaymentRef.set({ ...paymentData, id: newPaymentRef.key });
+            const paymentId = newPaymentRef.key;
+            await newPaymentRef.set({ ...paymentData, id: paymentId });
+
+            if (window.MoneyFlow) {
+                const empName = allEmployees[employeeId]?.name || 'Employee';
+                await window.MoneyFlow.recordPayment({
+                    refId: 'employee_pay_' + paymentId,
+                    category: 'Employee Salary',
+                    amount: amount,
+                    type: 'debit',
+                    accountId: paymentAccountId,
+                    note: `Employee Salary payment to ${empName}`,
+                    date: date
+                });
+            }
 
             alert('Payment recorded successfully!');
             e.target.reset();
             document.getElementById('paymentDate').value = toDateStr(new Date()); 
+            populatePaymentAccounts(); // Refresh account balances dropdown
         } catch (error) {
             console.error("Error recording payment:", error);
             alert('Error recording payment. Please check the console.');
@@ -1006,7 +1046,7 @@
                     emp.name,
                     pay.date,
                     formatCurrency(pay.amount),
-                    `<button class="btn btn-sm btn-outline-danger" onclick="deletePayment('${pay.id}')"><i class="fas fa-trash"></i></button>`
+                    `<button class="btn btn-sm btn-outline-danger" onclick="deletePayment('${pay.id}')" data-permission="delete_records"><i class="fas fa-trash"></i></button>`
                 ];
             });
 
@@ -1022,12 +1062,16 @@
                 
                 if (paymentToDelete) {
                     await db.ref(`users/${currentCoreAccountId}/payments/${paymentId}`).remove();
+                    if (window.MoneyFlow) {
+                        await window.MoneyFlow.deletePayment('employee_pay_' + paymentId);
+                    }
                     alert('Payment record deleted successfully!');
                     
                     if(isModalCall) {
                         updateModalPaymentStatus(currentEmployeeIdViewing);
                         populateModalPaymentDetailTable(currentEmployeeIdViewing);
                     }
+                    populatePaymentAccounts(); // Refresh account balances dropdown
                 } else {
                     alert('Error: Payment record not found locally.');
                 }

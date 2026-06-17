@@ -1,128 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
-<!-- 🔐 Secure .env Configuration Loader -->
-    <!-- 🔐 Secure Configuration - Loaded from .env -->
-    <script>
-        // Configuration loaded from .env file (server-side)
-        (function() {
-            'use strict';
-            
-            // Firebase configuration from .env
-            if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-            }
-            
-            // Cloudinary configuration from .env
-            if (!window.CLOUDINARY_CONFIG) {
-                window.CLOUDINARY_CONFIG = {
-                    cloudName: "doqapn15f",
-                    uploadPreset: "vehicle-driver",
-                    presets: {
-                        vehicleDriver: "vehicle-driver",
-                        paymentBilling: "payment-billing",
-                        profilePic: "profile-pic",
-                        documents: "documents",
-                        receipts: "receipts",
-                        expenses: "expenses",
-                        tyres: "tyres",
-                        vehicles: "vehicles",
-                        drivers: "drivers",
-                        invoices: "invoices",
-                        lrReports: "lr-reports",
-                        tripExpenses: "trip-expenses"
-                    },
-                    folders: {
-                        vehicles: "transport/vehicles",
-                        drivers: "transport/drivers", 
-                        documents: "transport/documents",
-                        profiles: "transport/profiles",
-                        receipts: "transport/receipts",
-                        expenses: "transport/expenses",
-                        tyres: "transport/tyres",
-                        invoices: "transport/invoices",
-                        lrReports: "transport/lr-reports",
-                        tripExpenses: "transport/trip-expenses"
-                    },
-                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-                };
-            }
-            
-            // Environment configuration from .env
-            if (!window.ENVIRONMENT) {
-                window.ENVIRONMENT = {
-                    name: "production",
-                    debug: false,
-                    apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0",
-                    corsOrigin: "https://transvortex.online",
-                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
-                    apiRateLimit: 100
-                };
-            }
-            
-            // Security configuration from .env
-            if (!window.SECURITY_CONFIG) {
-                window.SECURITY_CONFIG = {
-                    sessionSecret: "transvortex-session-secret-2024",
-                    jwtSecret: "transvortex-jwt-secret-2024",
-                    encryptionKey: "transvortex-encryption-key-2024"
-                };
-            }
-            
-            // Optional API configurations from .env
-            if (!window.API_CONFIG) {
-                window.API_CONFIG = {
-                    email: {
-                        provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-                        from: "noreply@transvortex.online",
-                        fromName: "TransVortex Transport"
-                    },
-                    payment: {
-                        provider: "stripe",
-                        publicKey: "your-stripe-public-key-here"
-                    },
-                    sms: {
-                        provider: "twilio",
-                        accountSid: "your-twilio-account-sid-here",
-                        phoneNumber: "your-twilio-phone-number-here"
-                    },
-                    maps: {
-                        googleMapsApiKey: "your-google-maps-api-key-here",
-                        googlePlacesApiKey: "your-google-places-api-key-here"
-                    },
-                    analytics: {
-                        googleAnalyticsId: "GA-XXXXXXXXX",
-                        facebookPixelId: "your-facebook-pixel-id-here",
-                        hotjarId: "your-hotjar-id-here"
-                    }
-                };
-            }
-            
-            // Log successful loading (only in debug mode)
-            if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
-                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-                console.log('🌍 Environment:', window.ENVIRONMENT.name);
-                console.log('🔐 Security: Loaded');
-            }
-            
-            // Dispatch event when configuration is ready
-            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-                detail: {
-                    firebase: window.FIREBASE_CONFIG,
-                    cloudinary: window.CLOUDINARY_CONFIG,
-                    environment: window.ENVIRONMENT,
-                    security: window.SECURITY_CONFIG,
-                    apis: window.API_CONFIG
-                }
-            }));
-        })();
-    </script>
 
 
 
@@ -884,6 +762,7 @@
     <!-- 🔐 Configuration Loading -->
     <script src="evm.js"></script>
     <script src="secure-api-loader.js"></script>
+    <script src="auth-manager.js"></script>
 </head>
 <body>
   <div class="sidebar" id="sidebar">
@@ -912,7 +791,7 @@
       <ul class="sub-nav">
         <li class="sub-nav-item"><a href="add.html" data-feature-name="Vehicle Info">Vehicle Info</a></li>
         <li class="sub-nav-item"><a href="booking.html">Client Manager</a></li>
-        <li class="sub-nav-item"><a href="transporters.html">Market orders</a></li>
+        <li class="sub-nav-item"><a href="transporters.html">Transporters</a></li>
         <li class="sub-nav-item"><a href="lr-report.html">LR Report</a></li>
         <li class="sub-nav-item"><a href="invoice.html">Invoice</a></li>
         <li class="sub-nav-item"><a href="route.html">Routes</a></li>
@@ -924,6 +803,7 @@
         <div class="dropdown-arrow"><i class="fas fa-arrow"></i></div>
       </div>
       <ul class="sub-nav">
+        <li class="sub-nav-item"><a href="money-flow.html">Money Management</a></li>
         <li class="sub-nav-item"><a href="payment-billing.html">Payments</a></li>
         <li class="sub-nav-item"><a href="trip-expenses.html">Trip Expenses</a></li>
         <li class="sub-nav-item"><a href="combined_ca.html">Trip Reports</a></li>
@@ -940,7 +820,6 @@
         <li class="sub-nav-item"><a href="tyre_history.html" data-feature-name="Tyre History">Tyre History</a></li>
       </ul>
 
-      
       <a href="route-details.html" class="nav-item">
         <div class="nav-icon"><i class="fas fa-gas-pump"></i></div>
         <div class="nav-text">Fuel Tracker</div>
@@ -949,10 +828,11 @@
         <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
         <div class="nav-text">Analytics</div>
       </a>
-      <a href="employees.html" class="nav-item">
+      <a href="team-management.html" class="nav-item">
         <div class="nav-icon"><i class="fas fa-users-cog"></i></div>
-        <div class="nav-text">employees</div>
+        <div class="nav-text">Employees</div>
       </a>
+      
     </div>
 
     <a href="profile.html" class="profile-link">
@@ -974,16 +854,14 @@
   </div>
 
   <div class="main-content">
-    
-    
+
 
   
   <div id="branchToast"></div>
   <div id="voiceFeedbackToast"></div>
 
     <!-- Load secure configuration first -->
-  
-  
+
 
   <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1015,8 +893,7 @@
         if (false) { // Condition is always false in the final logic, keeping as per original structure
             
         } else {
-            
-            
+
             
         }
     } catch (error) {
@@ -1103,25 +980,63 @@
         const userData = userSnap.exists() ? userSnap.val() : {};
         const profile = userData.profile || {};
 
-        // Use ownerName from profile, fallback to display name or email.
-        const ownerName = profile.ownerName || user.displayName || user.email.split('@')[0];
+        // Determine if sub-user or owner
+        const coreAccountId = userData.coreAccountId || user.uid;
+        const isSubUser = coreAccountId !== user.uid;
+        const role = userData.role || (isSubUser ? 'employee' : 'owner');
+
+        // Get display name
+        const ownerName = userData.name || profile.ownerName || user.displayName || user.email.split('@')[0];
         
         // Update Profile section
         document.getElementById('profileName').textContent = ownerName;
         
-        // Since branch selection is removed, all users are effectively 'Main'
-        const role = (userData.role || profile.role || 'Main').toLowerCase();
-        document.getElementById('profileRole').textContent = role.charAt(0).toUpperCase() + role.slice(1);
+        // Show role badge
+        const ROLE_LABELS = { owner:'Owner', manager:'Manager', employee:'Employee', viewer:'Viewer', admin:'Admin' };
+        const ROLE_COLORS = { owner:'#f59e0b', manager:'#3b82f6', employee:'#10b981', viewer:'#8b5cf6', admin:'#ef4444' };
+        const roleLabel = ROLE_LABELS[role] || role;
+        const roleColor = ROLE_COLORS[role] || '#6b7280';
+        document.getElementById('profileRole').innerHTML =
+          `<span style="background:${roleColor}22; color:${roleColor}; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700;">${roleLabel}</span>`;
 
-        // --- Simplified Access Logic (All logged-in users get access) ---
-        // 1. Remove display:none style on restricted links (if it was set via HTML attribute which is now removed)
-        // 2. Attach a simple handler to show a notice if the feature name is present (for future role-based updates).
-        
+        // Show/hide Team Management link (owner only)
+        const teamLink = document.getElementById('teamMgmtLink');
+        if (teamLink && role === 'owner') {
+          teamLink.style.display = 'flex';
+        }
+
+        // Cache context for auth-manager
+        try {
+          const ctxRaw = sessionStorage.getItem('tv_user_context');
+          if (!ctxRaw) {
+            const permsMap = window.AuthManager ? window.AuthManager.ROLE_PERMISSIONS : {};
+            sessionStorage.setItem('tv_user_context', JSON.stringify({
+              uid: user.uid, name: ownerName, email: user.email,
+              role, coreAccountId, isSubUser,
+              accountType: userData.accountType || 'core',
+              permissions: permsMap[role] || [],
+            }));
+          }
+        } catch(_) {}
+
+        // Hide nav items based on role (finance for employees/viewers)
+        const hasFinance = role === 'owner' || role === 'manager';
+        if (!hasFinance) {
+          // Hide Finance sub-nav for employees/viewers
+          document.querySelectorAll('.sub-nav-item a').forEach(link => {
+            const href = link.getAttribute('href') || '';
+            const financePages = ['payment-billing.html','trip-expenses.html','combined_ca.html','invoice.html'];
+            if (financePages.includes(href)) {
+              link.closest('.sub-nav-item').style.display = 'none';
+            }
+          });
+        }
+
+        // Click guard for restricted links
         document.querySelectorAll('.nav-links a, .sub-nav-item a').forEach(link => {
             link.addEventListener('click', function(e) {
                 const featureName = this.getAttribute('data-feature-name');
-                const isNormalRole = (userData.role || 'Main').toLowerCase() === 'normal';
-
+                const isNormalRole = (userData.role || 'owner') === 'normal';
                 if (featureName && isNormalRole) {
                     e.preventDefault();
                     showBranchNotice(`Access to '${featureName}' is restricted by your account role.`);
@@ -1130,7 +1045,6 @@
         });
 
       } catch (e) {
-          // Fallback if profile load fails
           document.getElementById('profileName').textContent = user.email.split('@')[0];
           document.getElementById('profileRole').textContent = 'User';
       }
@@ -1186,5 +1100,46 @@
       });
     });
   </script>
+
+<!-- 🔐 RBAC Navbar Permission Guard -->
+<script>
+(function() {
+  function applyNavbarPermissions() {
+    const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+    if (!ctx) return;
+
+    // Hide Team Management for sub-users
+    document.querySelectorAll('a[href*="team-management"]').forEach(el => {
+      if (ctx.isSubUser) el.closest('li, .nav-item, div')?.style && (el.style.display = 'none');
+    });
+
+    // Hide Finance links for non-finance roles
+    const financeLinks = ['payment-billing', 'admin-payments', 'combined_ca'];
+    if (!ctx.permissions.includes('access_finance')) {
+      financeLinks.forEach(page => {
+        document.querySelectorAll(`a[href*="${page}"]`).forEach(el => {
+          const parent = el.closest('li') || el.closest('.nav-item') || el.parentElement;
+          if (parent) parent.style.display = 'none';
+        });
+      });
+    }
+
+    // Hide Tyre for those without access_tyre
+    if (!ctx.permissions.includes('access_tyre')) {
+      document.querySelectorAll('a[href*="tyre"]').forEach(el => {
+        const parent = el.closest('li') || el.closest('.nav-item') || el.parentElement;
+        if (parent) parent.style.display = 'none';
+      });
+    }
+  }
+
+  // Run after navbar is injected
+  document.addEventListener('navbarLoaded', applyNavbarPermissions);
+  // Also run after a short delay as fallback
+  setTimeout(applyNavbarPermissions, 800);
+  window.addEventListener('load', applyNavbarPermissions);
+})();
+</script>
+
 </body>
 </html>

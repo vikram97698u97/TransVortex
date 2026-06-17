@@ -3,128 +3,6 @@
 
 <head>
 
-  <!-- 🔐 Secure .env Configuration Loader -->
-  <!-- 🔐 Secure Configuration - Loaded from .env -->
-  <script>
-    // Configuration loaded from .env file (server-side)
-    (function () {
-      'use strict';
-
-      // Firebase configuration from .env
-      if (!window.FIREBASE_CONFIG) {
-        apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-      }
-
-      // Cloudinary configuration from .env
-      if (!window.CLOUDINARY_CONFIG) {
-        window.CLOUDINARY_CONFIG = {
-          cloudName: "doqapn15f",
-          uploadPreset: "vehicle-driver",
-          presets: {
-            vehicleDriver: "vehicle-driver",
-            paymentBilling: "payment-billing",
-            profilePic: "profile-pic",
-            documents: "documents",
-            receipts: "receipts",
-            expenses: "expenses",
-            tyres: "tyres",
-            vehicles: "vehicles",
-            drivers: "drivers",
-            invoices: "invoices",
-            lrReports: "lr-reports",
-            tripExpenses: "trip-expenses"
-          },
-          folders: {
-            vehicles: "transport/vehicles",
-            drivers: "transport/drivers",
-            documents: "transport/documents",
-            profiles: "transport/profiles",
-            receipts: "transport/receipts",
-            expenses: "transport/expenses",
-            tyres: "transport/tyres",
-            invoices: "transport/invoices",
-            lrReports: "transport/lr-reports",
-            tripExpenses: "transport/trip-expenses"
-          },
-          apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-          baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-        };
-      }
-
-      // Environment configuration from .env
-      if (!window.ENVIRONMENT) {
-        window.ENVIRONMENT = {
-          name: "production",
-          debug: false,
-          apiBaseUrl: "https://transvortex.online",
-          version: "1.0.0",
-          corsOrigin: "https://transvortex.online",
-          allowedOrigins: "https://transvortex.online,http://localhost:3000",
-          apiRateLimit: 100
-        };
-      }
-
-      // Security configuration from .env
-      if (!window.SECURITY_CONFIG) {
-        window.SECURITY_CONFIG = {
-          sessionSecret: "transvortex-session-secret-2024",
-          jwtSecret: "transvortex-jwt-secret-2024",
-          encryptionKey: "transvortex-encryption-key-2024"
-        };
-      }
-
-      // Optional API configurations from .env
-      if (!window.API_CONFIG) {
-        window.API_CONFIG = {
-          email: {
-            provider: "sendgrid",
-            config: window.SECURE_FIREBASE_CONFIG || {},
-            from: "noreply@transvortex.online",
-            fromName: "TransVortex Transport"
-          },
-          payment: {
-            provider: "stripe",
-            publicKey: "your-stripe-public-key-here"
-          },
-          sms: {
-            provider: "twilio",
-            accountSid: "your-twilio-account-sid-here",
-            phoneNumber: "your-twilio-phone-number-here"
-          },
-          maps: {
-            googleMapsApiKey: "your-google-maps-api-key-here",
-            googlePlacesApiKey: "your-google-places-api-key-here"
-          },
-          analytics: {
-            googleAnalyticsId: "GA-XXXXXXXXX",
-            facebookPixelId: "your-facebook-pixel-id-here",
-            hotjarId: "your-hotjar-id-here"
-          }
-        };
-      }
-
-      // Log successful loading (only in debug mode)
-      if (window.ENVIRONMENT.debug) {
-        console.log('✅ Secure configuration loaded from .env');
-        console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-        console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-        console.log('🌍 Environment:', window.ENVIRONMENT.name);
-        console.log('🔐 Security: Loaded');
-      }
-
-      // Dispatch event when configuration is ready
-      window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-        detail: {
-          firebase: window.FIREBASE_CONFIG,
-          cloudinary: window.CLOUDINARY_CONFIG,
-          environment: window.ENVIRONMENT,
-          security: window.SECURITY_CONFIG,
-          apis: window.API_CONFIG
-        }
-      }));
-    })();
-  </script>
-
 
 
   <meta charset="utf-8" />
@@ -472,7 +350,6 @@
     }
 
 
-
     /* View Toggle */
     .view-toggle {
       display: flex;
@@ -534,6 +411,7 @@
   <!-- 🔐 Configuration Loading -->
   <script src="evm.js"></script>
   <script src="secure-api-loader.js"></script>
+  <script src="money-flow-utils.js"></script>
 </head>
 
 <body>
@@ -800,7 +678,6 @@
           </div>
 
 
-
           <div id="vehicleTableView" class="table-responsive">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h5>Vehicle List</h5>
@@ -906,17 +783,23 @@
               </div>
               <div class="card-body">
                 <div class="row">
-                  <div class="col-md-4 mb-3">
+                  <div class="col-md-3 mb-3">
                     <label for="paymentDriverSelect" class="form-label">Driver *</label>
                     <select id="paymentDriverSelect" class="form-select" required>
                       <option value="">Select a Driver</option>
                     </select>
                   </div>
-                  <div class="col-md-4 mb-3">
+                  <div class="col-md-3 mb-3">
+                    <label for="salaryPaymentAccountId" class="form-label">Payment Account *</label>
+                    <select id="salaryPaymentAccountId" class="form-select" required>
+                      <option value="">Select Account</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3 mb-3">
                     <label for="paymentDate" class="form-label">Payment Date *</label>
                     <input type="date" id="paymentDate" class="form-control" required />
                   </div>
-                  <div class="col-md-4 mb-3">
+                  <div class="col-md-3 mb-3">
                     <label for="paymentAmount" class="form-label">Amount Paid (₹) *</label>
                     <input type="number" id="paymentAmount" class="form-control" required placeholder="e.g., 15000"
                       step="0.01" />
@@ -966,7 +849,6 @@
               </tbody>
             </table>
           </div>
-
         </div>
       </div>
     </div>
@@ -1066,7 +948,6 @@
   </div>
 
   <!-- Load secure configuration first -->
-
 
 
   <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
@@ -1205,7 +1086,6 @@
         } else {
 
 
-
         }
       } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
@@ -1314,10 +1194,13 @@
       });
 
       // NEW: Listen for payroll payment data changes
-      const payrollRef = ref(database, `users/${coreAccountId}/driverPayments`);
+      const payrollRef = ref(database, `users/${coreAccountId}/driverSalaryPayments`);
       onValue(payrollRef, (snapshot) => {
         allPayrollPayments = snapshot.val() || {};
         renderDriverListTable(); // Re-render table when payments change
+        if (window.currentViewingDriverKey && typeof window.refreshModalPaymentTable === 'function') {
+          window.refreshModalPaymentTable(window.currentViewingDriverKey);
+        }
       });
 
       // Listen for client data changes (needed for LR detail modal)
@@ -1606,11 +1489,8 @@
                <button class="btn btn-sm btn-outline-info" onclick="viewDetails('${key}')" title="View Details">
                  <i class="fas fa-eye"></i>
                </button>
-               <button class="btn btn-sm btn-outline-warning" onclick="editVehicleEntry('${key}')" title="Edit">
+               <button class="btn btn-sm btn-outline-warning" onclick="editVehicleEntry('${key}')" title="Edit" data-permission="edit_records">
                  <i class="fas fa-edit"></i>
-               </button>
-               <button class="btn btn-sm btn-outline-danger" onclick="deleteVehicleEntry('${key}')" title="Delete">
-                 <i class="fas fa-trash"></i>
                </button>
              </div>
            </td>
@@ -1680,10 +1560,10 @@
           `<button class="btn btn-sm btn-outline-info me-1" onclick="viewDriverDetails('${key}')" title="View Payroll & Details">
                    <i class="fas fa-eye"></i> View
                  </button>
-                 <button class="btn btn-sm btn-outline-warning me-1" onclick="editDriverEntry('${key}')" title="Edit">
+                 <button class="btn btn-sm btn-outline-warning me-1" onclick="editDriverEntry('${key}')" title="Edit" data-permission="edit_records">
                    <i class="fas fa-edit"></i>
                  </button>
-                 <button class="btn btn-sm btn-outline-danger" onclick="deleteDriverEntry('${key}')" title="Delete">
+                 <button class="btn btn-sm btn-outline-danger" onclick="deleteDriverEntry('${key}')" title="Delete" data-permission="edit_records">
                    <i class="fas fa-trash"></i>
                  </button>`
         ]);
@@ -1729,25 +1609,51 @@
       document.getElementById('driverForm').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Delete Driver Entry (NEW)
-    function deleteDriverEntry(key) {
-      if (confirm('Are you sure you want to delete this driver entry? This will also unassign them from any vehicle.')) {
-        // Delete the driver
-        Promise.resolve()
-          .then(() => {
-            return remove(ref(database, `users/${coreAccountId}/drivers/${key}`));
-          })
-          .then(() => {
-            showSuccess('Driver entry deleted and unassigned successfully');
-          })
-          .catch((error) => {
-            showError('Error deleting driver entry: ' + error.message);
+    async function deleteDriverEntry(key) {
+      const driver = allDriversData[key];
+      if (!driver) return;
+
+      const linkedVehicles = Object.entries(allVehiclesData).filter(([, vehicle]) => vehicle?.assignedDriverKey === key);
+      const hasPayrollHistory = Object.values(allPayrollPayments).some(payment => payment?.driverKey === key);
+
+      let confirmMessage = `Delete driver "${driver.driverName || 'this driver'}"? This action cannot be undone.`;
+
+      if (linkedVehicles.length > 0) {
+        confirmMessage += `\n\n${linkedVehicles.length} vehicle(s) are linked to this driver. Their driver assignment will be cleared.`;
+      }
+
+      if (hasPayrollHistory) {
+        confirmMessage += `\n\nExisting payroll payment records will be kept for history.`;
+      }
+
+      if (!window.confirm(confirmMessage)) return;
+
+      try {
+        if (isEditingDriver && editingDriverKey === key) {
+          cancelDriverEdit();
+        }
+
+        if (linkedVehicles.length > 0) {
+          const assignmentUpdates = {};
+          linkedVehicles.forEach(([vehicleKey]) => {
+            assignmentUpdates[`users/${coreAccountId}/vehicles/${vehicleKey}/assignedDriverKey`] = null;
           });
+          await update(ref(database), assignmentUpdates);
+        }
+
+        await remove(ref(database, `users/${coreAccountId}/drivers/${key}`));
+
+        showSuccess(`Driver "${driver.driverName || 'record'}" deleted successfully.`);
+      } catch (error) {
+        console.error('Error deleting driver entry:', error);
+        showError('Error deleting driver entry: ' + error.message);
       }
     }
 
+
     // **NEW**: View Driver Details (including payment history)
     function viewDriverDetails(driverKey) {
+      window.currentViewingDriverKey = driverKey;
       const driver = allDriversData[driverKey];
       if (!driver) return;
 
@@ -1770,6 +1676,15 @@
         });
       }
 
+      window.refreshModalPaymentTable(driverKey);
+
+      // Show the modal
+      const driverDetailModal = new bootstrap.Modal(document.getElementById('driverDetailModal'));
+      driverDetailModal.show();
+    }
+
+    window.refreshModalPaymentTable = function (driverKey) {
+      if (!modalDriverPaymentTable) return;
       modalDriverPaymentTable.clear();
 
       // Filter and add payment history rows
@@ -1779,19 +1694,31 @@
             payment.date || '-',
             `₹${(payment.amount || 0).toFixed(2)}`,
             payment.remarks || '-',
-            `<button class="btn btn-sm btn-outline-danger" onclick="deletePayrollEntry('${key}')" title="Delete Payment">
-                       <i class="fas fa-trash"></i>
-                     </button>`
+            `<button class="btn btn-sm btn-outline-danger" onclick="deleteDriverPayment('${key}')"><i class="fas fa-trash"></i></button>`
           ]);
         }
       });
       modalDriverPaymentTable.draw();
+    };
 
-      // Show the modal
-      const driverDetailModal = new bootstrap.Modal(document.getElementById('driverDetailModal'));
-      driverDetailModal.show();
-    }
+    window.deleteDriverPayment = async function (paymentId) {
+      if (window.AuthManager && !window.AuthManager.hasPermission("delete_records")) { alert("You do not have permission to perform this action."); return; }
+      if (!coreAccountId) return;
+      if (confirm('Are you sure you want to delete this payment record?')) {
+        try {
+          await remove(ref(database, `users/${coreAccountId}/driverSalaryPayments/${paymentId}`));
+          
+          if (window.MoneyFlow) {
+            await window.MoneyFlow.deletePayment('salary_' + paymentId);
+          }
 
+          alert('Payment record deleted successfully!');
+        } catch (error) {
+          console.error("Error deleting driver payment:", error);
+          alert('Error deleting payment.');
+        }
+      }
+    };
 
 
     // Get expiry status for a date
@@ -1981,16 +1908,6 @@
       document.getElementById('vehicleForm').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Delete Vehicle Entry (NEW)
-    function deleteVehicleEntry(key) {
-      if (confirm('Are you sure you want to delete this vehicle entry? This action is permanent.')) {
-        remove(ref(database, `users/${coreAccountId}/vehicles/${key}`)).then(() => {
-          showSuccess('Vehicle entry deleted and driver unassigned successfully');
-        }).catch((error) => {
-          showError('Error deleting vehicle entry: ' + error.message);
-        });
-      }
-    }
 
     // Download Vehicle Excel (NEW)
     function downloadVehicleExcel() {
@@ -2048,8 +1965,14 @@
               coreAccountId = userData.coreAccountId || user.uid;
               branchType = userData.branchType || 'main';
 
+              if (window.MoneyFlow) {
+                  window.MoneyFlow.coreAccountId = coreAccountId;
+                  window.MoneyFlow.recordedBy = user.displayName || user.email || 'System';
+              }
+
               setupRealtimeListeners();
               checkVehicleLimit();
+              populateSalaryPaymentAccounts();
               initTabInterface();
               renderDriverListTable(); // Initialize driver table
               showBranchInfo(); // Show branch info once data is loaded
@@ -2159,7 +2082,6 @@
         if (!newVehicleNumber) {
           throw new Error('Vehicle number is required');
         }
-
 
         // Vehicle data only
         const formData = {
@@ -2334,10 +2256,14 @@
         const date = document.getElementById('paymentDate').value;
         const amount = parseFloat(document.getElementById('paymentAmount').value);
         const remarks = document.getElementById('paymentRemarks').value.trim();
+        const paymentAccountId = document.getElementById('salaryPaymentAccountId').value;
         const driver = allDriversData[driverKey];
 
         if (!driverKey || !date || isNaN(amount) || amount <= 0) {
           throw new Error('Please fill out all required fields with valid data.');
+        }
+        if (!paymentAccountId) {
+          throw new Error('Please select a payment account.');
         }
         if (!driver) {
           throw new Error('Selected driver not found in the database.');
@@ -2349,12 +2275,27 @@
           date: date,
           amount: amount,
           remarks: remarks,
+          paymentAccountId: paymentAccountId,
           recordedAt: new Date().toISOString(),
           recordedBy: currentUser.uid,
           recordedByName: currentUser.displayName || currentUser.email
         };
 
-        await push(ref(database, `users/${coreAccountId}/driverPayments`), paymentData);
+        const newPaymentRef = push(ref(database, `users/${coreAccountId}/driverSalaryPayments`));
+        const paymentId = newPaymentRef.key;
+        await set(newPaymentRef, paymentData);
+
+        if (window.MoneyFlow) {
+          await window.MoneyFlow.recordPayment({
+            refId: 'salary_' + paymentId,
+            category: 'Driver Salary',
+            amount: amount,
+            type: 'debit',
+            accountId: paymentAccountId,
+            note: `Salary Payment to Driver: ${driver.driverName} (${remarks || ''})`,
+            date: date
+          });
+        }
 
         document.getElementById('payrollForm').reset();
         showSuccess('Driver payment recorded successfully!');
@@ -2368,31 +2309,6 @@
       }
     }
 
-    // NEW: Delete Payroll Entry
-    function deletePayrollEntry(key) {
-      if (confirm('Are you sure you want to delete this payment record? This action cannot be undone.')) {
-        remove(ref(database, `users/${coreAccountId}/driverPayments/${key}`))
-          .then(() => {
-            showSuccess('Payment record deleted successfully.');
-            // Re-render the driver details modal if it's open (or close it)
-            const modalEl = document.getElementById('driverDetailModal');
-            if (modalEl.classList.contains('show')) {
-              // Find the key of the driver currently in the modal
-              const currentDriverName = document.getElementById('modalDriverName').textContent;
-              const driverKey = Object.keys(allDriversData).find(k => allDriversData[k].driverName === currentDriverName);
-              if (driverKey) {
-                viewDriverDetails(driverKey); // Re-render the table content
-              } else {
-                // If we can't find the key, rely on the realtime listener update (or close if stuck)
-                // bootstrap.Modal.getInstance(modalEl).hide(); 
-              }
-            }
-          })
-          .catch((error) => {
-            showError('Error deleting payment record: ' + error.message);
-          });
-      }
-    }
 
     // Cancel Vehicle edit
     function cancelVehicleEdit() {
@@ -2515,6 +2431,27 @@
     }
 
     // NEW: Populate the Driver Select dropdown in the Payroll form
+    async function populateSalaryPaymentAccounts() {
+      const select = document.getElementById('salaryPaymentAccountId');
+      if (!select) return;
+      select.innerHTML = '<option value="">Select Account</option>';
+      try {
+        const targetCoreId = coreAccountId || currentUser?.uid;
+        if (!targetCoreId) return;
+        const snap = await get(ref(database, `users/${targetCoreId}/money_accounts`));
+        const accounts = snap.val() || {};
+        const sorted = Object.entries(accounts).sort((a,b) => a[1].name.localeCompare(b[1].name));
+        sorted.forEach(([id, acc]) => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = `${acc.name} (${acc.type.toUpperCase()})`;
+          select.appendChild(opt);
+        });
+      } catch (e) {
+        console.error('[MoneyFlow] Failed to load accounts in payroll:', e);
+      }
+    }
+
     function populateDriverSelects() {
       const select = document.getElementById('paymentDriverSelect');
       if (!select) return;
@@ -2610,19 +2547,15 @@
     // Make functions globally accessible
     window.viewLRDetails = viewLRDetails;
     window.editVehicleEntry = editVehicleEntry; // NEW
-    window.deleteVehicleEntry = deleteVehicleEntry; // NEW
     window.viewDriverDetails = viewDriverDetails; // NEW
     window.editDriverEntry = editDriverEntry; // NEW
     window.deleteDriverEntry = deleteDriverEntry; // NEW
-    window.deletePayrollEntry = deletePayrollEntry; // NEW
     window.viewDetails = viewDetails;
     window.hideDetailView = hideDetailView;
     window.downloadVehicleExcel = downloadVehicleExcel; // NEW
     window.downloadDriverExcel = downloadDriverExcel; // NEW
     window.cancelVehicleEdit = cancelVehicleEdit; // Expose cancel edit
     window.cancelDriverEdit = cancelDriverEdit; // Expose cancel edit
-
-
   </script>
 </body>
 

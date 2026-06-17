@@ -1,128 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
-<!-- 🔐 Secure .env Configuration Loader -->
-    <!-- 🔐 Secure Configuration - Loaded from .env -->
-    <script>
-        // Configuration loaded from .env file (server-side)
-        (function() {
-            'use strict';
-            
-            // Firebase configuration from .env
-            if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-            }
-            
-            // Cloudinary configuration from .env
-            if (!window.CLOUDINARY_CONFIG) {
-                window.CLOUDINARY_CONFIG = {
-                    cloudName: "doqapn15f",
-                    uploadPreset: "vehicle-driver",
-                    presets: {
-                        vehicleDriver: "vehicle-driver",
-                        paymentBilling: "payment-billing",
-                        profilePic: "profile-pic",
-                        documents: "documents",
-                        receipts: "receipts",
-                        expenses: "expenses",
-                        tyres: "tyres",
-                        vehicles: "vehicles",
-                        drivers: "drivers",
-                        invoices: "invoices",
-                        lrReports: "lr-reports",
-                        tripExpenses: "trip-expenses"
-                    },
-                    folders: {
-                        vehicles: "transport/vehicles",
-                        drivers: "transport/drivers", 
-                        documents: "transport/documents",
-                        profiles: "transport/profiles",
-                        receipts: "transport/receipts",
-                        expenses: "transport/expenses",
-                        tyres: "transport/tyres",
-                        invoices: "transport/invoices",
-                        lrReports: "transport/lr-reports",
-                        tripExpenses: "transport/trip-expenses"
-                    },
-                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-                };
-            }
-            
-            // Environment configuration from .env
-            if (!window.ENVIRONMENT) {
-                window.ENVIRONMENT = {
-                    name: "production",
-                    debug: false,
-                    apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0",
-                    corsOrigin: "https://transvortex.online",
-                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
-                    apiRateLimit: 100
-                };
-            }
-            
-            // Security configuration from .env
-            if (!window.SECURITY_CONFIG) {
-                window.SECURITY_CONFIG = {
-                    sessionSecret: "transvortex-session-secret-2024",
-                    jwtSecret: "transvortex-jwt-secret-2024",
-                    encryptionKey: "transvortex-encryption-key-2024"
-                };
-            }
-            
-            // Optional API configurations from .env
-            if (!window.API_CONFIG) {
-                window.API_CONFIG = {
-                    email: {
-                        provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-                        from: "noreply@transvortex.online",
-                        fromName: "TransVortex Transport"
-                    },
-                    payment: {
-                        provider: "stripe",
-                        publicKey: "your-stripe-public-key-here"
-                    },
-                    sms: {
-                        provider: "twilio",
-                        accountSid: "your-twilio-account-sid-here",
-                        phoneNumber: "your-twilio-phone-number-here"
-                    },
-                    maps: {
-                        googleMapsApiKey: "your-google-maps-api-key-here",
-                        googlePlacesApiKey: "your-google-places-api-key-here"
-                    },
-                    analytics: {
-                        googleAnalyticsId: "GA-XXXXXXXXX",
-                        facebookPixelId: "your-facebook-pixel-id-here",
-                        hotjarId: "your-hotjar-id-here"
-                    }
-                };
-            }
-            
-            // Log successful loading (only in debug mode)
-            if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
-                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-                console.log('🌍 Environment:', window.ENVIRONMENT.name);
-                console.log('🔐 Security: Loaded');
-            }
-            
-            // Dispatch event when configuration is ready
-            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-                detail: {
-                    firebase: window.FIREBASE_CONFIG,
-                    cloudinary: window.CLOUDINARY_CONFIG,
-                    environment: window.ENVIRONMENT,
-                    security: window.SECURITY_CONFIG,
-                    apis: window.API_CONFIG
-                }
-            }));
-        })();
-    </script>
 
 
 
@@ -196,7 +74,6 @@
       background-color: #fff3cd; /* Match pending for partial */
       color: #664d03;
     }
-
 
     /* LR Detail Modal - Kept simple */
     .lr-detail-modal .modal-content {
@@ -314,6 +191,7 @@
     <!-- 🔐 Configuration Loading -->
     <script src="evm.js"></script>
     <script src="secure-api-loader.js"></script>
+    <script src="money-flow-utils.js"></script>
 </head>
 <body>
   <div id="navbar-placeholder"></div>
@@ -467,6 +345,12 @@
                 <div class="card-header"><i class="fas fa-plus-circle me-2"></i>Record New Payment</div> <div class="card-body">
                   <form id="tPaymentForm" class="space-y-3">
                     <div class="mb-2"><label class="form-label small">Amount (₹)</label><input type="number" step="0.01" class="form-control form-control-sm" id="tPayAmount" required></div>
+                    <div class="mb-2">
+                      <label class="form-label small">Payment Account *</label>
+                      <select class="form-select form-select-sm" id="tPayAccountId" required>
+                        <option value="">Select Account</option>
+                      </select>
+                    </div>
                     <div class="mb-2"><label class="form-label small">Date</label><input type="date" class="form-control form-control-sm" id="tPayDate" required></div>
                     <div class="mb-3"><label class="form-label small">Notes</label><input type="text" class="form-control form-control-sm" id="tPayNotes" placeholder="UTR/Remarks"></div>
                     <button type="submit" class="btn btn-sm btn-info w-100 text-white"><i class="fas fa-save me-2"></i>Save Payment</button> 
@@ -512,17 +396,23 @@
       <h4 class="mb-3">Add/Edit Payment</h4>
       <input type="hidden" id="paymentTransporterIdHidden"> 
       <div class="row">
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
           <label for="paymentAmount" class="form-label">Amount (₹) <span class="text-danger">*</span></label>
           <input type="number" id="paymentAmount" class="form-control" required step="0.01">
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
+          <label for="transporterPaymentAccountId" class="form-label">Payment Account <span class="text-danger">*</span></label>
+          <select id="transporterPaymentAccountId" class="form-select" required>
+            <option value="">Select Account</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-3">
           <label for="paymentDate" class="form-label">Date <span class="text-danger">*</span></label>
           <input type="date" id="paymentDate" class="form-control" required>
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
           <label for="paymentNotes" class="form-label">Notes / Remarks</label>
-          <textarea id="paymentNotes" class="form-control" placeholder="Add any notes about this payment"></textarea>
+          <input type="text" id="paymentNotes" class="form-control" placeholder="UTR/Remarks">
         </div>
       </div>
       <div class="d-flex gap-2">
@@ -589,8 +479,7 @@
   </div>
 
     <!-- Load secure configuration first -->
-  
-  
+
 
   <script src="navbar-loader.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -607,42 +496,13 @@
     let firebaseConfig;
     
     try {
-      // Get Firebase configuration from secure EVM system
-      // Initialize Firebase with proper error handling
-    try {
         if (!window.FIREBASE_CONFIG) {
             throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
         }
-        
-        if (!window.FIREBASE_CONFIG.databaseURL) {
-            throw new Error('Firebase databaseURL not found in configuration.');
-        }
-        
-        if (!window.FIREBASE_CONFIG.projectId) {
-            throw new Error('Firebase projectId not found in configuration.');
-        }
-        
         firebaseConfig = window.FIREBASE_CONFIG;
-        
-        // Check if we're using fallback values
-        if (false) { // Condition is always false in the final logic, keeping as per original structure
-            
-        } else {
-            
-            
-            
-        }
     } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
-        
-        // Use fallback configuration to prevent complete failure
-        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig();
-        
-    }} catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = window.FIREBASE_CONFIG;
+        firebaseConfig = window.FIREBASE_CONFIG;
     }
 
     const app = initializeApp(window.FIREBASE_CONFIG);
@@ -670,6 +530,10 @@
         get(userRef).then(snapshot => {
           const userData = snapshot.val() || {};
           coreAccountId = userData.coreAccountId || user.uid;
+          if (window.MoneyFlow) {
+              window.MoneyFlow.coreAccountId = coreAccountId;
+              window.MoneyFlow.recordedBy = user.displayName || user.email || 'System';
+          }
           
           if (!transporterTable) {
             transporterTable = $('#transporterTable').DataTable({
@@ -692,7 +556,43 @@
           document.getElementById('paymentDate').valueAsDate = new Date();
           document.getElementById('cancelPaymentEditBtn').addEventListener('click', resetPaymentForm);
 
+          // --- DRAFT PERSISTENCE ---
+          const transporterForm = document.getElementById('transporterForm');
+          const fields = ['transporterName', 'contactPerson', 'mobile', 'gstin', 'address'];
+          
+          const saveDraft = () => {
+            const draft = {};
+            fields.forEach(id => { draft[id] = document.getElementById(id).value; });
+            localStorage.setItem(`tv_transporter_draft_${coreAccountId}`, JSON.stringify(draft));
+          };
+          
+          const restoreDraft = () => {
+            const raw = localStorage.getItem(`tv_transporter_draft_${coreAccountId}`);
+            if (!raw) return;
+            try {
+              const draft = JSON.parse(raw);
+              fields.forEach(id => { 
+                if (draft[id] !== undefined) document.getElementById(id).value = draft[id];
+              });
+            } catch (e) {}
+          };
+
+          transporterForm.addEventListener('input', () => {
+            if (!currentEditingTransporterId) saveDraft();
+          });
+          
+          restoreDraft();
+          
+          const originalReset = window.resetForm;
+          window.resetForm = function() {
+            if (typeof originalReset === 'function') originalReset();
+            else transporterForm.reset();
+            localStorage.removeItem(`tv_transporter_draft_${coreAccountId}`);
+          };
+          // --------------------------
+
           loadAllTransporterMetrics();
+          populateTransporterPaymentAccounts();
 
           // Offcanvas payment form bind
           const tPayForm = document.getElementById('tPaymentForm');
@@ -706,27 +606,82 @@
               const amount = parseFloat(document.getElementById('tPayAmount').value) || 0;
               const date = document.getElementById('tPayDate').value;
               const notes = document.getElementById('tPayNotes').value;
+              const paymentAccountId = document.getElementById('tPayAccountId').value;
               if (!amount || !date) return alert('Enter amount and date');
-              const payRef = push(ref(db, `users/${coreAccountId}/transporterPayments`));
-              await set(payRef, { id: payRef.key, transporterId, amount, date, notes, userId: currentUser?.uid, createdAt: new Date().toISOString() });
-              await updateTransporterLRStatus(transporterId);
-              await Promise.all([
-                renderTSummary(transporterId),
-                renderTLRS(transporterId),
-                renderTInvoices(transporterId),
-                renderTPayments(transporterId),
-                updateTransporterOutstanding(transporterId),
-              ]);
-              tPayForm.reset();
-              if (dateEl) dateEl.valueAsDate = new Date();
-              alert('Payment saved');
+              if (!paymentAccountId) return alert('Please select a payment account.');
+
+              const submitBtn = e.target.querySelector('button[type="submit"]');
+              submitBtn.disabled = true;
+
+              try {
+                let paymentId = currentEditingPaymentId;
+                const transporterOutstandingRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}/outstanding`);
+                let amountChange = 0;
+
+                if (currentEditingPaymentId) {
+                  const oldPaymentSnap = await get(ref(db, `users/${coreAccountId}/transporterPayments/${currentEditingPaymentId}`));
+                  const oldAmount = oldPaymentSnap.val()?.amount || 0;
+                  amountChange = oldAmount - amount;
+
+                  const payRef = ref(db, `users/${coreAccountId}/transporterPayments/${currentEditingPaymentId}`);
+                  await update(payRef, { amount, date, notes, paymentAccountId, updatedAt: new Date().toISOString() });
+                  
+                  // Record in MoneyFlow
+                  if (window.MoneyFlow) {
+                    const tSnap = await get(ref(db, `users/${coreAccountId}/transporters/${transporterId}`));
+                    const transporterName = tSnap.val()?.name || 'Transporter';
+                    await window.MoneyFlow.recordPayment({
+                      refId: 'transporter_pay_' + currentEditingPaymentId,
+                      category: 'Transporter Payment',
+                      amount: amount,
+                      type: 'debit',
+                      accountId: paymentAccountId,
+                      note: `Payment to Transporter: ${transporterName} (${notes || ''})`,
+                      date: date
+                    });
+                  }
+                  alert('Payment updated successfully!');
+                } else {
+                  amountChange = -amount;
+                  const payRef = push(ref(db, `users/${coreAccountId}/transporterPayments`));
+                  paymentId = payRef.key;
+                  await set(payRef, { id: paymentId, transporterId, amount, date, notes, paymentAccountId, userId: currentUser?.uid, createdAt: new Date().toISOString() });
+                  
+                  // Record in MoneyFlow
+                  if (window.MoneyFlow) {
+                    const tSnap = await get(ref(db, `users/${coreAccountId}/transporters/${transporterId}`));
+                    const transporterName = tSnap.val()?.name || 'Transporter';
+                    await window.MoneyFlow.recordPayment({
+                      refId: 'transporter_pay_' + paymentId,
+                      category: 'Transporter Payment',
+                      amount: amount,
+                      type: 'debit',
+                      accountId: paymentAccountId,
+                      note: `Payment to Transporter: ${transporterName} (${notes || ''})`,
+                      date: date
+                    });
+                  }
+                  alert('Payment saved successfully!');
+                }
+
+                await runTransaction(transporterOutstandingRef, (currentValue) => {
+                  return (currentValue || 0) + amountChange;
+                });
+
+                await updateTransporterLRStatus(transporterId);
+                resetPaymentForm();
+              } catch (error) {
+                console.error('Error saving payment:', error);
+                alert('Error saving payment: ' + error.message);
+              } finally {
+                submitBtn.disabled = false;
+              }
             });
           }
         });
       }
     });
-    
-    
+
     function detachDetailViewListeners() {
         detailViewListeners.forEach(offFunction => offFunction());
         detailViewListeners = [];
@@ -768,12 +723,26 @@
           await push(ref(db, `users/${coreAccountId}/transporters`), transporterData);
           alert("Transporter saved successfully!");
         }
+        localStorage.removeItem(`tv_transporter_draft_${coreAccountId}`);
         resetForm();
       } catch (error) {
         alert("Error saving transporter: " + error.message);
       }
     });
     
+    // Refresh active transporter drawer details in real-time
+    async function refreshActiveTransporterDetails() {
+        if (currentDetailTransporterId) {
+            await Promise.all([
+                renderTSummary(currentDetailTransporterId),
+                renderTLRS(currentDetailTransporterId),
+                renderTInvoices(currentDetailTransporterId),
+                renderTPayments(currentDetailTransporterId),
+                updateTransporterOutstanding(currentDetailTransporterId)
+            ]);
+        }
+    }
+
     async function loadAllTransporterMetrics() {
         if (!coreAccountId) return;
         
@@ -796,6 +765,8 @@
                 allTransporterLrs[transporterId].totalBilled += lr.tripDetails?.totalBillingAmount || lr.tripDetails?.billingAmount || 0;
             });
             loadTransporters(); // Refresh list after LRs are cached
+            if (window.AuthManager) window.AuthManager.applyUIPermissions();
+            refreshActiveTransporterDetails();
         });
 
         onValue(paymentRef, (snapshot) => {
@@ -808,6 +779,7 @@
                 allTransporterPayments[payment.transporterId].push({ key: child.key, ...payment });
             });
             loadTransporters(); // Refresh the list when payment data changes
+            refreshActiveTransporterDetails();
         });
     }
 
@@ -951,11 +923,15 @@
       const transporterId = currentDetailTransporterId;
       if (!transporterId) return alert("No transporter selected. Please view a transporter's details first.");
 
+      const paymentAccountId = document.getElementById('transporterPaymentAccountId').value;
+      if (!paymentAccountId) return alert("Please select a payment account.");
+
       const paymentData = {
         transporterId: transporterId,
         amount: parseFloat(document.getElementById('paymentAmount').value),
         date: document.getElementById('paymentDate').value,
         notes: document.getElementById('paymentNotes').value,
+        paymentAccountId: paymentAccountId,
         updatedAt: new Date().toISOString(),
         userId: currentUser?.uid
       };
@@ -968,6 +944,7 @@
       try {
         const transporterOutstandingRef = ref(db, `users/${coreAccountId}/transporters/${transporterId}/outstanding`);
         let amountChange = 0;
+        let paymentId = currentEditingPaymentId;
 
         if (currentEditingPaymentId) {
           const oldPaymentSnap = await get(ref(db, `users/${coreAccountId}/transporterPayments/${currentEditingPaymentId}`));
@@ -979,13 +956,28 @@
           alert('Payment updated successfully!');
         } else {
           amountChange = -paymentData.amount; // reduce outstanding on new payment
-          await push(ref(db, `users/${coreAccountId}/transporterPayments`), paymentData);
+          const newPayRef = push(ref(db, `users/${coreAccountId}/transporterPayments`));
+          paymentId = newPayRef.key;
+          await set(newPayRef, paymentData);
           alert('Payment saved successfully!');
         }
 
+        // Record in MoneyFlow
+        if (window.MoneyFlow) {
+          const tSnap = await get(ref(db, `users/${coreAccountId}/transporters/${transporterId}`));
+          const transporterName = tSnap.val()?.name || 'Transporter';
+          await window.MoneyFlow.recordPayment({
+            refId: 'transporter_pay_' + paymentId,
+            category: 'Transporter Payment',
+            amount: paymentData.amount,
+            type: 'debit',
+            accountId: paymentAccountId,
+            note: `Payment to Transporter: ${transporterName} (${paymentData.notes || ''})`,
+            date: paymentData.date
+          });
+        }
+
         await runTransaction(transporterOutstandingRef, (currentValue) => {
-          // This outstanding logic is flawed in the original code but kept for minimal change. 
-          // The proper outstanding is calculated dynamically in updateTransporterOutstanding.
           return (currentValue || 0) + amountChange;
         });
 
@@ -995,6 +987,37 @@
       } catch (error) {
         console.error('Error saving payment:', error);
         alert('Error saving payment: ' + error.message);
+      }
+    }
+
+    async function populateTransporterPaymentAccounts() {
+      const select1 = document.getElementById('transporterPaymentAccountId');
+      const select2 = document.getElementById('tPayAccountId');
+      if (!select1 && !select2) return;
+      try {
+        const accounts = await window.MoneyFlow.getAccounts();
+        const sorted = Object.entries(accounts).sort((a,b) => a[1].name.localeCompare(b[1].name));
+        
+        if (select1) {
+          select1.innerHTML = '<option value="">Select Account</option>';
+          sorted.forEach(([id, acc]) => {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = `${acc.name} (${acc.type.toUpperCase()})`;
+            select1.appendChild(opt);
+          });
+        }
+        if (select2) {
+          select2.innerHTML = '<option value="">Select Account</option>';
+          sorted.forEach(([id, acc]) => {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = `${acc.name} (${acc.type.toUpperCase()})`;
+            select2.appendChild(opt);
+          });
+        }
+      } catch(e) {
+        console.error('[MoneyFlow] Failed to load accounts in transporters:', e);
       }
     }
 
@@ -1251,7 +1274,6 @@
       document.getElementById('transporterInvoiceCount').textContent = count;
     }
 
-
     // Open invoice in new tab for a given LR
     window.openInvoiceForLR = async (lrId) => {
       if (!coreAccountId) return;
@@ -1313,6 +1335,18 @@
       document.getElementById('tPayAmount').value = payment.amount;
       document.getElementById('tPayDate').value = payment.date;
       document.getElementById('tPayNotes').value = payment.notes || '';
+      
+      // Update form values for both forms
+      if (document.getElementById('transporterPaymentAccountId')) {
+        document.getElementById('transporterPaymentAccountId').value = payment.paymentAccountId || '';
+      }
+      if (document.getElementById('tPayAccountId')) {
+        document.getElementById('tPayAccountId').value = payment.paymentAccountId || '';
+      }
+      // Set main form amount/date/notes too
+      document.getElementById('paymentAmount').value = payment.amount;
+      document.getElementById('paymentDate').value = payment.date;
+      document.getElementById('paymentNotes').value = payment.notes || '';
 
       const submitBtn = document.querySelector('#tPaymentForm button[type="submit"]');
       submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Payment';
@@ -1342,6 +1376,10 @@
         
         // Use remove to delete the payment
         await remove(ref(db, `users/${coreAccountId}/transporterPayments/${paymentId}`));
+        
+        if (window.MoneyFlow) {
+          await window.MoneyFlow.deletePayment('transporter_pay_' + paymentId);
+        }
         
         await updateTransporterLRStatus(transporterId);
 
@@ -1376,6 +1414,12 @@
       document.getElementById('tPayDate').valueAsDate = new Date();
       
       document.getElementById('paymentDate').valueAsDate = new Date();
+      if (document.getElementById('transporterPaymentAccountId')) {
+        document.getElementById('transporterPaymentAccountId').value = '';
+      }
+      if (document.getElementById('tPayAccountId')) {
+        document.getElementById('tPayAccountId').value = '';
+      }
       currentEditingPaymentId = null;
       
       const submitBtn = document.querySelector('#transporterPaymentForm button[type="submit"]');

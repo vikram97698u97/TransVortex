@@ -21,10 +21,6 @@
   <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="mb-0"><i class="fas fa-file-invoice me-2"></i>LR Management</h2>
-      <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
-        data-bs-target="#autoGenerationSettingsModal">
-        <i class="fas fa-cog me-2"></i>Settings
-      </button>
     </div>
 
     <ul class="nav nav-tabs" id="lrTabs">
@@ -65,17 +61,6 @@
           </div>
         </div>
 
-        <ul class="nav nav-pills mb-3" id="lrViewTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="own-lrs-tab" data-bs-toggle="tab" data-bs-target="#own-lrs-content"
-              type="button" role="tab">Own Company LRs</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="market-lrs-tab" data-bs-toggle="tab" data-bs-target="#market-lrs-content"
-              type="button" role="tab">Market company LRs</button>
-          </li>
-        </ul>
-
         <div class="tab-content" id="lrViewTabsContent">
           <div class="tab-pane fade show active" id="own-lrs-content" role="tabpanel">
             <div class="mb-3">
@@ -96,6 +81,7 @@
                     <th>Date</th>
                     <th>LR No</th>
                     <th>Truck No</th>
+                    <th>Client</th>
                     <th>Consignor</th>
                     <th>Consignee</th>
                     <th>Item</th>
@@ -117,46 +103,6 @@
               <button class="btn btn-outline-primary" onclick="loadLRData('next')">Load More LRs</button>
             </div>
           </div>
-
-          <div class="tab-pane fade" id="market-lrs-content" role="tabpanel">
-            <div class="mb-3">
-              <button class="btn btn-info" id="generateMarketInvoiceBtn" onclick="showBankDetailsModal(true)" disabled>
-                <i class="fas fa-file-invoice me-2"></i>Generate Market Invoice
-              </button>
-            </div>
-            <div class="table-responsive">
-              <table id="marketLrTable" class="table table-striped">
-                <thead>
-                  <tr>
-                    <th>
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="selectAllMarketCheckbox"
-                          onclick="toggleSelectAll(true)">
-                      </div>
-                    </th>
-                    <th>Date</th>
-                    <th>LR No</th>
-                    <th>Truck No</th>
-                    <th>Market Company</th>
-                    <th>Item</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Weight</th>
-                    <th><i class="fas fa-plus"></i> Details</th>
-                    <th>Status</th>
-                    <th>LR Made By</th>
-                    <th>LR Copy</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                </tbody>
-              </table>
-            </div>
-            <div class="text-center mt-3">
-              <button class="btn btn-outline-primary" onclick="loadLRData('next')">Load More Market LRs</button>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -168,52 +114,64 @@
             </div>
             <div class="card-body">
               <div class="row mb-3">
-                <div class="col-md-3">
-                  <label for="lrDate" class="form-label">Date*</label>
-                  <input type="date" class="form-control" id="lrDate" required />
-                </div>
-                <div class="col-md-3">
-                  <label for="lrNumber" class="form-label">LR Number <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="lrNumber" required placeholder="Auto-generated" />
-                </div>
-                <div class="col-md-6 vehicle-input-container">
-                  <div class="form-check form-switch mb-2 pt-1">
-                    <input class="form-check-input" type="checkbox" role="switch" id="vehicleTypeToggle"
-                      onchange="toggleVehicleInput(this.checked)">
-                    <label class="form-check-label" for="vehicleTypeToggle">Use Market Vehicle</label>
+                <div class="col-md-12">
+                  <span class="fw-bold me-3">Ownership Type:</span>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="vehicleTypeRadio" id="ownVehicleRadio" value="own" checked onchange="toggleVehicleInput(this.value === 'market')">
+                    <label class="form-check-label" for="ownVehicleRadio">Own Fleet</label>
                   </div>
-                  <div id="ownVehicleFields">
-                    <label for="truckNumber" class="form-label">Own Truck Number <span
-                        class="text-danger">*</span></label>
-                    <div class="d-flex gap-2">
-                      <select id="truckNumber" class="form-select flex-grow-1" required></select>
-                      <button class="btn btn-outline-success" type="button" id="quickAddVehicleBtn"
-                        title="Add New Vehicle"><i class="fas fa-plus"></i></button>
-                    </div>
-                  </div>
-                  <div id="marketVehicleFields" style="display: none;">
-                    <label for="marketTruckNumber" class="form-label">Market Truck Number <span
-                        class="text-danger">*</span></label>
-                    <input type="text" id="marketTruckNumber" class="form-control" placeholder="Enter vehicle number">
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="vehicleTypeRadio" id="marketVehicleRadio" value="market" onchange="toggleVehicleInput(this.value === 'market')">
+                    <label class="form-check-label" for="marketVehicleRadio">Market Vehicle</label>
                   </div>
                 </div>
               </div>
               <div class="row mb-3">
                 <div class="col-md-3">
+                  <label for="lrDate" class="form-label">Date*</label>
+                  <input type="date" class="form-control" id="lrDate" required />
+                </div>
+                <div class="col-md-3">
+                  <label for="lrNumber" class="form-label">LR Number</label>
+                  <input type="text" class="form-control" id="lrNumber" />
+                  <small class="text-muted">Leave blank to auto-generate</small>
+                </div>
+                <div class="col-md-6 vehicle-input-container">
+                    <label id="truckLabel" for="truckNumber" class="form-label">Truck Number <span class="text-danger">*</span></label>
+                    <div id="ownVehicleFields" class="d-flex gap-2">
+                      <select id="truckNumber" class="form-select flex-grow-1" required></select>
+                      <button class="btn btn-outline-success" type="button" id="quickAddVehicleBtn" title="Add New Vehicle"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="marketVehicleFields" style="display:none;" class="row g-2">
+                      <div class="col-6">
+                        <input type="text" id="marketTruckNumber" class="form-control" placeholder="Enter Truck No.">
+                      </div>
+                      <div class="col-6">
+                        <select id="transporterSelect" class="form-select"></select>
+                      </div>
+                    </div>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3">
                   <label for="invoiceNumberInput" class="form-label">Invoice No.</label>
-                  <input type="text" class="form-control" id="invoiceNumberInput" placeholder="Auto-generated" />
+                  <input type="text" class="form-control" id="invoiceNumberInput" />
+                  <small class="text-muted">Leave blank to auto-generate</small>
                 </div>
                 <div class="col-md-3">
                   <label for="shipmentNo" class="form-label">Shipment No</label>
-                  <input type="text" class="form-control" id="shipmentNo" placeholder="Auto-generated" />
+                  <input type="text" class="form-control" id="shipmentNo" />
+                  <small class="text-muted">Leave blank to auto-generate</small>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label">Delivery No</label>
-                  <input type="text" class="form-control" id="deliveryNo" placeholder="Auto-generated">
+                  <input type="text" class="form-control" id="deliveryNo" />
+                  <small class="text-muted">Leave blank to auto-generate</small>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label">Order No</label>
-                  <input type="text" class="form-control" id="orderNo" placeholder="Auto-generated">
+                  <input type="text" class="form-control" id="orderNo" />
+                  <small class="text-muted">Leave blank to auto-generate</small>
                 </div>
               </div>
               <div class="row mb-3">
@@ -227,37 +185,23 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-4 mb-3">
-                  <div id="ownDriverField">
+                <div class="col-md-6 mb-3">
                     <label for="driverSelect" class="form-label">Driver</label>
-                    <div class="input-group">
+                    <div id="ownDriverField" class="input-group">
                       <select id="driverSelect" class="form-select"></select>
-                      <button class="btn btn-outline-success" type="button" id="quickAddDriverBtn"
-                        title="Add New Driver"><i class="fas fa-plus"></i></button>
+                      <button class="btn btn-outline-success" type="button" id="quickAddDriverBtn" title="Add New Driver"><i class="fas fa-plus"></i></button>
                     </div>
-                  </div>
-                  <div id="marketDriverField" style="display: none;">
-                    <label for="marketDriverName" class="form-label">Driver Name</label>
-                    <input type="text" id="marketDriverName" class="form-control" placeholder="Enter driver's name">
-                  </div>
+                    <div id="marketDriverField" style="display:none;">
+                      <input type="text" id="marketDriverName" class="form-control" placeholder="Enter Driver Name / Contact">
+                    </div>
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                   <label for="clientId" class="form-label">Billed To (Client)*</label>
                   <div class="input-group">
                     <select id="clientId" class="form-select" required
                       onchange="window.updateConsigneeFromClient()"></select>
                     <button class="btn btn-outline-success" type="button" id="quickAddClientBtn"
                       title="Add New Client"><i class="fas fa-plus"></i></button>
-                  </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <div id="transporterField" style="display: block;">
-                    <label for="transporterSelect" class="form-label">Transporter</label>
-                    <div class="input-group">
-                      <select id="transporterSelect" class="form-select"></select>
-                      <button class="btn btn-outline-success" type="button" id="quickAddTransporterBtn"
-                        title="Add New Transporter"><i class="fas fa-plus"></i></button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -284,21 +228,21 @@
                 <h5 class="mb-0"><i class="fas fa-box me-2"></i>Shipment Details</h5>
               </div>
               <div class="card-body">
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="consigneeId" class="form-label">Consignee <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                      <select id="consigneeId" class="form-select" required></select>
-                      <button class="btn btn-outline-success" type="button" id="quickAddConsigneeBtn"
-                        title="Add New Consignee"><i class="fas fa-plus"></i></button>
-                    </div>
+                <div class="row g-3 align-items-end fuel-entry-grid">
+                  <div class="col-md-4 mb-3">
+                    <label for="consignorName" class="form-label">Consignor</label>
+                    <input type="text" id="consignorName" class="form-control" placeholder="Consignor Name">
                   </div>
-                  <div class="col-md-6 mb-3">
+                  <div class="col-md-4 mb-3">
+                    <label for="consigneeName" class="form-label">Consignee</label>
+                    <input type="text" id="consigneeName" class="form-control" placeholder="Consignee Name">
+                  </div>
+                  <div class="col-md-4 mb-3">
                     <label class="form-label">Item</label>
                     <input type="text" class="form-control" id="item" placeholder="e.g., Cement Bags, Steel Bars">
                   </div>
                 </div>
-                <div class="row">
+                <div class="row g-3 align-items-end fuel-entry-grid">
                   <div class="col-md-4 mb-3">
                     <label class="form-label">Number of Packages</label>
                     <input type="number" class="form-control" id="numPackages" placeholder="For package goods"
@@ -324,43 +268,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="autoGenerationSettingsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title"><i class="fas fa-cog me-2"></i>Auto-Generation Settings</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p class="text-muted">Toggle which numbers should be auto-generated by the system.</p>
-          <div class="form-check form-switch mb-2">
-            <input class="form-check-input" type="checkbox" id="autoGenerateLrNo" checked>
-            <label class="form-check-label" for="autoGenerateLrNo">Auto-generate LR Number</label>
-          </div>
-          <div class="form-check form-switch mb-2">
-            <input class="form-check-input" type="checkbox" id="autoGenerateInvoiceNo" checked>
-            <label class="form-check-label" for="autoGenerateInvoiceNo">Auto-generate Invoice Number</label>
-          </div>
-          <div class="form-check form-switch mb-2">
-            <input class="form-check-input" type="checkbox" id="autoGenerateShipmentNo" checked>
-            <label class="form-check-label" for="autoGenerateShipmentNo">Auto-generate Shipment No.</label>
-          </div>
-          <div class="form-check form-switch mb-2">
-            <input class="form-check-input" type="checkbox" id="autoGenerateOrderNo" checked>
-            <label class="form-check-label" for="autoGenerateOrderNo">Auto-generate Order No.</label>
-          </div>
-          <div class="form-check form-switch mb-2">
-            <input class="form-check-input" type="checkbox" id="autoGenerateDeliveryNo" checked>
-            <label class="form-check-label" for="autoGenerateDeliveryNo">Auto-generate Delivery No.</label>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary" onclick="saveAutoGenerationSettings()"
-            data-bs-dismiss="modal">Save Changes</button>
-        </div>
-      </div>
-    </div>
-  </div>
+
 
   <div class="modal fade" id="tripDetailsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
@@ -390,7 +298,7 @@
             </li>
             <li class="nav-item" role="presentation">
               <button class="nav-link" id="empty-expenses-tab" data-bs-toggle="tab"
-                data-bs-target="#empty-expenses-content" type="button" role="tab">5. Empty Trip Expenses</button>
+                data-bs-target="#empty-expenses-content" type="button" role="tab">5. Empty Trip</button>
             </li>
           </ul>
 
@@ -429,11 +337,9 @@
                             oninput="calculateTripTotals()">
                         </div>
                         <div class="col-5">
-                          <label class="form-label">Payment Mode</label>
-                          <select id="tripAdvancePaymentMode" class="form-select">
-                            <option value="Cash">Cash</option>
-                            <option value="UPI">UPI</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
+                          <label class="form-label">Payment Account</label>
+                          <select id="tripAdvanceAccountId" class="form-select">
+                            <option value="">Select Account</option>
                           </select>
                         </div>
                       </div>
@@ -526,11 +432,11 @@
               </div>
               <form id="fuelEntryForm">
                 <h5 class="mb-3">Record Fuel Fill-up (Adds to Inventory)</h5>
-                <div class="row">
-                  <div class="col-md-3 mb-3">
+                <div class="row g-3 align-items-end fuel-entry-grid">
+                  <div class="col-md-3">
                     <label for="fuelPumpSelect" class="form-label">Select Pump <span
                         class="text-danger">*</span></label>
-                    <div class="input-group">
+                    <div class="fuel-pump-group">
                       <select id="fuelPumpSelect" class="form-select" required>
                         <option value="">Select a Pump</option>
                       </select>
@@ -538,19 +444,21 @@
                           class="fas fa-plus"></i></button>
                     </div>
                   </div>
-                  <div class="col-md-3 mb-3">
+                  <div class="col-md-3">
                     <label for="fuelFillDate" class="form-label">Date <span class="text-danger">*</span></label>
                     <input type="date" id="fuelFillDate" class="form-control" required>
                   </div>
-                  <div class="col-md-3 mb-3">
+                  <div class="col-md-3">
                     <label for="fuelLiters" class="form-label">Liters <span class="text-danger">*</span></label>
                     <input type="number" id="fuelLiters" class="form-control" placeholder="0.00" required step="0.01"
                       oninput="calculateFuelTotalAmount()">
                   </div>
-                  <div class="col-md-3 mb-3">
-                    <input type="number" id="fuelTripKm" class="form-control" required>
+                  <div class="col-md-3">
+                    <label for="fuelTripKm" class="form-label">KM Reading <span class="text-danger">*</span></label>
+                    <input type="number" id="fuelTripKm" class="form-control" placeholder="Enter KM reading" required
+                      step="0.1" min="0">
                   </div>
-                  <div class="col-md-3 mb-3">
+                  <div class="col-md-3">
                     <label for="fuelPerLiter" class="form-label">Price/Liter <span class="text-danger">*</span></label>
                     <input type="number" id="fuelPerLiter" class="form-control" placeholder="0.00" required step="0.01"
                       oninput="calculateFuelTotalAmount()">
@@ -560,12 +468,18 @@
                     <input type="number" id="fuelAmount" class="form-control bg-light" placeholder="0.00" required
                       step="0.01" readonly>
                   </div>
-                  <div class="col-md-6 mb-3">
+                  <div class="col-md-3">
+                    <label for="fuelPaymentAccountId" class="form-label">Payment Account</label>
+                    <select id="fuelPaymentAccountId" class="form-select">
+                      <option value="">Select Account</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
                     <label for="fuelRemarks" class="form-label">Remarks</label>
                     <input type="text" id="fuelRemarks" class="form-control" placeholder="Driver name or note">
                   </div>
                 </div>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Record Fuel Entry</button>
+                <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save me-2"></i>Record Fuel Entry</button>
               </form>
 
               <h5 class="mt-4">Recent Fuel Entries (Fill-ups)</h5>
@@ -578,6 +492,7 @@
                       <th class="text-end">Liters</th>
                       <th class="text-end">Amount (₹)</th>
                       <th>Remarks</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody id="recentFuelEntriesBody"></tbody>
@@ -607,20 +522,33 @@
 
             <div class="tab-pane fade" id="empty-expenses-content" role="tabpanel">
               <div class="card">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                  <h5 class="mb-0">Empty Return Expense Log</h5>
-                  <button type="button" class="btn btn-sm btn-outline-success"
-                    onclick="addExpenseRow('emptyTripGenericExpensesContainer')">
-                    <i class="fas fa-plus me-1"></i>Add Expense
-                  </button>
+                <div class="card-header bg-light">
+                  <h5 class="mb-0"><i class="fas fa-route me-2"></i>Empty Trip Details</h5>
                 </div>
                 <div class="card-body">
-                  <div id="emptyTripGenericExpensesContainer" class="d-flex flex-column gap-2">
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">From</label>
+                      <input type="text" class="form-control" id="emptyTripFrom" placeholder="Enter starting location">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">To</label>
+                      <input type="text" class="form-control" id="emptyTripTo" placeholder="Enter destination location">
+                    </div>
                   </div>
-                  <hr>
-                  <div class="text-end">
-                    <h5 class="mb-0">Total Empty Trip Expenses: <span id="emptyTripTotalExpensesDisplay"
-                        class="fw-bold text-danger">₹0.00</span></h5>
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Distance (KM)</label>
+                      <input type="number" step="0.1" class="form-control" id="emptyTripKm" placeholder="Enter KM" oninput="window.calculateEmptyTripFuelUsed()">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Fuel Average (km/l)</label>
+                      <input type="number" step="0.01" class="form-control" id="emptyTripAvg" placeholder="Enter average" oninput="window.calculateEmptyTripFuelUsed()">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Fuel Usage (Liters)</label>
+                      <input type="number" step="0.01" class="form-control bg-light" id="emptyTripFuelUsage" placeholder="Fuel used" readonly>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -775,10 +703,6 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit LR Record</h5>
-          <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#autoGenerationSettingsModal">
-            <i class="fas fa-cog"></i>
-          </button>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -788,6 +712,19 @@
                 <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Basic LR Information</h5>
               </div>
               <div class="card-body">
+                <div class="row mb-3">
+                  <div class="col-md-12">
+                    <span class="fw-bold me-3">Ownership Type:</span>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="editVehicleTypeRadio" id="editOwnVehicleRadio" value="own" checked onchange="toggleEditVehicleInput(this.value === 'market')">
+                      <label class="form-check-label" for="editOwnVehicleRadio">Own Fleet</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" name="editVehicleTypeRadio" id="editMarketVehicleRadio" value="market" onchange="toggleEditVehicleInput(this.value === 'market')">
+                      <label class="form-check-label" for="editMarketVehicleRadio">Market Vehicle</label>
+                    </div>
+                  </div>
+                </div>
                 <div class="row mb-3">
                   <div class="col-md-3">
                     <label for="editLrDate" class="form-label">Date*</label>
@@ -807,38 +744,47 @@
                     </select>
                   </div>
                   <div class="col-md-3">
-                    <label for="editLrNumber" class="form-label">LR Number*</label>
-                    <input type="text" class="form-control" id="editLrNumber" required>
+                    <label for="editLrNumber" class="form-label">LR Number</label>
+                    <input type="text" class="form-control" id="editLrNumber" />
+                    <small class="text-muted">Leave blank to auto-generate</small>
                   </div>
                   <div class="col-md-6 vehicle-input-container">
-                    <div class="form-check form-switch mb-2 pt-1">
-                      <input class="form-check-input" type="checkbox" role="switch" id="editVehicleTypeToggle"
-                        onchange="toggleEditVehicleInput(this.checked)">
-                      <label class="form-check-label" for="editVehicleTypeToggle">Use Market Vehicle</label>
-                    </div>
-                    <div id="editOwnVehicleFields">
-                      <label for="editTruckNumber" class="form-label">Own Truck Number</label>
-                      <div class="input-group">
+                      <label id="editTruckLabel" for="editTruckNumber" class="form-label">Truck Number</label>
+                      <div id="editOwnVehicleFields" class="input-group">
                         <select id="editTruckNumber" class="form-select" required></select>
-                        <button class="btn btn-outline-success" type="button" id="editQuickAddVehicleBtn"
-                          title="Add New Vehicle"><i class="fas fa-plus"></i></button>
+                        <button class="btn btn-outline-success" type="button" id="editQuickAddVehicleBtn" title="Add New Vehicle"><i class="fas fa-plus"></i></button>
                       </div>
-                    </div>
-                    <div id="editMarketVehicleFields" style="display: none;">
-                      <label for="editMarketTruckNumber" class="form-label">Market Truck Number</label>
-                      <input type="text" id="editMarketTruckNumber" class="form-control">
-                    </div>
+                      <div id="editMarketVehicleFields" style="display:none;" class="row g-2">
+                        <div class="col-6">
+                          <input type="text" id="editMarketTruckNumber" class="form-control" placeholder="Enter Truck No.">
+                        </div>
+                        <div class="col-6">
+                          <select id="editTransporterSelect" class="form-select"></select>
+                        </div>
+                      </div>
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <div class="col-md-3"><label for="editInvoiceNumberInput" class="form-label">Invoice No.</label><input
-                      type="text" class="form-control" id="editInvoiceNumberInput"></div>
-                  <div class="col-md-3"><label for="editShipmentNo" class="form-label">Shipment No.</label><input
-                      type="text" class="form-control" id="editShipmentNo"></div>
-                  <div class="col-md-3"><label for="editDeliveryNo" class="form-label">Delivery No.</label><input
-                      type="text" class="form-control" id="editDeliveryNo"></div>
-                  <div class="col-md-3"><label for="editOrderNo" class="form-label">Order No.</label><input type="text"
-                      class="form-control" id="editOrderNo"></div>
+                  <div class="col-md-3">
+                    <label for="editInvoiceNumberInput" class="form-label">Invoice No.</label>
+                    <input type="text" class="form-control" id="editInvoiceNumberInput">
+                    <small class="text-muted">Leave blank to auto-generate</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="editShipmentNo" class="form-label">Shipment No.</label>
+                    <input type="text" class="form-control" id="editShipmentNo">
+                    <small class="text-muted">Leave blank to auto-generate</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="editDeliveryNo" class="form-label">Delivery No.</label>
+                    <input type="text" class="form-control" id="editDeliveryNo">
+                    <small class="text-muted">Leave blank to auto-generate</small>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="editOrderNo" class="form-label">Order No.</label>
+                    <input type="text" class="form-control" id="editOrderNo">
+                    <small class="text-muted">Leave blank to auto-generate</small>
+                  </div>
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-3">
@@ -851,36 +797,22 @@
                   </div>
                 </div>
                 <div class="row">
-                  <div class="col-md-4 mb-3">
-                    <div id="editOwnDriverField">
+                  <div class="col-md-6 mb-3">
                       <label for="editDriverSelect" class="form-label">Driver</label>
-                      <div class="input-group">
+                      <div id="editOwnDriverField" class="input-group">
                         <select id="editDriverSelect" class="form-select"></select>
-                        <button class="btn btn-outline-success" type="button" id="editQuickAddDriverBtn"
-                          title="Add New Driver"><i class="fas fa-plus"></i></button>
+                        <button class="btn btn-outline-success" type="button" id="editQuickAddDriverBtn" title="Add New Driver"><i class="fas fa-plus"></i></button>
                       </div>
-                    </div>
-                    <div id="editMarketDriverField" style="display: none;">
-                      <label for="editMarketDriverName" class="form-label">Driver Name</label>
-                      <input type="text" id="editMarketDriverName" class="form-control">
-                    </div>
+                      <div id="editMarketDriverField" style="display:none;">
+                        <input type="text" id="editMarketDriverName" class="form-control" placeholder="Enter Driver Name / Contact">
+                      </div>
                   </div>
-                  <div class="col-md-4 mb-3">
+                  <div class="col-md-6 mb-3">
                     <label for="editClientId" class="form-label">Billed To (Client)*</label>
                     <div class="input-group">
                       <select id="editClientId" class="form-select" required></select>
                       <button class="btn btn-outline-success" type="button" id="editQuickAddClientBtn"
                         title="Add New Client"><i class="fas fa-plus"></i></button>
-                    </div>
-                  </div>
-                  <div class="col-md-4 mb-3">
-                    <div id="editTransporterField" style="display: block;">
-                      <label for="editTransporterSelect" class="form-label">Transporter</label>
-                      <div class="input-group">
-                        <select id="editTransporterSelect" class="form-select"></select>
-                        <button class="btn btn-outline-success" type="button" id="editQuickAddTransporterBtn"
-                          title="Add New Transporter"><i class="fas fa-plus"></i></button>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -909,15 +841,15 @@
               </div>
               <div class="card-body">
                 <div class="row">
-                  <div class="col-md-6">
-                    <label for="editConsigneeId" class="form-label">Consignee*</label>
-                    <div class="input-group">
-                      <select id="editConsigneeId" class="form-select" required></select>
-                      <button class="btn btn-outline-success" type="button" id="editQuickAddConsigneeBtn"
-                        title="Add New Consignee"><i class="fas fa-plus"></i></button>
-                    </div>
+                  <div class="col-md-4">
+                    <label for="editConsignorName" class="form-label">Consignor</label>
+                    <input type="text" id="editConsignorName" class="form-control">
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-md-4">
+                    <label for="editConsigneeName" class="form-label">Consignee</label>
+                    <input type="text" id="editConsigneeName" class="form-control">
+                  </div>
+                  <div class="col-md-4">
                     <label for="editItem" class="form-label">Item</label>
                     <input type="text" class="form-control" id="editItem" placeholder="e.g., Cement Bags, Steel Bars">
                   </div>
@@ -1147,21 +1079,13 @@
 
   <script src="navbar-loader.js"></script>
   <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "transport-dashboard-ad69a",
-      storageBucket: "transport-dashboard-ad69a.appspot.com",
-      messagingSenderId: "526889676196",
-      appId: "1:526889676196:web:66032c80a4aede690ae531",
-      measurementId: "G-7F9R7HJYDH"
-    };
-
-    // Initialize Firebase
+    // Initialize Firebase securely using window.FIREBASE_CONFIG from evm.js
     if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+      if (!window.FIREBASE_CONFIG) {
+        console.error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
+      } else {
+        firebase.initializeApp(window.FIREBASE_CONFIG);
+      }
     }
     const db = firebase.database();
     const auth = firebase.auth();
@@ -1169,8 +1093,21 @@
     window.db = db;
     window.auth = auth;
   </script>
+  <script src="auth-manager.js"></script>
   <script src="shared-invoice.js"></script>
-  <script src="lr-report.js?v=newlayout5"></script>
+  <script src="money-flow-utils.js"></script>
+  <script src="lr-report.js?v=autogen-remove-1"></script>
+
+  <script>
+    // RBAC Page Guard
+    document.addEventListener('DOMContentLoaded', async function() {
+      if (window.AuthManager) {
+        await window.AuthManager.enforcePageAccess('lr-report');
+        window.AuthManager.applyUIPermissions();
+      }
+    });
+  </script>
+
 </body>
 
 </html>

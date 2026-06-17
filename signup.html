@@ -1,134 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
-<!-- 🔐 Secure .env Configuration Loader -->
-    <!-- 🔐 Secure Configuration - Loaded from .env -->
-    <script>
-        // Configuration loaded from .env file (server-side)
-        (function() {
-            'use strict';
-            
-            // Firebase configuration from .env
-            if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-            }
-            
-            // Cloudinary configuration from .env
-            if (!window.CLOUDINARY_CONFIG) {
-                window.CLOUDINARY_CONFIG = {
-                    cloudName: "doqapn15f",
-                    uploadPreset: "vehicle-driver",
-                    presets: {
-                        vehicleDriver: "vehicle-driver",
-                        paymentBilling: "payment-billing",
-                        profilePic: "profile-pic",
-                        documents: "documents",
-                        receipts: "receipts",
-                        expenses: "expenses",
-                        tyres: "tyres",
-                        vehicles: "vehicles",
-                        drivers: "drivers",
-                        invoices: "invoices",
-                        lrReports: "lr-reports",
-                        tripExpenses: "trip-expenses"
-                    },
-                    folders: {
-                        vehicles: "transport/vehicles",
-                        drivers: "transport/drivers", 
-                        documents: "transport/documents",
-                        profiles: "transport/profiles",
-                        receipts: "transport/receipts",
-                        expenses: "transport/expenses",
-                        tyres: "transport/tyres",
-                        invoices: "transport/invoices",
-                        lrReports: "transport/lr-reports",
-                        tripExpenses: "transport/trip-expenses"
-                    },
-                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-                };
-            }
-            
-            // Environment configuration from .env
-            if (!window.ENVIRONMENT) {
-                window.ENVIRONMENT = {
-                    name: "production",
-                    debug: false,
-                    apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0",
-                    corsOrigin: "https://transvortex.online",
-                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
-                    apiRateLimit: 100
-                };
-            }
-            
-            // Security configuration from .env
-            if (!window.SECURITY_CONFIG) {
-                window.SECURITY_CONFIG = {
-                    sessionSecret: "transvortex-session-secret-2024",
-                    jwtSecret: "transvortex-jwt-secret-2024",
-                    encryptionKey: "transvortex-encryption-key-2024"
-                };
-            }
-            
-            // Optional API configurations from .env
-            if (!window.API_CONFIG) {
-                window.API_CONFIG = {
-                    email: {
-                        provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-                        from: "noreply@transvortex.online",
-                        fromName: "TransVortex Transport"
-                    },
-                    payment: {
-                        provider: "stripe",
-                        publicKey: "your-stripe-public-key-here"
-                    },
-                    sms: {
-                        provider: "twilio",
-                        accountSid: "your-twilio-account-sid-here",
-                        phoneNumber: "your-twilio-phone-number-here"
-                    },
-                    maps: {
-                        googleMapsApiKey: "your-google-maps-api-key-here",
-                        googlePlacesApiKey: "your-google-places-api-key-here"
-                    },
-                    analytics: {
-                        googleAnalyticsId: "GA-XXXXXXXXX",
-                        facebookPixelId: "your-facebook-pixel-id-here",
-                        hotjarId: "your-hotjar-id-here"
-                    }
-                };
-            }
-            
-            // Log successful loading (only in debug mode)
-            if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
-                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-                console.log('🌍 Environment:', window.ENVIRONMENT.name);
-                console.log('🔐 Security: Loaded');
-            }
-            
-            // Dispatch event when configuration is ready
-            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-                detail: {
-                    firebase: window.FIREBASE_CONFIG,
-                    cloudinary: window.CLOUDINARY_CONFIG,
-                    environment: window.ENVIRONMENT,
-                    security: window.SECURITY_CONFIG,
-                    apis: window.API_CONFIG
-                }
-            }));
-        })();
-    </script>
 
 
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up - Transport Dashboard</title>
+  <title>Request Portal Access - Transport Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     /* Color Variables */
@@ -463,22 +341,41 @@
           <img src="logo1.jpg" alt="TransVortex Logo">
         </div>
         <div class="auth-header">
-          <h1>Create an account</h1>
-          <p>Join us to get started with your 14-day free trial</p>
+          <h1>Request Portal Access</h1>
+          <p>Submit your details and we will provide credentials</p>
         </div>
         <div id="form-error" style="display:none;"></div>
+        <div id="form-success" style="display:none; background:rgba(46, 139, 87, 0.1); color: var(--primary-color); padding: 12px; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary-color); font-size: 0.95rem;"></div>
         <form id="signup-form">
+          <div class="form-group">
+            <input type="text" id="request-name" class="form-control" placeholder="Full Name" required>
+          </div>
+          <div class="error-message" id="request-name-error"></div>
+
           <div class="form-group">
             <input type="email" id="signup-email" class="form-control" placeholder="Email address" autocomplete="email" required>
           </div>
           <div class="error-message" id="signup-email-error"></div>
           
           <div class="form-group">
-            <input type="password" id="signup-password" class="form-control" placeholder="Create a password (min 6 chars)" autocomplete="new-password" required>
+            <input type="tel" id="request-phone" class="form-control" placeholder="Phone Number" required>
           </div>
-          <div class="error-message" id="signup-password-error"></div>
+          <div class="error-message" id="request-phone-error"></div>
+
+          <div class="form-group">
+            <input type="text" id="request-company" class="form-control" placeholder="Transport/Company Name" required>
+          </div>
+          <div class="error-message" id="request-company-error"></div>
+
+          <div class="form-group">
+            <input type="number" id="request-vehicles" class="form-control" placeholder="Number of Vehicles in Your Fleet" min="1" required>
+            <small style="color:#6c757d; font-size:0.8rem; margin-top:4px; display:block;">
+              💡 Starter (1–25 vehicles) ₹1,999/mo &nbsp;|&nbsp; Business (26–50) ₹3,999/mo &nbsp;|&nbsp; Enterprise (51–100) ₹6,999/mo &nbsp;|&nbsp; Ultimate (100+) ₹14,999/mo
+            </small>
+          </div>
+          <div class="error-message" id="request-vehicles-error"></div>
           
-          <button type="submit" class="btn btn-primary" id="signup-button">Sign Up</button>
+          <button type="submit" class="btn btn-primary" id="signup-button">Submit Request</button>
         </form>
 
         <div class="auth-footer">
@@ -489,8 +386,7 @@
   </div>
 
     <!-- Load secure configuration first -->
-  
-  
+
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -505,7 +401,8 @@
       getDatabase, 
       ref, 
       set,
-      update
+      update,
+      push
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     // Firebase configuration
@@ -513,42 +410,13 @@
     let firebaseConfig;
     
     try {
-      // Get Firebase configuration from secure EVM system
-      // Initialize Firebase with proper error handling
-    try {
         if (!window.FIREBASE_CONFIG) {
             throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
         }
-        
-        if (!window.FIREBASE_CONFIG.databaseURL) {
-            throw new Error('Firebase databaseURL not found in configuration.');
-        }
-        
-        if (!window.FIREBASE_CONFIG.projectId) {
-            throw new Error('Firebase projectId not found in configuration.');
-        }
-        
         firebaseConfig = window.FIREBASE_CONFIG;
-        
-        // Check if we're using fallback values
-        if (false) { // Condition is always false in the final logic, keeping as per original structure
-            
-        } else {
-            
-            
-            
-        }
     } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
-        
-        // Use fallback configuration to prevent complete failure
-        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig();
-        
-    }} catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = window.FIREBASE_CONFIG;
+        firebaseConfig = window.FIREBASE_CONFIG;
     }
 
     // Initialize Firebase
@@ -580,6 +448,22 @@
       }
     }
 
+    function saveSignupDraft() {
+      const fields = ['request-name', 'signup-email', 'request-phone', 'request-company', 'request-vehicles'];
+      const draft = {};
+      fields.forEach(id => { draft[id] = document.getElementById(id).value; });
+      localStorage.setItem('tv_signup_draft', JSON.stringify(draft));
+    }
+
+    function restoreSignupDraft() {
+      const raw = localStorage.getItem('tv_signup_draft');
+      if (!raw) return;
+      try {
+        const draft = JSON.parse(raw);
+        Object.keys(draft).forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = draft[id]; });
+      } catch(e) {}
+    }
+
     // Validate email format
     function validateEmail() {
       const email = document.getElementById("signup-email").value.trim();
@@ -599,137 +483,92 @@
       return true;
     }
     
-    // Validate password strength
-    function validatePassword() {
-      const password = document.getElementById("signup-password").value;
-      
-      if (!password) {
-        showError('signup-password', 'Password is required');
+    // Validate required field
+    function validateField(fieldId, errorMsg) {
+      const val = document.getElementById(fieldId).value.trim();
+      if (!val) {
+        showError(fieldId, errorMsg);
         return false;
       }
-      
-      if (password.length < 6) {
-        showError('signup-password', 'Password must be at least 6 characters');
-        return false;
-      }
-      
-      clearError('signup-password');
+      clearError(fieldId);
       return true;
     }
     
     // Handle form submission
     window.signUp = async function() {
+      const name = document.getElementById("request-name").value.trim();
       const email = document.getElementById("signup-email").value.trim();
-      const password = document.getElementById("signup-password").value;
+      const phoneRaw = document.getElementById("request-phone").value.trim();
+      const company = document.getElementById("request-company").value.trim();
+      const vehicleCount = parseInt(document.getElementById("request-vehicles").value.trim()) || 0;
       const signupButton = document.getElementById("signup-button");
       const errorContainer = document.getElementById('form-error');
+      const successContainer = document.getElementById('form-success');
       
       // Validate form
+      const isNameValid = validateField('request-name', 'Name is required');
       const isEmailValid = validateEmail();
-      const isPasswordValid = validatePassword();
+      const isPhoneValid = validateField('request-phone', 'Phone number is required (min 6 digits)');
+      const isCompanyValid = validateField('request-company', 'Company name is required');
+      const isVehiclesValid = validateField('request-vehicles', 'Number of vehicles is required');
       
-      if (!isEmailValid || !isPasswordValid) {
+      // Extra phone length check (phone is used as password, must be >= 6 chars)
+      const phone = document.getElementById("request-phone").value.trim();
+      if (phone.length < 6) {
+        showError('request-phone', 'Phone number must be at least 6 digits (used as your login password)');
+        return;
+      }
+      
+      if (!isNameValid || !isEmailValid || !isPhoneValid || !isCompanyValid || !isVehiclesValid) {
         return;
       }
       
       // Show loading state
       const originalButtonText = signupButton.innerHTML;
       signupButton.disabled = true;
-      signupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+      signupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
       
       try {
-        // Create user account
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        
-        // Update user profile
-        await updateProfile(user, {
-          displayName: email.split('@')[0],
-          photoURL: ''
-        });
-
-        // Create the 14-day free trial immediately on signup.
-        const trialStart = new Date();
-        const trialEnd = new Date();
-        trialEnd.setDate(trialStart.getDate() + 14);
-
-        const subscriptionData = {
-          status: 'trial',
-          // Add all required fields to satisfy the database validation rules.
-          planId: 'starter',
-          planName: 'starter', 
-          vehicleLimit: 50,    
-          price: 699,          
-          trialStart: trialStart.toISOString(),
-          trialEnd: trialEnd.toISOString(),
-          createdAt: trialStart.toISOString(),
-          subscribedAt: new Date().getTime() 
-        };
-
-        // Save user data to database
-        const userData = {
+        // Save to Realtime Database demoRequests node
+        const requestData = {
+          name: name,
           email: email,
-          accountType: 'core',
-          createdAt: new Date().toISOString(),
-          status: 'active',
-          emailVerified: false,
-          subscription: subscriptionData 
+          phone: phoneRaw,
+          company: company,
+          vehicleCount: vehicleCount,
+          status: 'pending',
+          timestamp: new Date().toISOString()
         };
         
-        // Save to Realtime Database
-        await set(ref(db, `users/${user.uid}`), userData);
+        await push(ref(db, 'demoRequests'), requestData);
         
-        // Send email verification
-        await sendEmailVerification(user);
+        // Show success message
+        localStorage.removeItem('tv_signup_draft');
+        successContainer.textContent = 'Request submitted successfully! We will contact you with your credentials shortly.';
+        successContainer.style.display = 'block';
+        errorContainer.style.display = 'none';
         
-        // Store email in session for next steps
-        sessionStorage.setItem('coreEmail', email);
-        sessionStorage.setItem('corePassword', password);
-        
-        // Redirect directly to plan selection (NEW FLOW)
-        window.location.href = 'plan-selection.html'; 
+        // Clear form
+        document.getElementById('signup-form').reset();
         
       } catch (error) {
-        console.error('Signup error:', error);
+        console.error('Request error:', error);
         
-        // Handle specific error cases
-        let errorMessage = 'An error occurred during signup. Please try again.';
-        
-        switch(error.code) {
-          case 'auth/email-already-in-use':
-            errorMessage = 'This email is already registered. Please use a different email or sign in.';
-            showError('signup-email', errorMessage);
-            break;
-          case 'auth/invalid-email':
-            errorMessage = 'Please enter a valid email address.';
-            showError('signup-email', errorMessage);
-            break;
-          case 'auth/weak-password':
-            errorMessage = 'Password should be at least 6 characters.';
-            showError('signup-password', errorMessage);
-            break;
-          case 'auth/network-request-failed':
-            errorMessage = 'Network error. Please check your internet connection.';
-            break;
-          default:
-            errorMessage = error.message || 'An unexpected error occurred.';
+        let errorMessage = 'An error occurred submitting your request. Please try again.';
+        if (error.code === 'auth/network-request-failed') {
+          errorMessage = 'Network error. Please check your internet connection.';
         }
         
-        // Show error to user
         if (errorContainer) {
           errorContainer.textContent = errorMessage;
           errorContainer.style.display = 'block';
-          
-          // Auto-hide error after 5 seconds
-          setTimeout(() => {
-            errorContainer.style.display = 'none';
-          }, 5000);
+          successContainer.style.display = 'none';
+          setTimeout(() => { errorContainer.style.display = 'none'; }, 5000);
         } else {
           alert(errorMessage);
         }
         
       } finally {
-        // Reset button state
         signupButton.disabled = false;
         signupButton.innerHTML = originalButtonText;
       }
@@ -739,15 +578,17 @@
 
     // Add input event listeners for real-time validation
     document.addEventListener('DOMContentLoaded', function() {
+      restoreSignupDraft();
+      document.getElementById('signup-form').addEventListener('input', saveSignupDraft);
+
       // Email validation
       document.getElementById("signup-email").addEventListener('input', () => {
         validateEmail();
       });
       
-      // Password validation
-      document.getElementById("signup-password").addEventListener('input', () => {
-        validatePassword();
-      });
+      document.getElementById("request-name").addEventListener('input', () => { validateField('request-name', 'Name is required'); });
+      document.getElementById("request-phone").addEventListener('input', () => { validateField('request-phone', 'Phone is required'); });
+      document.getElementById("request-company").addEventListener('input', () => { validateField('request-company', 'Company is required'); });
       
       // Form submission
       document.getElementById('signup-form').addEventListener('submit', function(e) {

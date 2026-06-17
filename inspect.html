@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TransVortex Diagnostics</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="evm.js"></script>
+  <script src="secure-api-loader.js"></script>
+  <script src="auth-manager.js"></script>
+</head>
+<body class="bg-light p-4">
+  <div class="container bg-white p-4 rounded shadow-sm">
+    <h2>🔐 TransVortex Diagnostics Tool</h2>
+    <hr>
+    
+    <div class="row">
+      <div class="col-md-6">
+        <h4>Auth & Context Information</h4>
+        <table class="table table-bordered">
+          <tr><th>Logged In User UID</th><td id="uid">Loading...</td></tr>
+          <tr><th>Email</th><td id="email">Loading...</td></tr>
+          <tr><th>Resolved Role</th><td id="role">Loading...</td></tr>
+          <tr><th>Resolved coreAccountId (AuthManager)</th><td id="coreAccountId">Loading...</td></tr>
+          <tr><th>Is Sub-User?</th><td id="isSubUser">Loading...</td></tr>
+          <tr><th>Session Storage Context</th><td id="sessionStorageContext">Loading...</td></tr>
+        </table>
+      </div>
+      <div class="col-md-6">
+        <h4>Database Content Status</h4>
+        <div class="mb-3">
+          <h5>Pumps under Logged-in User UID (<span class="text-primary" id="uidLabel">...</span>)</h5>
+          <ul id="uidPumps" class="list-group">
+            <li class="list-group-item text-muted">Loading...</li>
+          </ul>
+        </div>
+        <div class="mb-3">
+          <h5>Pumps under resolved coreAccountId (<span class="text-success" id="coreLabel">...</span>)</h5>
+          <ul id="corePumps" class="list-group">
+            <li class="list-group-item text-muted">Loading...</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        document.body.innerHTML = '<div class="container mt-5"><div class="alert alert-danger">No user logged in. Please log in first at <a href="login.html">login.html</a></div></div>';
+        return;
+      }
+
+      document.getElementById('uid').textContent = user.uid;
+      document.getElementById('email').textContent = user.email;
+      document.getElementById('uidLabel').textContent = user.uid;
+
+      // Print session storage
+      const sessionCtx = sessionStorage.getItem('tv_user_context');
+      document.getElementById('sessionStorageContext').textContent = sessionCtx || 'None (null)';
+
+      try {
+        const ctx = await window.AuthManager.getCurrentUserContext();
+        if (ctx) {
+          document.getElementById('role').textContent = ctx.role;
+          document.getElementById('coreAccountId').textContent = ctx.coreAccountId;
+          document.getElementById('isSubUser').textContent = ctx.isSubUser ? 'Yes' : 'No';
+          document.getElementById('coreLabel').textContent = ctx.coreAccountId;
+
+          // Fetch pumps under resolved coreAccountId
+          db.ref(`users/${ctx.coreAccountId}/petrolPumps`).once('value', (snap) => {
+            const list = document.getElementById('corePumps');
+            list.innerHTML = '';
+            if (snap.exists()) {
+              snap.forEach(child => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item list-group-item-success d-flex justify-content-between align-items-center';
+                const p = child.val();
+                const name = p.name || p.pumpName || 'Unnamed Pump';
+                const place = p.place || p.location || 'No Place';
+                li.innerHTML = `<span><strong>${name}</strong> (${place})</span> <span class="badge bg-secondary">${child.key}</span>`;
+                list.appendChild(li);
+              });
+            } else {
+              list.innerHTML = '<li class="list-group-item text-danger">No pumps found!</li>';
+            }
+          });
+        } else {
+          document.getElementById('role').textContent = 'No Context';
+          document.getElementById('coreAccountId').textContent = 'No Context';
+          document.getElementById('isSubUser').textContent = 'No Context';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
+      // Fetch pumps under direct user UID
+      db.ref(`users/${user.uid}/petrolPumps`).once('value', (snap) => {
+        const list = document.getElementById('uidPumps');
+        list.innerHTML = '';
+        if (snap.exists()) {
+          snap.forEach(child => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item list-group-item-primary d-flex justify-content-between align-items-center';
+            const p = child.val();
+            const name = p.name || p.pumpName || 'Unnamed Pump';
+            const place = p.place || p.location || 'No Place';
+            li.innerHTML = `<span><strong>${name}</strong> (${place})</span> <span class="badge bg-secondary">${child.key}</span>`;
+            list.appendChild(li);
+          });
+        } else {
+          list.innerHTML = '<li class="list-group-item text-danger">No pumps found!</li>';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

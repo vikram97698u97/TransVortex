@@ -1,128 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
-<!-- 🔐 Secure .env Configuration Loader -->
-    <!-- 🔐 Secure Configuration - Loaded from .env -->
-    <script>
-        // Configuration loaded from .env file (server-side)
-        (function() {
-            'use strict';
-            
-            // Firebase configuration from .env
-            if (!window.FIREBASE_CONFIG) {
-                apiKey: window.SECURE_FIREBASE_CONFIG?.apiKey || "";
-            }
-            
-            // Cloudinary configuration from .env
-            if (!window.CLOUDINARY_CONFIG) {
-                window.CLOUDINARY_CONFIG = {
-                    cloudName: "doqapn15f",
-                    uploadPreset: "vehicle-driver",
-                    presets: {
-                        vehicleDriver: "vehicle-driver",
-                        paymentBilling: "payment-billing",
-                        profilePic: "profile-pic",
-                        documents: "documents",
-                        receipts: "receipts",
-                        expenses: "expenses",
-                        tyres: "tyres",
-                        vehicles: "vehicles",
-                        drivers: "drivers",
-                        invoices: "invoices",
-                        lrReports: "lr-reports",
-                        tripExpenses: "trip-expenses"
-                    },
-                    folders: {
-                        vehicles: "transport/vehicles",
-                        drivers: "transport/drivers", 
-                        documents: "transport/documents",
-                        profiles: "transport/profiles",
-                        receipts: "transport/receipts",
-                        expenses: "transport/expenses",
-                        tyres: "transport/tyres",
-                        invoices: "transport/invoices",
-                        lrReports: "transport/lr-reports",
-                        tripExpenses: "transport/trip-expenses"
-                    },
-                    apiUrl: "https://api.cloudinary.com/v1_1/doqapn15f/image/upload",
-                    baseUrl: "https://res.cloudinary.com/doqapn15f/image/upload"
-                };
-            }
-            
-            // Environment configuration from .env
-            if (!window.ENVIRONMENT) {
-                window.ENVIRONMENT = {
-                    name: "production",
-                    debug: false,
-                    apiBaseUrl: "https://transvortex.online",
-                    version: "1.0.0",
-                    corsOrigin: "https://transvortex.online",
-                    allowedOrigins: "https://transvortex.online,http://localhost:3000",
-                    apiRateLimit: 100
-                };
-            }
-            
-            // Security configuration from .env
-            if (!window.SECURITY_CONFIG) {
-                window.SECURITY_CONFIG = {
-                    sessionSecret: "transvortex-session-secret-2024",
-                    jwtSecret: "transvortex-jwt-secret-2024",
-                    encryptionKey: "transvortex-encryption-key-2024"
-                };
-            }
-            
-            // Optional API configurations from .env
-            if (!window.API_CONFIG) {
-                window.API_CONFIG = {
-                    email: {
-                        provider: "sendgrid",
-                        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig(),
-                        from: "noreply@transvortex.online",
-                        fromName: "TransVortex Transport"
-                    },
-                    payment: {
-                        provider: "stripe",
-                        publicKey: "your-stripe-public-key-here"
-                    },
-                    sms: {
-                        provider: "twilio",
-                        accountSid: "your-twilio-account-sid-here",
-                        phoneNumber: "your-twilio-phone-number-here"
-                    },
-                    maps: {
-                        googleMapsApiKey: "your-google-maps-api-key-here",
-                        googlePlacesApiKey: "your-google-places-api-key-here"
-                    },
-                    analytics: {
-                        googleAnalyticsId: "GA-XXXXXXXXX",
-                        facebookPixelId: "your-facebook-pixel-id-here",
-                        hotjarId: "your-hotjar-id-here"
-                    }
-                };
-            }
-            
-            // Log successful loading (only in debug mode)
-            if (window.ENVIRONMENT.debug) {
-                console.log('✅ Secure configuration loaded from .env');
-                console.log('🔥 Firebase:', window.FIREBASE_CONFIG.projectId);
-                console.log('☁️ Cloudinary:', window.CLOUDINARY_CONFIG.cloudName);
-                console.log('🌍 Environment:', window.ENVIRONMENT.name);
-                console.log('🔐 Security: Loaded');
-            }
-            
-            // Dispatch event when configuration is ready
-            window.dispatchEvent(new CustomEvent('envConfigLoaded', {
-                detail: {
-                    firebase: window.FIREBASE_CONFIG,
-                    cloudinary: window.CLOUDINARY_CONFIG,
-                    environment: window.ENVIRONMENT,
-                    security: window.SECURITY_CONFIG,
-                    apis: window.API_CONFIG
-                }
-            }));
-        })();
-    </script>
 
 
 
@@ -133,8 +11,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <!-- Load secure configuration first -->
-  
-  
+
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
@@ -318,6 +195,7 @@
     <!-- 🔐 Configuration Loading -->
     <script src="evm.js"></script>
     <script src="secure-api-loader.js"></script>
+    <script src="money-flow-utils.js"></script>
 </head>
 <body>
   <div id="navbar-placeholder"></div>
@@ -519,6 +397,12 @@
                         <input type="number" step="0.01" class="form-control form-control-sm focus:ring-2 focus:ring-indigo-500" id="clientPayAmount" required>
                       </div>
                       <div class="mb-2">
+                        <label class="form-label small text-slate-600">Received In *</label>
+                        <select class="form-select form-select-sm focus:ring-2 focus:ring-indigo-500" id="clientPaymentAccountId" required>
+                          <option value="">Select Account</option>
+                        </select>
+                      </div>
+                      <div class="mb-2">
                         <label class="form-label small text-slate-600">Date</label>
                         <input type="date" class="form-control form-control-sm focus:ring-2 focus:ring-indigo-500" id="clientPayDate" required>
                       </div>
@@ -593,42 +477,13 @@
     let firebaseConfig;
     
     try {
-      // Get Firebase configuration from secure EVM system
-      // Initialize Firebase with proper error handling
-    try {
         if (!window.FIREBASE_CONFIG) {
             throw new Error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
         }
-        
-        if (!window.FIREBASE_CONFIG.databaseURL) {
-            throw new Error('Firebase databaseURL not found in configuration.');
-        }
-        
-        if (!window.FIREBASE_CONFIG.projectId) {
-            throw new Error('Firebase projectId not found in configuration.');
-        }
-        
         firebaseConfig = window.FIREBASE_CONFIG;
-        
-        // Check if we're using fallback values
-        if (false) { // Condition is always false in the final logic, keeping as per original structure
-            
-        } else {
-            
-            
-            
-        }
     } catch (error) {
         console.error('❌ Failed to load Firebase configuration:', error);
-        
-        // Use fallback configuration to prevent complete failure
-        window.SECURE_FIREBASE_CONFIG || await window.SECURE_CONFIG_LOADER.loadConfig();
-        
-    }} catch (error) {
-      console.error('❌ Failed to load Firebase configuration:', error);
-      
-      // Use fallback configuration to prevent complete failure
-      firebaseConfig = window.FIREBASE_CONFIG;
+        firebaseConfig = window.FIREBASE_CONFIG;
     }
 
   // Load Invoices for Client (kept but not used in the new UI list style)
@@ -669,6 +524,11 @@
             coreAccountId = userData.coreAccountId || user.uid;
           } else {
             coreAccountId = user.uid; // Fallback
+          }
+
+          if (window.MoneyFlow) {
+              window.MoneyFlow.coreAccountId = coreAccountId;
+              window.MoneyFlow.recordedBy = user.displayName || user.email || 'System';
           }
 
           // Initialize DataTables only after coreAccountId is known
@@ -857,7 +717,7 @@
       const dataRoot = coreAccountId;
       // Sum all payments for this client
       let totalPaid = 0;
-      const paymentsSnap = await get(query(ref(db, 'payments'), orderByChild('clientId'), equalTo(clientId)));
+      const paymentsSnap = await get(query(ref(db, `users/${coreAccountId}/payments`), orderByChild('clientId'), equalTo(clientId)));
       if (paymentsSnap.exists()) {
         paymentsSnap.forEach(c => { totalPaid += c.val()?.amount || 0; });
       }
@@ -905,9 +765,22 @@
       rebuildClientTableOnce();
     }
 
+    // Refresh details for active client drawer in real-time
+    async function refreshActiveClientDetails() {
+      if (currentClientId) {
+        await Promise.all([
+          renderClientSummaryBar(currentClientId),
+          renderClientLRTable(currentClientId),
+          renderClientInvoicesTable(currentClientId),
+          renderClientPaymentsTable(currentClientId)
+        ]);
+      }
+    }
+
     // Load client payments into the DataTable
     function loadClientPayments() {
-      const paymentsRef = ref(db, 'payments');
+      if (!coreAccountId) return;
+      const paymentsRef = ref(db, `users/${coreAccountId}/payments`);
       onValue(paymentsRef, (snapshot) => {
         // rebuild cache per client
         allClientPayments = {};
@@ -924,6 +797,7 @@
           });
         }
         rebuildClientTableOnce();
+        refreshActiveClientDetails();
       });
     }
 
@@ -1117,6 +991,26 @@
     window.viewClientDetails = async (clientId) => {
       currentClientId = clientId;
       
+      // Populate account select dropdown
+      const select = document.getElementById('clientPaymentAccountId');
+      if (select) {
+        select.innerHTML = '<option value="">Select Account</option>';
+        if (window.MoneyFlow) {
+          try {
+            const accounts = await window.MoneyFlow.getAccounts();
+            const sorted = Object.entries(accounts).sort((a,b) => a[1].name.localeCompare(b[1].name));
+            sorted.forEach(([id, acc]) => {
+              const opt = document.createElement('option');
+              opt.value = id;
+              opt.textContent = `${acc.name} (${acc.type.toUpperCase()})`;
+              select.appendChild(opt);
+            });
+          } catch(e) {
+            console.error('[MoneyFlow] Failed to load accounts in client details:', e);
+          }
+        }
+      }
+      
       const dataRoot = coreAccountId || currentUser.uid;
       const clientRef = ref(db, `users/${dataRoot}/clients/${clientId}`); 
       const clientSnap = await get(clientRef);
@@ -1148,7 +1042,7 @@
       const lrsQuery = query(ref(db, `users/${dataRoot}/lrReports`), orderByChild('clientId'), equalTo(clientId));
       // ********************************************
 
-      const paymentsQuery = query(ref(db, 'payments'), orderByChild('clientId'), equalTo(clientId));
+      const paymentsQuery = query(ref(db, `users/${coreAccountId}/payments`), orderByChild('clientId'), equalTo(clientId));
       
       const [invoicesSnap, lrsSnap, paymentsSnap] = await Promise.all([
         get(invoicesQuery),
@@ -1362,7 +1256,7 @@
       const tbody = document.querySelector('#clientPaymentsTable tbody');
       if (!tbody) return;
       tbody.innerHTML = '';
-      const paymentsQuery = query(ref(db, 'payments'), orderByChild('clientId'), equalTo(clientId));
+      const paymentsQuery = query(ref(db, `users/${coreAccountId}/payments`), orderByChild('clientId'), equalTo(clientId));
       const snap = await get(paymentsQuery);
       const rows = [];
       if (snap.exists()) {
@@ -1376,8 +1270,8 @@
               <td class="text-end">₹${(p.amount || 0).toFixed(2)}</td>
               <td>${p.notes || ''}</td>
               <td class="text-end">
-                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editClientSidePayment('${p.id}')"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteClientSidePayment('${p.id}')"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editClientSidePayment('${p.id}')" data-permission="edit_records"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteClientSidePayment('${p.id}')" data-permission="delete_records"><i class="fas fa-trash"></i></button>
               </td>
             </tr>`);
         });
@@ -1418,14 +1312,42 @@
           const clientRef = ref(db, `users/${coreAccountId}/clients/${currentClientId}`);
           const clientSnap = await get(clientRef);
           const clientName = clientSnap.val()?.clientName || 'Client';
+          const paymentAccountId = document.getElementById('clientPaymentAccountId').value;
+          if (!paymentAccountId) { alert('Please select a payment account'); submitBtn.disabled = false; return; }
+
           if (currentEditingPaymentId) {
             // Update existing payment
-            const pRef = ref(db, `payments/${currentEditingPaymentId}`);
-            await update(pRef, { amount, date, notes, companyName: clientName });
+            const pRef = ref(db, `users/${coreAccountId}/payments/${currentEditingPaymentId}`);
+            await update(pRef, { amount, date, notes, companyName: clientName, paymentAccountId });
+            
+            if (window.MoneyFlow) {
+              await window.MoneyFlow.recordPayment({
+                refId: 'client_pay_' + currentEditingPaymentId,
+                category: 'Client Payment',
+                amount: amount,
+                type: 'credit',
+                accountId: paymentAccountId,
+                note: `Client Payment from: ${clientName} (${notes || ''})`,
+                date: date
+              });
+            }
           } else {
             // Create new payment
-            const paymentRef = push(ref(db, `payments`));
-            await set(paymentRef, { id: paymentRef.key, clientId: currentClientId, userId: currentUser.uid, companyName: clientName, amount, date, notes, status: 'completed', createdAt: new Date().toISOString() });
+            const paymentRef = push(ref(db, `users/${coreAccountId}/payments`));
+            const paymentId = paymentRef.key;
+            await set(paymentRef, { id: paymentId, clientId: currentClientId, userId: currentUser.uid, companyName: clientName, amount, date, notes, status: 'completed', createdAt: new Date().toISOString(), paymentAccountId });
+            
+            if (window.MoneyFlow) {
+              await window.MoneyFlow.recordPayment({
+                refId: 'client_pay_' + paymentId,
+                category: 'Client Payment',
+                amount: amount,
+                type: 'credit',
+                accountId: paymentAccountId,
+                note: `Client Payment from: ${clientName} (${notes || ''})`,
+                date: date
+              });
+            }
           }
           
           await updateClientLRStatus(currentClientId); // Recalculate LR status globally
@@ -1448,13 +1370,16 @@
 
     // Edit/Delete handlers for client-detail payments
     window.editClientSidePayment = async (paymentId) => {
-      if (!currentClientId) return;
-      const pSnap = await get(ref(db, `payments/${paymentId}`));
+      if (!currentClientId || !coreAccountId) return;
+      const pSnap = await get(ref(db, `users/${coreAccountId}/payments/${paymentId}`));
       if (!pSnap.exists()) return alert('Payment not found');
       const p = pSnap.val();
       document.getElementById('clientPayAmount').value = p.amount || 0;
       document.getElementById('clientPayDate').value = p.date || '';
       document.getElementById('clientPayNotes').value = p.notes || '';
+      if (document.getElementById('clientPaymentAccountId')) {
+        document.getElementById('clientPaymentAccountId').value = p.paymentAccountId || '';
+      }
       currentEditingPaymentId = paymentId;
       const form = document.getElementById('clientSidePaymentForm');
       if (form) {
@@ -1464,9 +1389,12 @@
     };
 
     window.deleteClientSidePayment = async (paymentId) => {
-      if (!currentClientId) return;
+      if (!currentClientId || !coreAccountId) return;
       if (!confirm('Delete this payment?')) return;
-      await remove(ref(db, `payments/${paymentId}`));
+      await remove(ref(db, `users/${coreAccountId}/payments/${paymentId}`));
+      if (window.MoneyFlow) {
+        await window.MoneyFlow.deletePayment('client_pay_' + paymentId);
+      }
       await updateClientLRStatus(currentClientId);
       await Promise.all([
         renderClientSummaryBar(currentClientId),
