@@ -77,15 +77,6 @@ jobs:
           exit 1
         fi
       
-    - name: Commit generated evm.js
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add evm.js
-        git diff --staged --quiet || git commit -m "Auto-update evm.js from GitHub Secrets [skip ci]"
-        
-    - name: Push changes
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ github.ref }}
+# Note: We do not commit or push the generated evm.js back to the repository.
+# The hosting provider (e.g. Netlify) should generate evm.js during deployment
+# or load it dynamically to prevent exposing secrets in the public repository.

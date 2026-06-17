@@ -1,0 +1,42 @@
+# Gitleaks Configuration (.gitleaks.toml)
+# Defines rules for detecting secrets and patterns that should be ignored.
+
+[allowlist]
+description = "Global allowlist of files to ignore during scans"
+files = [
+    ".gitleaks.toml",
+    ".env.example",
+    "README.md",
+    "walkthrough.md",
+    "SECURITY_REPORT.md",
+    "implementation_plan.md"
+]
+paths = [
+    "node_modules",
+    "dist",
+    "build"
+]
+
+[[rules]]
+description = "Firebase API Key"
+id = "firebase-api-key"
+regex = '''AIza[0-9A-Za-z-_]{35}'''
+tags = ["key", "firebase"]
+
+[[rules]]
+description = "Generic API Key"
+id = "generic-api-key"
+regex = '''(?i)(?:key|api|secret|token|password)\s*[:=]\s*["'][0-9A-Za-z-_]{16,}["']'''
+tags = ["key", "generic"]
+
+[[rules]]
+description = "Google Maps API Key"
+id = "google-maps-api-key"
+regex = '''AIzaSy[0-9A-Za-z-_]{33}'''
+tags = ["key", "google-maps"]
+
+[[rules]]
+description = "GitHub Personal Access Token"
+id = "github-pat"
+regex = '''ghp_[0-9A-Za-z]{36}'''
+tags = ["key", "github"]

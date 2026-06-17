@@ -32,18 +32,9 @@
                 console.warn('⚠️ Config endpoint not available');
             }
             
-            // Strategy 3: Fallback to hardcoded config for development
-            console.warn('⚠️ Using fallback configuration - ensure evm.js is loaded properly');
-            return {
-                apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-                authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-                databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-                projectId: "transport-dashboard-ad69a",
-                storageBucket: "transport-dashboard-ad69a.appspot.com",
-                messagingSenderId: "526889676196",
-                appId: "1:526889676196:web:66032c80a4aede690ae531",
-                measurementId: "G-7F9R7HJYDH"
-            };
+            // Strategy 3: Fallback warning for development
+            console.warn('⚠️ No fallback configuration available - ensure evm.js is generated or configuration server is running');
+            return null;
             
         } catch (error) {
             console.error('❌ Failed to load secure configuration:', error);

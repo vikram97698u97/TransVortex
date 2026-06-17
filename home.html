@@ -851,21 +851,13 @@
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   
   <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-      authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-      databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "transport-dashboard-ad69a",
-      storageBucket: "transport-dashboard-ad69a.appspot.com",
-      messagingSenderId: "526889676196",
-      appId: "1:526889676196:web:66032c80a4aede690ae531",
-      measurementId: "G-7F9R7HJYDH"
-    };
-
-    // Initialize Firebase
+    // Initialize Firebase securely using window.FIREBASE_CONFIG from evm.js
     if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+      if (!window.FIREBASE_CONFIG) {
+        console.error('Firebase configuration not loaded. Please ensure evm.js is loaded first.');
+      } else {
+        firebase.initializeApp(window.FIREBASE_CONFIG);
+      }
     }
 
     const db = firebase.database();
