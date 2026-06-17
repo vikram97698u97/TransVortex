@@ -123,9 +123,6 @@
             }));
         })();
     </script>
-
-
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile</title>
@@ -339,7 +336,6 @@
             border: 1px solid #f5c6cb;
         }
     </style>
-
     <!-- 🔥 Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -352,7 +348,6 @@
 </head>
 <body>
     <div id="navbar-placeholder"></div>
-
     <div class="main-content">
         <div class="profile-container">
             <div class="profile-card">
@@ -368,7 +363,6 @@
                 <div class="profile-name-display" id="displayName">Loading...</div>
                 <div class="profile-role-display" id="displayRole">Loading...</div>
             </div>
-
             <div class="profile-details view-mode" id="profileDetailsContainer">
                 <div class="detail-item">
                     <div class="detail-icon"><i class="fas fa-user"></i></div>
@@ -442,7 +436,6 @@
                         <input type="text" id="editPincode" placeholder="Enter pincode">
                     </div>
                 </div>
-
                 <!-- **NEW**: Bank Details Section -->
                 <div class="detail-item">
                     <div class="detail-icon"><i class="fas fa-university"></i></div>
@@ -481,7 +474,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="profile-actions">
                 <button class="btn btn-secondary" id="cancelEditBtn" style="display: none;">Cancel</button>
                 <button class="btn btn-primary" id="editProfileBtn">Edit Profile</button>
@@ -489,7 +481,6 @@
             </div>
             <div id="profileMessage" style="display: none;"></div>
         </div>
-
         <!-- Account Security Card -->
         <div class="profile-card" id="securityCard">
             <div class="profile-header" style="text-align: left; margin-bottom: 20px;">
@@ -498,7 +489,6 @@
                 </div>
                 <div class="profile-role-display">Update your email address or password</div>
             </div>
-
             <!-- Update Email Form -->
             <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
                 <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #333; display: flex; align-items: center; gap: 8px;">
@@ -514,7 +504,6 @@
                 </div>
                 <button class="btn btn-primary" id="updateEmailBtn" style="margin-left: 0;">Update Email</button>
             </div>
-
             <!-- Update Password Form -->
             <div>
                 <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #333; display: flex; align-items: center; gap: 8px;">
@@ -534,25 +523,20 @@
                 </div>
                 <button class="btn btn-primary" id="updatePasswordBtn" style="margin-left: 0;">Update Password</button>
             </div>
-
             <div id="securityMessage" style="margin-top: 20px; padding: 10px; border-radius: 8px; text-align: center; display: none;"></div>
         </div>
     </div>
 </div>
-
     <!-- **NEW**: Hidden file input for logo upload -->
     <input type="file" id="logoUploadInput" accept="image/*" style="display: none;">
-
       <!-- Load secure configuration first -->
   
   
-
   <script src="navbar-loader.js"></script>
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, updateProfile, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
         // Initialize Firebase directly from secure config
         let app;
         if (!getApps().length) {
@@ -562,7 +546,6 @@
         }
         const auth = getAuth(app);
         const db = getDatabase(app);
-
         const profileDetailsContainer = document.getElementById('profileDetailsContainer');
         const profileAvatarImg = document.getElementById('profileAvatar');
         const avatarInitial = document.getElementById('avatarInitial');
@@ -578,7 +561,6 @@
         const viewAddress = document.getElementById('viewAddress');
         const viewCity = document.getElementById('viewCity');
         const viewPincode = document.getElementById('viewPincode');
-
         // Edit elements (updated to new fields)
         const editOwnerName = document.getElementById('editOwnerName');
         const editTransportName = document.getElementById('editTransportName');
@@ -593,16 +575,12 @@
         const editAccountNumber = document.getElementById('editAccountNumber');
         const editAccountHolder = document.getElementById('editAccountHolder');
         const editIfscCode = document.getElementById('editIfscCode');
-
-
         const editProfileBtn = document.getElementById('editProfileBtn');
         const saveProfileBtn = document.getElementById('saveProfileBtn');
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const profileMessage = document.getElementById('profileMessage');
-
         let currentUser = null;
         let currentOwnerUid = null; // tracks the owner's UID (same as user.uid for owners, coreAccountId for sub-users)
-
         // Function to display messages
         function showMessage(message, type) {
             profileMessage.textContent = message;
@@ -613,7 +591,6 @@
                 profileMessage.style.display = 'none';
             }, 5000);
         }
-
         // Function to load user data
         async function loadUserProfile(user) {
             currentUser = user;
@@ -622,7 +599,6 @@
                  const userRef = ref(db, 'users/' + user.uid);
                  const snapshot = await get(userRef);
                  let userData = snapshot.val() || {};
-
                  // Auto-sync email in database if it doesn't match authenticated user's email
                  if (user.email && userData.email !== user.email) {
                      try {
@@ -632,12 +608,10 @@
                          console.error('Error syncing email to database:', err);
                      }
                  }
-
                  // Determine owner vs sub-user
                 const coreAccountId = userData.coreAccountId || user.uid;
                 const isOwner = !userData.coreAccountId || coreAccountId === user.uid;
                 currentOwnerUid = coreAccountId; // store for save operations
-
                 // Always load the OWNER's profile data for company details
                 // (team members share the same company profile as their owner)
                 let profileData = userData.profile || {};
@@ -647,7 +621,6 @@
                         profileData = ownerSnap.val();
                     }
                 }
-
                 // Map registration fields → profile display:
                 // Registration saves: name, phone, company
                 // Profile expects: ownerName, phoneNumber, transportName
@@ -661,7 +634,6 @@
                 const phoneNumber   = profileData.phoneNumber
                                       || profileData.phone
                                       || 'N/A';
-
                 // Avatar / Logo
                 if (profileData.companyLogoUrl) {
                     profileAvatarImg.src = profileData.companyLogoUrl;
@@ -674,10 +646,8 @@
                     document.getElementById('removeLogoBtn').style.display = 'none';
                     avatarInitial.style.display = 'flex';
                 }
-
                 displayName.textContent = ownerName;
                 displayRole.textContent = transportName === 'N/A' ? 'Transport User' : transportName;
-
                 // Display values
                 viewOwnerName.textContent    = ownerName;
                 viewTransportName.textContent = transportName;
@@ -691,7 +661,6 @@
                 document.getElementById('viewAccountNumber').textContent = profileData.accountNumber || 'N/A';
                 document.getElementById('viewAccountHolder').textContent = profileData.accountHolder || 'N/A';
                 document.getElementById('viewIfscCode').textContent      = profileData.ifscCode      || 'N/A';
-
                 // Populate edit fields
                 editOwnerName.value      = ownerName    !== 'N/A' ? ownerName    : '';
                 editTransportName.value  = transportName !== 'N/A' ? transportName : '';
@@ -706,7 +675,6 @@
                 editAccountHolder.value  = profileData.accountHolder || '';
                 editIfscCode.value       = profileData.ifscCode      || '';
                 editEmail.disabled = true;
-
                 // --- Owner-only edit restriction ---
                 const editBtn = document.getElementById('editProfileBtn');
                 if (!isOwner) {
@@ -723,12 +691,10 @@
                 } else {
                     editBtn.style.display = 'inline-block';
                 }
-
             } else {
                 window.location.href = 'login.html';
             }
         }
-
         // Toggle edit mode
         function toggleEditMode(isEdit) {
             if (isEdit) {
@@ -747,11 +713,9 @@
                 if (currentUser) loadUserProfile(currentUser);
             }
         }
-
         // Save profile changes (UPDATED)
         async function saveProfileChanges() {
             if (!currentUser) return;
-
             const newOwnerName = editOwnerName.value.trim();
             const newTransportName = editTransportName.value.trim();
             const newPhone = editPhone.value.trim();
@@ -763,13 +727,11 @@
             const newAccountNumber = editAccountNumber.value.trim();
             const newAccountHolder = editAccountHolder.value.trim();
             const newIfscCode = editIfscCode.value.trim();
-
             try {
                 // Update Firebase Authentication profile (displayName)
                 if (newOwnerName && newOwnerName !== currentUser.displayName) {
                     await updateProfile(currentUser, { displayName: newOwnerName });
                 }
-
                 // Always save to the OWNER's profile node
                 // (currentOwnerUid is set during load; for owners it equals their own uid)
                 const saveUid = currentOwnerUid || currentUser.uid;
@@ -787,7 +749,6 @@
                     accountHolder: newAccountHolder,
                     ifscCode: newIfscCode
                 });
-
                 showMessage('Profile updated successfully!', 'success');
                 toggleEditMode(false); // Switch back to view mode
                 loadUserProfile(currentUser); // Reload updated data
@@ -796,60 +757,49 @@
                 showMessage('Error updating profile: ' + error.message, 'error');
             }
         }
-
         // **NEW**: Cloudinary upload logic
         async function uploadToCloudinary(file) {
             const CLOUDINARY_CLOUD_NAME = (window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.cloudName);
             const CLOUDINARY_UPLOAD_PRESET = (window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.uploadPreset);
             const url = (window.CLOUDINARY_CONFIG && window.CLOUDINARY_CONFIG.apiUrl);
-
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
             const response = await fetch(url, { method: 'POST', body: formData });
             if (!response.ok) throw new Error('Cloudinary upload failed.');
             
             const data = await response.json();
             return data.secure_url;
         }
-
         // **NEW**: Handle logo upload
         async function handleLogoUpload(event) {
             const file = event.target.files[0];
             if (!file || !currentUser) return;
-
             showMessage('Uploading logo...', 'info');
-
             try {
                 const imageUrl = await uploadToCloudinary(file);
                 
                 // Save the URL to the user's profile
                 const profileRef = ref(db, `users/${currentUser.uid}/profile`);
                 await update(profileRef, { companyLogoUrl: imageUrl });
-
                 // Update the UI
                 profileAvatarImg.src = imageUrl;
                 profileAvatarImg.style.display = 'block';
                 avatarInitial.style.display = 'none';
-
                 showMessage('Logo updated successfully!', 'success');
             } catch (error) {
                 console.error('Error uploading logo:', error);
                 showMessage('Failed to upload logo. Please try again.', 'error');
             }
         }
-
         // **NEW**: Event listener for logo upload
         const logoUploadInput = document.getElementById('logoUploadInput');
         const profileAvatarContainer = document.getElementById('profileAvatarContainer');
-
         // **MODIFIED**: Use specific button for changing logo
         document.getElementById('changeLogoBtn').addEventListener('click', () => {
             logoUploadInput.click();
         });
         logoUploadInput.addEventListener('change', handleLogoUpload);
-
         // **NEW**: Event listener for removing logo
         document.getElementById('removeLogoBtn').addEventListener('click', async (e) => {
             e.stopPropagation(); // Prevent triggering the change logo click
@@ -857,24 +807,20 @@
                 return;
             }
             if (!currentUser) return;
-
             try {
                 const profileRef = ref(db, `users/${currentUser.uid}/profile`);
                 await update(profileRef, { companyLogoUrl: null });
-
                 // Update UI
                 profileAvatarImg.src = '';
                 profileAvatarImg.style.display = 'none';
                 document.getElementById('removeLogoBtn').style.display = 'none';
                 avatarInitial.style.display = 'flex';
-
                 showMessage('Logo removed successfully!', 'success');
             } catch (error) {
                 console.error('Error removing logo:', error);
                 showMessage('Failed to remove logo. Please try again.', 'error');
             }
         });
-
         // Reauthenticate user before critical operations
         async function reauthenticate(currentPassword) {
             if (!currentUser || !currentUser.email) {
@@ -883,13 +829,11 @@
             const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
             return reauthenticateWithCredential(currentUser, credential);
         }
-
         // Handle Email Change
         async function handleEmailChange() {
             const newEmail = document.getElementById('securityNewEmail').value.trim();
             const currentPassword = document.getElementById('securityEmailPassword').value;
             const securityMessage = document.getElementById('securityMessage');
-
             function showSecurityMessage(msg, type) {
                 securityMessage.textContent = msg;
                 securityMessage.className = '';
@@ -897,7 +841,6 @@
                 securityMessage.style.display = 'block';
                 setTimeout(() => { securityMessage.style.display = 'none'; }, 5000);
             }
-
             if (!newEmail) {
                 showSecurityMessage('Please enter a new email address.', 'error');
                 return;
@@ -915,19 +858,15 @@
                 showSecurityMessage('New email address must be different from current email.', 'error');
                 return;
             }
-
             const updateEmailBtn = document.getElementById('updateEmailBtn');
             const originalText = updateEmailBtn.textContent;
             updateEmailBtn.disabled = true;
             updateEmailBtn.textContent = 'Updating...';
-
             try {
                 // 1. Reauthenticate user
                 await reauthenticate(currentPassword);
-
                 // 2. Send verification email to the new address
                 await verifyBeforeUpdateEmail(currentUser, newEmail);
-
                 showSecurityMessage('Verification email sent to ' + newEmail + '! Please click the link in the email to complete the change.', 'success');
                 document.getElementById('securityNewEmail').value = '';
                 document.getElementById('securityEmailPassword').value = '';
@@ -949,14 +888,12 @@
                 updateEmailBtn.textContent = originalText;
             }
         }
-
         // Handle Password Change
         async function handlePasswordChange() {
             const currentPassword = document.getElementById('securityCurrentPassword').value;
             const newPassword = document.getElementById('securityNewPassword').value;
             const confirmPassword = document.getElementById('securityConfirmPassword').value;
             const securityMessage = document.getElementById('securityMessage');
-
             function showSecurityMessage(msg, type) {
                 securityMessage.textContent = msg;
                 securityMessage.className = '';
@@ -964,7 +901,6 @@
                 securityMessage.style.display = 'block';
                 setTimeout(() => { securityMessage.style.display = 'none'; }, 5000);
             }
-
             if (!currentPassword) {
                 showSecurityMessage('Please enter your current password.', 'error');
                 return;
@@ -981,19 +917,15 @@
                 showSecurityMessage('New passwords do not match.', 'error');
                 return;
             }
-
             const updatePasswordBtn = document.getElementById('updatePasswordBtn');
             const originalText = updatePasswordBtn.textContent;
             updatePasswordBtn.disabled = true;
             updatePasswordBtn.textContent = 'Updating...';
-
             try {
                 // 1. Reauthenticate user
                 await reauthenticate(currentPassword);
-
                 // 2. Update Firebase Auth password
                 await updatePassword(currentUser, newPassword);
-
                 showSecurityMessage('Password updated successfully!', 'success');
                 document.getElementById('securityCurrentPassword').value = '';
                 document.getElementById('securityNewPassword').value = '';
@@ -1010,7 +942,6 @@
                 updatePasswordBtn.textContent = originalText;
             }
         }
-
         // Event Listeners
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -1019,13 +950,11 @@
                 window.location.href = 'login.html'; // Redirect to login if not authenticated
             }
         });
-
         editProfileBtn.addEventListener('click', () => toggleEditMode(true));
         cancelEditBtn.addEventListener('click', () => toggleEditMode(false));
         saveProfileBtn.addEventListener('click', saveProfileChanges);
         document.getElementById('updateEmailBtn').addEventListener('click', handleEmailChange);
         document.getElementById('updatePasswordBtn').addEventListener('click', handlePasswordChange);
-
     </script>
 </body>
 </html>
