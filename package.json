@@ -5,6 +5,7 @@
   "main": "local-server.js",
   "scripts": {
     "start": "node local-server.js",
+    "build": "node secure-config-builder.js",
     "secure-config": "node secure-config-server.js",
     "build-config": "node build-config.js"
   },
