@@ -85,6 +85,12 @@ function generateEVMJS(envVars) {
         apiRateLimit: parseInt(envVars.API_RATE_LIMIT) || 100
     };
 
+    const emailjsConfig = {
+        serviceId: envVars.EMAILJS_SERVICE_ID || '',
+        templateId: envVars.EMAILJS_TEMPLATE_ID || '',
+        publicKey: envVars.EMAILJS_PUBLIC_KEY || ''
+    };
+
     return `/**
  * 🔐 EVM - Environment Variables Module (Auto-generated)
  * 
@@ -109,6 +115,13 @@ if (!window.CLOUDINARY_CONFIG) {
 }
 
 // ========================================
+// ✉️ EMAILJS CONFIGURATION
+// ========================================
+if (!window.EMAILJS_CONFIG) {
+    window.EMAILJS_CONFIG = ${JSON.stringify(emailjsConfig, null, 8)};
+}
+
+// ========================================
 // 🌍 ENVIRONMENT CONFIGURATION
 // ========================================
 if (!window.ENVIRONMENT) {
@@ -128,6 +141,7 @@ if (typeof module !== 'undefined' && module.exports) {
         ENVIRONMENT: window.ENVIRONMENT,
         FIREBASE_CONFIG: window.FIREBASE_CONFIG,
         CLOUDINARY_CONFIG: window.CLOUDINARY_CONFIG,
+        EMAILJS_CONFIG: window.EMAILJS_CONFIG,
         SECURITY_CONFIG: window.SECURITY_CONFIG
     };
 }

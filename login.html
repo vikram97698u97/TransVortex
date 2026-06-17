@@ -269,11 +269,14 @@
   <!-- EmailJS init -->
   <script>
     // ── EMAILJS CONFIG ────────────────────────────────────────────────────
-    const EMAILJS_SERVICE_ID  = 'service_nicgzk6';
-    const EMAILJS_TEMPLATE_ID = 'template_ocp4g4h';
-    const EMAILJS_PUBLIC_KEY  = '-1x65K5GaVIMgxR4i';
+    // Loaded securely from window.EMAILJS_CONFIG via evm.js
+    const EMAILJS_SERVICE_ID  = window.EMAILJS_CONFIG ? window.EMAILJS_CONFIG.serviceId : 'service_nicgzk6';
+    const EMAILJS_TEMPLATE_ID = window.EMAILJS_CONFIG ? window.EMAILJS_CONFIG.templateId : 'template_ocp4g4h';
+    const EMAILJS_PUBLIC_KEY  = window.EMAILJS_CONFIG ? window.EMAILJS_CONFIG.publicKey : '-1x65K5GaVIMgxR4i';
     // ─────────────────────────────────────────────────────────────────────
-    emailjs.init(EMAILJS_PUBLIC_KEY);
+    if (EMAILJS_PUBLIC_KEY) {
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+    }
 
     // ── OTP STATE ─────────────────────────────────────────────────────────
     let _otpCode        = null;  // generated OTP
