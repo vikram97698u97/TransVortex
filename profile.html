@@ -148,14 +148,21 @@
             justify-content: center;
             align-items: flex-start;
         }
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+            margin-bottom: 50px;
+        }
         .profile-card {
             background: white;
             border-radius: 12px;
             padding: 30px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             width: 100%;
-            max-width: 600px;
-            margin-top: 50px;
         }
         .profile-header {
             text-align: center;
@@ -347,7 +354,8 @@
     <div id="navbar-placeholder"></div>
 
     <div class="main-content">
-        <div class="profile-card">
+        <div class="profile-container">
+            <div class="profile-card">
             <div class="profile-header">
                 <div class="profile-avatar-large" id="profileAvatarContainer">
                     <img id="profileAvatar" src="" alt="Profile Picture" style="display: none;">
@@ -481,7 +489,56 @@
             </div>
             <div id="profileMessage" style="display: none;"></div>
         </div>
+
+        <!-- Account Security Card -->
+        <div class="profile-card" id="securityCard">
+            <div class="profile-header" style="text-align: left; margin-bottom: 20px;">
+                <div class="profile-name-display" style="font-size: 22px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-shield-alt"></i> Account Security
+                </div>
+                <div class="profile-role-display">Update your email address or password</div>
+            </div>
+
+            <!-- Update Email Form -->
+            <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #333; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-envelope-open-text" style="color: #2E8B57;"></i> Change Email Address
+                </h4>
+                <div class="form-group">
+                    <label for="securityNewEmail">New Email Address</label>
+                    <input type="email" id="securityNewEmail" placeholder="Enter new email address">
+                </div>
+                <div class="form-group">
+                    <label for="securityEmailPassword">Current Password (Required)</label>
+                    <input type="password" id="securityEmailPassword" placeholder="Enter password to confirm change">
+                </div>
+                <button class="btn btn-primary" id="updateEmailBtn" style="margin-left: 0;">Update Email</button>
+            </div>
+
+            <!-- Update Password Form -->
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #333; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-key" style="color: #2E8B57;"></i> Change Password
+                </h4>
+                <div class="form-group">
+                    <label for="securityCurrentPassword">Current Password</label>
+                    <input type="password" id="securityCurrentPassword" placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label for="securityNewPassword">New Password</label>
+                    <input type="password" id="securityNewPassword" placeholder="Enter new password (min. 6 characters)">
+                </div>
+                <div class="form-group">
+                    <label for="securityConfirmPassword">Confirm New Password</label>
+                    <input type="password" id="securityConfirmPassword" placeholder="Re-type new password">
+                </div>
+                <button class="btn btn-primary" id="updatePasswordBtn" style="margin-left: 0;">Update Password</button>
+            </div>
+
+            <div id="securityMessage" style="margin-top: 20px; padding: 10px; border-radius: 8px; text-align: center; display: none;"></div>
+        </div>
     </div>
+</div>
 
     <!-- **NEW**: Hidden file input for logo upload -->
     <input type="file" id="logoUploadInput" accept="image/*" style="display: none;">
@@ -493,7 +550,7 @@
   <script src="navbar-loader.js"></script>
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, updateProfile, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
         // Initialize Firebase directly from secure config
@@ -562,11 +619,21 @@
             currentUser = user;
             if (user) {
                 // Fetch the logged-in user's own node
-                const userRef = ref(db, 'users/' + user.uid);
-                const snapshot = await get(userRef);
-                const userData = snapshot.val() || {};
+                 const userRef = ref(db, 'users/' + user.uid);
+                 const snapshot = await get(userRef);
+                 let userData = snapshot.val() || {};
 
-                // Determine owner vs sub-user
+                 // Auto-sync email in database if it doesn't match authenticated user's email
+                 if (user.email && userData.email !== user.email) {
+                     try {
+                         await update(userRef, { email: user.email });
+                         userData.email = user.email;
+                     } catch (err) {
+                         console.error('Error syncing email to database:', err);
+                     }
+                 }
+
+                 // Determine owner vs sub-user
                 const coreAccountId = userData.coreAccountId || user.uid;
                 const isOwner = !userData.coreAccountId || coreAccountId === user.uid;
                 currentOwnerUid = coreAccountId; // store for save operations
@@ -808,6 +875,142 @@
             }
         });
 
+        // Reauthenticate user before critical operations
+        async function reauthenticate(currentPassword) {
+            if (!currentUser || !currentUser.email) {
+                throw new Error("User session not found.");
+            }
+            const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
+            return reauthenticateWithCredential(currentUser, credential);
+        }
+
+        // Handle Email Change
+        async function handleEmailChange() {
+            const newEmail = document.getElementById('securityNewEmail').value.trim();
+            const currentPassword = document.getElementById('securityEmailPassword').value;
+            const securityMessage = document.getElementById('securityMessage');
+
+            function showSecurityMessage(msg, type) {
+                securityMessage.textContent = msg;
+                securityMessage.className = '';
+                securityMessage.classList.add('message-' + type);
+                securityMessage.style.display = 'block';
+                setTimeout(() => { securityMessage.style.display = 'none'; }, 5000);
+            }
+
+            if (!newEmail) {
+                showSecurityMessage('Please enter a new email address.', 'error');
+                return;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(newEmail)) {
+                showSecurityMessage('Please enter a valid email address format (e.g., name@example.com).', 'error');
+                return;
+            }
+            if (!currentPassword) {
+                showSecurityMessage('Please enter your current password to authenticate.', 'error');
+                return;
+            }
+            if (newEmail === currentUser.email) {
+                showSecurityMessage('New email address must be different from current email.', 'error');
+                return;
+            }
+
+            const updateEmailBtn = document.getElementById('updateEmailBtn');
+            const originalText = updateEmailBtn.textContent;
+            updateEmailBtn.disabled = true;
+            updateEmailBtn.textContent = 'Updating...';
+
+            try {
+                // 1. Reauthenticate user
+                await reauthenticate(currentPassword);
+
+                // 2. Send verification email to the new address
+                await verifyBeforeUpdateEmail(currentUser, newEmail);
+
+                showSecurityMessage('Verification email sent to ' + newEmail + '! Please click the link in the email to complete the change.', 'success');
+                document.getElementById('securityNewEmail').value = '';
+                document.getElementById('securityEmailPassword').value = '';
+            } catch (error) {
+                console.error('Error changing email:', error);
+                let errMsg = error.message;
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                    errMsg = 'Incorrect password. Please try again.';
+                } else if (error.code === 'auth/invalid-email' || error.code === 'auth/invalid-new-email') {
+                    errMsg = 'Invalid email address format.';
+                } else if (error.code === 'auth/email-already-in-use') {
+                    errMsg = 'This email is already in use by another account.';
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    errMsg = 'Email updates are restricted in this Firebase environment. Please check console settings.';
+                }
+                showSecurityMessage(errMsg, 'error');
+            } finally {
+                updateEmailBtn.disabled = false;
+                updateEmailBtn.textContent = originalText;
+            }
+        }
+
+        // Handle Password Change
+        async function handlePasswordChange() {
+            const currentPassword = document.getElementById('securityCurrentPassword').value;
+            const newPassword = document.getElementById('securityNewPassword').value;
+            const confirmPassword = document.getElementById('securityConfirmPassword').value;
+            const securityMessage = document.getElementById('securityMessage');
+
+            function showSecurityMessage(msg, type) {
+                securityMessage.textContent = msg;
+                securityMessage.className = '';
+                securityMessage.classList.add('message-' + type);
+                securityMessage.style.display = 'block';
+                setTimeout(() => { securityMessage.style.display = 'none'; }, 5000);
+            }
+
+            if (!currentPassword) {
+                showSecurityMessage('Please enter your current password.', 'error');
+                return;
+            }
+            if (!newPassword) {
+                showSecurityMessage('Please enter your new password.', 'error');
+                return;
+            }
+            if (newPassword.length < 6) {
+                showSecurityMessage('New password must be at least 6 characters long.', 'error');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showSecurityMessage('New passwords do not match.', 'error');
+                return;
+            }
+
+            const updatePasswordBtn = document.getElementById('updatePasswordBtn');
+            const originalText = updatePasswordBtn.textContent;
+            updatePasswordBtn.disabled = true;
+            updatePasswordBtn.textContent = 'Updating...';
+
+            try {
+                // 1. Reauthenticate user
+                await reauthenticate(currentPassword);
+
+                // 2. Update Firebase Auth password
+                await updatePassword(currentUser, newPassword);
+
+                showSecurityMessage('Password updated successfully!', 'success');
+                document.getElementById('securityCurrentPassword').value = '';
+                document.getElementById('securityNewPassword').value = '';
+                document.getElementById('securityConfirmPassword').value = '';
+            } catch (error) {
+                console.error('Error changing password:', error);
+                let errMsg = error.message;
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                    errMsg = 'Incorrect current password. Please try again.';
+                }
+                showSecurityMessage(errMsg, 'error');
+            } finally {
+                updatePasswordBtn.disabled = false;
+                updatePasswordBtn.textContent = originalText;
+            }
+        }
+
         // Event Listeners
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -820,6 +1023,8 @@
         editProfileBtn.addEventListener('click', () => toggleEditMode(true));
         cancelEditBtn.addEventListener('click', () => toggleEditMode(false));
         saveProfileBtn.addEventListener('click', saveProfileChanges);
+        document.getElementById('updateEmailBtn').addEventListener('click', handleEmailChange);
+        document.getElementById('updatePasswordBtn').addEventListener('click', handlePasswordChange);
 
     </script>
 </body>
