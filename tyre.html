@@ -189,11 +189,21 @@
       margin-bottom: 20px;
     }
 
+    #alertContainer {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      max-width: 350px;
+      width: calc(100% - 40px);
+    }
+
     .alert {
       padding: 15px;
       margin-bottom: 20px;
       border-radius: 5px;
       font-weight: 500;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .alert-success {
@@ -858,6 +868,7 @@
 
 <body>
   <!-- Load secure configuration first -->
+  <div id="alertContainer"></div>
 
 
   <script src="evm.js"></script>
@@ -889,8 +900,6 @@
           <p id="totalInvestmentStat">₹0</p>
         </div>
       </div>
-
-      <div id="alertContainer"></div>
 
       <div class="form-section">
         <div id="draftStatus" style="font-size: 0.85rem; color: #666; margin-bottom: 10px; text-align: right;"></div>
