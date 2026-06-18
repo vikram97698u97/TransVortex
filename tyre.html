@@ -2094,6 +2094,8 @@
               if (editedTyreNumber) {
                 updatedTyres = existingTyres.map(t => {
                   if (t.number === editedTyreNumber) {
+                    // Log details updated movement
+                    window.logTyreMovement(editingVehicleId, vehicleNumber, newTyres[0].number, t.number === newTyres[0].number ? 'Details Updated' : `Number Changed from ${t.number} to ${newTyres[0].number}`);
                     // Merge: preserve immutable fields (portalAddedAt, totalRunningKm, status)
                     // and apply form edits on top
                     return {
@@ -2113,6 +2115,12 @@
 
             } else if (document.getElementById('saveVehicleBtn').textContent === 'Update Vehicle') {
               // In vehicle edit mode, we replace all tyres with the ones from the form.
+
+              // Log any removed tyres
+              const newTyreNumbers = newTyres.map(t => t.number);
+              existingTyres.filter(existingT => !newTyreNumbers.includes(existingT.number)).forEach(deletedT => {
+                 window.logTyreMovement(editingVehicleId, vehicleNumber, deletedT.number, 'Removed from Vehicle');
+              });
 
               // We'll iterate through existingTyres and update with newTyres where the number matches
               updatedTyres = existingTyres.map(existingT => {
@@ -2136,7 +2144,11 @@
             } else {
               // In add tyre mode, add new tyres to existing ones
               updatedTyres = [...existingTyres, ...newTyres];
-
+              
+              // Log newly added tyres
+              newTyres.forEach(newT => {
+                 window.logTyreMovement(editingVehicleId, vehicleNumber, newT.number, 'Added to Vehicle', newT.portalAddedAt);
+              });
             }
 
             // Check Global Duplicates (Stock & History)
@@ -3888,6 +3900,8 @@
           // Save to tyre history
           const historyRef = ref(db, `users/${currentUser.uid}/tyre_history`);
           push(historyRef, disposedTyre).then(() => {
+            window.logTyreMovement(vehicleId, vehicle.vehicleNumber, tyreNumber, `Disposed (Reason: ${reason})`);
+            
             // Filter out the disposed tyre from vehicle
             const updatedTyres = tyres.filter(t => t.number !== tyreNumber);
 
