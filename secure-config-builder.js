@@ -69,6 +69,10 @@ function generateConfigFromSecrets() {
         publicKey: process.env.EMAILJS_PUBLIC_KEY || ''
     };
 
+    const razorpayConfig = {
+        keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder'
+    };
+
     return `/**
  * 🔐 EVM - Environment Variables Module (Auto-generated from GitHub Secrets)
  * 
@@ -99,6 +103,13 @@ if (!window.EMAILJS_CONFIG) {
 }
 
 // ========================================
+// 💳 RAZORPAY CONFIGURATION
+// ========================================
+if (!window.RAZORPAY_CONFIG) {
+    window.RAZORPAY_CONFIG = ${JSON.stringify(razorpayConfig, null, 8)};
+}
+
+// ========================================
 // 🌍 ENVIRONMENT CONFIGURATION
 // ========================================
 if (!window.ENVIRONMENT) {
@@ -119,6 +130,7 @@ if (typeof module !== 'undefined' && module.exports) {
         FIREBASE_CONFIG: window.FIREBASE_CONFIG,
         CLOUDINARY_CONFIG: window.CLOUDINARY_CONFIG,
         EMAILJS_CONFIG: window.EMAILJS_CONFIG,
+        RAZORPAY_CONFIG: window.RAZORPAY_CONFIG,
         SECURITY_CONFIG: window.SECURITY_CONFIG
     };
 }`;
