@@ -211,36 +211,29 @@
       if (typeof window.logout !== 'function') {
         window.logout = function () {
           try {
-            // Clear stored user data from localStorage
+            const device = localStorage.getItem('tv_trusted_device');
             localStorage.removeItem('userName');
             
-            if (window.firebase && typeof firebase.auth === 'function') {
-              firebase.auth().signOut()
-                .then(() => { 
-                  // Ensure localStorage is cleared before redirecting
-                  localStorage.removeItem('userName');
-                  localStorage.clear();
-                  sessionStorage.clear();
-                  window.location.href = 'index.html'; 
-                })
-                .catch(err => { 
-                  // Still clear localStorage even if there's an error
-                  localStorage.removeItem('userName');
-                  localStorage.clear();
-                  sessionStorage.clear();
-                  alert('Error logging out: ' + (err && err.message ? err.message : err)); 
-                  window.location.href = 'index.html'; // Redirect even on error
-                });
-            } else {
-              // Fallback: no Firebase on page, just clear and redirect
-              localStorage.removeItem('userName');
+            const handleRedirect = () => {
               localStorage.clear();
               sessionStorage.clear();
+              if (device) {
+                localStorage.setItem('tv_trusted_device', device);
+              }
               window.location.href = 'index.html';
+            };
+
+            if (window.firebase && typeof firebase.auth === 'function') {
+              firebase.auth().signOut()
+                .then(handleRedirect)
+                .catch(err => { 
+                  alert('Error logging out: ' + (err && err.message ? err.message : err)); 
+                  handleRedirect();
+                });
+            } else {
+              handleRedirect();
             }
           } catch (e) {
-            // Ensure localStorage is cleared even if there's an error
-            localStorage.removeItem('userName');
             localStorage.clear();
             sessionStorage.clear();
             window.location.href = 'index.html';

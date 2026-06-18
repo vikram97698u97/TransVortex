@@ -1,3 +1,4 @@
+require('dotenv').config();
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -55,14 +56,14 @@ const server = http.createServer((req, res) => {
             // Minimal fallback configuration
             config = {
                 firebase: {
-                    apiKey: "AIzaSyDAlk_K8p8Of8Ne6Jpcl2QqXTtm95NgG7o",
-                    authDomain: "transport-dashboard-ad69a.firebaseapp.com",
-                    databaseURL: "https://transport-dashboard-ad69a-default-rtdb.asia-southeast1.firebasedatabase.app",
-                    projectId: "transport-dashboard-ad69a",
-                    storageBucket: "transport-dashboard-ad69a.appspot.com",
-                    messagingSenderId: "526889676196",
-                    appId: "1:526889676196:web:66032c80a4aede690ae531",
-                    measurementId: "G-7F9R7HJYDH"
+                    apiKey: process.env.FIREBASE_API_KEY || "",
+                    authDomain: process.env.FIREBASE_AUTH_DOMAIN || "",
+                    databaseURL: process.env.FIREBASE_DATABASE_URL || "",
+                    projectId: process.env.FIREBASE_PROJECT_ID || "",
+                    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "",
+                    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "",
+                    appId: process.env.FIREBASE_APP_ID || "",
+                    measurementId: process.env.FIREBASE_MEASUREMENT_ID || ""
                 }
             };
         }

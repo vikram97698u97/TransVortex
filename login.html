@@ -265,151 +265,7 @@
       </div>
     </div>
   </div>
-
-  <!-- Load secure configuration first -->
-  <!-- EmailJS init -->
-  <script>
-    // ── EMAILJS CONFIG ────────────────────────────────────────────────────
-    // Loaded securely from window.EMAILJS_CONFIG via evm.js
-    const EMAILJS_SERVICE_ID  = window.EMAILJS_CONFIG ? window.EMAILJS_CONFIG.serviceId : 'service_nicgzk6';
-    const EMAILJS_TEMPLATE_ID = window.EMAILJS_CONFIG ? window.EMAILJS_CONFIG.templateId : 'template_ocp4g4h';
-    const EMAILJS_PUBLIC_KEY  = window.EMAILJS_CONFIG ? window.EMAILJS_CONFIG.publicKey : '-1x65K5GaVIMgxR4i';
-    // ─────────────────────────────────────────────────────────────────────
-    if (EMAILJS_PUBLIC_KEY) {
-      emailjs.init(EMAILJS_PUBLIC_KEY);
-    }
-
-    // ── OTP STATE ─────────────────────────────────────────────────────────
-    let _otpCode        = null;  // generated OTP
-    let _otpExpiry      = null;  // Date when OTP expires
-    let _otpTimerInt    = null;  // countdown interval
-    let _pendingAction  = null;  // function to call after OTP verified
-
-    // ── GENERATE + SEND OTP ───────────────────────────────────────────────
-    async function sendOtp(email, name) {
-      _otpCode   = String(Math.floor(100000 + Math.random() * 900000));
-      _otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-
-      // Format expiry time for display in email e.g. "11:35 AM"
-      const timeStr = _otpExpiry.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-
-      // Send via EmailJS — variables match your template
-      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-        to_email: email,
-        to_name:  name || email.split('@')[0],
-        passcode: _otpCode,   // matches {{passcode}} in your template
-        time:     timeStr     // matches {{time}} in your template
-      });
-    }
-
-    // ── SHOW OTP OVERLAY ──────────────────────────────────────────────────
-    function showOtpOverlay(email, name, onSuccess) {
-      _pendingAction = onSuccess;
-      document.getElementById('otpEmailDisplay').textContent = email;
-      // Clear inputs
-      ['d1','d2','d3','d4','d5','d6'].forEach(id => {
-        const el = document.getElementById(id);
-        el.value = '';
-        el.classList.remove('filled');
-      });
-      document.getElementById('otpError').textContent = '';
-      document.getElementById('verifyOtpBtn').disabled = false;
-      document.getElementById('otpOverlay').classList.add('show');
-      document.getElementById('d1').focus();
-      startOtpTimer();
-      setupOtpInputs();
-    }
-
-    // ── OTP DIGIT INPUTS ──────────────────────────────────────────────────
-    function setupOtpInputs() {
-      const ids = ['d1','d2','d3','d4','d5','d6'];
-      ids.forEach((id, i) => {
-        const el = document.getElementById(id);
-        el.oninput = function() {
-          this.value = this.value.replace(/[^0-9]/g,'').slice(-1);
-          this.classList.toggle('filled', this.value !== '');
-          if (this.value && i < 5) document.getElementById(ids[i+1]).focus();
-          if (i === 5 && this.value) verifyOtp();
-        };
-        el.onkeydown = function(e) {
-          if (e.key === 'Backspace' && !this.value && i > 0) {
-            document.getElementById(ids[i-1]).focus();
-          }
-        };
-      });
-    }
-
-    // ── VERIFY OTP ────────────────────────────────────────────────────────
-    function verifyOtp() {
-      const entered = ['d1','d2','d3','d4','d5','d6']
-        .map(id => document.getElementById(id).value).join('');
-      const errEl = document.getElementById('otpError');
-
-      if (entered.length < 6) {
-        errEl.textContent = 'Please enter all 6 digits.';
-        return;
-      }
-      if (new Date() > _otpExpiry) {
-        errEl.textContent = '⏰ OTP expired. Please request a new one.';
-        return;
-      }
-      if (entered !== _otpCode) {
-        errEl.textContent = '❌ Incorrect code. Please try again.';
-        ['d1','d2','d3','d4','d5','d6'].forEach(id => {
-          const el = document.getElementById(id);
-          el.style.borderColor = '#ef4444';
-          setTimeout(() => el.style.borderColor = '', 1000);
-        });
-        return;
-      }
-
-      // ✅ OTP correct
-      clearInterval(_otpTimerInt);
-      document.getElementById('otpOverlay').classList.remove('show');
-      if (_pendingAction) _pendingAction();
-    }
-
-    // ── RESEND OTP ────────────────────────────────────────────────────────
-    async function resendOtp() {
-      const email = document.getElementById('otpEmailDisplay').textContent;
-      const link  = document.getElementById('resendLink');
-      link.classList.add('disabled');
-      link.textContent = 'Sending...';
-      try {
-        await sendOtp(email, email.split('@')[0]);
-        document.getElementById('otpError').textContent = '✅ New code sent!';
-        startOtpTimer();
-      } catch(e) {
-        document.getElementById('otpError').textContent = 'Failed to resend. Check your EmailJS config.';
-      }
-      setTimeout(() => {
-        link.classList.remove('disabled');
-        link.textContent = 'Resend';
-      }, 30000);
-    }
-
-    // ── COUNTDOWN TIMER ───────────────────────────────────────────────────
-    function startOtpTimer() {
-      clearInterval(_otpTimerInt);
-      const timerEl = document.getElementById('otpTimer');
-      const resend   = document.getElementById('resendLink');
-      resend.classList.add('disabled');
-      let secs = 300; // 5 min
-      timerEl.textContent = '5:00';
-      _otpTimerInt = setInterval(() => {
-        secs--;
-        const m = Math.floor(secs / 60);
-        const s = String(secs % 60).padStart(2, '0');
-        timerEl.textContent = `${m}:${s}`;
-        if (secs <= 0) {
-          clearInterval(_otpTimerInt);
-          timerEl.textContent = 'Expired';
-          resend.classList.remove('disabled');
-        }
-        if (secs === 240) resend.classList.remove('disabled'); // Allow resend after 1 min
-      }, 1000);
-    }
-  </script>
+  <!-- EmailJS initialization handled securely in module script below -->
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -424,6 +280,9 @@
       ref,
       get,
       update,
+      set,
+      push,
+      remove,
       query,
       orderByChild,
       equalTo
@@ -445,6 +304,334 @@
     const app = initializeApp(window.FIREBASE_CONFIG);
     const auth = getAuth(app);
     const db = getDatabase(app);
+
+    // ── TRUSTED DEVICE & OTP CONFIGURATION ────────────────────────────────
+    let _otpExpiry      = null;
+    let _otpTimerInt    = null;
+    let _pendingAction  = null;
+    let _pendingUid     = null;
+
+    // Initialize EmailJS key
+    if (window.EMAILJS_CONFIG && window.EMAILJS_CONFIG.publicKey) {
+      emailjs.init(window.EMAILJS_CONFIG.publicKey);
+    }
+
+    function generateUUID() {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function getBrowserInfo() {
+      const ua = navigator.userAgent;
+      let browser = "Unknown Browser";
+      if (ua.indexOf("Firefox") > -1) {
+        browser = "Mozilla Firefox";
+      } else if (ua.indexOf("SamsungBrowser") > -1) {
+        browser = "Samsung Internet";
+      } else if (ua.indexOf("Opera") > -1 || ua.indexOf("OPR") > -1) {
+        browser = "Opera";
+      } else if (ua.indexOf("Trident") > -1) {
+        browser = "Internet Explorer";
+      } else if (ua.indexOf("Edge") > -1 || ua.indexOf("Edg") > -1) {
+        browser = "Microsoft Edge";
+      } else if (ua.indexOf("Chrome") > -1) {
+        browser = "Google Chrome";
+      } else if (ua.indexOf("Safari") > -1) {
+        browser = "Apple Safari";
+      }
+      return browser;
+    }
+
+    function getDeviceName() {
+      const ua = navigator.userAgent;
+      let deviceName = "Unknown Device";
+      if (/Windows/i.test(ua)) {
+        deviceName = "Windows PC";
+      } else if (/Macintosh/i.test(ua)) {
+        deviceName = "Mac";
+      } else if (/Android/i.test(ua)) {
+        deviceName = "Android Device";
+      } else if (/iPhone/i.test(ua)) {
+        deviceName = "iPhone";
+      } else if (/iPad/i.test(ua)) {
+        deviceName = "iPad";
+      } else if (/Linux/i.test(ua)) {
+        deviceName = "Linux PC";
+      }
+      return deviceName;
+    }
+
+    function getOrInitLocalDevice() {
+      let localData = null;
+      try {
+        const raw = localStorage.getItem('tv_trusted_device');
+        if (raw) {
+          localData = JSON.parse(raw);
+        }
+      } catch (e) {
+        console.error('Error parsing local device data:', e);
+      }
+
+      if (!localData || !localData.deviceId) {
+        const newDeviceId = generateUUID();
+        localData = {
+          deviceId: newDeviceId,
+          deviceName: getDeviceName(),
+          browser: getBrowserInfo(),
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days
+        };
+        try {
+          localStorage.setItem('tv_trusted_device', JSON.stringify(localData));
+        } catch (e) {
+          console.error('Error writing local device data:', e);
+        }
+      }
+      return localData;
+    }
+
+    async function getIpApproximation() {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (res.ok) {
+          const data = await res.json();
+          return `${data.ip} (${data.city || 'Unknown City'}, ${data.country_name || 'Unknown Country'})`;
+        }
+      } catch (e) {
+        console.warn('Could not fetch IP approximation:', e);
+      }
+      return 'Unknown IP';
+    }
+
+    async function logLoginHistory(uid, deviceData, loginMethod, success) {
+      try {
+        const ip = await getIpApproximation();
+        const historyRef = push(ref(db, `users/${uid}/loginHistory`));
+        await set(historyRef, {
+          timestamp: new Date().toISOString(),
+          browser: deviceData.browser,
+          deviceName: deviceData.deviceName,
+          ipApproximation: ip,
+          loginMethod: loginMethod,
+          success: success
+        });
+      } catch (e) {
+        console.error('Error logging login history:', e);
+      }
+    }
+
+    async function checkOtpRateLimit(uid) {
+      const now = Date.now();
+      const fifteenMinsAgo = now - 15 * 60 * 1000;
+      const otpRequestsRef = ref(db, `users/${uid}/otpRequests`);
+      const otpRequestsSnap = await get(otpRequestsRef);
+      
+      if (otpRequestsSnap.exists()) {
+        const requests = otpRequestsSnap.val();
+        const activeRequests = Object.values(requests).filter(t => t > fifteenMinsAgo);
+        if (activeRequests.length >= 5) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    async function recordOtpRequest(uid) {
+      const otpRequestsRef = ref(db, `users/${uid}/otpRequests`);
+      const newRequestRef = push(otpRequestsRef);
+      await set(newRequestRef, Date.now());
+    }
+
+    async function sendOtp(uid, email, name) {
+      const rateLimitOk = await checkOtpRateLimit(uid);
+      if (!rateLimitOk) {
+        throw new Error("Too many attempts. Please try again later.");
+      }
+
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+      // Store securely in DB
+      const otpRef = ref(db, `users/${uid}/pendingOTP`);
+      await set(otpRef, {
+        code: code,
+        expiresAt: expiresAt,
+        used: false
+      });
+
+      await recordOtpRequest(uid);
+      _otpExpiry = new Date(expiresAt);
+
+      const timeStr = _otpExpiry.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      if (!window.EMAILJS_CONFIG || !window.EMAILJS_CONFIG.publicKey) {
+        throw new Error('EmailJS configuration not loaded. Check your setup.');
+      }
+
+      const EMAILJS_SERVICE_ID  = window.EMAILJS_CONFIG.serviceId;
+      const EMAILJS_TEMPLATE_ID = window.EMAILJS_CONFIG.templateId;
+
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: email,
+        to_name:  name || email.split('@')[0],
+        passcode: code,
+        time:     timeStr
+      });
+    }
+
+    function showOtpOverlay(email, name, onSuccess) {
+      _pendingAction = onSuccess;
+      document.getElementById('otpEmailDisplay').textContent = email;
+      ['d1','d2','d3','d4','d5','d6'].forEach(id => {
+        const el = document.getElementById(id);
+        el.value = '';
+        el.classList.remove('filled');
+      });
+      document.getElementById('otpError').textContent = '';
+      document.getElementById('verifyOtpBtn').disabled = false;
+      document.getElementById('otpOverlay').classList.add('show');
+      document.getElementById('d1').focus();
+      startOtpTimer();
+      setupOtpInputs();
+    }
+
+    function setupOtpInputs() {
+      const ids = ['d1','d2','d3','d4','d5','d6'];
+      ids.forEach((id, i) => {
+        const el = document.getElementById(id);
+        el.oninput = function() {
+          this.value = this.value.replace(/[^0-9]/g,'').slice(-1);
+          this.classList.toggle('filled', this.value !== '');
+          if (this.value && i < 5) document.getElementById(ids[i+1]).focus();
+          if (i === 5 && this.value) window.verifyOtp();
+        };
+        el.onkeydown = function(e) {
+          if (e.key === 'Backspace' && !this.value && i > 0) {
+            document.getElementById(ids[i-1]).focus();
+          }
+        };
+      });
+    }
+
+    window.verifyOtp = async function() {
+      const entered = ['d1','d2','d3','d4','d5','d6']
+        .map(id => document.getElementById(id).value).join('');
+      const errEl = document.getElementById('otpError');
+
+      if (entered.length < 6) {
+        errEl.textContent = 'Please enter all 6 digits.';
+        return;
+      }
+
+      const uid = _pendingUid;
+      const otpRef = ref(db, `users/${uid}/pendingOTP`);
+      
+      try {
+        const otpSnap = await get(otpRef);
+        if (!otpSnap.exists()) {
+          errEl.textContent = '❌ No active OTP session. Please request a new one.';
+          return;
+        }
+
+        const otpData = otpSnap.val();
+        if (otpData.used) {
+          errEl.textContent = '❌ OTP already used. Please request a new one.';
+          return;
+        }
+
+        if (Date.now() > otpData.expiresAt) {
+          errEl.textContent = '⏰ OTP expired. Please request a new one.';
+          return;
+        }
+
+        if (entered !== otpData.code) {
+          errEl.textContent = '❌ Incorrect code. Please try again.';
+          ['d1','d2','d3','d4','d5','d6'].forEach(id => {
+            const el = document.getElementById(id);
+            el.style.borderColor = '#ef4444';
+            setTimeout(() => el.style.borderColor = '', 1000);
+          });
+          return;
+        }
+
+        // Mark OTP as used and delete it from DB immediately to prevent reuse/replay
+        await remove(otpRef);
+
+        // Save current device to trustedDevices
+        const deviceData = getOrInitLocalDevice();
+        const deviceRef = ref(db, `users/${uid}/trustedDevices/${deviceData.deviceId}`);
+        
+        await set(deviceRef, {
+          deviceId: deviceData.deviceId,
+          deviceName: deviceData.deviceName,
+          browser: deviceData.browser,
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
+          lastLogin: Date.now()
+        });
+
+        // Log successful login history
+        await logLoginHistory(uid, deviceData, 'Password_and_MFA', true);
+
+        // ✅ OTP correct - proceed
+        clearInterval(_otpTimerInt);
+        document.getElementById('otpOverlay').classList.remove('show');
+        if (_pendingAction) _pendingAction();
+
+      } catch (err) {
+        console.error('Error verifying OTP:', err);
+        errEl.textContent = 'Error: ' + err.message;
+      }
+    };
+
+    window.resendOtp = async function() {
+      const email = document.getElementById('otpEmailDisplay').textContent;
+      const link  = document.getElementById('resendLink');
+      link.classList.add('disabled');
+      link.textContent = 'Sending...';
+      const uid = _pendingUid;
+      try {
+        const userRef = ref(db, `users/${uid}`);
+        const snap = await get(userRef);
+        const userData = snap.val() || {};
+        const userName = userData.name || (userData.profile && userData.profile.ownerName) || email.split('@')[0];
+        
+        await sendOtp(uid, email, userName);
+        document.getElementById('otpError').textContent = '✅ New code sent!';
+        startOtpTimer();
+      } catch(e) {
+        document.getElementById('otpError').textContent = 'Failed to resend: ' + e.message;
+      }
+      setTimeout(() => {
+        link.classList.remove('disabled');
+        link.textContent = 'Resend';
+      }, 30000);
+    };
+
+    function startOtpTimer() {
+      clearInterval(_otpTimerInt);
+      const timerEl = document.getElementById('otpTimer');
+      const resend   = document.getElementById('resendLink');
+      
+      function update() {
+        const remain = Math.max(0, _otpExpiry.getTime() - Date.now());
+        const mins   = Math.floor(remain / 60000);
+        const secs   = Math.floor((remain % 60000) / 1000);
+        timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        if (remain <= 0) {
+          clearInterval(_otpTimerInt);
+          timerEl.textContent = 'Expired';
+          resend.classList.remove('disabled');
+        }
+      }
+      update();
+      _otpTimerInt = setInterval(update, 1000);
+    }
 
     // Show success message if redirected from signup
     const urlParams = new URLSearchParams(window.location.search);
@@ -602,17 +789,38 @@
             permissions:   (window.AuthManager && window.AuthManager.ROLE_PERMISSIONS[userData.role || 'employee']) || [],
           }));
 
-          // 🔐 MFA Step — send OTP before redirecting
+          // 🔐 MFA Step — check trusted device first
+          const deviceData = getOrInitLocalDevice();
+          const deviceRef = ref(db, `users/${user.uid}/trustedDevices/${deviceData.deviceId}`);
+          const deviceSnap = await get(deviceRef);
+          
+          let isDeviceTrusted = false;
+          if (deviceSnap.exists()) {
+            const dbDevice = deviceSnap.val();
+            if (dbDevice.expiresAt && dbDevice.expiresAt > Date.now()) {
+              isDeviceTrusted = true;
+            }
+          }
+
+          if (isDeviceTrusted) {
+            await update(deviceRef, { lastLogin: Date.now() });
+            await logLoginHistory(user.uid, deviceData, 'MFA_Skipped_Trusted_Device', true);
+            window.location.href = 'home.html';
+            return;
+          }
+
+          _pendingUid = user.uid;
           const userName = userData.name || user.email.split('@')[0];
           try {
             loginButton.innerHTML = '<i class="fas fa-paper-plane"></i> Sending OTP...';
-            await sendOtp(user.email, userName);
+            await sendOtp(user.uid, user.email, userName);
             showOtpOverlay(user.email, userName, () => {
               window.location.href = 'home.html';
             });
           } catch (otpErr) {
             console.error('OTP send failed:', otpErr);
-            showError('Could not send OTP. Check your EmailJS config or try again.');
+            showError('Could not send OTP: ' + otpErr.message);
+            await logLoginHistory(user.uid, deviceData, 'Password_and_MFA', false);
           } finally {
             loginButton.disabled = false;
             loginButton.innerHTML = originalButtonHTML;
@@ -676,17 +884,38 @@
           });
           sessionStorage.setItem('tv_user_context', ownerContext);
 
-          // 🔐 MFA Step — send OTP before redirecting
+          // 🔐 MFA Step — check trusted device first
+          const deviceData = getOrInitLocalDevice();
+          const deviceRef = ref(db, `users/${user.uid}/trustedDevices/${deviceData.deviceId}`);
+          const deviceSnap = await get(deviceRef);
+          
+          let isDeviceTrusted = false;
+          if (deviceSnap.exists()) {
+            const dbDevice = deviceSnap.val();
+            if (dbDevice.expiresAt && dbDevice.expiresAt > Date.now()) {
+              isDeviceTrusted = true;
+            }
+          }
+
+          if (isDeviceTrusted) {
+            await update(deviceRef, { lastLogin: Date.now() });
+            await logLoginHistory(user.uid, deviceData, 'MFA_Skipped_Trusted_Device', true);
+            window.location.href = 'home.html';
+            return;
+          }
+
+          _pendingUid = user.uid;
           const ownerName = (userData.profile && userData.profile.ownerName) || user.displayName || user.email.split('@')[0];
           try {
             loginButton.innerHTML = '<i class="fas fa-paper-plane"></i> Sending OTP...';
-            await sendOtp(user.email, ownerName);
+            await sendOtp(user.uid, user.email, ownerName);
             showOtpOverlay(user.email, ownerName, () => {
               window.location.href = 'home.html';
             });
           } catch (otpErr) {
             console.error('OTP send failed:', otpErr);
-            showError('Could not send OTP. Check your EmailJS config or try again.');
+            showError('Could not send OTP: ' + otpErr.message);
+            await logLoginHistory(user.uid, deviceData, 'Password_and_MFA', false);
           } finally {
             loginButton.disabled = false;
             loginButton.innerHTML = originalButtonHTML;

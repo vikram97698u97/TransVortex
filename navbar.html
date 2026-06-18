@@ -833,6 +833,10 @@
         <div class="nav-icon"><i class="fas fa-users-cog"></i></div>
         <div class="nav-text">Employees</div>
       </a>
+      <a href="security.html" class="nav-item">
+        <div class="nav-icon"><i class="fas fa-shield-halved"></i></div>
+        <div class="nav-text">Security Settings</div>
+      </a>
       
     </div>
 
@@ -1053,9 +1057,13 @@
 
     window.logout = function () {
       signOut(auth).then(() => {
-        // Clear all session data on logout
+        // Clear all session data on logout but preserve trusted device
+        const device = localStorage.getItem('tv_trusted_device');
         localStorage.clear();
         sessionStorage.clear();
+        if (device) {
+          localStorage.setItem('tv_trusted_device', device);
+        }
         window.location.href = "index.html";
       }).catch(error => {
         alert("Error logging out: " + error.message);
