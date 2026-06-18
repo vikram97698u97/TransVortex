@@ -8,7 +8,7 @@
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tyre Management & Analytics System</title>
+  <title>Tyre Management System</title>
   <style>
     /* ... (original CSS remains the same) ... */
     * {
@@ -795,13 +795,11 @@
   <script src="table-pager.js"></script>
 
   <div class="container">
-    <h1>Tyre Management & Analytics System</h1>
+    <h1>Tyre Management System</h1>
 
     <div class="tab-header">
       <button class="tab-button active" onclick="openTab(event, 'Management')"><i class="fas fa-list-check"></i>
         Management</button>
-      <button class="tab-button" onclick="openTab(event, 'Analytics')"><i class="fas fa-chart-pie"></i>
-        Analytics</button>
       <button class="tab-button" onclick="openTab(event, 'Stock')"><i class="fas fa-warehouse"></i>
         Tyre Stock</button>
       <button class="tab-button" onclick="openTab(event, 'ActivityLog')"><i class="fas fa-history"></i>
@@ -985,51 +983,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div id="Analytics" class="tab-content">
-      <section class="analytics-kpis">
-        <div class="analytics-kpi">
-          <div class="analytics-label">Avg Tyre Health</div>
-          <div class="analytics-value" id="kpiHealth">0%</div>
-          <div class="analytics-sub">Across fleet</div>
-        </div>
-        <div class="analytics-kpi">
-          <div class="analytics-label">Active Tyres</div>
-          <div class="analytics-value" id="kpiActive">0</div>
-          <div class="analytics-sub">Mounted & in‑use</div>
-        </div>
-        <div class="analytics-kpi">
-          <div class="analytics-label">Attention Needed</div>
-          <div class="analytics-value" id="kpiAlerts">0</div>
-          <div class="analytics-sub">Health < 60% or age> 2y</div>
-        </div>
-        <div class="analytics-kpi">
-          <div class="analytics-label">Total Tyre Cost</div>
-          <div class="analytics-value" id="kpiCost">₹0</div>
-          <div class="analytics-sub">Purchase + maintenance</div>
-        </div>
-      </section>
-
-      <section class="analytics-grid-2" style="margin-top:16px">
-        <div class="analytics-card">
-          <h3>Tyre Health by Vehicle</h3>
-          <div class="analytics-chart-wrap"><canvas id="healthByVehicle"></canvas></div>
-        </div>
-        <div class="analytics-card">
-          <h3>Brand Distribution</h3>
-          <div class="analytics-chart-wrap"><canvas id="brandShare"></canvas></div>
-        </div>
-      </section>
-
-      <section class="analytics-grid-2-even" style="margin-top:16px">
-        <div class="analytics-card">
-          <h3>Cost per Km (Trend)</h3>
-          <div class="analytics-chart-wrap"><canvas id="cpkTrend"></canvas></div>
-        </div>
-
-      </section>
-
     </div>
 
     <div id="ActivityLog" class="tab-content">
@@ -1526,32 +1479,7 @@
 
 
 
-    // TAB SWITCHING FUNCTION (NEW)
-    window.openTab = function (evt, tabName) {
-      // Declare all variables
-      let i, tabcontent, tablinks;
 
-      // Get all elements with class="tab-content" and hide them
-      tabcontent = document.getElementsByClassName("tab-content");
-      for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-      }
-
-      // Get all elements with class="tab-button" and remove the class "active"
-      tablinks = document.getElementsByClassName("tab-button");
-      for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-      }
-
-      // Show the current tab, and add an "active" class to the button that opened the tab
-      document.getElementById(tabName).style.display = "block";
-      evt.currentTarget.className += " active";
-
-      // If switching to the Analytics tab, ensure charts re-render
-      if (tabName === 'Analytics' && analyticsRows.length > 0) {
-        renderAnalyticsCharts();
-      }
-    }
 
     // Make Firebase functions available globally
     window.db = db;
@@ -1772,27 +1700,7 @@
       }
     });
 
-    // Tab switching logic
-    window.openTab = function (evt, tabName) {
-      var i, tabcontent, tablinks;
-      tabcontent = document.getElementsByClassName("tab-content");
-      for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-      }
-      tablinks = document.getElementsByClassName("tab-button");
-      for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-      }
-      document.getElementById(tabName).style.display = "block";
-      evt.currentTarget.className += " active";
-      scheduleTyreDraftSave();
-      
-      if (tabName === 'Analytics' && analyticsRows.length > 0) {
-        renderAnalyticsCharts();
-      } else if (tabName === 'ActivityLog') {
-        loadGlobalActivityLog();
-      }
-    };
+
 
     // Live validation for vehicle number input
     window.validateVehicleInput = function (query) {
@@ -3139,25 +3047,30 @@
       if (tab) tab.style.display = "block";
 
       // Activate button
-      if (evt) {
+      if (evt && evt.currentTarget) {
         evt.currentTarget.className += " active";
       } else {
-        // Find button by text or index? 
-        // Better to assume if evt is null we just switch content.
-        // But we should try to highlight the button.
-        // Let's iterate and find the one that points to this tab? 
-        // Hard to link button to tab without explicit ID or map.
-        // We'll rely on index or text.
+        // Find button by text or index
         for (let i = 0; i < tabLinks.length; i++) {
           if (tabLinks[i].textContent.includes(tabName) ||
             (tabName === 'Management' && i === 0) ||
-            (tabName === 'Analytics' && i === 1) ||
-            (tabName === 'Stock' && i === 2)) { // Adjust indices based on actual HTML
+            (tabName === 'Stock' && i === 1) ||
+            (tabName === 'ActivityLog' && i === 2)) {
             if (!tabLinks[i].className.includes("active")) tabLinks[i].className += " active";
           }
         }
       }
-    }
+
+      if (typeof scheduleTyreDraftSave === 'function') {
+        scheduleTyreDraftSave();
+      }
+
+      if (tabName === 'ActivityLog') {
+        if (typeof window.loadGlobalActivityLog === 'function') {
+          window.loadGlobalActivityLog();
+        }
+      }
+    };
 
     // Deep Linking Handler
     window.initialDeepLinkHandled = false;
@@ -3847,36 +3760,13 @@
       }
     };
 
-    // Initialize Listener
-    const origLoadRegistered = window.loadRegisteredVehicles; // Hook into init flow if needed, but onAuthStateChanged calls loadVehicles
 
-    // We can just call loadStockTyres once user is authenticated. 
-    // Adding it to onAuthStateChanged:
-    const originalAuthStateChanged = onAuthStateChanged;
-    // Wait, onAuthStateChanged is already defined in the module script.
-    // I need to inject the call inside the existing onAuthStateChanged callback.
-    // Since I can't easily inject into the middle of the function with replacement chunks without context, I'll use a specific hook or just rely on 'currentUser' being set.
-
-    // Actually, I can just setting up the listener here if currentUser is already set (unlikely at script load) 
-    // OR I can hook into the 'envConfigLoaded' or just poll? No.
-
-    // I will redefine the onAuthStateChanged logic? No, too risky.
-    // I'll add a check:
-
-    // Since this script runs at the end, I can just add a separate auth listener for the stock feature.
-    // Firebase supports multiple listeners.
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        loadStockTyres();
-        window.loadTyreHistory();
-      }
-    });
 
 
     // Function to handle the actual disposal (FIXED)
     function proceedWithDisposal(vehicleId, tyreNumber, reason, resellPrice) {
-      get(ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`)).then((snapshot) => {
+      const activeAccountId = coreAccountId || currentUser.uid;
+      get(ref(db, `users/${activeAccountId}/vehicles/${vehicleId}`)).then((snapshot) => {
         if (snapshot.exists()) {
           const vehicle = snapshot.val();
           const tyres = vehicle.tyres || [];
@@ -3898,7 +3788,7 @@
           };
 
           // Save to tyre history
-          const historyRef = ref(db, `users/${currentUser.uid}/tyre_history`);
+          const historyRef = ref(db, `users/${activeAccountId}/tyre_history`);
           push(historyRef, disposedTyre).then(() => {
             window.logTyreMovement(vehicleId, vehicle.vehicleNumber, tyreNumber, `Disposed (Reason: ${reason})`);
             
@@ -3906,7 +3796,7 @@
             const updatedTyres = tyres.filter(t => t.number !== tyreNumber);
 
             // Update the vehicle with the new tyres array
-            update(ref(db, `users/${currentUser.uid}/vehicles/${vehicleId}`), {
+            update(ref(db, `users/${activeAccountId}/vehicles/${vehicleId}`), {
               tyres: updatedTyres
             }).then(() => {
               showAlert('Tyre disposed successfully', 'success');
@@ -3918,7 +3808,7 @@
           });
         }
       });
-    };
+    }
 
     // Cancel edit mode
     window.cancelEdit = function () {
@@ -4119,6 +4009,27 @@
         currentSortActivity.column = column;
         currentSortActivity.order = 'asc';
       }
+      
+      // Update sort icons visually
+      const headersMap = {
+        date: document.querySelector("#ActivityLog th[onclick*='date'] i"),
+        vehicle: document.querySelector("#ActivityLog th[onclick*='vehicle'] i"),
+        tyre: document.querySelector("#ActivityLog th[onclick*='tyre'] i"),
+        action: document.querySelector("#ActivityLog th[onclick*='action'] i")
+      };
+      
+      Object.keys(headersMap).forEach(key => {
+        const icon = headersMap[key];
+        if (icon) {
+          icon.className = 'fas fa-sort text-muted';
+        }
+      });
+      
+      const activeIcon = headersMap[column];
+      if (activeIcon) {
+        activeIcon.className = `fas fa-sort-${currentSortActivity.order === 'asc' ? 'up' : 'down'}`;
+      }
+      
       filterGlobalActivityLog();
     };
 
@@ -4129,6 +4040,26 @@
         const snap = await get(ref(db, `users/${coreAccountId}/tyre_movements`));
         if(snap.exists()) {
           allGlobalMovements = Object.values(snap.val()).sort((a,b) => b.timestamp - a.timestamp);
+          
+          // Reset icons to default sort on load (date desc)
+          const headersMap = {
+            date: document.querySelector("#ActivityLog th[onclick*='date'] i"),
+            vehicle: document.querySelector("#ActivityLog th[onclick*='vehicle'] i"),
+            tyre: document.querySelector("#ActivityLog th[onclick*='tyre'] i"),
+            action: document.querySelector("#ActivityLog th[onclick*='action'] i")
+          };
+          Object.keys(headersMap).forEach(key => {
+            const icon = headersMap[key];
+            if (icon) {
+              icon.className = 'fas fa-sort text-muted';
+            }
+          });
+          const dateIcon = headersMap['date'];
+          if (dateIcon) {
+            dateIcon.className = 'fas fa-sort-down';
+          }
+          currentSortActivity = { column: 'date', order: 'desc' };
+
           filterGlobalActivityLog();
         } else {
           tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No activities found.</td></tr>';

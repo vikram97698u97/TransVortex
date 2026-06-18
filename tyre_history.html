@@ -784,6 +784,27 @@
         currentSortActivity.column = column;
         currentSortActivity.order = 'asc';
       }
+      
+      // Update sort icons visually
+      const headersMap = {
+        date: document.querySelector("#activityContainer th[onclick*='date'] i"),
+        vehicle: document.querySelector("#activityContainer th[onclick*='vehicle'] i"),
+        tyre: document.querySelector("#activityContainer th[onclick*='tyre'] i"),
+        action: document.querySelector("#activityContainer th[onclick*='action'] i")
+      };
+      
+      Object.keys(headersMap).forEach(key => {
+        const icon = headersMap[key];
+        if (icon) {
+          icon.className = 'fas fa-sort text-muted';
+        }
+      });
+      
+      const activeIcon = headersMap[column];
+      if (activeIcon) {
+        activeIcon.className = `fas fa-sort-${currentSortActivity.order === 'asc' ? 'up' : 'down'}`;
+      }
+      
       filterGlobalActivityLog();
     };
 
@@ -793,7 +814,27 @@
       try {
         const snap = await db.ref(`users/${coreAccountId}/tyre_movements`).get();
         if(snap.exists()) {
-          allGlobalMovements = Object.values(snap.val());
+          allGlobalMovements = Object.values(snap.val()).sort((a,b) => b.timestamp - a.timestamp);
+          
+          // Reset icons to default sort on load (date desc)
+          const headersMap = {
+            date: document.querySelector("#activityContainer th[onclick*='date'] i"),
+            vehicle: document.querySelector("#activityContainer th[onclick*='vehicle'] i"),
+            tyre: document.querySelector("#activityContainer th[onclick*='tyre'] i"),
+            action: document.querySelector("#activityContainer th[onclick*='action'] i")
+          };
+          Object.keys(headersMap).forEach(key => {
+            const icon = headersMap[key];
+            if (icon) {
+              icon.className = 'fas fa-sort text-muted';
+            }
+          });
+          const dateIcon = headersMap['date'];
+          if (dateIcon) {
+            dateIcon.className = 'fas fa-sort-down';
+          }
+          currentSortActivity = { column: 'date', order: 'desc' };
+
           filterGlobalActivityLog();
         } else {
           tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No activities found.</td></tr>';
@@ -856,7 +897,7 @@
       tbody.innerHTML = html;
     };
 
-    window.showMovementswindow.showMovements = async function(vehicleId, tyreNumber = null) {
+    window.showMovements = async function(vehicleId, tyreNumber = null) {
       if (!currentUser) return;
       if (!tyreNumber) return; // In history context, we strictly ask for tyreNumber
 
