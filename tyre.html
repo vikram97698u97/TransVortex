@@ -1003,6 +1003,39 @@
         </div>
       </div>
 
+      <!-- Add Tyre to Stock Form -->
+      <div class="form-section" style="margin-bottom: 30px;">
+        <h3><i class="fas fa-plus-circle"></i> Add Tyre Directly to Stock</h3>
+        <form id="addStockTyreForm" onsubmit="event.preventDefault(); addTyreToStock();" style="margin-top: 15px;">
+          <div class="tyre-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div class="form-group">
+              <label for="stockTyreNumber">Tyre Number: <span style="color:red;">*</span></label>
+              <input type="text" id="stockTyreNumber" class="form-control" placeholder="e.g., TYRE123456" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
+            </div>
+            <div class="form-group">
+              <label for="stockTyreBrand">Brand: <span style="color:red;">*</span></label>
+              <input type="text" id="stockTyreBrand" class="form-control" placeholder="e.g., MRF, Apollo" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
+            </div>
+            <div class="form-group">
+              <label for="stockTyreKm">Initial Running Km:</label>
+              <input type="number" id="stockTyreKm" class="form-control" placeholder="e.g., 0" value="0" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
+            </div>
+            <div class="form-group">
+              <label for="stockTyreCost">Cost (₹): <span style="color:red;">*</span></label>
+              <input type="number" id="stockTyreCost" class="form-control" placeholder="e.g., 12000" min="0" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
+            </div>
+            <div class="form-group">
+              <label for="stockTyreDate">Purchase/Added Date: <span style="color:red;">*</span></label>
+              <input type="date" id="stockTyreDate" class="form-control" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
+            </div>
+          </div>
+          <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save to Stock</button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('addStockTyreForm').reset(); document.getElementById('stockTyreDate').valueAsDate = new Date();" style="background-color:#6c757d; border-color:#6c757d; color:#fff; padding: 10px 15px; border-radius: 4px; border: none; cursor: pointer;"><i class="fas fa-undo"></i> Reset</button>
+          </div>
+        </form>
+      </div>
+
       <div class="form-section">
         <h3>Tyre Stock Inventory</h3>
         <div class="search-section">
@@ -3158,6 +3191,11 @@
         if (typeof window.loadGlobalActivityLog === 'function') {
           window.loadGlobalActivityLog();
         }
+      } else if (tabName === 'Stock') {
+        const stockDateInput = document.getElementById('stockTyreDate');
+        if (stockDateInput && !stockDateInput.value) {
+          stockDateInput.valueAsDate = new Date();
+        }
       }
     };
 
@@ -3390,6 +3428,69 @@
     // ==========================================
 
     let stockTyres = [];
+
+    window.addTyreToStock = async function () {
+      if (!currentUser) return;
+
+      const number = document.getElementById('stockTyreNumber').value.trim();
+      const brand = document.getElementById('stockTyreBrand').value.trim();
+      const km = parseInt(document.getElementById('stockTyreKm').value, 10) || 0;
+      const cost = parseFloat(document.getElementById('stockTyreCost').value) || 0;
+      const dateVal = document.getElementById('stockTyreDate').value;
+
+      if (!number || !brand || !dateVal) {
+        showAlert('Please fill all required fields.', 'danger');
+        return;
+      }
+
+      // Check if tyre number already exists in stock or in active vehicles to prevent duplicates
+      const existsInStock = (window.stockTyres || []).some(t => t.number.toLowerCase() === number.toLowerCase());
+
+      let existsInVehicles = false;
+      if (typeof allVehiclesData !== 'undefined') {
+        Object.values(allVehiclesData).forEach(v => {
+          if (v.tyres && Array.isArray(v.tyres)) {
+            if (v.tyres.some(t => t.number.toLowerCase() === number.toLowerCase())) {
+              existsInVehicles = true;
+            }
+          }
+        });
+      }
+
+      if (existsInStock || existsInVehicles) {
+        showAlert(`Tyre number "${number}" already exists in the system (either in stock or active on a vehicle).`, 'danger');
+        return;
+      }
+
+      try {
+        const addedTimestamp = new Date(dateVal).getTime();
+        const stockRef = ref(db, `users/${coreAccountId}/tyre_stock`);
+        const newTyre = {
+          number: number,
+          brand: brand,
+          totalRunningKm: km,
+          cost: cost,
+          addedAt: addedTimestamp,
+          portalAddedAt: addedTimestamp,
+          lastUpdated: Date.now(),
+          status: 'In Stock'
+        };
+
+        await push(stockRef, newTyre);
+
+        // Log movement
+        window.logTyreMovement('STOCK', 'Stock Inventory', number, 'Added Directly to Stock');
+
+        showAlert('Tyre added to stock successfully!', 'success');
+
+        // Reset form
+        document.getElementById('addStockTyreForm').reset();
+        document.getElementById('stockTyreDate').valueAsDate = new Date();
+      } catch (e) {
+        console.error(e);
+        showAlert('Error adding tyre to stock: ' + e.message, 'danger');
+      }
+    };
 
     // Load Stock Tyres
     function loadStockTyres() {
@@ -4083,6 +4184,10 @@
       if (managementSection) {
         managementSection.addEventListener('input', scheduleTyreDraftSave);
         managementSection.addEventListener('change', scheduleTyreDraftSave);
+      }
+      const stockDateInput = document.getElementById('stockTyreDate');
+      if (stockDateInput) {
+        stockDateInput.valueAsDate = new Date();
       }
     });
 
