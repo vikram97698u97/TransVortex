@@ -47,6 +47,7 @@ const server = http.createServer((req, res) => {
                 firebase: global.window.FIREBASE_CONFIG || evm.FIREBASE_CONFIG,
                 cloudinary: global.window.CLOUDINARY_CONFIG || evm.CLOUDINARY_CONFIG,
                 environment: global.window.ENVIRONMENT || evm.ENVIRONMENT,
+                razorpay: global.window.RAZORPAY_CONFIG || evm.RAZORPAY_CONFIG,
                 security: global.window.SECURITY_CONFIG || evm.SECURITY_CONFIG
             };
         } catch (e) {

@@ -76,6 +76,9 @@ app.get('/api/config', (req, res) => {
             debug: process.env.DEBUG === 'true',
             apiBaseUrl: process.env.API_BASE_URL,
             version: process.env.VERSION || '1.0.0'
+        },
+        razorpay: {
+            keyId: process.env.RAZORPAY_KEY_ID
         }
     };
     

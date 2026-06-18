@@ -249,6 +249,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
     
+    <!-- 💳 Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    
     <!-- 🔐 Configuration Loading -->
     <script src="evm.js"></script>
     <script src="secure-api-loader.js"></script>
@@ -774,183 +777,161 @@
 
                 const paymentRef = generatePaymentRef();
 
-                // Use set for new payment
-                await set(ref(db, `subscriptionPayments/${paymentRef}`), {
-                    userId: user.uid,
-                    amount: amountToPay,
-                    status: 'pending',
-                    createdAt: new Date().toISOString(),
-                    clientId: user.uid,
-                    timestamp: new Date().toISOString(),
-                    plan: `${months} Months` // Store the cycle duration
-                });
+                // Prepare Razorpay options
+                const razorpayKey = window.RAZORPAY_CONFIG?.keyId || 'rzp_test_placeholder';
+                
+                const options = {
+                    key: razorpayKey,
+                    amount: amountToPay * 100, // Amount is in currency subunits (paise)
+                    currency: 'INR',
+                    name: 'TransVortex',
+                    description: `${months} Month${months > 1 ? 's' : ''} Subscription`,
+                    image: 'logo1.jpg',
+                    theme: {
+                        color: '#2E8B57'
+                    },
+                    prefill: {
+                        name: user.displayName || user.email.split('@')[0],
+                        email: user.email
+                    },
+                    notes: {
+                        paymentRef: paymentRef,
+                        userId: user.uid,
+                        planMonths: months
+                    },
+                    handler: async function (response) {
+                        try {
+                            const razorpayPaymentId = response.razorpay_payment_id;
 
-                sessionStorage.setItem('currentPaymentRef', paymentRef);
+                            // Show success/verifying message
+                            subscribeBtn.style.display = 'none';
+                            paymentStatus.style.display = 'block';
+                            paymentStatus.innerHTML = `
+                                <div class="status-message">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 20px;"></i>
+                                    <h3>Activating Subscription...</h3>
+                                    <p>Please wait while we record your payment and activate your subscription.</p>
+                                </div>
+                            `;
 
-                paymentRefElement.textContent = paymentRef;
-                paymentAmountEl.textContent = `₹${amountToPay.toLocaleString('en-IN')}`;
-                qrContainer.style.display = 'block';
+                            // 1. Record the transaction in subscriptionPayments
+                            await set(ref(db, `subscriptionPayments/${paymentRef}`), {
+                                userId: user.uid,
+                                amount: amountToPay,
+                                status: 'verified',
+                                razorpayPaymentId: razorpayPaymentId,
+                                createdAt: new Date().toISOString(),
+                                clientId: user.uid,
+                                timestamp: new Date().toISOString(),
+                                plan: `${months} Months`
+                            });
+
+                            // 2. Activate subscription
+                            const now = new Date();
+                            const subscriptionEnd = new Date();
+                            subscriptionEnd.setMonth(subscriptionEnd.getMonth() + months);
+
+                            // Get existing subscription details to preserve plan values
+                            const userRef = ref(db, `users/${user.uid}`);
+                            const userSnap = await get(userRef);
+                            const existingData = userSnap.val() || {};
+                            const existingSubscription = existingData.subscription || {};
+
+                            const subscriptionData = {
+                                status: 'active',
+                                planId: existingSubscription.planId || 'starter',
+                                vehicleLimit: existingSubscription.vehicleLimit || 25,
+                                monthlyRate: existingSubscription.monthlyRate || 1999,
+                                startDate: now.toISOString(),
+                                endDate: subscriptionEnd.toISOString(),
+                                nextPayment: subscriptionEnd.toISOString(),
+                                lastPayment: now.toISOString(),
+                                paymentRef: paymentRef,
+                                updatedAt: now.toISOString(),
+                                trialStart: existingSubscription.trialStart || now.toISOString(),
+                                trialEnd: existingSubscription.trialEnd || now.toISOString()
+                            };
+
+                            await update(ref(db, `users/${user.uid}`), {
+                                subscription: subscriptionData,
+                                'profile/subscription': subscriptionData,
+                                lastPayment: now.toISOString()
+                            });
+
+                            // 3. Clear session storage
+                            sessionStorage.removeItem('currentPaymentRef');
+
+                            // 4. Show final success UI with download invoice button
+                            paymentStatus.innerHTML = `
+                                <div class="status-message">
+                                    <i class="fas fa-check-circle" style="color: #4CAF50; font-size: 48px;"></i>
+                                    <h3>Subscription Activated Successfully!</h3>
+                                    <p>Your subscription is now active. Transaction ID: ${razorpayPaymentId}</p>
+                                    <div class="action-buttons" style="margin-top: 20px;">
+                                        <button id="downloadInvoiceAndGoHome" class="btn btn-primary" data-payment-ref="${paymentRef}" data-user-id="${user.uid}"><i class="fas fa-download me-2"></i>Download Invoice</button>
+                                        <button onclick="redirectToDashboard()" class="btn btn-outline" style="background: var(--primary); color: white; border: none; font-weight: 600;">Go to Dashboard</button>
+                                    </div>
+                                </div>
+                            `;
+
+                            document.getElementById('downloadInvoiceAndGoHome').addEventListener('click', async function() {
+                                const pRef = this.getAttribute('data-payment-ref');
+                                const uId = this.getAttribute('data-user-id');
+                                const success = await window.generateInvoicePDF(pRef, uId);
+                                if (success) {
+                                    paymentStatus.innerHTML = `
+                                        <div class="status-message">
+                                            <i class="fas fa-check-circle" style="color: #4CAF50; font-size: 48px;"></i>
+                                            <h3>Invoice Downloaded Successfully!</h3>
+                                            <p>Thank you for subscribing. You can now go to your dashboard.</p>
+                                            <div class="action-buttons" style="margin-top: 20px;">
+                                                <button onclick="redirectToDashboard()" class="btn btn-primary">Go to Dashboard</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                            });
+
+                        } catch (err) {
+                            console.error('Error in Razorpay success handler:', err);
+                            paymentStatus.innerHTML = `
+                                <div class="status-message">
+                                    <i class="fas fa-exclamation-triangle" style="color: #f44336; font-size: 48px;"></i>
+                                    <h3>Activation Failed</h3>
+                                    <p>We detected your payment but failed to update your account: ${err.message}. Please contact support with payment ID.</p>
+                                </div>
+                            `;
+                        }
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            console.log('Razorpay payment window closed by user.');
+                            subscribeBtn.style.display = 'block';
+                            paymentStatus.style.display = 'none';
+                        }
+                    }
+                };
+
+                // Show awaiting payment status
                 subscribeBtn.style.display = 'none';
-
-                const upiId = 'singhvikram43210s@okhdfcbank';
-                const amount = `${amountToPay}.00`;
-                const note = `Payment Ref: ${paymentRef}`;
-                const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=Your%20Business&am=${amount}&tn=${encodeURIComponent(note)}`;
-
-                qrCodeElement.innerHTML = '';
-
-                new QRCode(qrCodeElement, {
-                    text: upiLink,
-                    width: 200,
-                    height: 200,
-                    colorDark: '#000000',
-                    colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-
-                qrContainer.style.display = 'block';
-
-            } catch (error) {
-                console.error('Error creating payment:', error);
-                showStatus(error.message || 'Error creating payment. Please try again.', true);
-            }
-        });
-
-        // When user clicks verify payment button
-        verifyPaymentBtn.addEventListener('click', async () => {
-            try {
-                if (!user) {
-                    throw new Error('User not authenticated. Please log in again.');
-                }
-
-                // Get the payment reference from session
-                const paymentReference = sessionStorage.getItem('currentPaymentRef');
-                if (!paymentReference) {
-                    throw new Error('No payment reference found. Please try subscribing again.');
-                }
-
-                // Show verifying message
-                qrContainer.style.display = 'none';
                 paymentStatus.style.display = 'block';
                 paymentStatus.innerHTML = `
                     <div class="status-message">
                         <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 20px;"></i>
-                        <h3>Verifying Payment...</h3>
-                        <p>Please wait while we verify your payment.</p>
+                        <h3>Awaiting Payment...</h3>
+                        <p>Please complete payment in the Razorpay checkout overlay.</p>
                     </div>
                 `;
 
-                // Check payment status with polling
-                let paymentVerified = false;
-                let attempts = 0;
-                const maxAttempts = 30;
-
-                while (attempts < maxAttempts && !paymentVerified) {
-                    attempts++;
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-
-                    // Check payment status
-                    const paymentSnap = await get(ref(db, `subscriptionPayments/${paymentReference}`));
-                    if (!paymentSnap.exists()) continue;
-
-                    const paymentData = paymentSnap.val();
-                    if (paymentData.status === 'verified') {
-                        paymentVerified = true;
-                        break;
-                    } else if (paymentData.status === 'failed') {
-                        throw new Error('Payment was rejected. Please contact support.');
-                    }
-                }
-
-                if (!paymentVerified) {
-                    throw new Error('Payment verification timed out. Please contact support if your payment was successful.');
-                }
-
-                // ✅ Payment verified → update subscription
-                const selectedCycle = document.querySelector('input[name="billingCycle"]:checked');
-                const months = parseInt(selectedCycle.value, 10);
-
-                const now = new Date();
-                const subscriptionEnd = new Date();
-                subscriptionEnd.setMonth(subscriptionEnd.getMonth() + months);
-
-                // Get existing subscription data
-                const userRef = ref(db, `users/${user.uid}`);
-                const userSnap = await get(userRef);
-                const existingData = userSnap.val() || {};
-                const existingSubscription = existingData.subscription || {};
-
-                // Create subscription data, preserving the original plan details.
-                const subscriptionData = {
-                    status: 'active',
-                    planId: existingSubscription.planId || 'starter',
-                    vehicleLimit: existingSubscription.vehicleLimit || 25,
-                    monthlyRate: existingSubscription.monthlyRate || 1999,
-                    startDate: now.toISOString(),
-                    endDate: subscriptionEnd.toISOString(),
-                    nextPayment: subscriptionEnd.toISOString(),
-                    lastPayment: now.toISOString(),
-                    paymentRef: paymentReference,
-                    updatedAt: now.toISOString(),
-                    trialStart: existingSubscription.trialStart || now.toISOString(),
-                    trialEnd: existingSubscription.trialEnd || now.toISOString()
-                };
-
-                // Perform updates on specific paths.
-                await update(ref(db, `users/${user.uid}`), {
-                    subscription: subscriptionData,
-                    'profile/subscription': subscriptionData,
-                    lastPayment: now.toISOString()
-                });
-
-                // Clear payment ref
-                sessionStorage.removeItem('currentPaymentRef');
-
-                // Show success message and download/dashboard action buttons
-                paymentStatus.innerHTML = `
-                    <div class="status-message">
-                        <i class="fas fa-check-circle" style="color: #4CAF50; font-size: 48px;"></i>
-                        <h3>Payment Verified Successfully!</h3>
-                        <p>Your subscription has been activated.</p>
-                        <div class="action-buttons" style="margin-top: 20px;">
-                            <button id="downloadInvoiceAndGoHome" class="btn btn-primary" data-payment-ref="${paymentReference}" data-user-id="${user.uid}"><i class="fas fa-download me-2"></i>Download Invoice</button>
-                            <button onclick="redirectToDashboard()" class="btn btn-outline" style="background: var(--primary); color: white; border: none; font-weight: 600;">Go to Dashboard</button>
-                        </div>
-                    </div>
-                `;
-                
-                // Add event listener for the new download button
-                document.getElementById('downloadInvoiceAndGoHome').addEventListener('click', async function() {
-                    const pRef = this.getAttribute('data-payment-ref');
-                    const uId = this.getAttribute('data-user-id');
-                    
-                    const success = await window.generateInvoicePDF(pRef, uId);
-                    
-                    if (success) {
-                        // After generating the PDF, update the message container to highlight the dashboard button
-                        paymentStatus.innerHTML = `
-                            <div class="status-message">
-                                <i class="fas fa-check-circle" style="color: #4CAF50; font-size: 48px;"></i>
-                                <h3>Invoice Downloaded Successfully!</h3>
-                                <p>Thank you for subscribing. You can now go to your dashboard.</p>
-                                <div class="action-buttons" style="margin-top: 20px;">
-                                    <button onclick="redirectToDashboard()" class="btn btn-primary">Go to Dashboard</button>
-                                </div>
-                            </div>
-                        `;
-                    }
-                });
+                // Open Razorpay Checkout overlay
+                const rzp = new Razorpay(options);
+                rzp.open();
 
             } catch (error) {
-                console.error('Payment verification error:', error);
-                paymentStatus.innerHTML = `
-                    <div class="status-message">
-                        <i class="fas fa-exclamation-triangle" style="color: #f44336; font-size: 48px;"></i>
-                        <h3>Verification Failed</h3>
-                        <p>${error.message}</p>
-                        <button onclick="window.location.reload()" class="btn" style="margin-top: 15px;">Try Again</button>
-                    </div>
-                `;
+                console.error('Error creating payment:', error);
+                showStatus(error.message || 'Error creating payment. Please try again.', true);
+                subscribeBtn.style.display = 'block';
+                paymentStatus.style.display = 'none';
             }
         });
 
