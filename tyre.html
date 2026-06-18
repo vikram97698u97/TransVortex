@@ -1017,6 +1017,12 @@
               <input type="text" id="stockTyreBrand" class="form-control" placeholder="e.g., MRF, Apollo" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
             </div>
             <div class="form-group">
+              <label for="stockTyreVendor">Vendor:</label>
+              <select id="stockTyreVendor" class="tyre-vendor form-select" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
+                <option value="">-- Select Vendor (Optional) --</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label for="stockTyreKm">Initial Running Km:</label>
               <input type="number" id="stockTyreKm" class="form-control" placeholder="e.g., 0" value="0" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
             </div>
@@ -1048,6 +1054,7 @@
               <tr>
                 <th>Tyre No</th>
                 <th>Brand</th>
+                <th>Vendor</th>
                 <th>Status</th>
                 <th>Running Km</th>
                 <th>Cost</th>
@@ -2070,12 +2077,12 @@
         }
 
         // Check for duplicate tyre numbers within the form
-        if (tyreNumbers.has(tyreNumber)) {
+        if (tyreNumbers.has(tyreNumber.toLowerCase())) {
           showAlert(`Duplicate tyre number: ${tyreNumber}`, 'danger');
           return;
         }
 
-        tyreNumbers.add(tyreNumber);
+        tyreNumbers.add(tyreNumber.toLowerCase());
 
         const parsedCost = parseFloat(tyreCost) || 0;
         if (parsedCost < 0) {
@@ -2185,7 +2192,7 @@
             const tyresToRemoveFromStock = [];
             for (const newTyre of newTyres) {
               // Check Stock
-              const stockTyre = window.stockTyres ? window.stockTyres.find(t => t.number === newTyre.number) : null;
+              const stockTyre = window.stockTyres ? window.stockTyres.find(t => t.number.toLowerCase() === newTyre.number.toLowerCase()) : null;
               if (stockTyre) {
                 // If it's in stock, we'll allow it but remove it from stock later
                 tyresToRemoveFromStock.push(stockTyre.stockKey);
@@ -2195,7 +2202,22 @@
               const historyRef = ref(db, `users/${coreAccountId}/tyre_history`);
               const historyQuery = query(historyRef, orderByChild('number'), equalTo(newTyre.number));
               const historySnap = await get(historyQuery);
-              if (historySnap.exists()) {
+              let existsInHistory = historySnap.exists();
+              if (!existsInHistory) {
+                // Check uppercase
+                const historySnapUpper = await get(query(historyRef, orderByChild('number'), equalTo(newTyre.number.toUpperCase())));
+                if (historySnapUpper.exists()) {
+                  existsInHistory = true;
+                } else {
+                  // Check lowercase
+                  const historySnapLower = await get(query(historyRef, orderByChild('number'), equalTo(newTyre.number.toLowerCase())));
+                  if (historySnapLower.exists()) {
+                    existsInHistory = true;
+                  }
+                }
+              }
+
+              if (existsInHistory) {
                 showAlert(`Tyre ${newTyre.number} already exists in Tyre History (Disposed).`, 'danger');
                 return;
               }
@@ -2215,7 +2237,7 @@
                 const vehicleTyres = allVehicles[vehicleKey].tyres || []; // Use the tyres array from the vehicle
 
                 for (const newTyre of newTyres) {
-                  const isDuplicate = vehicleTyres.some(t => t.number === newTyre.number);
+                  const isDuplicate = vehicleTyres.some(t => t.number.toLowerCase() === newTyre.number.toLowerCase());
                   if (isDuplicate) {
                     showAlert(`Tyre number ${newTyre.number} already exists in another vehicle`, 'danger');
                     return;
@@ -2276,7 +2298,7 @@
           const tyresToRemoveFromStock = [];
           for (const newTyre of newTyres) {
             // Check Stock
-            const stockTyre = window.stockTyres ? window.stockTyres.find(t => t.number === newTyre.number) : null;
+            const stockTyre = window.stockTyres ? window.stockTyres.find(t => t.number.toLowerCase() === newTyre.number.toLowerCase()) : null;
             if (stockTyre) {
               tyresToRemoveFromStock.push(stockTyre.stockKey);
             }
@@ -2285,7 +2307,22 @@
             const historyRef = ref(db, `users/${coreAccountId}/tyre_history`);
             const historyQuery = query(historyRef, orderByChild('number'), equalTo(newTyre.number));
             const historySnap = await get(historyQuery);
-            if (historySnap.exists()) {
+            let existsInHistory = historySnap.exists();
+            if (!existsInHistory) {
+              // Check uppercase
+              const historySnapUpper = await get(query(historyRef, orderByChild('number'), equalTo(newTyre.number.toUpperCase())));
+              if (historySnapUpper.exists()) {
+                existsInHistory = true;
+              } else {
+                // Check lowercase
+                const historySnapLower = await get(query(historyRef, orderByChild('number'), equalTo(newTyre.number.toLowerCase())));
+                if (historySnapLower.exists()) {
+                  existsInHistory = true;
+                }
+              }
+            }
+
+            if (existsInHistory) {
               showAlert(`Tyre ${newTyre.number} already exists in Tyre History (Disposed).`, 'danger');
               return;
             }
@@ -2297,7 +2334,7 @@
             for (const key in vehicles) {
               const vehicleTyres = vehicles[key].tyres || [];
               for (const newTyre of newTyres) {
-                const isDuplicate = vehicleTyres.some(t => t.number === newTyre.number);
+                const isDuplicate = vehicleTyres.some(t => t.number.toLowerCase() === newTyre.number.toLowerCase());
                 if (isDuplicate) {
                   showAlert(`Tyre number ${newTyre.number} already exists in another vehicle`, 'danger');
                   return;
@@ -3196,6 +3233,9 @@
         if (stockDateInput && !stockDateInput.value) {
           stockDateInput.valueAsDate = new Date();
         }
+        if (typeof populateVendorDropdowns === 'function') {
+          populateVendorDropdowns();
+        }
       }
     };
 
@@ -3434,6 +3474,7 @@
 
       const number = document.getElementById('stockTyreNumber').value.trim();
       const brand = document.getElementById('stockTyreBrand').value.trim();
+      const vendorId = document.getElementById('stockTyreVendor').value || '';
       const km = parseInt(document.getElementById('stockTyreKm').value, 10) || 0;
       const cost = parseFloat(document.getElementById('stockTyreCost').value) || 0;
       const dateVal = document.getElementById('stockTyreDate').value;
@@ -3457,8 +3498,34 @@
         });
       }
 
-      if (existsInStock || existsInVehicles) {
-        showAlert(`Tyre number "${number}" already exists in the system (either in stock or active on a vehicle).`, 'danger');
+      let existsInHistory = false;
+      try {
+        const historyRef = ref(db, `users/${coreAccountId}/tyre_history`);
+        const historyQuery = query(historyRef, orderByChild('number'), equalTo(number));
+        const historySnap = await get(historyQuery);
+        if (historySnap.exists()) {
+          existsInHistory = true;
+        } else {
+          // Check uppercase version
+          const historyQueryUpper = query(historyRef, orderByChild('number'), equalTo(number.toUpperCase()));
+          const historySnapUpper = await get(historyQueryUpper);
+          if (historySnapUpper.exists()) {
+            existsInHistory = true;
+          } else {
+            // Check lowercase version
+            const historyQueryLower = query(historyRef, orderByChild('number'), equalTo(number.toLowerCase()));
+            const historySnapLower = await get(historyQueryLower);
+            if (historySnapLower.exists()) {
+              existsInHistory = true;
+            }
+          }
+        }
+      } catch (historyErr) {
+        console.warn('Error querying tyre history:', historyErr);
+      }
+
+      if (existsInStock || existsInVehicles || existsInHistory) {
+        showAlert(`Tyre number "${number}" already exists in the system (either in stock, active on a vehicle, or in history/disposed).`, 'danger');
         return;
       }
 
@@ -3468,6 +3535,7 @@
         const newTyre = {
           number: number,
           brand: brand,
+          vendorId: vendorId,
           totalRunningKm: km,
           cost: cost,
           addedAt: addedTimestamp,
@@ -3544,7 +3612,7 @@
       updateStockPaginationControls(totalItems);
 
       if (pageEntries.length === 0 && !searchTermStock) {
-        container.innerHTML = '<tr><td colspan="8" style="text-align: center;">No tyres in stock.</td></tr>';
+        container.innerHTML = '<tr><td colspan="9" style="text-align: center;">No tyres in stock.</td></tr>';
         return;
       }
 
@@ -3552,6 +3620,7 @@
         <tr>
           <td><strong>${t.number}</strong></td>
           <td>${t.brand}</td>
+          <td>${allWorkVendors.find(v => v.id === t.vendorId)?.name || '—'}</td>
           <td><span class="badge badge-warning">In Stock</span></td>
           <td>${(t.totalRunningKm || 0).toLocaleString()} km</td>
           <td>₹${(t.cost || 0).toFixed(2)}</td>
@@ -3582,11 +3651,12 @@
 
         if (vehicleMatches.length > 0) {
           container.innerHTML += `
-                <tr style="background-color: #e2e3e5;"><td colspan="8" style="font-weight:bold; text-align:center;">Found on Vehicles</td></tr>
+                <tr style="background-color: #e2e3e5;"><td colspan="9" style="font-weight:bold; text-align:center;">Found on Vehicles</td></tr>
                 ${vehicleMatches.map(t => `
                     <tr style="background-color: #f8f9fa;">
                       <td><strong>${t.number}</strong></td>
                       <td>${t.brand}</td>
+                      <td>${allWorkVendors.find(v => v.id === t.vendorId)?.name || '—'}</td>
                       <td><span class="badge badge-info">On Vehicle (${t.vehicleNumber})</span></td>
                       <td>${(t.totalRunningKm || 0).toLocaleString()} km</td>
                       <td>₹${(t.cost || 0).toFixed(2)}</td>
@@ -3607,11 +3677,12 @@
 
         if (historyMatches.length > 0) {
           container.innerHTML += `
-              <tr style="background-color: #f2f2f2; color: #666;"><td colspan="8" style="font-weight:bold; text-align:center;">Found in Disposed History</td></tr>
+              <tr style="background-color: #f2f2f2; color: #666;"><td colspan="9" style="font-weight:bold; text-align:center;">Found in Disposed History</td></tr>
               ${historyMatches.map(t => `
                   <tr style="background-color: #f8f9fa;">
                     <td><strong>${t.number}</strong></td>
                     <td>${t.brand}</td>
+                    <td>${allWorkVendors.find(v => v.id === t.vendorId)?.name || '—'}</td>
                     <td><span class="badge badge-secondary">Disposed</span></td>
                     <td>${(t.totalRunningKm || 0).toLocaleString()} km</td>
                     <td>₹${(t.cost || 0).toFixed(2)}</td>
@@ -3915,6 +3986,7 @@
         const vehicleTyre = {
           number: stockTyre.number || '',
           brand: stockTyre.brand || '',
+          vendorId: stockTyre.vendorId || '',
           cost: parseFloat(stockTyre.cost) || 0,
           totalRunningKm: parseFloat(stockTyre.totalRunningKm) || 0,
           addedAt: stockTyre.addedAt || Date.now(),
