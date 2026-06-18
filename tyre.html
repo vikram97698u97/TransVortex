@@ -772,6 +772,77 @@
         height: 280px
       }
     }
+
+    /* Proper Table Styling for Tyre Stock and Active Log */
+    .table-responsive {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-top: 15px;
+      margin-bottom: 15px;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      font-size: 0.95rem;
+    }
+    .table th,
+    .table td {
+      padding: 12px 16px;
+      vertical-align: middle;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    .table thead th {
+      background-color: #2E8B57;
+      color: #fff;
+      font-weight: 600;
+      border-bottom: 2px solid #dee2e6;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+    }
+    .table-bordered {
+      border: 1px solid #dee2e6;
+    }
+    .table-bordered th,
+    .table-bordered td {
+      border: 1px solid #dee2e6;
+    }
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: #fcfcfc;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #f5f5f5;
+      transition: background-color 0.2s ease;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 4px;
+    }
+    .badge-secondary {
+      color: #fff;
+      background-color: #6c757d;
+    }
+    .badge-success {
+      color: #fff;
+      background-color: #28a745;
+    }
+    .badge-info {
+      color: #fff;
+      background-color: #17a2b8;
+    }
   </style>
 
   <!-- 🔥 Firebase SDK -->
@@ -939,7 +1010,7 @@
             placeholder="Search stock by tyre number, brand..." oninput="renderStockTyres()">
         </div>
         <div id="stockList" class="table-responsive">
-          <table class="table table-bordered table-striped" id="stockTable" style="margin-top: 20px;">
+          <table class="table table-bordered table-striped table-hover" id="stockTable" style="margin-top: 20px;">
             <thead class="thead-dark">
               <tr>
                 <th>Tyre No</th>
@@ -995,13 +1066,13 @@
           <input type="text" id="searchActivityLogInput" class="search-input" placeholder="Search by vehicle, tyre number or action..." oninput="filterGlobalActivityLog()">
         </div>
         <div class="table-responsive">
-          <table class="table table-bordered table-striped" style="margin-top: 15px; width: 100%;">
+          <table class="table table-bordered table-striped table-hover" style="margin-top: 15px; width: 100%;">
             <thead class="thead-dark" style="text-align: left;">
               <tr>
-                <th style="cursor:pointer;" onclick="sortGlobalActivityLog('date')">Date & Time <i class="fas fa-sort text-muted"></i></th>
-                <th style="cursor:pointer;" onclick="sortGlobalActivityLog('vehicle')">Vehicle <i class="fas fa-sort text-muted"></i></th>
-                <th style="cursor:pointer;" onclick="sortGlobalActivityLog('tyre')">Tyre No <i class="fas fa-sort text-muted"></i></th>
-                <th style="cursor:pointer;" onclick="sortGlobalActivityLog('action')">Action <i class="fas fa-sort text-muted"></i></th>
+                <th style="cursor:pointer;" onclick="sortGlobalActivityLog('date')">Date & Time <i id="sortIconDate" class="fas fa-sort text-muted"></i></th>
+                <th style="cursor:pointer;" onclick="sortGlobalActivityLog('vehicle')">Vehicle <i id="sortIconVehicle" class="fas fa-sort text-muted"></i></th>
+                <th style="cursor:pointer;" onclick="sortGlobalActivityLog('tyre')">Tyre No <i id="sortIconTyre" class="fas fa-sort text-muted"></i></th>
+                <th style="cursor:pointer;" onclick="sortGlobalActivityLog('action')">Action <i id="sortIconAction" class="fas fa-sort text-muted"></i></th>
               </tr>
             </thead>
             <tbody id="activityLogTableBody">
@@ -1444,10 +1515,16 @@
       const active = analyticsRows.filter(r => r.status === 'active').length;
       const alerts = analyticsRows.filter(r => r.health < 60 || (r.installAgeYears || 0) > 2).length;
       const totalCost = analyticsRows.reduce((a, b) => a + (Number(b.cost || 0)), 0);
-      document.getElementById('kpiHealth').textContent = `${avgHealth.toFixed(1)}%`;
-      document.getElementById('kpiActive').textContent = active;
-      document.getElementById('kpiAlerts').textContent = alerts;
-      document.getElementById('kpiCost').textContent = INR(totalCost);
+      
+      const kpiHealth = document.getElementById('kpiHealth');
+      const kpiActive = document.getElementById('kpiActive');
+      const kpiAlerts = document.getElementById('kpiAlerts');
+      const kpiCost = document.getElementById('kpiCost');
+
+      if (kpiHealth) kpiHealth.textContent = `${avgHealth.toFixed(1)}%`;
+      if (kpiActive) kpiActive.textContent = active;
+      if (kpiAlerts) kpiAlerts.textContent = alerts;
+      if (kpiCost) kpiCost.textContent = INR(totalCost);
     }
 
     function renderAnalyticsCharts() {
@@ -1457,24 +1534,36 @@
       analyticsRows.forEach(r => { if (!byVeh[r.vehicle]) byVeh[r.vehicle] = []; byVeh[r.vehicle].push(r.health); });
       const vLabels = Object.keys(byVeh);
       const vData = vLabels.map(v => byVeh[v].reduce((a, b) => a + b, 0) / byVeh[v].length);
-      analyticsCharts.hbv = new Chart(document.getElementById('healthByVehicle'), {
-        type: 'bar', data: { labels: vLabels, datasets: [{ label: 'Avg Health %', data: vData, backgroundColor: '#2E8B57' }] }, options: analyticsBaseOpts
-      });
+      
+      const healthByVehicleEl = document.getElementById('healthByVehicle');
+      if (healthByVehicleEl) {
+        analyticsCharts.hbv = new Chart(healthByVehicleEl, {
+          type: 'bar', data: { labels: vLabels, datasets: [{ label: 'Avg Health %', data: vData, backgroundColor: '#2E8B57' }] }, options: analyticsBaseOpts
+        });
+      }
 
       // Brand share
       const byBrand = {};
       analyticsRows.forEach(r => { const b = r.brand || '—'; byBrand[b] = (byBrand[b] || 0) + 1; });
       const bLabels = Object.keys(byBrand); const bVals = Object.values(byBrand);
-      analyticsCharts.brand = new Chart(document.getElementById('brandShare'), {
-        type: 'doughnut', data: { labels: bLabels, datasets: [{ data: bVals, backgroundColor: ['#2E8B57', '#3CB371', '#20B2AA', '#66CDAA', '#8FBC8F', '#A1E3B5', '#7BD389', '#43B97F'] }] }, options: { plugins: { legend: { position: 'right' } } }
-      });
+      
+      const brandShareEl = document.getElementById('brandShare');
+      if (brandShareEl) {
+        analyticsCharts.brand = new Chart(brandShareEl, {
+          type: 'doughnut', data: { labels: bLabels, datasets: [{ data: bVals, backgroundColor: ['#2E8B57', '#3CB371', '#20B2AA', '#66CDAA', '#8FBC8F', '#A1E3B5', '#7BD389', '#43B97F'] }] }, options: { plugins: { legend: { position: 'right' } } }
+        });
+      }
 
       // Cost per km trend (monthly buckets from install dates as a proxy)
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const buckets = Array.from({ length: 12 }, () => ({ cost: 0, km: 0 }));
       analyticsRows.forEach(r => { const i = (r.installMonth || 0) % 12; buckets[i].cost += Number(r.cost || 0); buckets[i].km += Number(r.km || 0); });
       const cpk = buckets.map(b => b.km ? b.cost / b.km : 0);
-      analyticsCharts.cpk = new Chart(document.getElementById('cpkTrend'), { type: 'line', data: { labels: months, datasets: [{ label: '₹/km', data: cpk, tension: .25, borderColor: '#2E8B57', backgroundColor: 'rgba(46,139,87,.12)', fill: true }] }, options: analyticsBaseOpts });
+      
+      const cpkTrendEl = document.getElementById('cpkTrend');
+      if (cpkTrendEl) {
+        analyticsCharts.cpk = new Chart(cpkTrendEl, { type: 'line', data: { labels: months, datasets: [{ label: '₹/km', data: cpk, tension: .25, borderColor: '#2E8B57', backgroundColor: 'rgba(46,139,87,.12)', fill: true }] }, options: analyticsBaseOpts });
+      }
     }
 
 
@@ -4012,10 +4101,10 @@
       
       // Update sort icons visually
       const headersMap = {
-        date: document.querySelector("#ActivityLog th[onclick*='date'] i"),
-        vehicle: document.querySelector("#ActivityLog th[onclick*='vehicle'] i"),
-        tyre: document.querySelector("#ActivityLog th[onclick*='tyre'] i"),
-        action: document.querySelector("#ActivityLog th[onclick*='action'] i")
+        date: document.getElementById('sortIconDate'),
+        vehicle: document.getElementById('sortIconVehicle'),
+        tyre: document.getElementById('sortIconTyre'),
+        action: document.getElementById('sortIconAction')
       };
       
       Object.keys(headersMap).forEach(key => {
@@ -4043,10 +4132,10 @@
           
           // Reset icons to default sort on load (date desc)
           const headersMap = {
-            date: document.querySelector("#ActivityLog th[onclick*='date'] i"),
-            vehicle: document.querySelector("#ActivityLog th[onclick*='vehicle'] i"),
-            tyre: document.querySelector("#ActivityLog th[onclick*='tyre'] i"),
-            action: document.querySelector("#ActivityLog th[onclick*='action'] i")
+            date: document.getElementById('sortIconDate'),
+            vehicle: document.getElementById('sortIconVehicle'),
+            tyre: document.getElementById('sortIconTyre'),
+            action: document.getElementById('sortIconAction')
           };
           Object.keys(headersMap).forEach(key => {
             const icon = headersMap[key];
