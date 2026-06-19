@@ -225,6 +225,9 @@
     <!-- 🔐 Configuration Loading -->
     <script src="evm.js"></script>
     <script src="secure-api-loader.js"></script>
+    <!-- jsPDF & AutoTable for Invoices -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
     <div id="navbar-placeholder"></div>
@@ -405,6 +408,51 @@
             </div>
             <div id="securityMessage" style="margin-top: 20px; padding: 10px; border-radius: 8px; text-align: center; display: none;"></div>
         </div>
+
+        <!-- Subscription & Billing History Card -->
+        <div class="profile-card" id="subscriptionHistoryCard" style="display: none; margin-top: 24px;">
+            <div class="profile-header" style="text-align: left; margin-bottom: 20px;">
+                <div class="profile-name-display" style="font-size: 22px; display: flex; align-items: center; gap: 10px; color: #2E8B57;">
+                    <i class="fas fa-receipt"></i> Subscription & Billing
+                </div>
+                <div class="profile-role-display">View billing history and download GST invoices</div>
+            </div>
+            
+            <!-- Current Subscription Status Panel -->
+            <div id="currentSubscriptionInfo" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h4 style="margin: 0 0 5px 0; font-size: 14px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Current Plan</h4>
+                        <p id="currentPlanName" style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #2E8B57;">Loading...</p>
+                        <p id="currentPlanExpiry" style="margin: 5px 0 0 0; font-size: 0.85rem; color: #64748b;"></p>
+                    </div>
+                    <a href="subscribe.html" class="btn btn-primary" style="margin: 0; padding: 8px 16px; font-size: 0.9rem; text-decoration: none; display: inline-block; text-align: center;">Renew / Upgrade</a>
+                </div>
+            </div>
+
+            <!-- Invoices Table -->
+            <div style="overflow-x: auto; margin-top: 15px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; min-width: 500px;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b; font-weight: 600;">
+                            <th style="padding: 10px 8px;">Date</th>
+                            <th style="padding: 10px 8px;">Reference</th>
+                            <th style="padding: 10px 8px;">Plan</th>
+                            <th style="padding: 10px 8px; text-align: right;">Amount</th>
+                            <th style="padding: 10px 8px; text-align: center;">Status</th>
+                            <th style="padding: 10px 8px; text-align: center;">Invoice</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoiceHistoryTableBody">
+                        <tr>
+                            <td colspan="6" style="padding: 20px 8px; text-align: center; color: #64748b;">
+                                <i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Loading history...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
     <!-- **NEW**: Hidden file input for logo upload -->
@@ -570,6 +618,8 @@
                 } else {
                     editBtn.style.display = 'inline-block';
                 }
+                // Load subscription history
+                await loadSubscriptionHistory(user, userData);
             } else {
                 window.location.href = 'login.html';
             }
@@ -821,6 +871,370 @@
                 updatePasswordBtn.textContent = originalText;
             }
         }
+
+        // --- GST SUBSCRIPTION HISTORY AND INVOICE LOGIC ---
+        function getStateByGstin(gstin, addressState) {
+            const stateCodes = {
+                "01": "Jammu & Kashmir", "02": "Himachal Pradesh", "03": "Punjab", "04": "Chandigarh",
+                "05": "Uttarakhand", "06": "Haryana", "07": "Delhi", "08": "Rajasthan", "09": "Uttar Pradesh",
+                "10": "Bihar", "11": "Sikkim", "12": "Arunachal Pradesh", "13": "Nagaland", "14": "Manipur",
+                "15": "Mizoram", "16": "Tripura", "17": "Meghalaya", "18": "Assam", "19": "West Bengal",
+                "20": "Jharkhand", "21": "Odisha", "22": "Chhattisgarh", "23": "Madhya Pradesh", "24": "Gujarat",
+                "25": "Daman & Diu", "26": "Dadra & Nagar Haveli", "27": "Maharashtra", "29": "Karnataka",
+                "30": "Goa", "31": "Lakshadweep", "32": "Kerala", "33": "Tamil Nadu", "34": "Puducherry",
+                "35": "Andaman & Nicobar Islands", "36": "Telangana", "37": "Andhra Pradesh", "38": "Ladakh"
+            };
+            if (gstin && gstin.length >= 2) {
+                const code = gstin.substring(0, 2);
+                if (stateCodes[code]) {
+                    return { code: code, name: stateCodes[code] };
+                }
+            }
+            const st = (addressState || 'Gujarat').trim().toLowerCase();
+            for (const [code, name] of Object.entries(stateCodes)) {
+                if (name.toLowerCase() === st) {
+                    return { code: code, name: name };
+                }
+            }
+            return { code: "24", name: "Gujarat" }; // default to Gujarat
+        }
+
+        async function loadSubscriptionHistory(user, userData) {
+            const historyCard = document.getElementById('subscriptionHistoryCard');
+            if (!historyCard) return;
+
+            const isOwner = !userData.coreAccountId || userData.coreAccountId === user.uid;
+            if (!isOwner) {
+                historyCard.style.display = 'none';
+                return;
+            }
+            historyCard.style.display = 'block';
+
+            const currentPlanName = document.getElementById('currentPlanName');
+            const currentPlanExpiry = document.getElementById('currentPlanExpiry');
+            
+            const sub = userData.subscription || {};
+            const status = sub.status || 'inactive';
+            const planId = sub.planId || 'Starter';
+            const endDate = sub.endDate ? new Date(sub.endDate) : null;
+            
+            if (status === 'active' || status === 'trial') {
+                currentPlanName.innerHTML = `${planId.toUpperCase()} Plan <span style="background: #e2f9ec; color: #2e7d32; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-left: 8px; text-transform: uppercase;">${status}</span>`;
+                currentPlanExpiry.textContent = endDate ? `Renews / Expires on: ${endDate.toLocaleDateString('en-IN')}` : 'No expiry date set';
+            } else {
+                currentPlanName.innerHTML = `No Active Plan <span style="background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-left: 8px; text-transform: uppercase;">${status}</span>`;
+                currentPlanExpiry.textContent = 'Please subscribe to activate your account features.';
+            }
+
+            const tbody = document.getElementById('invoiceHistoryTableBody');
+            try {
+                const paymentsRef = ref(db, 'subscriptionPayments');
+                const snap = await get(paymentsRef);
+                
+                const userPayments = [];
+                if (snap.exists()) {
+                    snap.forEach(child => {
+                        const p = child.val();
+                        if (p.userId === user.uid || p.clientId === user.uid) {
+                            userPayments.push({ id: child.key, ...p });
+                        }
+                    });
+                }
+
+                userPayments.sort((a, b) => {
+                    const dateA = new Date(a.createdAt || a.timestamp || 0);
+                    const dateB = new Date(b.createdAt || b.timestamp || 0);
+                    return dateB - dateA;
+                });
+
+                if (userPayments.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="padding: 20px 8px; text-align: center; color: #64748b;">
+                                <i class="fas fa-info-circle" style="margin-right: 8px;"></i> No billing history found.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                userPayments.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid #f1f5f9';
+                    
+                    const dateVal = p.createdAt || p.timestamp || '';
+                    const dateStr = dateVal ? new Date(dateVal).toLocaleDateString('en-IN') : 'N/A';
+                    
+                    const refStr = p.paymentRef || p.id || 'N/A';
+                    const planStr = p.plan || 'SaaS Subscription';
+                    const amountStr = `₹${(p.amount || 0).toLocaleString('en-IN')}`;
+                    const statusStr = p.status || 'pending';
+                    
+                    let badgeColor = '#ffe0b2';
+                    let badgeText = 'Pending';
+                    let badgeTextColor = '#e65100';
+                    
+                    if (statusStr === 'verified') {
+                        badgeColor = '#e8f5e9';
+                        badgeText = 'Paid';
+                        badgeTextColor = '#2e7d32';
+                    } else if (statusStr === 'rejected' || statusStr === 'failed') {
+                        badgeColor = '#ffebee';
+                        badgeText = 'Failed';
+                        badgeTextColor = '#c62828';
+                    }
+                    
+                    tr.innerHTML = `
+                        <td style="padding: 12px 8px; vertical-align: middle;">${dateStr}</td>
+                        <td style="padding: 12px 8px; vertical-align: middle; font-family: monospace;">${refStr.substring(0, 12)}</td>
+                        <td style="padding: 12px 8px; vertical-align: middle;">${planStr}</td>
+                        <td style="padding: 12px 8px; vertical-align: middle; text-align: right; font-weight: 600;">${amountStr}</td>
+                        <td style="padding: 12px 8px; vertical-align: middle; text-align: center;">
+                            <span style="background: ${badgeColor}; color: ${badgeTextColor}; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; display: inline-block;">${badgeText}</span>
+                        </td>
+                        <td style="padding: 12px 8px; vertical-align: middle; text-align: center;">
+                            ${statusStr === 'verified' ? `
+                                <button class="btn btn-outline download-invoice-btn" data-id="${p.id}" style="margin: 0; padding: 4px 10px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #2E8B57; color: #2E8B57; background: transparent; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                    <i class="fas fa-download"></i> PDF
+                                </button>
+                            ` : '-'}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                tbody.querySelectorAll('.download-invoice-btn').forEach(btn => {
+                    btn.addEventListener('click', async function() {
+                        const paymentId = this.getAttribute('data-id');
+                        const btnEl = this;
+                        btnEl.disabled = true;
+                        const originalContent = btnEl.innerHTML;
+                        btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                        try {
+                            await generateGSTInvoicePDF(paymentId, user.uid);
+                        } catch (err) {
+                            console.error('Invoice generation error:', err);
+                            alert('Failed to generate PDF invoice.');
+                        } finally {
+                            btnEl.disabled = false;
+                            btnEl.innerHTML = originalContent;
+                        }
+                    });
+                });
+
+            } catch (err) {
+                console.error('Error loading payments:', err);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="padding: 20px 8px; text-align: center; color: #c62828;">
+                            <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i> Error loading billing history.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function generateGSTInvoicePDF(paymentId, userId) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const COMPANY_NAME = 'TransVortex Technologies';
+            const COMPANY_DETAILS = {
+                address: '123 Business Street, Ahmedabad, GJ 380009',
+                phone: '+91 98765 43210',
+                email: 'support@transvortex.com',
+                gstin: '24AVTPS4321F1Z2',
+                state: 'Gujarat',
+                stateCode: '24'
+            };
+
+            try {
+                const paymentRef = ref(db, `subscriptionPayments/${paymentId}`);
+                const userRef = ref(db, `users/${userId}`);
+                
+                const [paymentSnap, userSnap] = await Promise.all([
+                    get(paymentRef),
+                    get(userRef)
+                ]);
+
+                if (!paymentSnap.exists()) {
+                    throw new Error('Payment details not found.');
+                }
+                const paymentData = paymentSnap.val();
+                const userData = userSnap.exists() ? userSnap.val() : {};
+                const profileData = userData.profile || {};
+
+                const createdDate = paymentData.createdAt || paymentData.timestamp || new Date().toISOString();
+                const invoiceDate = new Date(createdDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+                const invoiceNo = `TXV-${paymentId.substring(0, 8).toUpperCase()}`;
+
+                const paidAmount = parseFloat(paymentData.amount) || 0;
+                const gstRate = 0.18;
+                const baseValue = paidAmount / (1 + gstRate);
+                const totalGst = paidAmount - baseValue;
+
+                const clientGstin = (profileData.gstin || '').trim();
+                const clientCity = (profileData.city || '').trim();
+                const clientStateObj = getStateByGstin(clientGstin, clientCity);
+                
+                const isIntrastate = clientStateObj.code === COMPANY_DETAILS.stateCode;
+                
+                let cgst = 0, sgst = 0, igst = 0;
+                
+                if (isIntrastate) {
+                    cgst = totalGst / 2;
+                    sgst = totalGst / 2;
+                } else {
+                    igst = totalGst;
+                }
+
+                let y = 10;
+                const MARGIN = 15;
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const PRIMARY_COLOR_RGB = [46, 139, 87];
+                const ACCENT_COLOR_RGB = [240, 240, 240];
+
+                doc.setFillColor(...PRIMARY_COLOR_RGB);
+                doc.rect(0, 0, pageWidth, 5, 'F');
+
+                y = 25;
+                doc.setFontSize(26);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0);
+                doc.text("TAX INVOICE", MARGIN, y);
+
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(50);
+                doc.text(`${COMPANY_NAME}`, pageWidth - MARGIN, y - 5, { align: 'right' });
+                doc.text(`${COMPANY_DETAILS.address}`, pageWidth - MARGIN, y, { align: 'right' });
+                doc.text(`GSTIN: ${COMPANY_DETAILS.gstin}`, pageWidth - MARGIN, y + 5, { align: 'right' });
+                doc.text(`Email: ${COMPANY_DETAILS.email} | Phone: ${COMPANY_DETAILS.phone}`, pageWidth - MARGIN, y + 10, { align: 'right' });
+
+                y += 20;
+                doc.setDrawColor(...PRIMARY_COLOR_RGB);
+                doc.setLineWidth(0.5);
+                doc.line(MARGIN, y, pageWidth - MARGIN, y);
+                
+                y += 10;
+
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0);
+                doc.text(`INVOICE NO:`, MARGIN, y);
+                doc.text(`DATE:`, MARGIN, y + 5);
+                doc.text(`PLACE OF SUPPLY:`, MARGIN, y + 10);
+                doc.text(`PAYMENT REF:`, MARGIN, y + 15);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(50);
+                doc.text(invoiceNo, MARGIN + 40, y);
+                doc.text(invoiceDate, MARGIN + 40, y + 5);
+                doc.text(`${clientStateObj.name} (${clientStateObj.code})`, MARGIN + 40, y + 10);
+                doc.text(paymentData.paymentRef || paymentData.razorpayPaymentId || 'N/A', MARGIN + 40, y + 15);
+
+                const col2X = pageWidth / 2 + 5;
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(...PRIMARY_COLOR_RGB);
+                doc.text("BILLED TO", col2X, y);
+                doc.setTextColor(0);
+
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(50);
+                
+                const clientCompany = profileData.transportName || 'Unregistered Transport';
+                const ownerName = profileData.ownerName || 'Valued Customer';
+                const clientAddress = `${profileData.address || ''}, ${profileData.city || ''} ${profileData.pincode || ''}`.trim().replace(/^,|,$/g, '') || 'N/A';
+                const clientGstinStr = clientGstin ? clientGstin : 'Unregistered (URD)';
+
+                doc.text(`${clientCompany} (Prop: ${ownerName})`, col2X, y + 5);
+                doc.text(`Address: ${clientAddress}`, col2X, y + 10, { maxWidth: pageWidth - col2X - MARGIN });
+                doc.text(`GSTIN: ${clientGstinStr}`, col2X, y + 15);
+                doc.text(`Email: ${userData.email || 'N/A'} | Phone: ${profileData.phoneNumber || 'N/A'}`, col2X, y + 20);
+
+                y += 30;
+
+                const tableBody = [
+                    [
+                        `SaaS Platform Subscription - TransVortex Plan (${paymentData.plan || 'Starter'})`,
+                        '997331',
+                        '1',
+                        `₹${baseValue.toFixed(2)}`,
+                        isIntrastate ? `₹${cgst.toFixed(2)}\n(9% CGST)` : '-',
+                        isIntrastate ? `₹${sgst.toFixed(2)}\n(9% SGST)` : '-',
+                        !isIntrastate ? `₹${igst.toFixed(2)}\n(18% IGST)` : '-',
+                        `₹${paidAmount.toFixed(2)}`
+                    ]
+                ];
+
+                doc.autoTable({
+                    startY: y,
+                    head: [['DESCRIPTION / SERVICE', 'SAC', 'QTY', 'TAXABLE VAL', 'CGST', 'SGST', 'IGST', 'TOTAL (₹)']],
+                    body: tableBody,
+                    foot: [
+                        ['', '', '', { content: `SUBTOTAL`, colSpan: 4, styles: { fillColor: ACCENT_COLOR_RGB, halign: 'right', fontStyle: 'bold' } }, { content: `₹${baseValue.toFixed(2)}`, styles: { fillColor: ACCENT_COLOR_RGB, fontStyle: 'bold' } }],
+                        ['', '', '', { content: `TOTAL TAX (GST 18%)`, colSpan: 4, styles: { fillColor: ACCENT_COLOR_RGB, halign: 'right', fontStyle: 'bold' } }, { content: `₹${totalGst.toFixed(2)}`, styles: { fillColor: ACCENT_COLOR_RGB, fontStyle: 'bold' } }],
+                        ['', '', '', { content: `TOTAL DUE (INCLUSIVE OF GST)`, colSpan: 4, styles: { fillColor: PRIMARY_COLOR_RGB, textColor: 255, fontStyle: 'bold', halign: 'right' } }, { content: `₹${paidAmount.toFixed(2)}`, styles: { fillColor: PRIMARY_COLOR_RGB, textColor: 255, fontStyle: 'bold' } }]
+                    ],
+                    theme: 'striped',
+                    headStyles: { fillColor: PRIMARY_COLOR_RGB, textColor: 255, fontStyle: 'bold', fontSize: 8 },
+                    styles: { fontSize: 8, cellPadding: 2.5 },
+                    columnStyles: {
+                        0: { cellWidth: 55 },
+                        1: { cellWidth: 15, halign: 'center' },
+                        2: { cellWidth: 10, halign: 'center' },
+                        3: { cellWidth: 22, halign: 'right' },
+                        4: { cellWidth: 22, halign: 'right' },
+                        5: { cellWidth: 22, halign: 'right' },
+                        6: { cellWidth: 22, halign: 'right' },
+                        7: { cellWidth: 22, halign: 'right' }
+                    }
+                });
+
+                const tableY = doc.autoTable.previous.finalY;
+                y = tableY + 15;
+
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0);
+                doc.text("TRANSVORTEX BANK DETAILS FOR REFERENCE:", MARGIN, y);
+                
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(50);
+                doc.text("Bank Name: HDFC Bank Ltd", MARGIN, y + 4);
+                doc.text("A/c Holder: TransVortex Technologies Pvt Ltd", MARGIN, y + 8);
+                doc.text("A/c Number: 502000987654321", MARGIN, y + 12);
+                doc.text("IFSC Code: HDFC0000123", MARGIN, y + 16);
+
+                doc.setFont('helvetica', 'italic');
+                doc.text("Declaration: We declare that this invoice shows the actual price of the services described and that all particulars are true and correct.", MARGIN, y + 24, { maxWidth: pageWidth / 2 + 10 });
+
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0);
+                doc.text("For TransVortex Technologies", pageWidth - MARGIN, y, { align: 'right' });
+                
+                doc.setDrawColor(46, 139, 87);
+                doc.setFillColor(240, 248, 240);
+                doc.rect(pageWidth - MARGIN - 45, y + 4, 45, 12, 'F');
+                doc.setFontSize(7);
+                doc.setTextColor(...PRIMARY_COLOR_RGB);
+                doc.text("AUTHORIZED SIGNATORY", pageWidth - MARGIN - 22.5, y + 11, { align: 'center' });
+
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100);
+                doc.text("This is a computer-generated tax invoice. No physical signature is required.", pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+
+                doc.save(`Invoice_${invoiceNo}.pdf`);
+            } catch (err) {
+                console.error("Error generating GST invoice PDF:", err);
+                alert("Failed to generate PDF invoice. Details: " + err.message);
+            }
+        }
+
         // Event Listeners
         onAuthStateChanged(auth, (user) => {
             if (user) {
