@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "demoRequests": {
+      // 🔓 Allow public visitors to submit demo and portal access requests
+      ".write": "true",
+      // 🔒 Only logged-in users/admins can read demo requests
+      ".read": "auth != null"
+    },
+    "users": {
+      "$uid": {
+        // 🔒 Allow authenticated accounts to read and write user account data (trusted devices, tyres, bookings, payments, etc.)
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}
