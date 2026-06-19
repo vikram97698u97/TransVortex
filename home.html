@@ -6,33 +6,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Transport Dashboard - Home</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       /* Saved Theme */
       --primary: #2E8B57;         /* Sea Green */
       --charcoal: #1F1F1F;        /* Dark Charcoal */
-      --bg: #F5F5F5;              /* Light Gray */
-      --text: #111111;            /* Almost Black */
+      --bg: #F8FAFC;              /* Modern Slate Light Gray */
+      --text: #0F172A;            /* Slate Black */
       --mint: #43B97F;            /* Bright Mint Green */
-
       --card: #ffffff;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --shadow: 0 6px 18px rgba(0,0,0,.08);
-      --radius: 14px;
+      --muted: #64748B;           /* Modern Slate Muted */
+      --border: #E2E8F0;          /* Modern Slate Border */
+      --shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08), 0 2px 8px -1px rgba(15, 23, 42, 0.04);
+      --radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Dark mode (if you add a theme toggle in navbar.html that toggles data-theme="dark" on <html>) */
+    /* Dark mode */
     html[data-theme="dark"] {
-      --bg: #0f172a;
-      --card: #111827;
-      --text: #e5e7eb;
-      --border: #1f2937;
-      --muted: #9ca3af;
-      --shadow: 0 6px 18px rgba(0,0,0,.45);
+      --bg: #0B0F19;
+      --card: #151F32;
+      --text: #F1F5F9;
+      --border: #1E293B;
+      --muted: #94A3B8;
+      --shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -43,247 +46,401 @@
       line-height: 1.6;
     }
 
+    /* Heading fonts */
+    h1, h2, h3, h4, h5, h6, .outfit-font {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+    }
+
     /* Container */
     .main-content {
-      padding: 0; /* Remove padding as it's now handled by the inner containers */
+      padding: 2rem 1.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
     }
     
-    .container {
+    .dashboard-panel {
       background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+      background: linear-gradient(135deg, rgba(46,139,87,0.06), rgba(67,185,127,0.08));
+      border: 1px solid rgba(46,139,87,0.15);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .welcome-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .welcome-subtitle { color: var(--muted); margin-top: 4px; font-size: 1rem; }
+    
+    .status-badge-container {
+      background: var(--card);
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .status-badge-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .status-badge-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Warning Banner */
+    .alert-banner {
+      background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(249,115,22,0.08));
+      border: 1px solid rgba(239,68,68,0.15);
+      border-radius: 12px;
+      padding: 12px 18px;
+      margin-bottom: 2rem;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      font-weight: 500;
+      color: #b91c1c;
+      animation: pulse 2s infinite;
+    }
+    html[data-theme="dark"] .alert-banner {
+      color: #fca5a5;
+    }
+
+    /* Quick Actions */
+    .quick-actions-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 2rem;
+    }
+    .action-button-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .action-button-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--primary);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: var(--transition);
+    }
+    .action-button-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.1);
+      border-color: rgba(46,139,87,0.3);
+    }
+    .action-button-card:hover::after {
+      transform: scaleX(1);
+    }
+    .action-button-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: rgba(46,139,87,0.1);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      transition: var(--transition);
+    }
+    .action-button-card:hover .action-button-icon {
+      background: var(--primary);
+      color: #fff;
+      transform: rotate(-8deg) scale(1.05);
+    }
+    .action-button-info h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+      color: var(--text);
+    }
+    .action-button-info p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* KPI Cards Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-bottom: 2rem;
+    }
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-
-    /* Welcome */
-    .welcome-section { margin-bottom: 24px; }
-    
-    /* Business Summary */
-    .business-summary {
-      margin-bottom: 30px;
-    }
-    
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-    
-    .summary-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 20px;
       display: flex;
-      align-items: center;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      border: 1px solid var(--border);
-      /* **FIX**: Make cards clickable */
-      cursor: pointer;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+      border-top: 4px solid var(--primary);
     }
-    
-    .summary-card:hover {
+    .kpi-card.kpi-blue { border-top-color: #3b82f6; }
+    .kpi-card.kpi-green { border-top-color: var(--primary); }
+    .kpi-card.kpi-orange { border-top-color: #f97316; }
+    .kpi-card.kpi-red { border-top-color: #ef4444; }
+
+    .kpi-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
     }
-    
-    .summary-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
+    .kpi-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      margin-right: 15px;
-      font-size: 1.5rem;
+      margin-bottom: 12px;
     }
-    
-    .summary-details h3 {
-      font-size: 0.9rem;
+    .kpi-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       color: var(--muted);
-      margin: 0 0 4px 0;
-      font-weight: 500;
-    }
-    
-    .summary-details p {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin: 0;
-      color: var(--text);
-    }
-    
-    .section-title {
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: var(--text);
-    }
-    .welcome-title {
-      font-size: 2rem;
       font-weight: 700;
-      color: var(--charcoal);
-      letter-spacing: .2px;
     }
-    .welcome-subtitle { color: var(--muted); margin-top: 6px; }
-
-    /* Quick Actions */
-    .quick-actions {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
-      gap: 16px;
-      margin: 20px 0 32px;
+    .kpi-icon-wrap {
+      font-size: 1.2rem;
+      color: var(--muted);
+      opacity: 0.7;
     }
-    .action-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: var(--shadow);
-      cursor: pointer;
-      transition: transform .15s ease, box-shadow .15s ease, border-color .2s ease;
+    .kpi-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      margin-bottom: 6px;
+      line-height: 1.1;
+    }
+    .kpi-detail {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: auto;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 5px;
     }
-    .action-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.12); border-color: rgba(46,139,87,.25); }
-    .action-card i { font-size: 1.6rem; color: var(--primary); }
-    .action-card h3 { font-size: 1.05rem; font-weight: 700; }
-    .action-card p { color: var(--muted); font-size: .9rem; }
+    .pointer { cursor: pointer; }
 
-    /* Summary */
-    .business-summary {
-      background: linear-gradient(135deg, var(--primary), var(--mint));
-      color: #fff;
-      border-radius: var(--radius);
-      padding: 22px;
-      margin-bottom: 28px;
-      box-shadow: var(--shadow);
+    /* Interactive Charts Grid */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 20px;
+      margin-bottom: 2rem;
     }
-    .summary-header {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+    @media (max-width: 992px) {
+      .analytics-grid {
+        grid-template-columns: 1fr;
+      }
     }
-    .summary-title { font-size: 1.4rem; font-weight: 700; letter-spacing: .3px; }
-    .summary-period {
-      background: rgba(255,255,255,.2);
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: .9rem;
-      font-weight: 600;
-    }
-    .summary-grid {
-      display: grid; gap: 14px;
-      grid-template-columns: repeat(auto-fit, minmax(190px,1fr));
-    }
-    .summary-item {
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.25);
-      border-radius: 12px;
-      padding: 14px;
-    }
-    .summary-value { font-size: 1.9rem; font-weight: 800; }
-    .summary-label { opacity: .95; margin-top: 6px; font-weight: 600; }
-
-    /* Recent Activity */
-    .recent-activity {
+    .chart-container-card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px;
       box-shadow: var(--shadow);
-      margin-bottom: 28px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      height: 380px;
     }
-    .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 14px; color: var(--charcoal); }
-    .activity-grid {
-      display: grid; gap: 16px;
-      grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
     }
-    .activity-column h4 { font-size: 1rem; font-weight: 800; margin-bottom: 10px; color: var(--charcoal); }
-    .activity-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 0; border-bottom: 1px dashed var(--border);
-      font-weight: 600;
+    .chart-card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
     }
-    .activity-item:last-child { border-bottom: none; }
-    .activity-sub { color: var(--muted); font-weight: 500; font-size: .9rem; }
+    .chart-wrapper {
+      position: relative;
+      flex-grow: 1;
+      height: 100%;
+      width: 100%;
+    }
 
-    /* Reminders */
-    .reminders-section {
+    /* Filters Section */
+    .filters-panel {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px;
       box-shadow: var(--shadow);
-      margin-bottom: 32px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
     }
-    .reminders-grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; margin-top: 8px; }
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; }
-    .form-control {
-      width: 100%; padding: 10px 12px; border: 1px solid var(--border); background: var(--card);
-      border-radius: 10px; color: var(--text);
-      outline: none; transition: border-color .2s, box-shadow .2s;
-    }
-    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(46,139,87,.12); }
-    .btn {
-      background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 10px;
-      font-weight: 700; cursor: pointer; transition: transform .15s ease, opacity .2s;
-    }
-    .btn:hover { transform: translateY(-1px); opacity: .95; }
-    .btn-full { width: 100%; }
-    .reminder-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px; background: var(--bg); border: 1px dashed var(--border); border-radius: 10px;
-      margin-bottom: 8px;
-    }
-    .reminder-item i { color: var(--mint); }
-    .no-reminders { text-align: center; color: var(--muted); padding: 14px; }
-
-    /* Error message styling */
-    .error-container {
-      background: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeaa7;
+    
+    /* Table Styling */
+    .table-container-card {
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px;
-      margin: 20px 0;
-      text-align: center;
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
     }
-    .error-container h3 {
-      color: #856404;
-      margin-bottom: 10px;
+    .table-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
     }
-    .error-container p {
-      margin-bottom: 15px;
-    }
-    .error-icon {
-      font-size: 2.5rem;
-      margin-bottom: 15px;
-      color: #ffc107;
+    .table-card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
     }
 
-    /* Dashboard specific styles */
-    .profit-positive { color: #198754; font-weight: bold; }
-    .profit-negative { color: #dc3545; font-weight: bold; }
-    .payment-type-badge {
-      font-size: 0.7em;
-      padding: 4px 8px;
-      border-radius: 12px;
+    .table {
+      width: 100% !important;
+      margin-bottom: 0;
+      color: var(--text);
     }
-    .table-responsive { border-radius: 8px; }
+    .table th {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      border-bottom: 2px solid var(--border);
+      padding: 12px 16px;
+    }
+    .table td {
+      padding: 14px 16px;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--border);
+    }
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: rgba(0, 0, 0, 0.015);
+    }
+    html[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+      background-color: rgba(255, 255, 255, 0.015);
+    }
 
-    /* Business Card Generator Styles (Minimized for space, keeping core) */
+    /* Business Card & Reminders Split */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 992px) {
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Form Controls */
+    .form-label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .form-control, .form-select {
+      border: 1px solid var(--border);
+      background-color: var(--card);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.15);
+      background-color: var(--card);
+      color: var(--text);
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 10px 20px;
+      transition: var(--transition);
+    }
+    .btn-primary:hover {
+      background-color: var(--mint);
+      border-color: var(--mint);
+      transform: translateY(-1px);
+    }
+    .btn-outline-secondary {
+      border-color: var(--border);
+      color: var(--muted);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 10px 20px;
+    }
+    .btn-outline-secondary:hover {
+      background-color: rgba(0,0,0,0.05);
+      color: var(--text);
+    }
+
+    /* Business Card Prev */
     .business-card-preview {
       display: flex;
       justify-content: center;
-      padding: 20px;
+      align-items: center;
+      padding: 24px;
       background: var(--bg);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      min-height: 300px;
+      border-radius: 12px;
+      border: 1px dashed var(--border);
+      min-height: 250px;
     }
-    
     .business-card {
       width: 350px;
       height: 200px;
@@ -341,7 +498,6 @@
       color: white;
     }
 
-    /* 1. Add CSS for your new template here */
     .business-card.purple-creative {
       background: #5b21b6;
       color: #f5f3ff;
@@ -354,7 +510,7 @@
     .business-card.purple-creative .contact-item i {
       color: #c4b5fd;
     }
-    /* Styles for other templates omitted for brevity, logic remains */
+    
     .card-content {
       display: flex;
       align-items: center;
@@ -367,61 +523,60 @@
     .contact-item { margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
     .contact-item i { width: 14px; text-align: center; }
 
-    /* Rolling Gallery Styles (Minimized for space, keeping core) */
-    .rolling-gallery-container { position: relative; height: 250px; width: 100%; overflow: hidden; margin-top: 20px; }
-    .rolling-gallery-track { display: flex; height: 100%; align-items: center; gap: 16px; position: relative; width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 8px 70px; }
+    /* Rolling Gallery Styles */
+    .rolling-gallery-container { position: relative; height: 240px; width: 100%; overflow: hidden; margin-top: 15px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); }
+    .rolling-gallery-track { display: flex; height: 100%; align-items: center; gap: 16px; position: relative; width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 8px 60px; }
     .rolling-gallery-item { position: relative; backface-visibility: hidden; transform-origin: center; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1); flex: 0 0 auto; scroll-snap-align: center; }
+    .rolling-gallery-item.active { transform: scale(1.02); }
 
-    /* Expense Modal Styles (NEW) */
+    /* Reminders list */
+    .reminder-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      transition: var(--transition);
+    }
+    .reminder-item:hover {
+      transform: translateX(3px);
+      border-color: rgba(46, 139, 87, 0.25);
+    }
+    .reminder-item i {
+      font-size: 1.1rem;
+      margin-top: 3px;
+    }
+    .no-reminders { text-align: center; color: var(--muted); padding: 24px; font-weight: 500; }
+
+    /* Profit badges */
+    .profit-positive { color: #10b981; font-weight: 700; }
+    .profit-negative { color: #ef4444; font-weight: 700; }
+    
+    /* Modal styles */
     .expense-modal-item {
         padding: 10px 0;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border);
     }
     .expense-modal-item:last-child {
         border-bottom: none;
     }
     .expense-modal-category {
-        font-weight: 600;
+        font-weight: 700;
         color: var(--primary);
-        margin-top: 10px;
-        padding-bottom: 5px;
-        border-bottom: 2px solid #2E8B57;
-    }
-    
-    @media (max-width: 768px) {
-      .main-content { padding: 1rem; }
-      .welcome-section .welcome-header,
-      .payment-card-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-      }
-      .welcome-title { font-size: 1.6rem; }
-      .welcome-subtitle { font-size: 0.95rem; }
-      .reminders-grid,
-      .summary-grid,
-      .activity-grid,
-      .quick-actions,
-      .template-options {
-        grid-template-columns: 1fr;
-      }
-      .summary-details p {
-        font-size: 1.3rem; /* Reduce font size for summary values */
-      }
-      .payment-card h4 { 
-        font-size: 1.6rem; /* Reduce font size for payment card values */
-      }
-      .business-card {
-        width: 100%;
-        max-width: 320px;
-      }
-      .card-content {
-        flex-direction: column;
-        text-align: center;
-        gap: 10px;
-      }
+        margin-top: 15px;
+        padding-bottom: 6px;
+        border-bottom: 2px solid var(--primary);
+        font-family: 'Outfit', sans-serif;
     }
 
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.005); border-color: rgba(239,68,68,0.3); }
+      100% { transform: scale(1); }
+    }
   </style>
   <script src="evm.js"></script>
   <script src="secure-api-loader.js"></script>
@@ -429,171 +584,196 @@
 <body>
   <div id="navbar-placeholder"></div>
 
-  <div class="main-content container">
-    <div class="welcome-section ">
-      <div class="welcome-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-          <h1 class="welcome-title">Welcome back, <span id="ownerName">User</span>!</h1>
-          <p class="welcome-subtitle">Here's what's happening with your business today</p>
-        </div>
-        <div id="subscriptionStatus" style="background: rgba(46, 139, 87, 0.1); padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(46, 139, 87, 0.3);">
-          <div style="font-weight: 600; color: #2E8B57; margin-bottom: 4px;">Subscription Status</div>
-          <div id="subscriptionStatusText" style="font-size: 0.9rem; color: #2E8B57;">Loading...</div>
-        </div>
+  <div class="main-content">
+    
+    <!-- Expiry Alert Banner -->
+    <div id="expiryAlertBanner" class="alert-banner">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span id="expiryAlertText" style="flex: 1;"></span>
+      <button class="btn btn-sm btn-outline-danger border-0" onclick="location.href='add.html'">View Vehicles</button>
+    </div>
+
+    <!-- Welcome Section Banner -->
+    <div class="welcome-banner">
+      <div>
+        <h1 class="welcome-title">Welcome back, <span id="ownerName">User</span>!</h1>
+        <p class="welcome-subtitle">Here's what's happening with your business today</p>
+      </div>
+      <div id="subscriptionStatus" class="status-badge-container">
+        <div class="status-badge-title">Subscription Status</div>
+        <div id="subscriptionStatusText" class="status-badge-value">Loading...</div>
       </div>
     </div>
 
+    <!-- Account Configuration Issues (Hidden by default) -->
     <div id="accountErrorContainer" class="error-container" style="display: none;">
       <i class="fas fa-exclamation-triangle error-icon"></i>
       <h3>Account Configuration Issue</h3>
       <p id="errorMessage">We encountered a problem verifying your account type.</p>
-      <p>Please contact support if this issue persists.</p>
-      <button id="retryButton" class="btn" style="background: #ffc107; color: #856404;">
+      <button id="retryButton" class="btn btn-warning">
         <i class="fas fa-redo"></i> Retry Verification
       </button>
     </div>
 
-    <div class="quick-actions">
-      <div class="action-card" onclick="location.href='add.html'">
-        <i class="fas fa-plus-circle"></i>
-        <div>
+    <!-- Quick Actions Horizontal Bar -->
+    <div class="quick-actions-bar">
+      <div class="action-button-card" onclick="location.href='add.html'">
+        <div class="action-button-icon">
+          <i class="fas fa-truck"></i>
+        </div>
+        <div class="action-button-info">
           <h3>Add Vehicle</h3>
-          <p>Add a new vehicle to your fleet</p>
+          <p>Register a new vehicle</p>
         </div>
       </div>
-      <div class="action-card" onclick="location.href='booking.html'">
-        <i class="fas fa-calendar-alt"></i>
-        <div>
+      <div class="action-button-card" onclick="location.href='booking.html'">
+        <div class="action-button-icon">
+          <i class="fas fa-user-friends"></i>
+        </div>
+        <div class="action-button-info">
           <h3>Manage Client</h3>
-          <p>Schedule new transport orders</p>
+          <p>Client booking & payments</p>
         </div>
       </div>
-      <div class="action-card" onclick="location.href='invoice.html'">
-        <i class="fas fa-file-invoice"></i>
-        <div>
+      <div class="action-button-card" onclick="location.href='invoice.html'">
+        <div class="action-button-icon">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div class="action-button-info">
           <h3>Generate Invoice</h3>
-          <p>Create professional invoices</p>
+          <p>Create client bills</p>
         </div>
       </div>
-      <div class="action-card" onclick="location.href='work-management.html'">
-        <i class="fas fa-tools"></i>
-        <div>
+      <div class="action-button-card" onclick="location.href='work-management.html'">
+        <div class="action-button-icon">
+          <i class="fas fa-tools"></i>
+        </div>
+        <div class="action-button-info">
           <h3>Work Mgmt</h3>
-          <p>Track vehicle work & payments</p>
+          <p>Track repairs & payments</p>
         </div>
       </div>
-      <div class="action-card" onclick="location.href='lr-report.html'">
-        <i class="fas fa-chart-bar"></i>
-        <div>
+      <div class="action-button-card" onclick="location.href='lr-report.html'">
+        <div class="action-button-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="action-button-info">
           <h3>View Reports</h3>
-          <p>Analyze business performance</p>
+          <p>Analyze trip history</p>
         </div>
       </div>
     </div>
 
-    <div class="business-summary">
-      <h2 class="section-title">Business Overview</h2>
-      <div class="summary-grid">
-        <div class="summary-card">
-          <div class="summary-icon" style="background: rgba(59, 130, 246, 0.1);">
-            <i class="fas fa-truck" style="color: #3B82F6;"></i>
-          </div>
-          <div class="summary-details">
-            <h3>Total Vehicles</h3>
-            <p id="vehiclesCount">0</p>
-          </div>
+    <!-- KPI Metrics Grid -->
+    <div class="kpi-grid">
+      <!-- 1. Total Revenue Card -->
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-header">
+          <span class="kpi-title">Total Billings</span>
+          <div class="kpi-icon-wrap"><i class="fas fa-coins text-primary"></i></div>
         </div>
-        <div class="summary-card">
-          <div class="summary-icon" style="background: rgba(14, 165, 233, 0.1);">
-            <i class="fas fa-calendar-check" style="color: #0EA5E9;"></i>
-          </div>
-          <div class="summary-details">
-            <h3>LR Reports</h3>
-            <p id="activeLRCount">0</p>
-          </div>
+        <div id="totalRevenue" class="kpi-value">₹0</div>
+        <div id="activeLRCountText" class="kpi-detail">0 bookings logged</div>
+      </div>
+
+      <!-- 2. Total Expenses Card -->
+      <div class="kpi-card kpi-red pointer" onclick="showExpenseDetailsModal()">
+        <div class="kpi-header">
+          <span class="kpi-title">Total Outflows</span>
+          <div class="kpi-icon-wrap"><i class="fas fa-receipt text-danger"></i></div>
         </div>
-        <div class="summary-card">
-          <div class="summary-icon" style="background: rgba(16, 185, 129, 0.1);">
-            <i class="fas fa-rupee-sign" style="color: #10B981;"></i>
-          </div>
-          <div class="summary-details">
-            <h3>Total Revenue</h3>
-            <p id="totalRevenue">₹0</p>
-          </div>
+        <div id="totalExpenses" class="kpi-value">₹0</div>
+        <div class="kpi-detail pointer"><i class="fas fa-search-plus"></i> View detailed breakdown</div>
+      </div>
+
+      <!-- 3. Outstanding Balance Card -->
+      <div class="kpi-card kpi-orange">
+        <div class="kpi-header">
+          <span class="kpi-title">Outstanding Balance</span>
+          <div class="kpi-icon-wrap"><i class="fas fa-wallet text-warning"></i></div>
         </div>
-        <div class="summary-card" onclick="showExpenseDetailsModal()">
-          <div class="summary-icon" style="background: rgba(239, 68, 68, 0.1);">
-            <i class="fas fa-file-invoice-dollar" style="color: #EF4444;"></i>
-          </div>
-          <div class="summary-details">
-            <h3>Total Expenses</h3>
-            <p id="totalExpenses">₹0.00</p>
-          </div>
+        <div id="outstandingReceivables" class="kpi-value">₹0</div>
+        <div id="outstandingReceivablesDetail" class="kpi-detail">Receivables due from clients</div>
+      </div>
+
+      <!-- 4. Fleet Utilization Card -->
+      <div class="kpi-card kpi-green">
+        <div class="kpi-header">
+          <span class="kpi-title">Fleet Utilization</span>
+          <div class="kpi-icon-wrap"><i class="fas fa-truck-loading text-success"></i></div>
+        </div>
+        <div id="fleetUtilization" class="kpi-value">0%</div>
+        <div id="fleetUtilizationText" class="kpi-detail">0% Active (0 of <span id="vehiclesCount">0</span> trucks active)</div>
+      </div>
+    </div>
+
+    <!-- Visual Analytics Panels (Chart.js) -->
+    <div class="analytics-grid">
+      <!-- Cash Flow Trend -->
+      <div class="chart-container-card">
+        <div class="chart-header">
+          <h3 class="chart-card-title"><i class="fas fa-chart-bar me-2 text-success"></i>Revenue vs Expenses Trend</h3>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="cashFlowChartCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Expense Categories Share -->
+      <div class="chart-container-card">
+        <div class="chart-header">
+          <h3 class="chart-card-title"><i class="fas fa-chart-pie me-2 text-danger"></i>Expense Allocation</h3>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="expenseDoughnutChartCanvas"></canvas>
         </div>
       </div>
     </div>
 
-    <div class="container mt-4">
-      <h2 class="mb-4"><i class="fas fa-chart-line me-2"></i>Recent Payments & Profit Dashboard</h2>
+    <!-- Period Profits Cards & Filters Panel -->
+    <div class="filters-panel">
+      <h3 class="outfit-font mb-3"><i class="fas fa-filter text-primary me-2"></i>Operational Outflow Filters</h3>
       
+      <!-- Operational Cash Cards -->
       <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-          <div class="payment-card">
-            <div class="payment-card-header">
-              <div class="payment-card-icon" style="background-color: rgba(99, 102, 241, 0.1); color: #6366F1;">
-                <i class="fas fa-user-tie"></i>
-              </div>
-              <h6 class="card-title text-muted mb-0">Total Driver Payments</h6>
-            </div>
-            <h4 id="totalDriverPayments" class="display-6 fw-bold mt-auto">₹0.00</h4>
+        <div class="col-md-3 mb-2">
+          <div class="p-3 border rounded bg-light dark-bg-dark">
+            <div class="text-muted small uppercase">Driver Salaries & Advances</div>
+            <h5 id="totalDriverPayments" class="fw-bold mt-1 mb-0 outfit-font text-indigo">₹0.00</h5>
           </div>
         </div>
-        <div class="col-md-3 mb-3">
-          <div class="payment-card">
-            <div class="payment-card-header">
-              <div class="payment-card-icon" style="background-color: rgba(249, 115, 22, 0.1); color: #F97316;">
-                <i class="fas fa-gas-pump"></i>
-              </div>
-              <h6 class="card-title text-muted mb-0">Total Fuel Payments</h6>
-            </div>
-            <p id="totalFuelPayments" class="display-6 fw-bold mt-auto">₹0.00</p>
+        <div class="col-md-3 mb-2">
+          <div class="p-3 border rounded bg-light dark-bg-dark">
+            <div class="text-muted small uppercase">Fuel Operational Payments</div>
+            <h5 id="totalFuelPayments" class="fw-bold mt-1 mb-0 outfit-font text-orange">₹0.00</h5>
           </div>
         </div>
-        <div class="col-md-3 mb-3">
-          <div class="payment-card">
-            <div class="payment-card-header">
-              <div class="payment-card-icon" style="background-color: rgba(234, 179, 8, 0.1); color: #EAB308;">
-                <i class="fas fa-tools"></i>
-              </div>
-              <h6 class="card-title text-muted mb-0">Total Vehicle Work</h6>
-            </div>
-            <h4 id="totalVehicleWork" class="display-6 fw-bold mt-auto">₹0.00</h4>
+        <div class="col-md-3 mb-2">
+          <div class="p-3 border rounded bg-light dark-bg-dark">
+            <div class="text-muted small uppercase">Vehicle Repair Works</div>
+            <h5 id="totalVehicleWork" class="fw-bold mt-1 mb-0 outfit-font text-warning">₹0.00</h5>
           </div>
         </div>
-        <div class="col-md-3 mb-3">
-          <div class="payment-card">
-            <div class="payment-card-header">
-              <div class="payment-card-icon" style="background-color: rgba(20, 184, 166, 0.1); color: #14B8A6;">
-                <i class="fas fa-chart-line"></i>
-              </div>
-              <h6 class="card-title text-muted mb-0">Monthly Profit</h6>
-            </div>
-            <h4 id="monthlyProfit" class="display-6 fw-bold mt-auto">₹0.00</h4>
+        <div class="col-md-3 mb-2">
+          <div class="p-3 border rounded bg-light dark-bg-dark">
+            <div class="text-muted small uppercase">Net Period Profit</div>
+            <h5 id="monthlyProfit" class="fw-bold mt-1 mb-0 outfit-font">₹0.00</h5>
           </div>
         </div>
       </div>
 
-      <div class="row mb-3">
+      <!-- Filter Controls -->
+      <div class="row g-3 mb-3">
         <div class="col-md-3">
-          <label class="form-label">From Date</label>
+          <label class="form-label" for="fromDate">From Date</label>
           <input type="date" class="form-control" id="fromDate">
         </div>
         <div class="col-md-3">
-          <label class="form-label">To Date</label>
+          <label class="form-label" for="toDate">To Date</label>
           <input type="date" class="form-control" id="toDate">
         </div>
         <div class="col-md-3">
-          <label class="form-label">Payment Type</label>
+          <label class="form-label" for="paymentTypeFilter">Payment Type</label>
           <select class="form-select" id="paymentTypeFilter">
             <option value="">All Types</option>
             <option value="fuel">Fuel Payments</option>
@@ -602,115 +782,108 @@
             <option value="expense">General Expense</option>
           </select>
         </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-primary me-2" id="applyFiltersBtn">Apply Filters</button>
-          <button class="btn btn-outline-secondary" id="resetFiltersBtn">Reset</button>
+        <div class="col-md-3 d-flex align-items-end gap-2">
+          <button class="btn btn-primary w-100" id="applyFiltersBtn"><i class="fas fa-filter me-1"></i>Apply</button>
+          <button class="btn btn-outline-secondary w-100" id="resetFiltersBtn"><i class="fas fa-undo me-1"></i>Reset</button>
         </div>
       </div>
 
-      <div class="row mb-3 align-items-end">
-        <div class="col-md-3">
-          <div class="form-check mt-3">
+      <!-- Unpaid checkbox sort -->
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <div class="form-check">
             <input class="form-check-input" type="checkbox" id="showUnpaidOnly">
-            <label class="form-check-label" for="showUnpaidOnly">
-              Show Unpaid Only (Work vs Vendor Payments)
+            <label class="form-check-label fw-bold text-danger" for="showUnpaidOnly">
+              <i class="fas fa-exclamation-circle me-1"></i>Show Unpaid Bills Only (Work vs Vendor Payments)
             </label>
           </div>
         </div>
         <div class="col-md-3">
-          <label class="form-label">Sort Unpaid By Date</label>
-          <select class="form-select" id="unpaidSortOrder">
-            <option value="desc">Newest First</option>
-            <option value="asc">Oldest First</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="card mb-4" id="unpaidBillsCard" style="display:none;">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Unpaid Bills (Work vs Vendor Payments)</h5>
-          <span class="badge text-bg-warning" id="unpaidSummary" style="display:none;"></span>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped" id="unpaidBillsTable">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Vendor</th>
-                  <th>Reference</th>
-                  <th class="text-end">Total Work (₹)</th>
-                  <th class="text-end">Paid (₹)</th>
-                  <th class="text-end">Balance (₹)</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="unpaidBillsBody">
-                </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header bg-white">
-          <h5 class="mb-0"><i class="fas fa-list me-2"></i>Recent Payments</h5>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table id="paymentsTable" class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th>Vehicle/Recipient</th>
-                  <th class="text-end">Amount (₹)</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="paymentsTableBody">
-                </tbody>
-            </table>
+          <div class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 text-nowrap" for="unpaidSortOrder">Sort Unpaid:</label>
+            <select class="form-select form-select-sm" id="unpaidSortOrder">
+              <option value="desc">Newest First</option>
+              <option value="asc">Oldest First</option>
+            </select>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="container mt-4">
-      <h2 class="section-title"><i class="fas fa-id-card me-2"></i>Business Card Generator</h2>
+    <!-- Unpaid Bills Card -->
+    <div class="table-container-card" id="unpaidBillsCard" style="display:none;">
+      <div class="table-card-header">
+        <h5 class="table-card-title text-danger"><i class="fas fa-file-invoice-dollar me-2"></i>Unpaid Bills (Work vs Vendor Payments)</h5>
+        <span class="badge bg-warning text-dark" id="unpaidSummary" style="display:none;"></span>
+      </div>
+      <div class="table-responsive">
+        <table class="table" id="unpaidBillsTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Vendor</th>
+              <th>Reference</th>
+              <th class="text-end">Total Work (₹)</th>
+              <th class="text-end">Paid (₹)</th>
+              <th class="text-end">Balance (₹)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="unpaidBillsBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-      <div class="row g-4">
-        <div class="col-lg-5">
-          <div class="card p-4 h-100">
-            <h5 class="mb-3">1. Select a Template</h5>
+    <!-- Recent Payments List Card -->
+    <div class="table-container-card">
+      <div class="table-card-header">
+        <h5 class="table-card-title"><i class="fas fa-list me-2"></i>Outflow Payment Ledger</h5>
+      </div>
+      <div class="table-responsive">
+        <table id="paymentsTable" class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Vehicle/Recipient</th>
+              <th class="text-end">Amount (₹)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="paymentsTableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tools Grid: Side-by-side Business Card & Reminders -->
+    <div class="tools-grid mt-4">
+      <!-- 1. Business Card Generator -->
+      <div class="dashboard-panel">
+        <h3 class="outfit-font mb-3"><i class="fas fa-id-card me-2 text-success"></i>Business Card Builder</h3>
+        
+        <div class="row g-3">
+          <div class="col-12">
+            <h5 class="form-label">1. Select a Template</h5>
             <div class="rolling-gallery-container">
-              <div class="rolling-gallery-gradient rolling-gallery-gradient-left"></div>
-              <div class="rolling-gallery-content">
-                <div id="rollingGalleryTrack" class="rolling-gallery-track">
-                  </div>
+              <div id="rollingGalleryTrack" class="rolling-gallery-track">
               </div>
               <button type="button" id="galleryPrev" aria-label="Previous" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">‹</button>
               <button type="button" id="galleryNext" aria-label="Next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">›</button>
-              <div class="rolling-gallery-gradient rolling-gallery-gradient-right"></div>
             </div>
-            <h5 class="mt-4 mb-3">2. Download Your Card</h5>
-            <button id="downloadCardBtn" class="btn btn-success w-100">
-              <i class="fas fa-download me-2"></i>Download as PNG
-            </button>
           </div>
-        </div>
-        
-        <div class="col-lg-7">
-          <div class="card p-4 h-100">
-            <h5 class="mb-3">Live Preview</h5>
+          
+          <div class="col-12">
+            <h5 class="form-label mt-2">Live Preview</h5>
             <div id="cardPreview" class="business-card-preview">
               <div id="businessCard" class="business-card green-modern">
                 <div class="card-content">
                   <div class="logo-section" id="logoClickArea">
                     <div id="logoPlaceholder" class="logo-placeholder">
                       <i class="fas fa-camera"></i>
-                      <span>Click to add logo</span>
+                      <span>Add logo</span>
                     </div>
                     <img id="previewLogo" src="" alt="Company Logo" class="logo-img" style="display: none;">
                   </div>
@@ -719,78 +892,92 @@
                     <div class="contact-info">
                       <p id="previewPhone" class="contact-item"><i class="fas fa-phone"></i> Phone: +1234567890</p>
                       <p id="previewEmail" class="contact-item"><i class="fas fa-envelope"></i> Email: info@example.com</p>
-                      <p id="previewAddress" class="contact-item"><i class="fas fa-map-marker-alt"></i> Address: Your Company Address</p>
+                      <p id="previewAddress" class="contact-item"><i class="fas fa-map-marker-alt"></i> Address: Your Address</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+            
+            <button id="downloadCardBtn" class="btn btn-primary w-100 mt-3">
+              <i class="fas fa-download me-2"></i>Download Business Card (PNG)
+            </button>
+          </div>
+        </div>
+        <input type="file" id="logoUploadInput" accept="image/*" style="display: none;">
+      </div>
+
+      <!-- 2. Reminders & Alerts -->
+      <div class="dashboard-panel">
+        <h3 class="outfit-font mb-3"><i class="fas fa-bell me-2 text-warning"></i>Reminders & Alerts</h3>
+        
+        <div class="row g-3">
+          <div class="col-12">
+            <h5 class="form-label">Set New Reminder</h5>
+            <form id="reminderForm">
+              <div class="row g-2">
+                <div class="col-sm-6">
+                  <label for="reminderType" class="form-label">Type</label>
+                  <select id="reminderType" class="form-select" required>
+                    <option value="">Select type...</option>
+                    <option value="service">Vehicle Service</option>
+                    <option value="payment">Payment Due</option>
+                    <option value="permit">Permit Expiry</option>
+                    <option value="insurance">Insurance Expiry</option>
+                    <option value="puc">PUC Expiry</option>
+                  </select>
+                </div>
+                <div class="col-sm-6">
+                  <label for="vehicleNumber" class="form-label">Vehicle</label>
+                  <input type="text" id="vehicleNumber" class="form-control" placeholder="MH12AB1234" required>
+                </div>
+                <div class="col-12">
+                  <label for="dueDate" class="form-label">Due Date</label>
+                  <input type="date" id="dueDate" class="form-control" required>
+                </div>
+                <div class="col-12">
+                  <label for="notes" class="form-label">Notes</label>
+                  <textarea id="notes" class="form-control" rows="2" placeholder="Optional details..."></textarea>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary w-100">Set Reminder</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="col-12 mt-3">
+            <h5 class="form-label">Upcoming Alerts</h5>
+            <div id="upcomingReminders" style="max-height: 250px; overflow-y: auto; padding-right: 5px;">
+              <div class="no-reminders">No upcoming reminders</div>
+            </div>
           </div>
         </div>
       </div>
-      <input type="file" id="logoUploadInput" accept="image/*" style="display: none;">
     </div>
 
-    <div class="recent-activity">
-      <h2 class="section-title">Recent Activity</h2>
-      <div class="activity-grid">
-        <div class="activity-column">
-          <h4>Latest Vehicles</h4>
+    <!-- Recent Activity History Log -->
+    <div class="dashboard-panel">
+      <h3 class="outfit-font mb-3"><i class="fas fa-history me-2 text-primary"></i>Live Feed Activity</h3>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <h5 class="outfit-font border-bottom pb-2 mb-2"><i class="fas fa-truck me-1"></i>Latest Vehicles</h5>
           <div id="latestVehicles"></div>
         </div>
-        <div class="activity-column">
-          <h4>Latest LR's</h4>
+        <div class="col-md-4">
+          <h5 class="outfit-font border-bottom pb-2 mb-2"><i class="fas fa-file-invoice me-1"></i>Latest LRs</h5>
           <div id="latestLRs"></div>
         </div>
-        <div class="activity-column">
-          <h4>Recent Payments</h4>
+        <div class="col-md-4">
+          <h5 class="outfit-font border-bottom pb-2 mb-2"><i class="fas fa-rupee-sign me-1"></i>Outflow Payments</h5>
           <div id="recentPayments"></div>
         </div>
       </div>
     </div>
 
-    <div class="reminders-section">
-      <h2 class="section-title"><i class="fas fa-bell"></i> Reminders & Alerts</h2>
-      <div class="reminders-grid">
-        <div>
-          <h4>Set New Reminder</h4>
-          <form id="reminderForm">
-            <div class="form-group">
-              <label for="reminderType">Reminder Type</label>
-              <select id="reminderType" class="form-control" required>
-                <option value="">Select type...</option>
-                <option value="service">Vehicle Service</option>
-                <option value="payment">Payment Due</option>
-                <option value="permit">Permit Expiry</option>
-                <option value="insurance">Insurance Expiry</option>
-                <option value="puc">PUC Expiry</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="vehicleNumber">Vehicle Number</label>
-              <input type="text" id="vehicleNumber" class="form-control" placeholder="e.g. MH12AB1234" required>
-            </div>
-            <div class="form-group">
-              <label for="dueDate">Due Date</label>
-              <input type="date" id="dueDate" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label for="notes">Notes</label>
-              <textarea id="notes" class="form-control" rows="3" placeholder="Add any additional details..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-full">Set Reminder</button>
-          </form>
-        </div>
-        <div>
-          <h4>Upcoming Reminders</h4>
-          <div id="upcomingReminders">
-            <div class="no-reminders">No upcoming reminders</div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
+  <!-- Expense Breakdown Detail Modal -->
   <div class="modal fade" id="expenseDetailsModal" tabindex="-1" aria-labelledby="expenseDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -799,7 +986,7 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <h4 class="mb-3">Total Expenses: <span id="modalTotalExpenses" class="text-danger fw-bold">₹0.00</span></h4>
+          <h4 class="mb-3 outfit-font">Total Operational Costs: <span id="modalTotalExpenses" class="text-danger fw-bold">₹0.00</span></h4>
           
           <div class="row">
             <div class="col-md-6">
@@ -993,6 +1180,7 @@
         db.ref(`users/${effectiveCoreAccountId}/vehicles`).on('value', (snap) => {
           const vehiclesCount = snap.exists() ? Object.keys(snap.val()).length : 0;
           document.getElementById('vehiclesCount').textContent = vehiclesCount;
+          refreshAdvancedDashboardMetrics(effectiveCoreAccountId);
         });
 
         // Active LR Reports - fixed path and counting logic
@@ -1007,10 +1195,475 @@
               totalRevenue += parseFloat(lr.tripDetails?.billingAmount || 0);
             });
           }
-          document.getElementById('activeLRCount').textContent = lrCount;
           document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+          const activeLREl = document.getElementById('activeLRCountText');
+          if (activeLREl) {
+            activeLREl.textContent = `${lrCount} total bookings logged`;
+          }
+          refreshAdvancedDashboardMetrics(effectiveCoreAccountId);
         });
       });
+    }
+
+    // Advanced dashboard metrics recalculation
+    async function refreshAdvancedDashboardMetrics(accountId) {
+      try {
+        // 1. Calculate and update Outstanding Receivables
+        const outstanding = await calculateOutstandingReceivables(accountId);
+        const outstandingEl = document.getElementById('outstandingReceivables');
+        if (outstandingEl) {
+          outstandingEl.textContent = formatCurrency(outstanding);
+        }
+
+        // 2. Calculate and update Fleet Utilization
+        const fleet = await calculateFleetUtilization(accountId);
+        const utilizationEl = document.getElementById('fleetUtilization');
+        if (utilizationEl) {
+          utilizationEl.textContent = fleet.rate + '%';
+        }
+        const utilizationTextEl = document.getElementById('fleetUtilizationText');
+        if (utilizationTextEl) {
+          utilizationTextEl.textContent = `${fleet.rate}% Active (${fleet.active} of ${fleet.total} trucks active)`;
+        }
+
+        // 3. Calculate and update Document Expiry Alerts
+        const alertCount = await calculateDocumentExpiryAlerts(accountId);
+        const alertBanner = document.getElementById('expiryAlertBanner');
+        const alertText = document.getElementById('expiryAlertText');
+        if (alertBanner && alertText) {
+          if (alertCount > 0) {
+            alertText.textContent = `${alertCount} critical vehicle document${alertCount > 1 ? 's are' : ' is'} expiring within 15 days or already expired!`;
+            alertBanner.style.display = 'flex';
+          } else {
+            alertBanner.style.display = 'none';
+          }
+        }
+
+        // 4. Initialize or update historical Cash Flow chart
+        await initCashFlowChart(accountId);
+
+      } catch (error) {
+        console.error("Error refreshing advanced dashboard metrics:", error);
+      }
+    }
+
+    // Calculations for client outstanding balances (Receivables)
+    async function calculateOutstandingReceivables(accountId) {
+      const lrRef = db.ref(`users/${accountId}/lrReports`);
+      const paymentsRef = db.ref(`users/${accountId}/payments`);
+      
+      const [lrSnap, paymentsSnap] = await Promise.all([
+        lrRef.once('value'),
+        paymentsRef.once('value')
+      ]);
+
+      let totalBilling = 0;
+      if (lrSnap.exists()) {
+        Object.values(lrSnap.val()).forEach(lr => {
+          totalBilling += parseFloat(lr.tripDetails?.billingAmount || 0);
+        });
+      }
+
+      let totalPayments = 0;
+      if (paymentsSnap.exists()) {
+        Object.values(paymentsSnap.val()).forEach(p => {
+          if (!p.plan) {
+            totalPayments += parseFloat(p.amount || 0);
+          }
+        });
+      }
+
+      return Math.max(0, totalBilling - totalPayments);
+    }
+
+    // Calculations for fleet active status
+    async function calculateFleetUtilization(accountId) {
+      const lrRef = db.ref(`users/${accountId}/lrReports`);
+      const vehiclesRef = db.ref(`users/${accountId}/vehicles`);
+
+      const [lrSnap, vehiclesSnap] = await Promise.all([
+        lrRef.once('value'),
+        vehiclesRef.once('value')
+      ]);
+
+      const totalVehicles = vehiclesSnap.exists() ? Object.keys(vehiclesSnap.val()).length : 0;
+      if (totalVehicles === 0) return { rate: 0, active: 0, total: 0 };
+
+      const activeTrucks = new Set();
+      if (lrSnap.exists()) {
+        Object.values(lrSnap.val()).forEach(lr => {
+          const status = lr.status || 'Active';
+          if (!['Completed', 'Delivered', 'Cancelled', 'invoiced', 'completed', 'delivered', 'cancelled'].includes(status)) {
+            const truck = lr.truckNumber || lr.vehicleNo || lr.vehicleNumber;
+            if (truck) {
+              activeTrucks.add(truck.replace(/\s+/g, '').toUpperCase());
+            }
+          }
+        });
+      }
+
+      // Intersect active trucks with registered ones to make sure we only count registered fleet
+      const registeredTrucks = new Set(
+        Object.values(vehiclesSnap.val()).map(v => (v.vehicleNumber || '').replace(/\s+/g, '').toUpperCase()).filter(Boolean)
+      );
+
+      let activeCount = 0;
+      activeTrucks.forEach(truck => {
+        if (registeredTrucks.has(truck)) {
+          activeCount++;
+        }
+      });
+
+      const rate = Math.min(100, Math.round((activeCount / totalVehicles) * 100));
+      return { rate, active: activeCount, total: totalVehicles };
+    }
+
+    // Calculate critical expiring documents (PUC, insurance, fitness)
+    async function calculateDocumentExpiryAlerts(accountId) {
+      const vehiclesRef = db.ref(`users/${accountId}/vehicles`);
+      const snap = await vehiclesRef.once('value');
+      if (!snap.exists()) return 0;
+
+      let alertCount = 0;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const fifteenDaysFromNow = new Date();
+      fifteenDaysFromNow.setDate(today.getDate() + 15);
+      fifteenDaysFromNow.setHours(23,59,59,999);
+
+      Object.values(snap.val()).forEach(v => {
+        ['pucExpiry', 'insuranceExpiry', 'fitnessExpiry'].forEach(field => {
+          const dateVal = v[field];
+          if (dateVal) {
+            const expiryDate = new Date(dateVal);
+            if (!isNaN(expiryDate.getTime())) {
+              expiryDate.setHours(0,0,0,0);
+              if (expiryDate <= fifteenDaysFromNow) {
+                alertCount++;
+              }
+            }
+          }
+        });
+      });
+
+      return alertCount;
+    }
+
+    // Chart.js: Draw Revenue vs Expenses historical trend
+    async function initCashFlowChart(accountId) {
+      const chartData = await getMonthlyDataForCharts(accountId);
+      const canvas = document.getElementById('cashFlowChartCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      if (window.cashFlowChart instanceof Chart) {
+        window.cashFlowChart.destroy();
+      }
+
+      window.cashFlowChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: chartData.labels,
+          datasets: [
+            {
+              label: 'Revenue',
+              data: chartData.revenue,
+              backgroundColor: 'rgba(46, 139, 87, 0.85)',
+              borderColor: '#2E8B57',
+              borderWidth: 1.5,
+              borderRadius: 4,
+              maxBarThickness: 30
+            },
+            {
+              label: 'Expenses',
+              data: chartData.expenses,
+              backgroundColor: 'rgba(239, 68, 68, 0.85)',
+              borderColor: '#ef4444',
+              borderWidth: 1.5,
+              borderRadius: 4,
+              maxBarThickness: 30
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                color: 'var(--text)',
+                font: {
+                  family: 'Inter',
+                  weight: '500'
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ' ' + context.dataset.label + ': ' + formatCurrency(context.raw);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: 'var(--muted)',
+                font: {
+                  family: 'Inter'
+                }
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              },
+              ticks: {
+                color: 'var(--muted)',
+                font: {
+                  family: 'Inter'
+                },
+                callback: function(value) {
+                  if (value >= 100000) return '₹' + (value / 100000).toFixed(1) + 'L';
+                  if (value >= 1000) return '₹' + (value / 1000).toFixed(0) + 'K';
+                  return '₹' + value;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Chart.js: Update dynamic category breakdown doughnut chart
+    function updateExpenseDoughnutChart(rawExpenses) {
+      const expenseSummary = rawExpenses.reduce((acc, item) => {
+        const category = item.type;
+        const amount = item.amount;
+        acc[category] = (acc[category] || 0) + amount;
+        return acc;
+      }, {});
+
+      const categories = {
+        'fuel': 'Fuel Costs',
+        'driver': 'Driver Salaries/Adv',
+        'vehicle-work': 'Vehicle Repairs',
+        'trip': 'LR Trip Cash',
+        'expense': 'General Expense',
+        'revenue-loss': 'Shortages'
+      };
+
+      const labels = [];
+      const data = [];
+      const backgroundColor = [
+        '#f97316',
+        '#6366f1',
+        '#eab308',
+        '#3b82f6',
+        '#14b8a6',
+        '#ef4444'
+      ];
+
+      Object.entries(categories).forEach(([type, label]) => {
+        const amount = expenseSummary[type] || 0;
+        if (amount > 0) {
+          labels.push(label);
+          data.push(amount);
+        }
+      });
+
+      if (data.length === 0) {
+        labels.push('No Expenses');
+        data.push(1);
+        backgroundColor.push('#e5e7eb');
+      }
+
+      const canvas = document.getElementById('expenseDoughnutChartCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      if (window.expenseDoughnutChart instanceof Chart) {
+        window.expenseDoughnutChart.destroy();
+      }
+
+      window.expenseDoughnutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: backgroundColor,
+            borderWidth: 2,
+            borderColor: 'var(--card)'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                color: 'var(--text)',
+                font: {
+                  family: 'Inter',
+                  size: 11
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  if (context.label === 'No Expenses') return 'No expenses logged';
+                  return ' ' + context.label + ': ' + formatCurrency(context.raw);
+                }
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+
+    // Chart.js: Parse monthly revenues and expenses for line/bar trend
+    async function getMonthlyDataForCharts(accountId) {
+      const lrReportsRef = db.ref(`users/${accountId}/lrReports`);
+      const fuelPaymentsRef = db.ref(`users/${accountId}/fuelPayments`);
+      const driverPaymentsRef = db.ref(`users/${accountId}/driverSalaryPayments`);
+      const expensesRef = db.ref(`users/${accountId}/expenses`);
+      const workPaymentsRef = db.ref(`users/${accountId}/workPayments`);
+      const pumpPaymentsRef = db.ref(`users/${accountId}/pumpPayments`);
+
+      const [lrReportsSnap, fuelPaymentsSnap, driverPaymentsSnap, expensesSnap, workPaymentsSnap, pumpPaymentsSnap] = await Promise.all([
+        lrReportsRef.once('value'),
+        fuelPaymentsRef.once('value'),
+        driverPaymentsSnap.once('value'),
+        expensesRef.once('value'),
+        workPaymentsRef.once('value'),
+        pumpPaymentsSnap.once('value')
+      ]);
+
+      const monthlyData = {};
+      const months = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const monthLabel = d.toLocaleString('default', { month: 'short', year: '2-digit' });
+        months.push({ key: monthKey, label: monthLabel });
+        monthlyData[monthKey] = { revenue: 0, expenses: 0 };
+      }
+
+      const getMonthKey = (dateStr) => {
+        if (!dateStr) return null;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return null;
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      };
+
+      if (lrReportsSnap.exists()) {
+        Object.values(lrReportsSnap.val()).forEach(lr => {
+          const mKey = getMonthKey(lr.date);
+          if (mKey && monthlyData[mKey]) {
+            const details = lr.tripDetails || {};
+            monthlyData[mKey].revenue += parseFloat(details.billingAmount || 0);
+
+            const lrTripExpenses = (parseFloat(details.tyreExpenses) || 0) + 
+                             (parseFloat(details.tollExpenses) || 0) + 
+                             (parseFloat(details.foodExpenses) || 0) + 
+                             (parseFloat(details.loadingUnloadingExpenses) || 0) + 
+                             (parseFloat(details.policeChallanExpenses) || 0) + 
+                             (parseFloat(details.tacExpenses) || 0) + 
+                             (parseFloat(details.permitExpenses) || 0) + 
+                             (parseFloat(details.brokerageExpenses) || 0) + 
+                             (parseFloat(details.commissionExpenses) || 0) +
+                             (parseFloat(details.tirpalRopeExpenses) || 0) +
+                             (parseFloat(details.otherExpenses) || 0);
+            monthlyData[mKey].expenses += lrTripExpenses;
+
+            const emptyDetails = lr.emptyTripData || {};
+            const lrEmptyExpenses = (parseFloat(emptyDetails.tyreExpenses) || 0) + 
+                                    (parseFloat(emptyDetails.tollExpenses) || 0) + 
+                                    (parseFloat(emptyDetails.foodExpenses) || 0) + 
+                                    (parseFloat(emptyDetails.loadingUnloadingExpenses) || 0) + 
+                                    (parseFloat(emptyDetails.policeChallanExpenses) || 0) + 
+                                    (parseFloat(emptyDetails.tacExpenses) || 0) + 
+                                    (parseFloat(emptyDetails.permitExpenses) || 0) + 
+                                    (parseFloat(emptyDetails.brokerageExpenses) || 0) + 
+                                    (parseFloat(emptyDetails.commissionExpenses) || 0) +
+                                    (parseFloat(emptyDetails.tirpalRopeExpenses) || 0) +
+                                    (parseFloat(emptyDetails.otherExpenses) || 0);
+            monthlyData[mKey].expenses += lrEmptyExpenses;
+
+            const fuelUsedAmount = (parseFloat(details.fuelUsedLiters) || 0) * (parseFloat(details.dieselRatePerLiter) || 0);
+            const emptyFuelUsed = (parseFloat(emptyDetails.fuelUsedLiters) || 0) * (parseFloat(emptyDetails.dieselRatePerLiter || details.dieselRatePerLiter) || 0);
+            if (!details.fuelAlreadyDeducted) {
+              monthlyData[mKey].expenses += (fuelUsedAmount + emptyFuelUsed);
+            }
+
+            monthlyData[mKey].expenses += parseFloat(details.advance || 0);
+
+            const shortage = ((parseFloat(details.shortage) || 0) / 1000) * (parseFloat(details.billingRate) || 0);
+            monthlyData[mKey].expenses += shortage;
+          }
+        });
+      }
+
+      if (fuelPaymentsSnap.exists()) {
+        Object.values(fuelPaymentsSnap.val()).forEach(p => {
+          const mKey = getMonthKey(p.date);
+          if (mKey && monthlyData[mKey]) {
+            monthlyData[mKey].expenses += parseFloat(p.amount || 0);
+          }
+        });
+      }
+
+      if (driverPaymentsSnap.exists()) {
+        Object.values(driverPaymentsSnap.val()).forEach(p => {
+          const mKey = getMonthKey(p.date);
+          if (mKey && monthlyData[mKey]) {
+            monthlyData[mKey].expenses += parseFloat(p.amount || 0);
+          }
+        });
+      }
+
+      if (expensesSnap.exists()) {
+        Object.values(expensesSnap.val()).forEach(e => {
+          const mKey = getMonthKey(e.date);
+          if (mKey && monthlyData[mKey]) {
+            monthlyData[mKey].expenses += parseFloat(e.amount || 0);
+          }
+        });
+      }
+
+      if (workPaymentsSnap.exists()) {
+        Object.values(workPaymentsSnap.val()).forEach(p => {
+          const mKey = getMonthKey(p.date);
+          if (mKey && monthlyData[mKey]) {
+            monthlyData[mKey].expenses += parseFloat(p.amount || 0);
+          }
+        });
+      }
+
+      if (pumpPaymentsSnap.exists()) {
+        Object.values(pumpPaymentsSnap.val()).forEach(p => {
+          const mKey = getMonthKey(p.date);
+          if (mKey && monthlyData[mKey]) {
+            monthlyData[mKey].expenses += parseFloat(p.amount || 0);
+          }
+        });
+      }
+
+      return {
+        labels: months.map(m => m.label),
+        revenue: months.map(m => monthlyData[m.key].revenue),
+        expenses: months.map(m => monthlyData[m.key].expenses)
+      };
     }
 
 
@@ -1638,6 +2291,7 @@
         document.getElementById('totalExpenses').textContent = formatCurrency(result.totalExpenses);
         
         updateMonthlyProfit();
+        refreshAdvancedDashboardMetrics(effectiveCoreAccountId);
     }
     
     // NEW: Function to calculate and update the total expenses for ALL TIME
@@ -1647,6 +2301,7 @@
         
         const result = await calculateProfitForPeriod(effectiveCoreAccountId, null, null);
         document.getElementById('totalExpenses').textContent = formatCurrency(result.totalExpenses);
+        refreshAdvancedDashboardMetrics(effectiveCoreAccountId);
     }
 
 
@@ -1668,6 +2323,9 @@
             } else {
                 profitEl.classList.add('profit-negative');
             }
+
+            // Update doughnut chart dynamically for selected period
+            updateExpenseDoughnutChart(profitData.rawExpenseList);
         });
     }
 
