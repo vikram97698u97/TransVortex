@@ -40,604 +40,584 @@
 
     .left-pane {
       width: 50%;
-      background: radial-gradient(circle at 50% 50%, #153a27 0%, #081610 100%);
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
       position: relative; overflow: hidden;
-      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-      padding: 4rem 3rem 1rem 3rem; color: var(--white);
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+      padding: 3rem; color: var(--white);
       animation: fadeInFromLeft 0.8s ease-out forwards;
     }
-    .left-content { position: relative; z-index: 10; max-width: 100%; text-align: center; }
-    .left-content h1 { font-size: 2.2rem; font-weight: 700; line-height: 1.2; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
-    .left-content p  { font-size: 1.1rem; font-weight: 300; opacity: 0.85; }
+    .left-content {
+      position: relative;
+      z-index: 10;
+      max-width: 85%;
+      text-align: center;
+      margin-bottom: 220px;
+    }
+    .left-content h1 {
+      font-size: 2.6rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      text-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .left-content p {
+      font-size: 1.25rem;
+      font-weight: 300;
+      opacity: 0.95;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
 
-    /* ── Isometric Logistics Illustration ────────────────── */
-    .iso-container {
-      position: relative;
+    /* ── 3D Isometric Logistics Scene ────────────────── */
+    .road-animation-3d {
+      position: absolute;
+      bottom: 0;
+      left: 0;
       width: 100%;
-      height: 60vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      height: 380px;
+      overflow: hidden;
+      z-index: 5;
       perspective: 1200px;
-      perspective-origin: 50% 50%;
-      margin-bottom: -20px;
     }
     
-    .iso-scene {
-      position: relative;
+    .iso-scene-bottom {
+      position: absolute;
+      left: 50%;
+      bottom: -60px;
       width: 600px;
-      height: 600px;
-      transform: rotateX(60deg) rotateZ(-45deg);
+      height: 400px;
+      transform: translateX(-50%) rotateX(55deg) rotateZ(-35deg);
       transform-style: preserve-3d;
-      zoom: 0.8;
-      opacity: 0.9;
+      zoom: 0.9;
     }
-    
-    .iso-floor {
+
+    /* Floor grid */
+    .iso-grid-floor {
       position: absolute;
       width: 100%;
       height: 100%;
       background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-      background-size: 40px 40px;
-      border: 2px dashed rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-    }
-    
-    .iso-water {
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 180px;
-      height: 180px;
-      background: rgba(30, 144, 255, 0.3);
-      border-right: 2px solid rgba(30, 144, 255, 0.5);
-      border-top: 2px solid rgba(30, 144, 255, 0.5);
-      border-radius: 0 40px 0 0;
-      overflow: hidden;
-    }
-    
-    .iso-water::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.08), transparent);
-      animation: wave 4s ease-in-out infinite alternate;
-    }
-    
-    @keyframes wave {
-      from { transform: translateX(-30px); }
-      to { transform: translateX(30px); }
-    }
-    
-    /* Cargo Ship */
-    .iso-ship {
-      position: absolute;
-      left: 30px;
-      bottom: 60px;
-      width: 100px;
-      height: 30px;
-      transform-style: preserve-3d;
-      animation: ship-float 3s ease-in-out infinite alternate;
-    }
-    
-    @keyframes ship-float {
-      from { transform: translateZ(0); }
-      to { transform: translateZ(3px); }
-    }
-    
-    .iso-ship .hull {
-      position: absolute;
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 30px 30px;
+      border: 1.5px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
       transform-style: preserve-3d;
     }
-    
-    .iso-ship .hull.top {
-      width: 100px;
-      height: 30px;
-      transform: translateZ(10px);
-      background: #e63946;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .iso-ship .hull.front {
-      width: 100px;
-      height: 10px;
-      transform: rotateX(-90deg);
-      transform-origin: bottom;
-      bottom: 0;
-      background: #a71d2a;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .iso-ship .hull.side {
-      width: 30px;
-      height: 10px;
-      transform: rotateY(90deg);
-      transform-origin: right;
-      right: 0;
-      background: #7a101a;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .iso-ship .cargo-container {
+
+    /* 3D Diagonal Highway */
+    .highway-3d {
       position: absolute;
-      width: 25px;
-      height: 18px;
-      transform-style: preserve-3d;
-    }
-    
-    .iso-ship .c1 {
-      left: 15px;
-      top: 6px;
-      transform: translateZ(10px);
-    }
-    
-    .iso-ship .c2 {
-      left: 50px;
-      top: 6px;
-      transform: translateZ(10px);
-    }
-    
-    .cargo-container::after {
-      content: '';
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: #ffc107;
-      transform: translateZ(12px);
-      border: 1px solid rgba(0,0,0,0.15);
-    }
-    
-    .cargo-container::before {
-      content: '';
-      position: absolute;
-      width: 100%;
-      height: 12px;
-      background: #cbd5e1;
-      transform: rotateX(-90deg);
-      transform-origin: bottom;
-      bottom: 0;
-      border: 1px solid rgba(0,0,0,0.15);
-    }
-    
-    /* Roads */
-    .iso-road {
-      position: absolute;
+      left: -100px;
+      top: 170px;
+      width: 800px;
+      height: 60px;
       background: #1e293b;
       transform-style: preserve-3d;
+      border-top: 3px solid rgba(255, 255, 255, 0.2);
+      border-bottom: 3px solid rgba(255, 255, 255, 0.2);
     }
-    
-    .iso-road.highway-x {
-      left: 0;
-      top: 280px;
-      width: 100%;
-      height: 50px;
-      border-top: 2px solid rgba(255,255,255,0.2);
-      border-bottom: 2px solid rgba(255,255,255,0.2);
-    }
-    
-    .iso-road.highway-x::after {
+    .highway-3d::after {
       content: '';
       position: absolute;
       top: 50%;
       left: 0;
       width: 100%;
       height: 0;
-      border-top: 2.5px dashed rgba(255, 255, 255, 0.4);
+      border-top: 3px dashed rgba(255, 255, 255, 0.45);
       transform: translateY(-50%);
     }
-    
-    .iso-road.highway-y {
-      left: 330px;
-      top: 0;
-      width: 50px;
-      height: 100%;
-      border-left: 2px solid rgba(255,255,255,0.2);
-      border-right: 2px solid rgba(255,255,255,0.2);
+
+    /* Highway curb / thickness */
+    .highway-curb {
+      position: absolute;
+      left: -100px;
+      top: 230px;
+      width: 800px;
+      height: 12px;
+      background: #475569;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      transform-style: preserve-3d;
+      border-bottom: 2px solid #334155;
     }
-    
-    .iso-road.highway-y::after {
+
+    /* 3D Box Utility styling */
+    .box-3d {
+      position: absolute;
+      transform-style: preserve-3d;
+    }
+    .face {
+      position: absolute;
+      transform-style: preserve-3d;
+      box-sizing: border-box;
+    }
+
+    /* 3D Semi-Truck */
+    .truck-3d {
+      position: absolute;
+      top: 176px;
+      left: -150px;
+      width: 100px;
+      height: 24px;
+      transform-style: preserve-3d;
+      animation: drive-truck 10s linear infinite;
+    }
+    @keyframes drive-truck {
+      from { left: -150px; }
+      to { left: 750px; }
+    }
+
+    /* Truck trailer */
+    .truck-3d .trailer-box {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 62px;
+      height: 24px;
+      transform-style: preserve-3d;
+    }
+    .truck-3d .trailer-box .top-face {
+      width: 62px; height: 24px;
+      transform: translateZ(30px);
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+    }
+    .truck-3d .trailer-box .front-face {
+      width: 62px; height: 30px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 24px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .truck-3d .trailer-box .back-face {
+      width: 62px; height: 30px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 0;
+      background: #e2e8f0;
+    }
+    .truck-3d .trailer-box .rear-face {
+      width: 24px; height: 30px;
+      transform: rotateY(-90deg);
+      transform-origin: left;
+      left: 0;
+      background: #94a3b8;
+      border: 1px solid #64748b;
+    }
+    .truck-3d .trailer-box .rear-face::after {
       content: '';
       position: absolute;
-      left: 50%;
-      top: 0;
-      width: 0;
-      height: 100%;
-      border-left: 2.5px dashed rgba(255, 255, 255, 0.4);
-      transform: translateX(-50%);
-    }
-    
-    /* Buildings */
-    .iso-building {
-      position: absolute;
-      transform-style: preserve-3d;
-    }
-    
-    .warehouse {
-      left: 120px;
-      top: 80px;
-      width: 140px;
-      height: 100px;
-    }
-    
-    .warehouse .top {
-      width: 140px;
-      height: 100px;
-      transform: translateZ(60px);
-      background: rgba(67, 185, 127, 0.85);
-      border: 1px solid rgba(255,255,255,0.3);
-    }
-    
-    .warehouse .front {
-      width: 140px;
-      height: 60px;
-      transform: rotateX(-90deg);
-      transform-origin: bottom;
-      bottom: 0;
-      background: rgba(46, 139, 87, 0.95);
-      border: 1px solid rgba(255,255,255,0.3);
-    }
-    
-    .warehouse .side {
-      width: 100px;
-      height: 60px;
-      transform: rotateY(90deg);
-      transform-origin: right;
-      right: 0;
-      background: rgba(30, 100, 60, 0.98);
-      border: 1px solid rgba(255,255,255,0.3);
-    }
-    
-    /* Radar antenna */
-    .radar-dish {
-      position: absolute;
-      left: 30px;
-      top: 30px;
-      width: 16px;
-      height: 16px;
-      background: #f59e0b;
-      border-radius: 50%;
-      transform: rotateX(-45deg);
-      transform-style: preserve-3d;
-      animation: rotate-radar 3s linear infinite;
-    }
-    
-    @keyframes rotate-radar {
-      from { transform: rotateZ(0deg) rotateX(-45deg); }
-      to { transform: rotateZ(360deg) rotateX(-45deg); }
-    }
-    
-    /* Office tower */
-    .office {
-      left: 440px;
-      top: 380px;
-      width: 80px;
-      height: 80px;
-    }
-    
-    .office .top {
-      width: 80px;
-      height: 80px;
-      transform: translateZ(100px);
-      background: #1e293b;
-      border: 1px solid #475569;
-    }
-    
-    .office .front {
-      width: 80px;
-      height: 100px;
-      transform: rotateX(-90deg);
-      transform-origin: bottom;
-      bottom: 0;
-      background: linear-gradient(180deg, #102a43, #243b53);
-      border: 1px solid rgba(255,255,255,0.15);
-      background-image: 
-        repeating-linear-gradient(rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 8px, transparent 8px, transparent 16px),
-        repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 8px, transparent 8px, transparent 16px);
-    }
-    
-    .office .side {
-      width: 80px;
-      height: 100px;
-      transform: rotateY(90deg);
-      transform-origin: right;
-      right: 0;
-      background: linear-gradient(180deg, #0b1a30, #102a43);
-      border: 1px solid rgba(255,255,255,0.15);
-      background-image: 
-        repeating-linear-gradient(rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 8px, transparent 8px, transparent 16px),
-        repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 8px, transparent 8px, transparent 16px);
-    }
-    
-    /* Cargo crates */
-    .cargo-crate {
-      position: absolute;
-      width: 25px;
-      height: 25px;
-      transform-style: preserve-3d;
-    }
-    
-    .cargo-crate.crate-1 {
-      left: 100px;
-      top: 190px;
-    }
-    
-    .cargo-crate.crate-2 {
-      left: 75px;
-      top: 210px;
-    }
-    
-    .cargo-crate .top {
-      width: 25px;
-      height: 25px;
-      transform: translateZ(16px);
-      background: #b45309;
-      border: 1px solid #78350f;
-    }
-    
-    .cargo-crate .front {
-      width: 25px;
-      height: 16px;
-      transform: rotateX(-90deg);
-      transform-origin: bottom;
-      bottom: 0;
-      background: #d97706;
-      border: 1px solid #78350f;
-    }
-    
-    .cargo-crate .side {
-      width: 25px;
-      height: 16px;
-      transform: rotateY(90deg);
-      transform-origin: right;
-      right: 0;
-      background: #92400e;
-      border: 1px solid #78350f;
-    }
-    
-    /* Moving Vehicles */
-    .iso-vehicle {
-      position: absolute;
-      transform-style: preserve-3d;
-    }
-    
-    .truck-x {
-      top: 292px;
-      left: 0;
-      width: 60px;
-      height: 24px;
-      animation: drive-x 12s linear infinite;
-    }
-    
-    @keyframes drive-x {
-      from { left: -80px; }
-      to { left: 620px; }
-    }
-    
-    .truck-x .cab {
-      position: absolute;
-      left: 44px;
-      top: 2px;
-      width: 14px;
-      height: 20px;
-      transform-style: preserve-3d;
-    }
-    
-    .truck-x .cab.top {
-      width: 14px;
-      height: 20px;
-      transform: translateZ(18px);
+      top: 5px; left: 11px; width: 2px; height: 20px;
       background: #ef4444;
     }
-    
-    .truck-x .cab.front {
-      width: 14px;
-      height: 18px;
-      transform: rotateX(-90deg);
-      transform-origin: bottom;
-      bottom: 0;
-      background: #dc2626;
+
+    /* Truck cab */
+    .truck-3d .cab-box {
+      position: absolute;
+      left: 64px;
+      top: 1px;
+      width: 26px;
+      height: 22px;
+      transform-style: preserve-3d;
     }
-    
-    .truck-x .cab.side {
-      width: 20px;
-      height: 18px;
+    .truck-3d .cab-box .top-face {
+      width: 26px; height: 22px;
+      transform: translateZ(22px);
+      background: #dc2626;
+      border-radius: 2px;
+    }
+    .truck-3d .cab-box .front-face {
+      width: 26px; height: 22px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 22px;
+      background: #ef4444;
+    }
+    .truck-3d .cab-box .back-face {
+      width: 26px; height: 22px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 0;
+      background: #b91c1c;
+    }
+    .truck-3d .cab-box .nose-face {
+      width: 22px; height: 22px;
       transform: rotateY(90deg);
       transform-origin: right;
       right: 0;
       background: #991b1b;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2px;
     }
-    
-    .truck-x .trailer {
+    .truck-3d .cab-box .nose-face .windshield {
+      width: 100%; height: 8px;
+      background: #1e293b;
+      border-radius: 1px;
+    }
+    .truck-3d .cab-box .nose-face .grill-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .truck-3d .cab-box .nose-face .headlight {
+      width: 4px; height: 4px;
+      background: #fef08a;
+      box-shadow: 0 0 8px #fef08a;
+      border-radius: 50%;
+    }
+
+    /* Headlight beams */
+    .truck-3d .light-beam {
       position: absolute;
-      left: 0;
-      top: 0;
-      width: 40px;
-      height: 24px;
+      left: 90px;
+      top: 3px;
+      width: 80px;
+      height: 18px;
+      background: linear-gradient(90deg, rgba(254, 240, 138, 0.4), transparent);
+      transform: translateZ(4px);
+      transform-style: preserve-3d;
+      pointer-events: none;
+      clip-path: polygon(0 30%, 100% 0, 100% 100%, 0 70%);
+    }
+
+    /* 3D Smart Car */
+    .car-3d {
+      position: absolute;
+      top: 204px;
+      left: -250px;
+      width: 50px;
+      height: 18px;
+      transform-style: preserve-3d;
+      animation: drive-car 8s linear infinite;
+      animation-delay: -4s;
+    }
+    @keyframes drive-car {
+      from { left: -150px; }
+      to { left: 750px; }
+    }
+
+    .car-3d .car-body {
+      position: absolute;
+      width: 46px;
+      height: 18px;
       transform-style: preserve-3d;
     }
-    
-    .truck-x .trailer.top {
-      width: 40px;
-      height: 24px;
-      transform: translateZ(24px);
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
+    .car-3d .car-body .top-face {
+      width: 46px; height: 18px;
+      transform: translateZ(8px);
+      background: #0ea5e9;
+      border: 1.5px solid #0284c7;
     }
-    
-    .truck-x .trailer.front {
-      width: 40px;
-      height: 24px;
+    .car-3d .car-body .front-face {
+      width: 46px; height: 8px;
       transform: rotateX(-90deg);
-      transform-origin: bottom;
-      bottom: 0;
+      transform-origin: top;
+      top: 18px;
+      background: #0ea5e9;
+    }
+    .car-3d .car-body .back-face {
+      width: 46px; height: 8px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 0;
+      background: #0284c7;
+    }
+    .car-3d .car-body .nose-face {
+      width: 18px; height: 8px;
+      transform: rotateY(90deg);
+      transform-origin: right;
+      right: 0;
+      background: #0369a1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2px;
+    }
+    .car-3d .car-body .nose-face .headlight {
+      width: 3px; height: 3px;
+      background: #ffffff;
+      box-shadow: 0 0 6px #ffffff;
+      border-radius: 50%;
+    }
+
+    .car-3d .car-cabin {
+      position: absolute;
+      left: 10px;
+      top: 2px;
+      width: 22px;
+      height: 14px;
+      transform-style: preserve-3d;
+    }
+    .car-3d .car-cabin .top-face {
+      width: 22px; height: 14px;
+      transform: translateZ(14px);
+      background: #1e293b;
+      border: 1px solid #334155;
+    }
+    .car-3d .car-cabin .front-face {
+      width: 22px; height: 6px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 14px;
+      background: #334155;
+    }
+    .car-3d .car-cabin .back-face {
+      width: 22px; height: 6px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 0;
+      background: #1e293b;
+    }
+
+    .car-3d .light-beam {
+      position: absolute;
+      left: 45px;
+      top: 2px;
+      width: 60px;
+      height: 14px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), transparent);
+      transform: translateZ(4px);
+      transform-style: preserve-3d;
+      pointer-events: none;
+      clip-path: polygon(0 30%, 100% 0, 100% 100%, 0 70%);
+    }
+
+    /* 3D Smart Warehouse */
+    .wh-building {
+      position: absolute;
+      left: 120px;
+      top: 40px;
+      width: 100px;
+      height: 80px;
+      transform-style: preserve-3d;
+    }
+    .wh-building .top-face {
+      width: 100px; height: 80px;
+      transform: translateZ(45px);
+      background: #34d399;
+      border: 1.5px solid #059669;
+    }
+    .wh-building .front-face {
+      width: 100px; height: 45px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 80px;
       background: #e2e8f0;
-      border: 1px solid #cbd5e1;
+      border: 1.5px solid #cbd5e1;
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      padding-bottom: 2px;
+    }
+    .wh-building .front-face .dock-door {
+      width: 32px;
+      height: 30px;
+      background: linear-gradient(#94a3b8, #475569);
+      border: 1.5px solid #64748b;
+      border-bottom: none;
+      position: relative;
+    }
+    .wh-building .front-face .dock-door::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 3px;
+      background: repeating-linear-gradient(45deg, #f59e0b 0, #f59e0b 4px, #1e293b 4px, #1e293b 8px);
     }
     
-    .truck-x .trailer.side {
-      width: 24px;
-      height: 24px;
+    .wh-building .back-face {
+      width: 100px; height: 45px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 0;
+      background: #cbd5e1;
+    }
+    .wh-building .side-face {
+      width: 80px; height: 45px;
       transform: rotateY(90deg);
       transform-origin: right;
       right: 0;
       background: #94a3b8;
-      border: 1px solid #cbd5e1;
+      border: 1.5px solid #cbd5e1;
     }
-    
-    .truck-y {
-      left: 342px;
-      top: 0;
-      width: 24px;
-      height: 60px;
-      animation: drive-y 9s linear infinite;
-    }
-    
-    @keyframes drive-y {
-      from { top: -80px; }
-      to { top: 620px; }
-    }
-    
-    .truck-y .cab {
+
+    /* Radar Dish on Warehouse Roof */
+    .wh-radar {
       position: absolute;
-      left: 2px;
-      top: 44px;
-      width: 20px;
-      height: 14px;
-      transform-style: preserve-3d;
-    }
-    
-    .truck-y .cab.top {
-      width: 20px;
-      height: 14px;
-      transform: translateZ(18px);
-      background: #3b82f6;
-    }
-    
-    .truck-y .cab.front {
-      width: 20px;
-      height: 18px;
-      transform: rotateX(-90deg);
-      transform-origin: bottom;
-      bottom: 0;
-      background: #2563eb;
-    }
-    
-    .truck-y .cab.side {
-      width: 14px;
-      height: 18px;
-      transform: rotateY(90deg);
-      transform-origin: right;
-      right: 0;
-      background: #1d4ed8;
-    }
-    
-    .truck-y .trailer {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 24px;
-      height: 40px;
-      transform-style: preserve-3d;
-    }
-    
-    .truck-y .trailer.top {
-      width: 24px;
-      height: 40px;
-      transform: translateZ(24px);
+      left: 20px;
+      top: 20px;
+      width: 12px;
+      height: 12px;
       background: #f59e0b;
-      border: 1px solid #d97706;
+      border-radius: 50%;
+      transform: translateZ(45px) rotateX(-30deg);
+      transform-style: preserve-3d;
+      animation: spin-radar 4s linear infinite;
     }
-    
-    .truck-y .trailer.front {
+    @keyframes spin-radar {
+      from { transform: translateZ(45px) rotateZ(0deg) rotateX(-30deg); }
+      to { transform: translateZ(45px) rotateZ(360deg) rotateX(-30deg); }
+    }
+
+    /* 3D Eco Wind Turbine */
+    .turbine-3d {
+      position: absolute;
+      left: 450px;
+      top: 40px;
+      width: 10px;
+      height: 10px;
+      transform-style: preserve-3d;
+    }
+    .turbine-mast {
+      position: absolute;
+      left: 3px; top: 3px;
+      width: 4px; height: 4px;
+      background: #f8fafc;
+      transform-style: preserve-3d;
+    }
+    .turbine-mast .mast-face {
+      width: 4px; height: 100px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 4px;
+      background: linear-gradient(#ffffff, #cbd5e1);
+    }
+    .turbine-rotor {
+      position: absolute;
+      left: 5px; top: 5px;
+      transform: translateZ(100px);
+      transform-style: preserve-3d;
+    }
+    .turbine-rotor .nacelle {
+      position: absolute;
+      left: -3px; top: -6px; width: 6px; height: 12px;
+      background: #e2e8f0;
+      transform-style: preserve-3d;
+    }
+    .turbine-rotor .blades-container {
+      position: absolute;
+      left: 0; top: 6px;
+      transform-style: preserve-3d;
+      animation: spin-blades 5s linear infinite;
+    }
+    @keyframes spin-blades {
+      from { transform: rotateY(90deg) rotateZ(0deg); }
+      to { transform: rotateY(90deg) rotateZ(360deg); }
+    }
+    .turbine-rotor .blade {
+      position: absolute;
+      left: -2px; top: 0;
+      width: 4px; height: 42px;
+      background: #f8fafc;
+      transform-origin: top center;
+      border-radius: 0 0 2px 2px;
+    }
+    .turbine-rotor .blade.b1 { transform: rotate(0deg); }
+    .turbine-rotor .blade.b2 { transform: rotate(120deg); }
+    .turbine-rotor .blade.b3 { transform: rotate(240deg); }
+
+    /* Hovering Patrol Drone */
+    .patrol-drone {
+      position: absolute;
+      left: 300px;
+      top: 130px;
       width: 24px;
       height: 24px;
-      transform: rotateX(-90deg);
-      transform-origin: bottom;
-      bottom: 0;
-      background: #d97706;
-      border: 1px solid #d97706;
+      transform-style: preserve-3d;
+      transform: translateZ(110px);
+      animation: drone-hover-effect 3s ease-in-out infinite alternate, drone-patrol-effect 12s linear infinite;
     }
-    
-    .truck-y .trailer.side {
-      width: 40px;
-      height: 24px;
+    @keyframes drone-hover-effect {
+      from { transform: translateZ(95px); }
+      to { transform: translateZ(115px); }
+    }
+    @keyframes drone-patrol-effect {
+      0% { left: 300px; top: 130px; }
+      33% { top: 90px; left: 360px; }
+      66% { top: 80px; left: 240px; }
+      100% { left: 300px; top: 130px; }
+    }
+
+    .patrol-drone .drone-body {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: #1e293b;
+      border-radius: 50%;
+      border: 2px solid #64748b;
+      transform-style: preserve-3d;
+    }
+    .patrol-drone .rotor {
+      position: absolute;
+      width: 10px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.8);
+      animation: spin-propeller 0.1s linear infinite;
+    }
+    @keyframes spin-propeller {
+      from { transform: rotateZ(0deg); }
+      to { transform: rotateZ(360deg); }
+    }
+    .patrol-drone .rotor.r1 { left: -4px; top: -4px; }
+    .patrol-drone .rotor.r2 { right: -4px; top: -4px; }
+    .patrol-drone .rotor.r3 { left: -4px; bottom: -4px; }
+    .patrol-drone .rotor.r4 { right: -4px; bottom: -4px; }
+
+    .patrol-drone .scanner-beam {
+      position: absolute;
+      left: 12px; top: 12px;
+      width: 60px;
+      height: 100px;
+      background: radial-gradient(ellipse at top, rgba(56, 189, 248, 0.35) 0%, transparent 70%);
+      transform: translate(-50%, 0) rotateX(90deg);
+      transform-origin: top center;
+      clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%);
+      pointer-events: none;
+      animation: beam-pulse 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes beam-pulse {
+      from { opacity: 0.6; }
+      to { opacity: 1; }
+    }
+
+    /* 3D Stacked Crates */
+    .crate-3d {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      transform-style: preserve-3d;
+    }
+    .crate-3d.c1 { left: 80px; top: 130px; }
+    .crate-3d.c2 { left: 98px; top: 132px; }
+    .crate-3d.c3 { left: 88px; top: 131px; transform: translateZ(10px); }
+
+    .crate-3d .top-face {
+      width: 16px; height: 16px;
+      transform: translateZ(10px);
+      background: #d97706;
+      border: 1px solid #b45309;
+    }
+    .crate-3d .front-face {
+      width: 16px; height: 10px;
+      transform: rotateX(-90deg);
+      transform-origin: top;
+      top: 16px;
+      background: #f59e0b;
+      border: 1px solid #b45309;
+    }
+    .crate-3d .side-face {
+      width: 16px; height: 10px;
       transform: rotateY(90deg);
       transform-origin: right;
       right: 0;
       background: #b45309;
-      border: 1px solid #d97706;
-    }
-    
-    /* Hovering Drone */
-    .iso-drone {
-      position: absolute;
-      left: 420px;
-      top: 120px;
-      width: 36px;
-      height: 36px;
-      transform-style: preserve-3d;
-      transform: translateZ(130px);
-      animation: drone-hover 4s ease-in-out infinite alternate, drone-patrol 16s linear infinite;
-    }
-    
-    @keyframes drone-hover {
-      from { transform: translateZ(130px); }
-      to { transform: translateZ(150px); }
-    }
-    
-    @keyframes drone-patrol {
-      0% { left: 420px; top: 120px; }
-      25% { left: 480px; top: 180px; }
-      50% { left: 440px; top: 260px; }
-      75% { left: 360px; top: 200px; }
-      100% { left: 420px; top: 120px; }
-    }
-    
-    .iso-drone .drone-body {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: #0f172a;
-      border-radius: 50%;
-      border: 2.5px solid #475569;
-      transform: translateZ(4px);
-    }
-    
-    .iso-drone .rotor {
-      position: absolute;
-      width: 14px;
-      height: 4px;
-      background: rgba(255,255,255,0.75);
-      animation: spin-rotor 0.08s linear infinite;
-    }
-    
-    @keyframes spin-rotor {
-      from { transform: rotateZ(0deg); }
-      to { transform: rotateZ(360deg); }
-    }
-    
-    .iso-drone .rotor.r1 { left: -6px; top: -6px; }
-    .iso-drone .rotor.r2 { right: -6px; top: -6px; }
-    .iso-drone .rotor.r3 { left: -6px; bottom: -6px; }
-    .iso-drone .rotor.r4 { right: -6px; bottom: -6px; }
-    
-    .iso-drone .drone-light {
-      position: absolute;
-      left: 15px;
-      top: 15px;
-      width: 6px;
-      height: 6px;
-      background: #06b6d4;
-      border-radius: 50%;
-      box-shadow: 0 0 10px #06b6d4;
-      animation: blink-light 0.4s ease infinite alternate;
-    }
-    
-    @keyframes blink-light {
-      from { opacity: 0.3; }
-      to { opacity: 1; }
+      border: 1px solid #92400e;
     }
 
     @keyframes fadeInFromLeft  { from{opacity:0;transform:translateX(-50px)} to{opacity:1;transform:translateX(0)} }
@@ -772,72 +752,112 @@
   <div class="split-screen">
     <div class="left-pane">
       <div class="left-content">
-        <h1>TransVortex Logistics</h1>
-        <p>Intelligent, sustainable, and connected fleet operations.</p>
+        <h1>An integrated platform</h1>
+        <p>to improve sustainability, effectiveness, and safety.</p>
       </div>
-      <div class="iso-container">
-        <div class="iso-scene">
+      <div class="road-animation-3d">
+        <div class="iso-scene-bottom">
           <!-- Floor Grid -->
-          <div class="iso-floor"></div>
+          <div class="iso-grid-floor"></div>
           
-          <!-- Water & Ship -->
-          <div class="iso-water"></div>
-          <div class="iso-ship">
-            <div class="hull top"></div>
-            <div class="hull front"></div>
-            <div class="hull side"></div>
-            <div class="cargo-container c1"></div>
-            <div class="cargo-container c2"></div>
-          </div>
-          
-          <!-- Roads -->
-          <div class="iso-road highway-x"></div>
-          <div class="iso-road highway-y"></div>
-          
-          <!-- Cargo crates -->
-          <div class="cargo-crate crate-1">
-            <div class="top"></div><div class="front"></div><div class="side"></div>
-          </div>
-          <div class="cargo-crate crate-2">
-            <div class="top"></div><div class="front"></div><div class="side"></div>
-          </div>
+          <!-- Highway -->
+          <div class="highway-3d"></div>
+          <div class="highway-curb"></div>
           
           <!-- Warehouse -->
-          <div class="iso-building warehouse">
-            <div class="top"></div>
-            <div class="front"></div>
-            <div class="side"></div>
-            <div class="radar-dish"></div>
+          <div class="wh-building">
+            <div class="top-face"></div>
+            <div class="front-face">
+              <div class="dock-door"></div>
+              <div class="dock-door"></div>
+            </div>
+            <div class="back-face"></div>
+            <div class="side-face"></div>
+            <div class="wh-radar"></div>
           </div>
           
-          <!-- Office Building -->
-          <div class="iso-building office">
-            <div class="top"></div>
-            <div class="front"></div>
-            <div class="side"></div>
+          <!-- Wind Turbine -->
+          <div class="turbine-3d">
+            <div class="turbine-mast">
+              <div class="mast-face"></div>
+            </div>
+            <div class="turbine-rotor">
+              <div class="nacelle"></div>
+              <div class="blades-container">
+                <div class="blade b1"></div>
+                <div class="blade b2"></div>
+                <div class="blade b3"></div>
+              </div>
+            </div>
           </div>
           
-          <!-- Truck X -->
-          <div class="iso-vehicle truck-x">
-            <div class="cab top"></div><div class="cab front"></div><div class="cab side"></div>
-            <div class="trailer top"></div><div class="trailer front"></div><div class="trailer side"></div>
+          <!-- Crates Stack -->
+          <div class="crate-3d c1">
+            <div class="top-face"></div><div class="front-face"></div><div class="side-face"></div>
+          </div>
+          <div class="crate-3d c2">
+            <div class="top-face"></div><div class="front-face"></div><div class="side-face"></div>
+          </div>
+          <div class="crate-3d c3">
+            <div class="top-face"></div><div class="front-face"></div><div class="side-face"></div>
           </div>
           
-          <!-- Truck Y -->
-          <div class="iso-vehicle truck-y">
-            <div class="cab top"></div><div class="cab front"></div><div class="cab side"></div>
-            <div class="trailer top"></div><div class="trailer front"></div><div class="trailer side"></div>
+          <!-- Semi-Truck -->
+          <div class="truck-3d">
+            <div class="trailer-box">
+              <div class="top-face"></div>
+              <div class="front-face">
+                <span style="font-family:'Segoe UI', sans-serif; font-size: 8px; font-weight: 700; color: #2E8B57; display: flex; align-items: center; justify-content: center; height: 100%; letter-spacing: 0.5px; transform: scaleY(0.75);">
+                  <i class="fas fa-bolt" style="margin-right: 2px;"></i> TRANSVORTEX
+                </span>
+              </div>
+              <div class="back-face"></div>
+              <div class="rear-face"></div>
+            </div>
+            <div class="cab-box">
+              <div class="top-face"></div>
+              <div class="front-face"></div>
+              <div class="back-face"></div>
+              <div class="nose-face">
+                <div class="windshield"></div>
+                <div class="grill-row">
+                  <div class="headlight"></div>
+                  <div class="headlight"></div>
+                </div>
+              </div>
+            </div>
+            <div class="light-beam"></div>
           </div>
           
-          <!-- Drone -->
-          <div class="iso-drone">
+          <!-- Smart Car -->
+          <div class="car-3d">
+            <div class="car-body">
+              <div class="top-face"></div>
+              <div class="front-face"></div>
+              <div class="back-face"></div>
+              <div class="nose-face">
+                <div class="headlight"></div>
+                <div class="headlight"></div>
+              </div>
+            </div>
+            <div class="car-cabin">
+              <div class="top-face"></div>
+              <div class="front-face"></div>
+              <div class="back-face"></div>
+            </div>
+            <div class="light-beam"></div>
+          </div>
+          
+          <!-- Patrol Drone -->
+          <div class="patrol-drone">
             <div class="drone-body"></div>
             <div class="rotor r1"></div>
             <div class="rotor r2"></div>
             <div class="rotor r3"></div>
             <div class="rotor r4"></div>
-            <div class="drone-light"></div>
+            <div class="scanner-beam"></div>
           </div>
+          
         </div>
       </div>
     </div>
