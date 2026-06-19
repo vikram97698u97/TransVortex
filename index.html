@@ -1179,12 +1179,20 @@
                 const db = firebase.database();
                 const demoRef = db.ref('demoRequests');
                 const newRequestRef = demoRef.push();
+                // Map fleet size string to vehicleCount integer approximation for validation rules
+                let vehicleCount = 5;
+                if (fleet === '11-50') vehicleCount = 30;
+                else if (fleet === '51-100') vehicleCount = 75;
+                else if (fleet === '100+') vehicleCount = 150;
+
                 await newRequestRef.set({
                   name: name,
                   email: email,
                   phone: phone,
                   company: company,
                   fleet: fleet,
+                  vehicleCount: vehicleCount,
+                  status: 'pending',
                   timestamp: new Date().toISOString()
                 });
 
