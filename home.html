@@ -855,104 +855,96 @@
           <tbody id="paymentsTableBody">
           </tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- Tools Grid: Side-by-side Business Card & Reminders -->
-    <div class="tools-grid mt-4">
-      <!-- 1. Business Card Generator -->
-      <div class="dashboard-panel">
-        <h3 class="outfit-font mb-3"><i class="fas fa-id-card me-2 text-success"></i>Business Card Builder</h3>
-        
-        <div class="row g-3">
-          <div class="col-12">
-            <h5 class="form-label">1. Select a Template</h5>
-            <div class="rolling-gallery-container">
-              <div id="rollingGalleryTrack" class="rolling-gallery-track">
-              </div>
-              <button type="button" id="galleryPrev" aria-label="Previous" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">‹</button>
-              <button type="button" id="galleryNext" aria-label="Next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">›</button>
+          <!-- 1. Business Card Generator Panel -->
+    <div class="dashboard-panel">
+      <h3 class="outfit-font mb-4"><i class="fas fa-id-card me-2 text-success"></i>Business Card Builder</h3>
+      
+      <div class="row g-4">
+        <div class="col-lg-5 col-md-6">
+          <h5 class="form-label mb-3">1. Select a Template</h5>
+          <div class="rolling-gallery-container">
+            <div id="rollingGalleryTrack" class="rolling-gallery-track">
             </div>
+            <button type="button" id="galleryPrev" aria-label="Previous" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">‹</button>
+            <button type="button" id="galleryNext" aria-label="Next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:11;border:none;background:rgba(0,0,0,.05);color:var(--text);width:36px;height:36px;border-radius:999px;cursor:pointer">›</button>
           </div>
           
-          <div class="col-12">
-            <h5 class="form-label mt-2">Live Preview</h5>
-            <div id="cardPreview" class="business-card-preview">
-              <div id="businessCard" class="business-card green-modern">
-                <div class="card-content">
-                  <div class="logo-section" id="logoClickArea">
-                    <div id="logoPlaceholder" class="logo-placeholder">
-                      <i class="fas fa-camera"></i>
-                      <span>Add logo</span>
-                    </div>
-                    <img id="previewLogo" src="" alt="Company Logo" class="logo-img" style="display: none;">
-                  </div>
-                  <div class="details-section">
-                    <h3 id="previewCompanyName" class="company-name">Your Company Name</h3>
-                    <div class="contact-info">
-                      <p id="previewPhone" class="contact-item"><i class="fas fa-phone"></i> Phone: +1234567890</p>
-                      <p id="previewEmail" class="contact-item"><i class="fas fa-envelope"></i> Email: info@example.com</p>
-                      <p id="previewAddress" class="contact-item"><i class="fas fa-map-marker-alt"></i> Address: Your Address</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <button id="downloadCardBtn" class="btn btn-primary w-100 mt-3">
-              <i class="fas fa-download me-2"></i>Download Business Card (PNG)
-            </button>
-          </div>
+          <button id="downloadCardBtn" class="btn btn-primary w-100 mt-4">
+            <i class="fas fa-download me-2"></i>Download Business Card (PNG)
+          </button>
         </div>
-        <input type="file" id="logoUploadInput" accept="image/*" style="display: none;">
-      </div>
-
-      <!-- 2. Reminders & Alerts -->
-      <div class="dashboard-panel">
-        <h3 class="outfit-font mb-3"><i class="fas fa-bell me-2 text-warning"></i>Reminders & Alerts</h3>
         
-        <div class="row g-3">
-          <div class="col-12">
-            <h5 class="form-label">Set New Reminder</h5>
-            <form id="reminderForm">
-              <div class="row g-2">
-                <div class="col-sm-6">
-                  <label for="reminderType" class="form-label">Type</label>
-                  <select id="reminderType" class="form-select" required>
-                    <option value="">Select type...</option>
-                    <option value="service">Vehicle Service</option>
-                    <option value="payment">Payment Due</option>
-                    <option value="permit">Permit Expiry</option>
-                    <option value="insurance">Insurance Expiry</option>
-                    <option value="puc">PUC Expiry</option>
-                  </select>
+        <div class="col-lg-7 col-md-6">
+          <h5 class="form-label mb-3">Live Preview (Click logo to upload custom image)</h5>
+          <div id="cardPreview" class="business-card-preview">
+            <div id="businessCard" class="business-card green-modern">
+              <div class="card-content">
+                <div class="logo-section" id="logoClickArea">
+                  <div id="logoPlaceholder" class="logo-placeholder">
+                    <i class="fas fa-camera"></i>
+                    <span>Add logo</span>
+                  </div>
+                  <img id="previewLogo" src="" alt="Company Logo" class="logo-img" style="display: none;">
                 </div>
-                <div class="col-sm-6">
-                  <label for="vehicleNumber" class="form-label">Vehicle</label>
-                  <input type="text" id="vehicleNumber" class="form-control" placeholder="MH12AB1234" required>
-                </div>
-                <div class="col-12">
-                  <label for="dueDate" class="form-label">Due Date</label>
-                  <input type="date" id="dueDate" class="form-control" required>
-                </div>
-                <div class="col-12">
-                  <label for="notes" class="form-label">Notes</label>
-                  <textarea id="notes" class="form-control" rows="2" placeholder="Optional details..."></textarea>
-                </div>
-                <div class="col-12">
-                  <button type="submit" class="btn btn-primary w-100">Set Reminder</button>
+                <div class="details-section">
+                  <h3 id="previewCompanyName" class="company-name">Your Company Name</h3>
+                  <div class="contact-info">
+                    <p id="previewPhone" class="contact-item"><i class="fas fa-phone"></i> Phone: +1234567890</p>
+                    <p id="previewEmail" class="contact-item"><i class="fas fa-envelope"></i> Email: info@example.com</p>
+                    <p id="previewAddress" class="contact-item"><i class="fas fa-map-marker-alt"></i> Address: Your Address</p>
+                  </div>
                 </div>
               </div>
-            </form>
-          </div>
-
-          <div class="col-12 mt-3">
-            <h5 class="form-label">Upcoming Alerts</h5>
-            <div id="upcomingReminders" style="max-height: 250px; overflow-y: auto; padding-right: 5px;">
-              <div class="no-reminders">No upcoming reminders</div>
             </div>
           </div>
         </div>
+      </div>
+      <input type="file" id="logoUploadInput" accept="image/*" style="display: none;">
+    </div>
+
+    <!-- 2. Reminders & Alerts Panel -->
+    <div class="dashboard-panel">
+      <h3 class="outfit-font mb-4"><i class="fas fa-bell me-2 text-warning"></i>Reminders & Alerts</h3>
+      
+      <div class="row g-4">
+        <div class="col-lg-4 col-md-5">
+          <h5 class="form-label mb-3">Set New Reminder</h5>
+          <form id="reminderForm">
+            <div class="form-group mb-3">
+              <label for="reminderType" class="form-label">Reminder Type</label>
+              <select id="reminderType" class="form-select" required>
+                <option value="">Select type...</option>
+                <option value="service">Vehicle Service</option>
+                <option value="payment">Payment Due</option>
+                <option value="permit">Permit Expiry</option>
+                <option value="insurance">Insurance Expiry</option>
+                <option value="puc">PUC Expiry</option>
+              </select>
+            </div>
+            <div class="form-group mb-3">
+              <label for="vehicleNumber" class="form-label">Vehicle Number</label>
+              <input type="text" id="vehicleNumber" class="form-control" placeholder="MH12AB1234" required>
+            </div>
+            <div class="form-group mb-3">
+              <label for="dueDate" class="form-label">Due Date</label>
+              <input type="date" id="dueDate" class="form-control" required>
+            </div>
+            <div class="form-group mb-3">
+              <label for="notes" class="form-label">Notes</label>
+              <textarea id="notes" class="form-control" rows="2" placeholder="Optional details..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Set Reminder</button>
+          </form>
+        </div>
+        
+        <div class="col-lg-8 col-md-7">
+          <h5 class="form-label mb-3">Upcoming Active Alerts</h5>
+          <div id="upcomingReminders" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
+            <div class="no-reminders">No upcoming reminders</div>
+          </div>
+        </div>
+      </div>
+    </div>
       </div>
     </div>
 
