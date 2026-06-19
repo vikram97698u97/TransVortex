@@ -579,7 +579,7 @@ window.loadAllDrivers = async function (uid) {
         const snap = await window.db.ref(`users/${uid}/drivers`).once('value');
         window.allDrivers = [];
         const driverSelect = document.getElementById('driverSelect');
-        const editDriverSelect = document.getElementById('editDriverName');
+        const editDriverSelect = document.getElementById('editDriverSelect');
 
         if (driverSelect) driverSelect.innerHTML = '<option value="">Select Driver</option>';
         if (editDriverSelect) editDriverSelect.innerHTML = '<option value="">Select Driver</option>';
