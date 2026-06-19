@@ -228,6 +228,7 @@
   function hasPermission(action) {
     const ctx = getCachedUserContext();
     if (!ctx) return false;
+    if (ctx.role === 'owner') return true; // Owner role bypasses all permission gates
     return ctx.permissions.includes(action);
   }
 
