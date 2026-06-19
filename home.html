@@ -1542,10 +1542,10 @@
       const [lrReportsSnap, fuelPaymentsSnap, driverPaymentsSnap, expensesSnap, workPaymentsSnap, pumpPaymentsSnap] = await Promise.all([
         lrReportsRef.once('value'),
         fuelPaymentsRef.once('value'),
-        driverPaymentsSnap.once('value'),
+        driverPaymentsRef.once('value'),
         expensesRef.once('value'),
         workPaymentsRef.once('value'),
-        pumpPaymentsSnap.once('value')
+        pumpPaymentsRef.once('value')
       ]);
 
       const monthlyData = {};
