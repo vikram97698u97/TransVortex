@@ -11,17 +11,23 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary-color: #2E8B57; /* Sea Green */
       --secondary-color: #43B97F; /* Mint Green */
       --accent-color: #3CB371; /* Lighter Green */
-      --text-color: #1F1F1F; /* Charcoal */
-      --light-bg: #F4FFF8; /* Very light green-white */
+      --primary-dark: #1e5c38;
+      --text-color: #0f172a; /* Slate 900 */
+      --text-muted: #475569; /* Slate 600 */
+      --light-bg: #f8fafc; /* Slate 50 */
+      --light-green-bg: #f0fdf4; /* Emerald 50 */
       --white: #FFFFFF;
-      --shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.12);
       --radius: 16px;
+      --border-color: #e2e8f0;
     }
 
     * {
@@ -45,24 +51,24 @@
       padding: 0 24px;
     }
 
-    /* Header */
+    /* Header styling */
     header {
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
       position: fixed;
       width: 100%;
       top: 0;
       z-index: 1000;
-      transition: background 0.3s ease;
+      transition: all 0.3s ease;
     }
 
     nav {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem 0;
+      padding: 0.75rem 0;
     }
 
     .logo-container {
@@ -71,26 +77,26 @@
     }
 
     .logo {
-      height: 45px;
+      height: 48px;
       width: auto;
       transition: transform 0.3s ease;
     }
 
     .logo:hover {
-      transform: scale(1.03);
+      transform: scale(1.02);
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 2rem;
+      gap: 1.75rem;
     }
 
     .nav-links a {
-      color: var(--text-color);
+      color: var(--text-muted);
       text-decoration: none;
-      font-weight: 600;
-      transition: color 0.3s ease;
+      font-weight: 500;
+      transition: all 0.2s ease;
       font-size: 0.95rem;
     }
 
@@ -98,85 +104,189 @@
       color: var(--primary-color);
     }
 
+    .login-link {
+      margin-right: 0.5rem;
+    }
+
     .cta-button {
-      display: inline-block;
-      padding: 12px 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 26px;
       background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
       color: white;
-      border-radius: 50px;
+      border-radius: 30px;
       text-decoration: none;
       font-weight: 600;
       transition: all 0.3s ease;
       border: none;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(46, 139, 87, 0.2);
+      box-shadow: 0 4px 15px rgba(46, 139, 87, 0.25);
+      font-size: 0.95rem;
     }
 
     .cta-button:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(46, 139, 87, 0.25);
-      background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(46, 139, 87, 0.35);
+      background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-dark) 100%);
+    }
+
+    .nav-cta {
+      padding: 10px 20px;
+      font-size: 0.9rem;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 26px;
+      background: white;
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+
+    .btn-secondary:hover {
+      background: var(--light-bg);
+      border-color: #cbd5e1;
+      transform: translateY(-2px);
     }
 
     /* Hero Section */
     .hero {
-      padding: 10rem 0 8rem;
+      padding: 9rem 0 6rem;
       position: relative;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      min-height: 90vh;
     }
 
     .hero .container {
       position: relative;
-      text-align: center;
       z-index: 2;
     }
 
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      text-align: left;
+    }
+
     .hero h1 {
-      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2.5rem, 4.5vw, 3.75rem);
       font-weight: 800;
-      margin-bottom: 1.5rem;
       color: var(--text-color);
-      letter-spacing: -1.5px;
-      line-height: 1.1;
+      letter-spacing: -1px;
+      line-height: 1.15;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .hero p {
-      font-size: clamp(1.1rem, 2vw, 1.25rem);
-      max-width: 700px;
-      margin: 0 auto 2.5rem;
-      color: #4a5568;
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      line-height: 1.6;
     }
 
-    /* Modern Hero Heading Hover Effect */
-    .hero h1, .section-title {
-      cursor: pointer;
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-top: 0.5rem;
     }
 
-    .hero h1 span, .section-title span {
+    .hero-trust {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 1.25rem;
+    }
+
+    .hero-trust i {
+      color: var(--primary-color);
+    }
+
+    /* Browser Frame Mockup */
+    .browser-frame {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+
+    .browser-header {
+      background: #f1f5f9;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
       position: relative;
+    }
+
+    .browser-header .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
       display: inline-block;
-      transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
-    .hero h1 span::after {
-      content: '';
-      position: absolute;
-      bottom: -5px;
-      left: 5%;
+    .browser-header .dot.red { background-color: #ef4444; }
+    .browser-header .dot.yellow { background-color: #f59e0b; }
+    .browser-header .dot.green { background-color: #10b981; }
+
+    .browser-address {
+      background: white;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 4px 16px;
+      width: 60%;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .browser-content {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mockup-img {
       width: 100%;
-      height: 3px;
-      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      height: auto;
+      display: block;
+      transition: transform 0.5s ease;
     }
 
-    .hero h1:hover span {
-      transform: translateY(-2px);
-    }
-
-    .hero h1:hover span::after {
-      transform: scaleX(0.9);
+    .browser-frame:hover {
+      transform: translateY(-5px);
     }
 
     /* 3D Animation Background */
@@ -189,93 +299,273 @@
       z-index: 1;
     }
 
-    /* Features Section */
+    /* Why Choose Us Section */
     .features {
       padding: 6rem 0;
       background-color: var(--white);
       position: relative;
       z-index: 2;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
     }
 
     .section-title {
+      font-family: 'Outfit', sans-serif;
       text-align: center;
-      margin-bottom: 4rem;
+      margin-bottom: 1rem;
       font-size: 2.5rem;
       font-weight: 700;
       color: var(--text-color);
     }
 
+    .section-title span {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .section-subtitle {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 4rem;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2.5rem;
     }
 
     .feature-card {
       background: var(--white);
-      padding: 2rem;
+      padding: 2.5rem;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      border: 1px solid #e2e8f0;
-      transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.5s ease-out, box-shadow 0.3s ease;
-      opacity: 0;
-      transform: translateY(40px);
+      border: 1px solid var(--border-color);
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
     .feature-card:hover {
       transform: translateY(-8px);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
-    }
-
-    .feature-card.is-visible {
-      opacity: 1;
-      transform: translateY(0);
+      box-shadow: var(--shadow-lg);
+      border-color: rgba(46, 139, 87, 0.3);
     }
 
     .feature-icon {
-      font-size: 2rem;
-      width: 60px;
-      height: 60px;
+      font-size: 1.75rem;
+      width: 54px;
+      height: 54px;
       display: grid;
       place-items: center;
-      border-radius: 50%;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(46, 139, 87, 0.1), rgba(67, 185, 127, 0.15));
+      color: var(--primary-color);
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover .feature-icon {
       background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
       color: white;
-      margin-bottom: 1.5rem;
     }
 
     .feature-card h3 {
-      font-size: 1.25rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.3rem;
       font-weight: 600;
       margin-bottom: 1rem;
       color: var(--text-color);
     }
 
     .feature-card p {
-      color: #4a5568;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Product Showcase Section */
+    .showcase-section {
+      padding: 6rem 0;
+      background-color: var(--light-bg);
+      position: relative;
+      z-index: 2;
+    }
+
+    .showcase-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 3.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 30px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-btn i {
+      font-size: 1.1rem;
+    }
+
+    .tab-btn.active {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+      box-shadow: 0 4px 15px rgba(46, 139, 87, 0.25);
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: var(--light-green-bg);
+      border-color: rgba(46, 139, 87, 0.4);
+      color: var(--primary-color);
+    }
+
+    .showcase-content {
+      position: relative;
+    }
+
+    .tab-pane {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .tab-pane.active {
+      display: block;
+      opacity: 1;
+    }
+
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .showcase-image {
+      position: relative;
+    }
+
+    .showcase-image .browser-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .showcase-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      text-align: left;
+    }
+
+    .showcase-text h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: var(--text-color);
+    }
+
+    .showcase-text p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .features-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .features-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+      color: var(--text-color);
+      font-size: 0.95rem;
+    }
+
+    .features-list li i {
+      color: var(--primary-color);
+      font-size: 1.1rem;
+    }
+
+    /* Stats Section */
+    .stats-section {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: white;
+      padding: 4.5rem 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 3rem;
+      text-align: center;
+    }
+
+    .stat-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .stat-card h4 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--secondary-color);
+    }
+
+    .stat-card p {
+      color: #94a3b8;
+      font-size: 1.05rem;
+      font-weight: 500;
     }
 
     /* CTA Section */
     .cta-section {
-      padding: 6rem 0;
+      padding: 6.5rem 0;
       text-align: center;
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      background: linear-gradient(135deg, var(--primary-color) 0%, #1b5233 100%);
       color: white;
       position: relative;
       z-index: 2;
     }
 
     .cta-section h2 {
-      margin-bottom: 1.5rem;
-      font-size: 2.5rem;
+      font-family: 'Outfit', sans-serif;
+      margin-bottom: 1rem;
+      font-size: 2.75rem;
       font-weight: 700;
+      letter-spacing: -0.5px;
     }
 
     .cta-section p {
-      max-width: 700px;
-      margin: 0 auto 2rem;
-      font-size: 1.1rem;
-      opacity: 0.95;
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+      font-size: 1.15rem;
+      opacity: 0.9;
+      line-height: 1.6;
     }
 
     /* Modal Styles */
@@ -286,10 +576,10 @@
       top: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(10, 25, 40, 0.5);
+      background-color: rgba(15, 23, 42, 0.6);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      transition: opacity 0.3s ease;
+      transition: all 0.3s ease;
       justify-content: center;
       align-items: center;
       display: none;
@@ -303,15 +593,16 @@
 
     .modal-content {
       background: var(--white);
-      padding: 2.5rem;
+      padding: 2.75rem;
       border-radius: var(--radius);
-      max-width: 480px;
+      max-width: 500px;
       width: 90%;
       position: relative;
-      transform: translateY(-50px) scale(0.95);
+      transform: translateY(-30px) scale(0.96);
       opacity: 0;
-      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
     }
 
     .modal.show .modal-content {
@@ -321,144 +612,167 @@
 
     .modal-header {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
     }
 
     .modal-header h2 {
+      font-family: 'Outfit', sans-serif;
       color: var(--primary-color);
-      margin-bottom: 0.25rem;
-      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      font-size: 1.85rem;
+      font-weight: 700;
     }
 
     .modal-header p {
-      color: #555;
-      font-size: 1rem;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
 
-    .trial-features {
-      margin: 2rem 0;
+    .form-group {
+      margin-bottom: 1.25rem;
     }
 
-    .feature {
-      display: flex;
-      align-items: center;
-      margin-bottom: 1rem;
-      color: #333;
-      font-weight: 500;
-    }
-
-    .feature i {
-      color: var(--primary-color);
-      margin-right: 1rem;
-      font-size: 1.1rem;
-      background: rgba(46, 139, 87, 0.1);
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .create-dashboard {
-      display: block;
+    .form-control {
       width: 100%;
-      text-align: center;
-      padding: 1rem;
-      font-size: 1.1rem;
-      margin: 2rem 0 1rem;
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-      color: white;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      box-shadow: 0 4px 15px rgba(46, 139, 87, 0.2);
+      padding: 0.85rem 1.1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      color: var(--text-color);
     }
 
-    .create-dashboard:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(46, 139, 87, 0.25);
-      background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
-    }
-
-    .trial-note {
-      font-size: 0.8rem;
-      color: #888;
-      text-align: center;
-      margin-top: 1rem;
-      line-height: 1.4;
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.15);
     }
 
     .close {
-      color: #aaa;
+      color: #94a3b8;
       position: absolute;
       top: 15px;
       right: 20px;
-      font-size: 28px;
+      font-size: 24px;
       font-weight: bold;
       cursor: pointer;
       line-height: 1;
-      transition: color 0.2s, transform 0.2s;
+      transition: all 0.2s;
     }
 
     .close:hover {
-      color: #333;
+      color: var(--text-color);
       transform: rotate(90deg);
     }
 
     /* Footer */
     footer {
-      background-color: var(--text-color);
-      color: #aaa;
-      padding: 3rem 0;
+      background-color: #0f172a;
+      color: #94a3b8;
+      padding: 4rem 0 3rem;
       text-align: center;
       position: relative;
       z-index: 2;
+      border-top: 1px solid #1e293b;
     }
 
     .footer-content {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 0 1rem;
     }
 
-    .footer-links { display: flex; justify-content: center; gap: 1.5rem; margin: 1.5rem 0; flex-wrap: wrap; }
-    .footer-links a { color: #aaa; text-decoration: none; transition: color 0.3s ease; font-size: 0.9rem; }
-    .footer-links a:hover { color: var(--secondary-color); }
+    footer h3 {
+      font-family: 'Outfit', sans-serif;
+      color: white;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-links { 
+      display: flex; 
+      justify-content: center; 
+      gap: 2rem; 
+      margin: 2rem 0; 
+      flex-wrap: wrap; 
+    }
+    
+    .footer-links a { 
+      color: #94a3b8; 
+      text-decoration: none; 
+      transition: color 0.3s ease; 
+      font-size: 0.95rem; 
+      font-weight: 500;
+    }
+    
+    .footer-links a:hover { 
+      color: var(--secondary-color); 
+    }
 
     .social-links {
       margin: 2rem 0;
     }
 
     .social-links a {
-      color: #bbb;
-      font-size: 1.5rem;
-      margin: 0 12px;
-      transition: color 0.3s ease;
+      color: #475569;
+      font-size: 1.35rem;
+      margin: 0 14px;
+      transition: all 0.3s ease;
+      display: inline-block;
     }
 
     .social-links a:hover {
       color: var(--secondary-color);
+      transform: translateY(-3px);
     }
 
     /* Responsive Design */
+    @media (max-width: 992px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 3.5rem;
+        text-align: center;
+      }
+      .hero-text {
+        text-align: center;
+        align-items: center;
+      }
+      .hero-actions {
+        justify-content: center;
+      }
+      .hero-trust {
+        justify-content: center;
+      }
+      .showcase-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+      }
+      .showcase-text {
+        text-align: center;
+        align-items: center;
+      }
+      .features-list {
+        align-items: flex-start;
+      }
+    }
+
     @media (max-width: 768px) {
       .nav-links {
         display: none;
       }
-      
+      .hero {
+        padding: 7rem 0 4rem;
+      }
       .hero h1 {
-        font-size: 2.5rem;
+        font-size: 2.35rem;
       }
-      
-      .hero p {
-        padding: 0 1rem;
+      .section-title {
+        font-size: 2rem;
       }
-      
-      .features-grid {
-        padding: 0 1.5rem;
+      .cta-section h2 {
+        font-size: 2.1rem;
       }
     }
   </style>
@@ -489,7 +803,8 @@
           <a href="about.html">About</a>
           <a href="services.html">Services</a>
           <a href="contact.html">Contact</a>
-          <a href="login.html" class="cta-button">Login</a>
+          <a href="login.html" class="login-link">Login</a>
+          <a href="#" class="cta-button nav-cta" id="navDemoBtn">Book Demo</a>
         </div>
       </nav>
     </div>
@@ -498,38 +813,204 @@
   <!-- Hero Section -->
   <section class="hero">
     <div class="container">
-      <h1><span>Streamline</span> <span>Your</span> <span>Business</span> <span>Operations</span></h1>
-      <p>Efficient, reliable, and secure solutions to manage your business processes with ease. Focus on what matters most while we handle the rest.</p>
-      <button id="heroGetStartedBtn" class="cta-button">Start Free Trial</button>
-      <p style="margin-top: 15px;">Already have an account? <a href="login.html" style="color: var(--accent-color); text-decoration: none; font-weight: 600;">Log in</a></p>
+      <div class="hero-grid">
+        <div class="hero-text">
+          <h1>Simplify Fleet Operations & <span>Preserve Tyre Life</span></h1>
+          <p>An all-in-one logistics suite built for modern transporters. Seamlessly enter serialized tyre stock, track active logs, automate dispatching, and audit trip billing in one unified screen.</p>
+          <div class="hero-actions">
+            <button id="heroGetStartedBtn" class="cta-button">Book a Demo</button>
+            <a href="login.html" class="btn-secondary">Portal Sign In <i class="fas fa-arrow-right"></i></a>
+          </div>
+          <div class="hero-trust">
+            <p><i class="fas fa-shield-alt"></i> Secure MFA Verification &nbsp;|&nbsp; <i class="fas fa-bolt"></i> Real-time Fleet Analytics</p>
+          </div>
+        </div>
+        <div class="hero-mockup">
+          <div class="browser-frame">
+            <div class="browser-header">
+              <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+              <div class="browser-address">dashboard.transvortex.online</div>
+            </div>
+            <div class="browser-content">
+              <img src="tyre_management.png" alt="TransVortex Dashboard Preview" class="mockup-img">
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- Features Section -->
+  <!-- Why Choose Us Section -->
   <section id="features" class="features">
     <div class="container">
-      <h2 class="section-title"><span>Why</span> <span>Choose</span> <span>Us?</span></h2>
+      <h2 class="section-title">Why Logistics Leaders Choose <span>TransVortex</span></h2>
+      <p class="section-subtitle">A rugged fleet ecosystem that removes leakages, optimizes resource runtimes, and maximizes bottom-line revenue.</p>
       <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-bolt"></i>
-          </div>
-          <h3>Lightning Fast</h3>
-          <p>Experience blazing fast performance with our optimized platform that handles all your business needs without any lag.</p>
-        </div>
         <div class="feature-card">
           <div class="feature-icon">
             <i class="fas fa-shield-alt"></i>
           </div>
-          <h3>Secure & Reliable</h3>
-          <p>Your data's security is our top priority. We use industry-standard encryption to keep your information safe.</p>
+          <h3>Trusted Device MFA</h3>
+          <p>Secure administrative and dispatch portals with two-step OTP checks. Saves your trusted browsers case-insensitively for 30 days.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">
-            <i class="fas fa-headset"></i>
+            <i class="fas fa-bolt"></i>
           </div>
-          <h3>24/7 Support</h3>
-          <p>Our dedicated support team is available round the clock to assist you with any queries or issues.</p>
+          <h3>Real-time Tyre Logistics</h3>
+          <p>Log tyres straight into warehouse stock, mount them onto custom vehicles, record axle coordinates, and sort running logs dynamically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-file-invoice-dollar"></i>
+          </div>
+          <h3>Consolidated Billing</h3>
+          <p>Log per-trip driver advances, fuel receipts, balance structures, and generate print-ready lorry receipts and tax invoices instantly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Showcase Section -->
+  <section id="showcase" class="showcase-section">
+    <div class="container">
+      <h2 class="section-title">Explore the <span>Interactive Showcase</span></h2>
+      <p class="section-subtitle">Click below to see live previews of the dashboard screens used by operations managers daily.</p>
+      
+      <div class="showcase-tabs">
+        <button class="tab-btn active" data-target="tab-tyres">
+          <i class="fas fa-truck-monster"></i> Tyre Stock & Logs
+        </button>
+        <button class="tab-btn" data-target="tab-bookings">
+          <i class="fas fa-calendar-check"></i> Booking Manager
+        </button>
+        <button class="tab-btn" data-target="tab-billing">
+          <i class="fas fa-file-invoice-dollar"></i> Billing & Payments
+        </button>
+        <button class="tab-btn" data-target="tab-trips">
+          <i class="fas fa-route"></i> Trip Expenses
+        </button>
+      </div>
+
+      <div class="showcase-content">
+        <div class="tab-pane active" id="tab-tyres">
+          <div class="showcase-grid">
+            <div class="showcase-image">
+              <div class="browser-frame">
+                <div class="browser-header">
+                  <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                  <div class="browser-address">dashboard.transvortex.online/tyres</div>
+                </div>
+                <img src="tyre_management.png" alt="Tyre Stock Dashboard">
+              </div>
+            </div>
+            <div class="showcase-text">
+              <h3>Direct Warehouse Stocks & Active Logs</h3>
+              <p>Skip vehicle attachment rules when adding new inventory. Add tyres directly to warehouse stocks, mount them on demand, and analyze serial-specific history records with filterable logs.</p>
+              <ul class="features-list">
+                <li><i class="fas fa-check-circle"></i> Direct stock entries with vendor dropdowns</li>
+                <li><i class="fas fa-check-circle"></i> Double-entry prevention & exist checks</li>
+                <li><i class="fas fa-check-circle"></i> Advanced serial sorting in active logs</li>
+              </ul>
+              <button class="cta-button demo-trigger-btn">Book Demo to See Live Logs</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane" id="tab-bookings">
+          <div class="showcase-grid">
+            <div class="showcase-image">
+              <div class="browser-frame">
+                <div class="browser-header">
+                  <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                  <div class="browser-address">dashboard.transvortex.online/bookings</div>
+                </div>
+                <img src="booking_management.png" alt="Booking Dashboard">
+              </div>
+            </div>
+            <div class="showcase-text">
+              <h3>Consignment Bookings & Fleet Allocations</h3>
+              <p>Streamline logistics scheduling. Manage booking routes, attach drivers, track trip start/end states, and capture digital signatures during client load delivery verification.</p>
+              <ul class="features-list">
+                <li><i class="fas fa-check-circle"></i> Automated Lorry Receipt (LR) reports</li>
+                <li><i class="fas fa-check-circle"></i> Live vehicle allocation updates</li>
+                <li><i class="fas fa-check-circle"></i> Location and dispatcher tracking</li>
+              </ul>
+              <button class="cta-button demo-trigger-btn">Book Booking Module Demo</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane" id="tab-billing">
+          <div class="showcase-grid">
+            <div class="showcase-image">
+              <div class="browser-frame">
+                <div class="browser-header">
+                  <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                  <div class="browser-address">dashboard.transvortex.online/billing</div>
+                </div>
+                <img src="payment_management.png" alt="Payment & Billing Dashboard">
+              </div>
+            </div>
+            <div class="showcase-text">
+              <h3>Billing Ledgers & Auto-Invoicing</h3>
+              <p>Reconcile booking balances, log down payments, issue tax invoices, and track outstanding vendor bills. Maintain a pristine cash ledger without switching back to spreadsheets.</p>
+              <ul class="features-list">
+                <li><i class="fas fa-check-circle"></i> Dynamic calculation of outstanding balances</li>
+                <li><i class="fas fa-check-circle"></i> Print-optimized HTML tax receipts</li>
+                <li><i class="fas fa-check-circle"></i> Custom transaction logging</li>
+              </ul>
+              <button class="cta-button demo-trigger-btn">Book Billing Demo</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane" id="tab-trips">
+          <div class="showcase-grid">
+            <div class="showcase-image">
+              <div class="browser-frame">
+                <div class="browser-header">
+                  <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                  <div class="browser-address">dashboard.transvortex.online/expenses</div>
+                </div>
+                <img src="per_trip_management.png" alt="Trip Expenses Dashboard">
+              </div>
+            </div>
+            <div class="showcase-text">
+              <h3>Fuel slips, Driver Advances & Tolls</h3>
+              <p>Audit per-trip expenditures. Account for driver allowances, cash advances, fuel purchases, repair bills, and instantly output profit/loss details for every completed transit.</p>
+              <ul class="features-list">
+                <li><i class="fas fa-check-circle"></i> Fuel receipt tracking & audits</li>
+                <li><i class="fas fa-check-circle"></i> Driver cash advance logging</li>
+                <li><i class="fas fa-check-circle"></i> Dynamic profit metrics per vehicle</li>
+              </ul>
+              <button class="cta-button demo-trigger-btn">Book Expense Module Demo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h4>5,000+</h4>
+          <p>Active Vehicles Tracked</p>
+        </div>
+        <div class="stat-card">
+          <h4>₹15Cr+</h4>
+          <p>Payments Reconciled</p>
+        </div>
+        <div class="stat-card">
+          <h4>25%</h4>
+          <p>Tyre Lifespan Preserved</p>
+        </div>
+        <div class="stat-card">
+          <h4>99.9%</h4>
+          <p>Uptime SLA Guarantee</p>
         </div>
       </div>
     </div>
@@ -538,41 +1019,45 @@
   <!-- CTA Section -->
   <section class="cta-section">
     <div class="container">
-      <h2>Ready to Transform Your Business?</h2>
-      <p>Join thousands of businesses that trust our platform to manage their operations efficiently.</p>
-      <button id="ctaGetStartedBtn" class="cta-button">Start Free Trial</button>
+      <h2>Ready to Modernize Your Fleet Operations?</h2>
+      <p>Schedule a live demo with a logistics consultant today. See how TransVortex can save you hours of billing and protect your inventory.</p>
+      <button id="ctaGetStartedBtn" class="cta-button">Book a Live Demo</button>
     </div>
   </section>
 
-  <!-- Free Trial Modal -->
-  <div id="freeTrialModal" class="modal">
+  <!-- Demo Request Modal -->
+  <div id="demoModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
       <div class="modal-header">
-        <h2>Start Your Free Trial</h2>
-        <p>Experience all features with our 14-day free trial. No credit card required.</p>
+        <h2>Book a Live Demo</h2>
+        <p>Get a personalized walkthrough of the TransVortex dashboard matching your fleet size.</p>
       </div>
       <div class="modal-body">
-        <div class="trial-features">
-          <div class="feature">
-            <i class="fas fa-check"></i>
-            <span>Full access to all features</span>
+        <form id="demo-form">
+          <div class="form-group">
+            <input type="text" id="demo-name" class="form-control" placeholder="Your Name" required>
           </div>
-          <div class="feature">
-            <i class="fas fa-check"></i>
-            <span>14 Days of premium service</span>
+          <div class="form-group">
+            <input type="email" id="demo-email" class="form-control" placeholder="Work Email" required>
           </div>
-          <div class="feature">
-            <i class="fas fa-check"></i>
-            <span>No credit card required</span>
+          <div class="form-group">
+            <input type="tel" id="demo-phone" class="form-control" placeholder="Phone Number" required>
           </div>
-          <div class="feature">
-            <i class="fas fa-check"></i>
-            <span>Cancel anytime</span>
+          <div class="form-group">
+            <input type="text" id="demo-company" class="form-control" placeholder="Transport/Company Name" required>
           </div>
-        </div>
-        <a href="signup.html" class="create-dashboard">Create Dashboard</a>
-        <p class="trial-note">By clicking 'Create Dashboard', you agree to our Terms of Service and Privacy Policy.</p>
+          <div class="form-group">
+            <select id="demo-fleet" class="form-control" style="background-color: white;" required>
+              <option value="" disabled selected>Select Fleet Size</option>
+              <option value="1-10">1 - 10 vehicles</option>
+              <option value="11-50">11 - 50 vehicles</option>
+              <option value="51-100">51 - 100 vehicles</option>
+              <option value="100+">100+ vehicles</option>
+            </select>
+          </div>
+          <button type="submit" class="cta-button" style="border: none; width: 100%; margin-top: 1rem;">Schedule Demo</button>
+        </form>
       </div>
     </div>
   </div>
@@ -581,7 +1066,7 @@
   <footer>
     <div class="footer-content">
       <h3>TransVortex</h3>
-      <p>Empowering businesses with innovative solutions</p>
+      <p>Empowering transporters with state-of-the-art management software.</p>
       <div class="footer-links">
         <a href="index.html">Home</a>
         <a href="about.html">About</a>
@@ -592,7 +1077,7 @@
       </div>
       <div class="social-links">
         <a href="https://www.facebook.com/share/1JHnKAWbHd/" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook"></i></a>
-        <a href="https://x.com/Transvortex8831?t=oWQlJrWolaUj5bt6poviGw&s=08 " target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter"></i></a>
+        <a href="https://x.com/Transvortex8831?t=oWQlJrWolaUj5bt6poviGw&s=08" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter"></i></a>
         <a href="https://www.linkedin.com/in/vikram-singh-73319237b?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i></a>
         <a href="https://www.instagram.com/transvortex?igsh=M3d6MWpieHYzajM5" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i></a>
       </div>
@@ -600,10 +1085,7 @@
     </div>
   </footer>
 
-  <!-- Vanta.js for 3D Background Animation -->
-    <!-- Firebase Configuration -->
-  <!-- Load secure configuration first -->
-
+  <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
   <script>
@@ -618,7 +1100,7 @@
         scale: 1.00,
         scaleMobile: 1.00,
         color: 0x2e8b57, /* Sea Green */
-        backgroundColor: 0xF4FFF8, /* Light green-white */
+        backgroundColor: 0xF8FAFC, /* Slate 50 */
         points: 12.00,
         maxDistance: 22.00,
         spacing: 18.00
@@ -630,50 +1112,143 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
   <script>
-    // Modal functionality
     document.addEventListener('DOMContentLoaded', function() {
-      const freeTrialModal = document.getElementById('freeTrialModal');
-      const getStartedButtons = [
+      const demoModal = document.getElementById('demoModal');
+      const modalTriggerButtons = [
         document.getElementById('heroGetStartedBtn'),
-        document.getElementById('ctaGetStartedBtn')
+        document.getElementById('ctaGetStartedBtn'),
+        document.getElementById('navDemoBtn'),
+        ...document.querySelectorAll('.demo-trigger-btn')
       ];
-      const closeBtn = freeTrialModal.querySelector('.close');
 
-      getStartedButtons.forEach(btn => {
+      // Store the original content of the modal for re-rendering on close
+      const originalModalContent = document.querySelector('#demoModal .modal-content').innerHTML;
+
+      window.closeDemoModal = function() {
+        if (demoModal) {
+          demoModal.classList.remove('show');
+          setTimeout(() => {
+            demoModal.style.display = 'none';
+            // Restore original HTML
+            document.querySelector('#demoModal .modal-content').innerHTML = originalModalContent;
+            // Re-bind events to reconstructed elements
+            bindDemoForm();
+          }, 300);
+        }
+      };
+
+      // Open Modal
+      modalTriggerButtons.forEach(btn => {
         if (btn) {
           btn.addEventListener('click', function(e) {
             e.preventDefault();
-            freeTrialModal.style.display = 'flex';
-            setTimeout(() => freeTrialModal.classList.add('show'), 10);
+            if (demoModal) {
+              demoModal.style.display = 'flex';
+              setTimeout(() => demoModal.classList.add('show'), 10);
+            }
           });
         }
       });
 
-      // Close modal when user clicks on (x)
-      if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
-          freeTrialModal.classList.remove('show');
-          setTimeout(() => {
-            freeTrialModal.style.display = 'none';
-          }, 300);
-        });
-      }
-
       // Close modal when user clicks anywhere outside of it
       window.addEventListener('click', function(event) {
-        if (event.target === freeTrialModal) {
-          freeTrialModal.classList.remove('show');
-          setTimeout(() => {
-            freeTrialModal.style.display = 'none';
-          }, 300);
+        if (event.target === demoModal) {
+          window.closeDemoModal();
         }
+      });
+
+      // Bind close button and form logic
+      function bindDemoForm() {
+        const closeBtn = document.querySelector('#demoModal .close');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', window.closeDemoModal);
+        }
+
+        const demoForm = document.getElementById('demo-form');
+        if (demoForm) {
+          demoForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('demo-name').value;
+            const email = document.getElementById('demo-email').value;
+            const phone = document.getElementById('demo-phone').value;
+            const company = document.getElementById('demo-company').value;
+            const fleet = document.getElementById('demo-fleet').value;
+
+            try {
+              if (typeof firebase !== 'undefined') {
+                const db = firebase.database();
+                const demoRef = db.ref('demoRequests');
+                const newRequestRef = demoRef.push();
+                await newRequestRef.set({
+                  name: name,
+                  email: email,
+                  phone: phone,
+                  company: company,
+                  fleet: fleet,
+                  timestamp: new Date().toISOString()
+                });
+
+                // Confetti burst!
+                if (typeof confetti === 'function') {
+                  confetti({
+                    particleCount: 140,
+                    spread: 100,
+                    origin: { y: 0.6 },
+                    colors: ['#2E8B57', '#43B97F', '#3CB371', '#FFFFFF']
+                  });
+                }
+
+                // Render success details inside the modal content
+                const modalContent = document.querySelector('#demoModal .modal-content');
+                modalContent.innerHTML = `
+                  <span class="close" onclick="window.closeDemoModal()">&times;</span>
+                  <div style="text-align: center; padding: 1.5rem 0;">
+                    <div style="font-size: 3.5rem; color: #2E8B57; margin-bottom: 1rem;">
+                      <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2 style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #0f172a; margin-bottom: 0.75rem;">Demo Booked!</h2>
+                    <p style="color: #475569; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;">
+                      Thank you, <strong>${name}</strong>. We have logged your request for <strong>${company}</strong>. Our fleet onboarding team will contact you at <strong>${email}</strong> or <strong>${phone}</strong> shortly to schedule your live portal walkthrough.
+                    </p>
+                    <button class="cta-button" onclick="window.closeDemoModal()" style="border: none; width: 100%;">Done</button>
+                  </div>
+                `;
+              } else {
+                throw new Error('Firebase configuration is loading, please try again in a moment.');
+              }
+            } catch (err) {
+              alert('Failed to register demo: ' + err.message);
+            }
+          });
+        }
+      }
+
+      // Initial binding
+      bindDemoForm();
+
+      // Showcase tab functionality
+      const tabButtons = document.querySelectorAll('.tab-btn');
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          tabButtons.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+
+          const targetId = this.getAttribute('data-target');
+          const panes = document.querySelectorAll('.tab-pane');
+          panes.forEach(p => p.classList.remove('active'));
+
+          const activePane = document.getElementById(targetId);
+          if (activePane) {
+            activePane.classList.add('active');
+          }
+        });
       });
 
       // Smooth scrolling for anchor links
       document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         const targetId = anchor.getAttribute('href');
         if (targetId !== '#') {
-          anchor.addEventListener('click', function (e) {
+          anchor.addEventListener('click', function(e) {
             e.preventDefault();
             const target = document.querySelector(targetId);
             if (target) {
@@ -682,57 +1257,6 @@
           });
         }
       });
-
-      // Creative welcome on "Create Dashboard" click
-      const createDashboardBtn = document.querySelector('.create-dashboard');
-      if (createDashboardBtn && typeof confetti === 'function') {
-        createDashboardBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-
-          // Get the button's position for the confetti effect
-          const rect = createDashboardBtn.getBoundingClientRect();
-          const origin = {
-            x: (rect.left + rect.right) / 2 / window.innerWidth,
-            y: (rect.top + rect.bottom) / 2 / window.innerHeight
-          };
-
-          // Trigger confetti!
-          confetti({
-            particleCount: 150,
-            spread: 180,
-            origin: origin,
-            colors: ['#2E8B57', '#43B97F', '#3CB371', '#FFFFFF']
-          });
-
-          // Redirect to the signup page after the animation
-          setTimeout(() => {
-            window.location.href = createDashboardBtn.href;
-          }, 800);
-        });
-      }
-
-      // Intersection Observer for animations
-      const observerOptions = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.2
-      };
-
-      const observerCallback = (entries, observer) => {
-        entries.forEach((entry, index) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => {
-              entry.target.classList.add('is-visible');
-            }, index * 180); // Staggered delay
-            observer.unobserve(entry.target);
-          }
-        });
-      };
-
-      const observer = new IntersectionObserver(observerCallback, observerOptions);
-      const featureCards = document.querySelectorAll('.feature-card');
-      featureCards.forEach(card => observer.observe(card));
-
     });
   </script>
 </body>
