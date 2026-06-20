@@ -775,6 +775,69 @@
         font-size: 2.1rem;
       }
     }
+
+    /* Powered By Tech Stack Section */
+    .tech-stack-section {
+      padding: 2.5rem 0;
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(226, 232, 240, 0.6);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+    .tech-stack-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+    .tech-stack-grid {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 3.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    .tech-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #94a3b8;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: default;
+    }
+    .tech-item i {
+      font-size: 1.35rem;
+      transition: transform 0.3s ease;
+    }
+    .tech-item:hover {
+      color: #0f172a;
+      transform: translateY(-2px);
+    }
+    .tech-item.google:hover i { color: #4285F4; transform: scale(1.2); }
+    .tech-item.firebase:hover i { color: #FFCA28; transform: scale(1.2); }
+    .tech-item.cloudinary:hover i { color: #3448C5; transform: scale(1.2); }
+    .tech-item.razorpay:hover i { color: #0070F3; transform: scale(1.2); }
+    .tech-item.emailjs:hover i { color: #FF3366; transform: scale(1.2); }
+    
+    @media (max-width: 768px) {
+      .tech-stack-grid {
+        gap: 2rem;
+      }
+      .tech-item {
+        font-size: 0.95rem;
+      }
+    }
   </style>
 
     <!-- 🔥 Firebase SDK -->
@@ -835,6 +898,35 @@
               <img src="gettyimages-2064288796-612x612.jpg" alt="TransVortex Dashboard Preview" class="mockup-img">
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Powered By Section -->
+  <section class="tech-stack-section">
+    <div class="container">
+      <h3 class="tech-stack-title">Powered By Industry-Leading Infrastructure</h3>
+      <div class="tech-stack-grid">
+        <div class="tech-item google">
+          <i class="fab fa-google"></i>
+          <span>Google Cloud</span>
+        </div>
+        <div class="tech-item firebase">
+          <i class="fas fa-fire"></i>
+          <span>Firebase</span>
+        </div>
+        <div class="tech-item cloudinary">
+          <i class="fas fa-cloud"></i>
+          <span>Cloudinary</span>
+        </div>
+        <div class="tech-item razorpay">
+          <i class="fas fa-credit-card"></i>
+          <span>Razorpay</span>
+        </div>
+        <div class="tech-item emailjs">
+          <i class="fas fa-envelope"></i>
+          <span>EmailJS</span>
         </div>
       </div>
     </div>
