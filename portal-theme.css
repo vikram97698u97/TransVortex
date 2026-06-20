@@ -172,35 +172,93 @@ html[data-theme="dark"] .expiry-warning {
   color: #dc3545;
 }
 
-/* Tables styling (Simple, Classy Bootstrap Style) */
+/* Tables styling (Simple, Classy Bootstrap Style matching trip-expenses.html) */
+.dataTables_wrapper table.table,
+table.table,
 .table {
-  color: var(--text);
-  vertical-align: middle;
-  border-collapse: collapse;
-}
-
-.table thead th {
-  background-color: var(--bg) !important; /* Clean background matching theme */
   color: var(--text) !important;
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  text-transform: none; /* Keep original normal case */
-  font-size: 0.9rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 2px solid var(--border) !important;
+  vertical-align: middle !important;
+  border-collapse: collapse !important;
+  border: none !important;
 }
 
+.dataTables_wrapper table.table thead th,
+table.table thead th,
+.table thead th,
+.table-light th {
+  background-color: #f8f9fa !important; /* Clean background matching theme */
+  color: #212529 !important; /* Dark text */
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 600 !important;
+  text-transform: none !important; /* Keep original normal case */
+  font-size: 0.9rem !important;
+  padding: 12px 16px !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 2px solid var(--border, #dee2e6) !important;
+  vertical-align: middle !important;
+}
+
+.dataTables_wrapper table.table tbody td,
+table.table tbody td,
 .table tbody td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border) !important;
+  padding: 12px 16px !important;
+  background-color: transparent !important;
+  color: #212529 !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid var(--border, #dee2e6) !important;
+  vertical-align: middle !important;
 }
 
+/* Force removal of vertical borders for table-bordered classes */
+.table-bordered,
+.table-bordered th,
+.table-bordered td,
+.table-bordered thead,
+.table-bordered tbody,
+.table-bordered tfoot {
+  border: none !important;
+}
+
+/* Zebra striping matching default theme */
+.table-striped tbody tr:nth-of-type(odd) td,
 .table-striped tbody tr:nth-of-type(odd) {
   background-color: rgba(0, 0, 0, 0.015) !important;
 }
 
+.table-striped tbody tr:nth-of-type(even) td,
+.table-striped tbody tr:nth-of-type(even) {
+  background-color: #ffffff !important;
+}
+
+/* Dark mode overrides for table */
+html[data-theme="dark"] .dataTables_wrapper table.table thead th,
+html[data-theme="dark"] table.table thead th,
+html[data-theme="dark"] .table thead th,
+html[data-theme="dark"] .table-light th {
+  background-color: var(--card, #151F32) !important;
+  color: var(--text, #F1F5F9) !important;
+  border-bottom: 2px solid var(--border, #1E293B) !important;
+}
+
+html[data-theme="dark"] .dataTables_wrapper table.table tbody td,
+html[data-theme="dark"] table.table tbody td,
+html[data-theme="dark"] .table tbody td {
+  color: var(--text, #F1F5F9) !important;
+  border-bottom: 1px solid var(--border, #1E293B) !important;
+}
+
+html[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) td,
 html[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
   background-color: rgba(255, 255, 255, 0.015) !important;
+}
+
+html[data-theme="dark"] .table-striped tbody tr:nth-of-type(even) td,
+html[data-theme="dark"] .table-striped tbody tr:nth-of-type(even) {
+  background-color: var(--card, #151F32) !important;
 }
 
 /* DataTables Overrides */
