@@ -459,7 +459,9 @@
                     const typeBadge = acc.type === 'bank' ? 'badge-bank' : 'badge-cash';
                     const icon = acc.type === 'bank' ? 'fa-university text-primary' : 'fa-wallet text-success';
                     
-                    const actions = userRole === 'owner' ? `
+                    const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+                    const isOwner = (ctx && ctx.role === 'owner') || userRole === 'owner';
+                    const actions = isOwner ? `
                         <div class="ms-2">
                             <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="showEditAccountModal('${id}', '${acc.name}', '${acc.type}', ${bal})" title="Edit"><i class="fas fa-edit small"></i></button>
                             <button class="btn btn-sm btn-outline-danger py-0 px-2 ms-1" onclick="deleteAccount('${id}')" title="Delete"><i class="fas fa-trash small"></i></button>
@@ -549,6 +551,8 @@
 
         // Add account helper
         window.showAddAccountModal = () => {
+            const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+            if (ctx && ctx.role !== 'owner') { alert("Only the account owner has permission to perform this action."); return; }
             document.getElementById('accountForm').reset();
             document.getElementById('editAccountId').value = '';
             document.getElementById('accountModalTitle').textContent = 'Add New Account';
@@ -559,6 +563,8 @@
 
         // Edit account helper
         window.showEditAccountModal = (id, name, type, balance) => {
+            const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+            if (ctx && ctx.role !== 'owner') { alert("Only the account owner has permission to perform this action."); return; }
             document.getElementById('editAccountId').value = id;
             document.getElementById('accName').value = name;
             document.getElementById('accType').value = type;
@@ -571,6 +577,8 @@
 
         // Delete account helper
         window.deleteAccount = async (id) => {
+            const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+            if (ctx && ctx.role !== 'owner') { alert("Only the account owner has permission to perform this action."); return; }
             if (confirm("Are you sure you want to delete this account? Any linked transactions will remain, but the account itself will be removed.")) {
                 try {
                     await db.ref(`users/${coreId}/money_accounts/${id}`).remove();
@@ -584,6 +592,8 @@
         // Handle Add/Edit Account Submit
         document.getElementById('accountForm').onsubmit = async (e) => {
             e.preventDefault();
+            const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+            if (ctx && ctx.role !== 'owner') { alert("Only the account owner has permission to perform this action."); return; }
             const editId = document.getElementById('editAccountId').value;
             const newAcc = {
                 name: document.getElementById('accName').value.trim(),
@@ -613,6 +623,8 @@
 
         // Manage Funds UI helpers
         window.showManageFundsModal = () => {
+            const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+            if (ctx && ctx.role !== 'owner') { alert("Only the account owner has permission to perform this action."); return; }
             document.getElementById('fundsForm').reset();
             document.getElementById('fundDate').valueAsDate = new Date();
             toggleFundFields();
@@ -641,6 +653,8 @@
         // Handle Funds Deposit/Withdraw/Transfer Submit
         document.getElementById('fundsForm').onsubmit = async (e) => {
             e.preventDefault();
+            const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+            if (ctx && ctx.role !== 'owner') { alert("Only the account owner has permission to perform this action."); return; }
             const action = document.getElementById('fundAction').value;
             const amount = parseFloat(document.getElementById('fundAmount').value) || 0;
             const date = document.getElementById('fundDate').value;
@@ -719,6 +733,8 @@
         };
 
         window.runReconciliationAudit = async () => {
+            const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+            if (ctx && ctx.role !== 'owner') { alert("Only the account owner has permission to perform this action."); return; }
             const tableBody = document.getElementById('reconciliationTableBody');
             tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Running audit calculations...</td></tr>';
             const modal = new bootstrap.Modal(document.getElementById('reconciliationModal'));
