@@ -12,152 +12,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="global-theme.css">
+  <link rel="stylesheet" href="public-styles.css">
   <style>
-    :root {
-      --primary-color: #2E8B57; /* Sea Green */
-      --secondary-color: #43B97F; /* Mint Green */
-      --accent-color: #3CB371; /* Lighter Green */
-      --primary-dark: #1e5c38;
-      --text-color: #0f172a; /* Slate 900 */
-      --text-muted: #475569; /* Slate 600 */
-      --light-bg: #f8fafc; /* Slate 50 */
-      --light-green-bg: #f0fdf4; /* Emerald 50 */
-      --white: #FFFFFF;
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
-      --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.12);
-      --radius: 16px;
-      --border-color: #e2e8f0;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Inter', sans-serif;
-      line-height: 1.6;
-      color: var(--text-color);
-      background-color: var(--light-bg);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-
-    /* Header styling */
-    header {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-      position: fixed;
-      width: 100%;
-      top: 0;
-      z-index: 1000;
-      transition: all 0.3s ease;
-    }
-
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem 0;
-    }
-
-    .logo-container {
-      display: flex;
-      align-items: center;
-    }
-
-    .logo {
-      height: 48px;
-      width: auto;
-      transition: transform 0.3s ease;
-    }
-
-    .logo:hover {
-      transform: scale(1.02);
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 1.75rem;
-    }
-
-    .nav-links a {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      font-size: 0.95rem;
-    }
-
-    .nav-links a:hover {
-      color: var(--primary-color);
-    }
-
-    .login-link {
-      margin-right: 0.5rem;
-    }
-
-    .cta-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px 26px;
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
-      color: white;
-      border-radius: 30px;
-      text-decoration: none;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(46, 139, 87, 0.25);
-      font-size: 0.95rem;
-    }
-
-    .cta-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(46, 139, 87, 0.35);
-      background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-dark) 100%);
-    }
-
-    .nav-cta {
-      padding: 10px 20px;
-      font-size: 0.9rem;
-    }
-
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 26px;
-      background: white;
-      color: var(--text-color);
-      border: 1px solid var(--border-color);
-      border-radius: 30px;
-      text-decoration: none;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      font-size: 0.95rem;
-    }
-
-    .btn-secondary:hover {
-      background: var(--light-bg);
-      border-color: #cbd5e1;
-      transform: translateY(-2px);
-    }
-
     /* Hero Section */
     .hero {
       padding: 9rem 0 6rem;
@@ -287,16 +144,6 @@
 
     .browser-frame:hover {
       transform: translateY(-5px);
-    }
-
-    /* 3D Animation Background */
-    #vanta-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
     }
 
     /* Why Choose Us Section */
@@ -759,9 +606,6 @@
     }
 
     @media (max-width: 768px) {
-      .nav-links {
-        display: none;
-      }
       .hero {
         padding: 7rem 0 4rem;
       }
@@ -773,69 +617,6 @@
       }
       .cta-section h2 {
         font-size: 2.1rem;
-      }
-    }
-
-    /* Powered By Tech Stack Section */
-    .tech-stack-section {
-      padding: 2.5rem 0;
-      background: rgba(255, 255, 255, 0.45);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(226, 232, 240, 0.6);
-      border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-      text-align: center;
-      position: relative;
-      z-index: 10;
-    }
-    .tech-stack-title {
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: #64748b;
-      text-transform: uppercase;
-      margin-bottom: 1.25rem;
-    }
-    .tech-stack-grid {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 3.5rem;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1.5rem;
-    }
-    .tech-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #94a3b8;
-      font-weight: 600;
-      font-size: 1.05rem;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: default;
-    }
-    .tech-item i {
-      font-size: 1.35rem;
-      transition: transform 0.3s ease;
-    }
-    .tech-item:hover {
-      color: #0f172a;
-      transform: translateY(-2px);
-    }
-    .tech-item.google:hover i { color: #4285F4; transform: scale(1.2); }
-    .tech-item.firebase:hover i { color: #FFCA28; transform: scale(1.2); }
-    .tech-item.cloudinary:hover i { color: #3448C5; transform: scale(1.2); }
-    .tech-item.razorpay:hover i { color: #0070F3; transform: scale(1.2); }
-    .tech-item.emailjs:hover i { color: #FF3366; transform: scale(1.2); }
-    
-    @media (max-width: 768px) {
-      .tech-stack-grid {
-        gap: 2rem;
-      }
-      .tech-item {
-        font-size: 0.95rem;
       }
     }
   </style>
