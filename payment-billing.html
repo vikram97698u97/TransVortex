@@ -218,6 +218,7 @@
     const db = getDatabase(app);
     const auth = getAuth();
     let currentUserUID = null;
+    let effectiveCoreAccountId = null;
 
     onAuthStateChanged(auth, user => {
       if (user) {
@@ -226,6 +227,7 @@
         get(userRef).then(snapshot => {
           const userData = snapshot.val() || {};
           const coreAccountId = userData.coreAccountId || user.uid;
+          effectiveCoreAccountId = coreAccountId;
           
           if (window.MoneyFlow) {
               window.MoneyFlow.coreAccountId = coreAccountId;
@@ -365,7 +367,7 @@
         createdAt: new Date().toISOString()
       };
 
-      const newExpenseRef = push(ref(db, `users/${currentUserUID}/expenses`));
+      const newExpenseRef = push(ref(db, `users/${effectiveCoreAccountId}/expenses`));
       expenseData.id = newExpenseRef.key;
       await set(newExpenseRef, expenseData);
       
@@ -390,7 +392,7 @@
     expenseForm.onsubmit = handleAddExpense;
 
     function loadExpenses() {
-      onValue(ref(db, `users/${currentUserUID}/expenses`), (snapshot) => {
+      onValue(ref(db, `users/${effectiveCoreAccountId}/expenses`), (snapshot) => {
         expenses = [];
         if (snapshot.exists()) {
           snapshot.forEach(child => {
@@ -528,7 +530,7 @@
           paymentAccountId: accountId,
           updatedAt: new Date().toISOString()
         };
-        await update(ref(db, `users/${currentUserUID}/expenses/${id}`), updatedData);
+        await update(ref(db, `users/${effectiveCoreAccountId}/expenses/${id}`), updatedData);
         
         // Update in MoneyFlow
         if (window.MoneyFlow) {
@@ -553,7 +555,7 @@
 
     window.deleteExpense = async (id) => {
       if (confirm("Delete this expense record?")) {
-        await remove(ref(db, `users/${currentUserUID}/expenses/${id}`));
+        await remove(ref(db, `users/${effectiveCoreAccountId}/expenses/${id}`));
         if (window.MoneyFlow) {
             await window.MoneyFlow.deletePayment(id);
         }
