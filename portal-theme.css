@@ -175,11 +175,30 @@ html[data-theme="dark"] .expiry-warning {
 /* Tables styling (Simple, Classy Bootstrap Style matching trip-expenses.html) */
 .dataTables_wrapper table.table,
 table.table,
-.table {
+.table,
+.table-responsive {
   color: var(--text) !important;
   vertical-align: middle !important;
   border-collapse: collapse !important;
   border: none !important;
+}
+
+/* Completely remove top lines/borders above tables and table headers */
+.dataTables_wrapper table.table,
+table.table,
+.table,
+.dataTables_wrapper table.table thead,
+table.table thead,
+.table thead,
+.dataTables_wrapper table.table thead tr,
+table.table thead tr,
+.table thead tr,
+.dataTables_wrapper table.table thead th,
+table.table thead th,
+.table thead th,
+.table-light th {
+  border-top: none !important;
+  border-top-width: 0 !important;
 }
 
 .dataTables_wrapper table.table thead th,
@@ -193,7 +212,6 @@ table.table thead th,
   text-transform: none !important; /* Keep original normal case */
   font-size: 0.9rem !important;
   padding: 12px 16px !important;
-  border-top: none !important;
   border-left: none !important;
   border-right: none !important;
   border-bottom: 2px solid var(--border, #dee2e6) !important;
@@ -260,6 +278,82 @@ html[data-theme="dark"] .table-striped tbody tr:nth-of-type(even) td,
 html[data-theme="dark"] .table-striped tbody tr:nth-of-type(even) {
   background-color: var(--card, #151F32) !important;
 }
+
+/* Navigation Tabs Styling (Modern, Clean Floating Tabs matching add.html) */
+.nav-tabs {
+  border-bottom: none !important;
+  gap: 1rem;
+  margin-bottom: 1.5rem !important;
+}
+
+.nav-tabs .nav-item {
+  margin-bottom: 0;
+}
+
+.nav-tabs .nav-link {
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #3b82f6 !important; /* Elegant blue for inactive state */
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px !important;
+  transition: var(--transition);
+  font-size: 0.95rem;
+}
+
+.nav-tabs .nav-link:hover {
+  background-color: rgba(59, 130, 246, 0.05) !important;
+  border-color: transparent !important;
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #ffffff !important;
+  color: var(--text, #0F172A) !important;
+  border: 1px solid var(--border, #E2E8F0) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Dark Mode Navigation Tabs Override */
+html[data-theme="dark"] .nav-tabs .nav-link {
+  color: #60a5fa !important; /* Muted blue for dark mode */
+}
+
+html[data-theme="dark"] .nav-tabs .nav-link:hover {
+  background-color: rgba(96, 165, 250, 0.08) !important;
+}
+
+html[data-theme="dark"] .nav-tabs .nav-link.active {
+  background-color: var(--card, #151F32) !important;
+  color: var(--text, #F1F5F9) !important;
+  border-color: var(--border, #1E293B) !important;
+}
+
+/* Navigation Pills Styling (Detail Views/Modals/Drawer tabs) */
+.nav-pills {
+  gap: 0.5rem;
+  border-bottom: none !important;
+}
+
+.nav-pills .nav-link {
+  color: var(--muted, #64748B) !important;
+  font-weight: 500;
+  border-radius: 8px !important;
+  padding: 0.5rem 1rem;
+  background: transparent !important;
+  transition: var(--transition);
+  border: 1px solid transparent !important;
+}
+
+.nav-pills .nav-link:hover {
+  background-color: var(--border, #E2E8F0) !important;
+}
+
+.nav-pills .nav-link.active {
+  background-color: var(--primary, #2E8B57) !important;
+  color: #ffffff !important;
+  border-color: var(--primary) !important;
+}
+
 
 /* DataTables Overrides */
 .dataTables_wrapper .dataTables_paginate .paginate_button.current {
