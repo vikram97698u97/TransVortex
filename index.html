@@ -1242,6 +1242,15 @@
         }
       });
 
+      // Check query parameter to open modal automatically
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('demo') === 'true') {
+        if (demoModal) {
+          demoModal.style.display = 'flex';
+          setTimeout(() => demoModal.classList.add('show'), 10);
+        }
+      }
+
       // Close modal when user clicks anywhere outside of it
       window.addEventListener('click', function(event) {
         if (event.target === demoModal) {
