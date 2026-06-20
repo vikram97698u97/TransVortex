@@ -8,10 +8,44 @@
     },
     "users": {
       "$uid": {
-        // 🔒 Allow authenticated accounts to read and write user account data (trusted devices, tyres, bookings, payments, etc.)
+        // 🔒 Allow authenticated accounts to read and write user account data
         ".read": "auth != null",
-        ".write": "auth != null"
+        ".write": "auth != null",
+        
+        // ⚡ Database Indexes for High-Performance Queries
+        "lrReports": {
+          ".indexOn": ["clientId", "transporterId", "truckNumber", "date"]
+        },
+        "payments": {
+          ".indexOn": ["clientId"]
+        },
+        "invoices": {
+          ".indexOn": ["clientId"]
+        },
+        "reminders": {
+          ".indexOn": ["dueDate"]
+        },
+        "vehicles": {
+          ".indexOn": ["vehicleNumber"]
+        },
+        "money_transactions": {
+          ".indexOn": ["timestamp"]
+        },
+        "driverSalaryPayments": {
+          ".indexOn": ["vehicleNumber"]
+        },
+        "transporterPayments": {
+          ".indexOn": ["transporterId"]
+        },
+        "tyres": {
+          ".indexOn": ["number"]
+        }
       }
+    },
+    "payments": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["userId"]
     }
   }
 }

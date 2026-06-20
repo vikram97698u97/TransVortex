@@ -170,7 +170,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, get, push, set, onValue, remove, update, query, orderByChild, equalTo, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, get, push, set, remove, update, query, orderByChild, orderByKey, equalTo, increment, limitToFirst, startAt } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     // Load Firebase configuration securely from EVM
@@ -292,6 +292,8 @@
     let itemsPerPageExpenses = 10;
     let totalPagesExpenses = 1;
     let filteredExpenses = [];
+    let pageCursorsExpenses = { 1: null };
+    let hasNextPageExpenses = false;
 
     async function resizeImage(file, maxWidth = 800) {
       return new Promise((resolve) => {
@@ -387,26 +389,60 @@
       localStorage.removeItem(`tv_billing_draft_${currentUserUID}`);
       expenseForm.reset();
       expensePreview.style.display = "none";
+      loadExpenses();
     }
 
     expenseForm.onsubmit = handleAddExpense;
 
     function loadExpenses() {
-      onValue(ref(db, `users/${effectiveCoreAccountId}/expenses`), (snapshot) => {
+      pageCursorsExpenses = { 1: null };
+      currentPageExpenses = 1;
+      fetchPageExpenses();
+    }
+
+    async function fetchPageExpenses() {
+      try {
+        const expensesRef = ref(db, `users/${effectiveCoreAccountId}/expenses`);
+        let q;
+        const startKey = pageCursorsExpenses[currentPageExpenses];
+        
+        if (startKey) {
+          q = query(expensesRef, orderByKey(), startAt(startKey), limitToFirst(itemsPerPageExpenses + 1));
+        } else {
+          q = query(expensesRef, orderByKey(), limitToFirst(itemsPerPageExpenses + 1));
+        }
+        
+        const snapshot = await get(q);
         expenses = [];
         if (snapshot.exists()) {
           snapshot.forEach(child => {
             expenses.push(child.val());
           });
         }
-        currentPageExpenses = 1;
-        renderExpensesWithPagination();
-      });
+        
+        if (expenses.length > itemsPerPageExpenses) {
+          hasNextPageExpenses = true;
+          const nextItem = expenses[itemsPerPageExpenses];
+          pageCursorsExpenses[currentPageExpenses + 1] = nextItem.id;
+          expenses = expenses.slice(0, itemsPerPageExpenses);
+        } else {
+          hasNextPageExpenses = false;
+        }
+        
+        renderExpensesList();
+      } catch (e) {
+        console.error("Error loading paginated expenses:", e);
+      }
     }
 
-    function renderExpenses(list) {
+    function renderExpensesList() {
       expenseTableBody.innerHTML = "";
-      list.forEach(expense => {
+      const searchValue = (expenseSearchInput.value || '').toLowerCase();
+      const filtered = searchValue 
+        ? expenses.filter(p => (p.type || '').toLowerCase().includes(searchValue))
+        : expenses;
+        
+      filtered.forEach(expense => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${expense.date}</td>
@@ -420,51 +456,11 @@
         `;
         expenseTableBody.appendChild(tr);
       });
-    }
-
-    function computeFilteredExpenses() {
-      const value = (expenseSearchInput.value || '').toLowerCase();
-      return expenses.filter(p => (p.type || '').toLowerCase().includes(value));
-    }
-
-    function updatePaginationControlsExpenses(totalItems) {
+      
       prevPageBtnExpenses.disabled = currentPageExpenses === 1;
-      nextPageBtnExpenses.disabled = currentPageExpenses === totalPagesExpenses;
-      entriesInfoExpenses.textContent = `Showing ${totalItems === 0 ? 0 : ((currentPageExpenses - 1) * itemsPerPageExpenses + 1)} to ${Math.min(currentPageExpenses * itemsPerPageExpenses, totalItems)} of ${totalItems} entries`;
-      generatePageTabsExpenses();
-    }
-
-    function generatePageTabsExpenses() {
-      tabNavigationExpenses.innerHTML = '';
-      if (totalPagesExpenses <= 1) return;
-      addTabExpenses(1);
-      let startPage = Math.max(2, currentPageExpenses - 2);
-      let endPage = Math.min(totalPagesExpenses - 1, currentPageExpenses + 2);
-      if (startPage > 2) tabNavigationExpenses.appendChild(document.createTextNode('...'));
-      for (let i = startPage; i <= endPage; i++) addTabExpenses(i);
-      if (endPage < totalPagesExpenses - 1) tabNavigationExpenses.appendChild(document.createTextNode('...'));
-      addTabExpenses(totalPagesExpenses);
-    }
-
-    function addTabExpenses(pageNumber) {
-      const tab = document.createElement('button');
-      tab.className = `btn btn-sm ${pageNumber === currentPageExpenses ? 'btn-success' : 'btn-outline-success'}`;
-      tab.style.minWidth = '36px';
-      tab.textContent = pageNumber;
-      tab.addEventListener('click', () => { currentPageExpenses = pageNumber; renderExpensesWithPagination(); });
-      tabNavigationExpenses.appendChild(tab);
-    }
-
-    function renderExpensesWithPagination() {
-      filteredExpenses = computeFilteredExpenses();
-      const totalItems = filteredExpenses.length;
-      totalPagesExpenses = Math.max(1, Math.ceil(totalItems / itemsPerPageExpenses));
-      if (currentPageExpenses > totalPagesExpenses) currentPageExpenses = totalPagesExpenses;
-      updatePaginationControlsExpenses(totalItems);
-      const startIndex = (currentPageExpenses - 1) * itemsPerPageExpenses;
-      const endIndex = Math.min(startIndex + itemsPerPageExpenses, totalItems);
-      const pageData = filteredExpenses.slice(startIndex, endIndex);
-      renderExpenses(pageData);
+      nextPageBtnExpenses.disabled = !hasNextPageExpenses;
+      entriesInfoExpenses.textContent = `Showing Page ${currentPageExpenses} (${filtered.length} entries)`;
+      tabNavigationExpenses.innerHTML = `<span class="px-2 align-self-center text-muted">Page ${currentPageExpenses}</span>`;
     }
 
     async function populateExpensePaymentAccounts() {
@@ -550,6 +546,7 @@
         submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Add Expense';
         if (cancelBtn) cancelBtn.classList.add('hidden');
         expenseForm.onsubmit = handleAddExpense;
+        await fetchPageExpenses();
       };
     };
 
@@ -559,13 +556,14 @@
         if (window.MoneyFlow) {
             await window.MoneyFlow.deletePayment(id);
         }
+        await fetchPageExpenses();
       }
     };
 
-    expenseSearchInput.addEventListener("input", () => { currentPageExpenses = 1; renderExpensesWithPagination(); });
-    entriesPerPageSelectExpenses.addEventListener('change', function () { itemsPerPageExpenses = parseInt(this.value, 10) || 10; currentPageExpenses = 1; renderExpensesWithPagination(); });
-    prevPageBtnExpenses.addEventListener('click', () => { if (currentPageExpenses > 1) { currentPageExpenses--; renderExpensesWithPagination(); } });
-    nextPageBtnExpenses.addEventListener('click', () => { if (currentPageExpenses < totalPagesExpenses) { currentPageExpenses++; renderExpensesWithPagination(); } });
+    expenseSearchInput.addEventListener("input", () => { renderExpensesList(); });
+    entriesPerPageSelectExpenses.addEventListener('change', function () { itemsPerPageExpenses = parseInt(this.value, 10) || 10; currentPageExpenses = 1; loadExpenses(); });
+    prevPageBtnExpenses.addEventListener('click', () => { if (currentPageExpenses > 1) { currentPageExpenses--; fetchPageExpenses(); } });
+    nextPageBtnExpenses.addEventListener('click', () => { if (hasNextPageExpenses) { currentPageExpenses++; fetchPageExpenses(); } });
 
     window.toggleMenu = function () {
       document.getElementById("navLinks").classList.toggle("show");
