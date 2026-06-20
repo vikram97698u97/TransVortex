@@ -49,7 +49,7 @@ const server = http.createServer((req, res) => {
                 cloudinary: global.window.CLOUDINARY_CONFIG || evm.CLOUDINARY_CONFIG,
                 environment: global.window.ENVIRONMENT || evm.ENVIRONMENT,
                 razorpay: global.window.RAZORPAY_CONFIG || evm.RAZORPAY_CONFIG,
-                security: global.window.SECURITY_CONFIG || evm.SECURITY_CONFIG
+                security: { apiRateLimit: (global.window.SECURITY_CONFIG || evm.SECURITY_CONFIG || {}).apiRateLimit || 100 }
             };
         } catch (e) {
             console.error('⚠️ Could not load configuration from evm.js:', e.message);

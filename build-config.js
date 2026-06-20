@@ -79,9 +79,9 @@ function generateEVMJS(envVars) {
     };
 
     const security = {
-        sessionSecret: envVars.SESSION_SECRET || '',
-        jwtSecret: envVars.JWT_SECRET || '',
-        encryptionKey: envVars.ENCRYPTION_KEY || '',
+        sessionSecret: 'hidden-on-client',
+        jwtSecret: 'hidden-on-client',
+        encryptionKey: 'hidden-on-client',
         apiRateLimit: parseInt(envVars.API_RATE_LIMIT) || 100
     };
 

@@ -57,9 +57,9 @@ function generateConfigFromSecrets() {
     };
 
     const security = {
-        sessionSecret: process.env.SESSION_SECRET || '',
-        jwtSecret: process.env.JWT_SECRET || '',
-        encryptionKey: process.env.ENCRYPTION_KEY || '',
+        sessionSecret: 'hidden-on-client',
+        jwtSecret: 'hidden-on-client',
+        encryptionKey: 'hidden-on-client',
         apiRateLimit: parseInt(process.env.API_RATE_LIMIT) || 100
     };
 
