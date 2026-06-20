@@ -13,62 +13,6 @@
   <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    :root {
-      /* Saved Theme */
-      --primary: #2E8B57;         /* Sea Green */
-      --charcoal: #1F1F1F;        /* Dark Charcoal */
-      --bg: #F8FAFC;              /* Modern Slate Light Gray */
-      --text: #0F172A;            /* Slate Black */
-      --mint: #43B97F;            /* Bright Mint Green */
-      --card: #ffffff;
-      --muted: #64748B;           /* Modern Slate Muted */
-      --border: #E2E8F0;          /* Modern Slate Border */
-      --shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08), 0 2px 8px -1px rgba(15, 23, 42, 0.04);
-      --radius: 16px;
-      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Dark mode */
-    html[data-theme="dark"] {
-      --bg: #0B0F19;
-      --card: #151F32;
-      --text: #F1F5F9;
-      --border: #1E293B;
-      --muted: #94A3B8;
-      --shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      line-height: 1.6;
-    }
-
-    /* Heading fonts */
-    h1, h2, h3, h4, h5, h6, .outfit-font {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-    }
-
-    /* Container */
-    .main-content {
-      padding: 2rem 1.5rem;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    
-    .dashboard-panel {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 1.75rem;
-      margin-bottom: 2rem;
-      border: 1px solid var(--border);
-      transition: var(--transition);
-    }
-
     /* Welcome Banner */
     .welcome-banner {
       background: linear-gradient(135deg, rgba(46,139,87,0.06), rgba(67,185,127,0.08));
@@ -109,24 +53,6 @@
       font-size: 0.95rem;
       font-weight: 700;
       color: var(--primary);
-    }
-
-    /* Warning Banner */
-    .alert-banner {
-      background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(249,115,22,0.08));
-      border: 1px solid rgba(239,68,68,0.15);
-      border-radius: 12px;
-      padding: 12px 18px;
-      margin-bottom: 2rem;
-      display: none;
-      align-items: center;
-      gap: 12px;
-      font-weight: 500;
-      color: #b91c1c;
-      animation: pulse 2s infinite;
-    }
-    html[data-theme="dark"] .alert-banner {
-      color: #fca5a5;
     }
 
     /* Quick Actions */
@@ -316,57 +242,6 @@
       margin-bottom: 2rem;
     }
     
-    /* Table Styling */
-    .table-container-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-    .table-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.75rem;
-    }
-    .table-card-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--text);
-      margin: 0;
-    }
-
-    .table {
-      width: 100% !important;
-      margin-bottom: 0;
-      color: var(--text);
-    }
-    .table th {
-      font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      letter-spacing: 0.5px;
-      color: var(--muted);
-      border-bottom: 2px solid var(--border);
-      padding: 12px 16px;
-    }
-    .table td {
-      padding: 14px 16px;
-      vertical-align: middle;
-      border-bottom: 1px solid var(--border);
-    }
-    .table-striped tbody tr:nth-of-type(odd) {
-      background-color: rgba(0, 0, 0, 0.015);
-    }
-    html[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
-      background-color: rgba(255, 255, 255, 0.015);
-    }
-
     /* Business Card & Reminders Split */
     .tools-grid {
       display: grid;
@@ -378,56 +253,6 @@
       .tools-grid {
         grid-template-columns: 1fr;
       }
-    }
-
-    /* Form Controls */
-    .form-label {
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: var(--text);
-      margin-bottom: 6px;
-    }
-    .form-control, .form-select {
-      border: 1px solid var(--border);
-      background-color: var(--card);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 0.9rem;
-      transition: var(--transition);
-    }
-    .form-control:focus, .form-select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.15);
-      background-color: var(--card);
-      color: var(--text);
-    }
-    
-    .btn-primary {
-      background-color: var(--primary);
-      border-color: var(--primary);
-      font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      border-radius: 10px;
-      padding: 10px 20px;
-      transition: var(--transition);
-    }
-    .btn-primary:hover {
-      background-color: var(--mint);
-      border-color: var(--mint);
-      transform: translateY(-1px);
-    }
-    .btn-outline-secondary {
-      border-color: var(--border);
-      color: var(--muted);
-      font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      border-radius: 10px;
-      padding: 10px 20px;
-    }
-    .btn-outline-secondary:hover {
-      background-color: rgba(0,0,0,0.05);
-      color: var(--text);
     }
 
     /* Business Card Prev */
@@ -580,6 +405,8 @@
   </style>
   <script src="evm.js"></script>
   <script src="secure-api-loader.js"></script>
+  <link rel="stylesheet" href="portal-theme.css">
+  <script src="auth-manager.js"></script>
 </head>
 <body>
   <div id="navbar-placeholder"></div>
@@ -1059,34 +886,24 @@
 
     // Initialize the page
     $(document).ready(function() {
-      auth.onAuthStateChanged((user) => {
-        if (!user) {
+      AuthManager.getCurrentUserContext().then((ctx) => {
+        if (!ctx) {
           window.location.href = 'login.html';
         } else {
-          currentUser = user;
+          currentUser = auth.currentUser || { uid: ctx.uid, email: ctx.email, displayName: ctx.name };
+          coreAccountId = ctx.coreAccountId;
+
+          // Initialize all dashboard components
+          initializePage(currentUser);
           
-          // Determine the core account ID to fetch shared data
-          const userRef = db.ref(`users/${user.uid}`);
-          userRef.once('value').then((snapshot) => {
-            const userData = snapshot.val();
-            if (userData && userData.coreAccountId) {
-              coreAccountId = userData.coreAccountId;
-            } else {
-              coreAccountId = user.uid;
-            }
+          // Set default date range to current month
+          const today = new Date();
+          const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+          $('#fromDate').val(formatDateForInput(firstDay));
+          $('#toDate').val(formatDateForInput(today));
 
-            // Initialize all dashboard components
-            initializePage(user);
-            
-            // Set default date range to current month
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            $('#fromDate').val(formatDateForInput(firstDay));
-            $('#toDate').val(formatDateForInput(today));
-
-            // Load all payment data and trigger initial rendering
-            listenToPayments(coreAccountId);
-          });
+          // Load all payment data and trigger initial rendering
+          listenToPayments(coreAccountId);
 
           // Initialize DataTable
           initializeDataTable();

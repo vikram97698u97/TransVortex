@@ -16,15 +16,7 @@
       referrerpolicy="no-referrer" 
     />
     <style>
-        :root {
-            --primary-color: #4a6bff;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --light-gray: #f8f9fa;
-            --dark-gray: #343a40;
-            --border-color: #dee2e6;
-        }
+        
         
         * {
             box-sizing: border-box;
@@ -694,6 +686,7 @@
         if(window.AuthManager) await window.AuthManager.enforcePageAccess("admin-payments"); 
     });
   </script>
+  <link rel="stylesheet" href="portal-theme.css">
 </head>
 <body>
     <div class="container">
@@ -2449,7 +2442,7 @@
 
         // Add dark mode styles dynamically
         const darkModeStyles = `
-            html[data-theme="dark"] { --light-gray: #1f2937; --dark-gray: #f9fafb; --border-color: #374151; --body-bg: #111827; --container-bg: #1f2937; --text-color: #d1d5db; --hover-bg: rgba(255, 255, 255, 0.05); }
+            
             html[data-theme="dark"] body { background-color: var(--body-bg); color: var(--text-color); }
             html[data-theme="dark"] .container { background: var(--container-bg); box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
             html[data-theme="dark"] th { background-color: #111827; color: var(--text-color); }
