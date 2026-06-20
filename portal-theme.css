@@ -172,27 +172,35 @@ html[data-theme="dark"] .expiry-warning {
   color: #dc3545;
 }
 
-/* Tables styling */
+/* Tables styling (Simple, Classy Bootstrap Style) */
 .table {
   color: var(--text);
   vertical-align: middle;
+  border-collapse: collapse;
 }
 
 .table thead th {
-  background-color: rgba(46, 139, 87, 0.04) !important;
-  color: var(--primary) !important;
-  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg) !important; /* Clean background matching theme */
+  color: var(--text) !important;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
-  padding: 1rem;
+  text-transform: none; /* Keep original normal case */
+  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
   border-bottom: 2px solid var(--border) !important;
 }
 
 .table tbody td {
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border) !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.015) !important;
+}
+
+html[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.015) !important;
 }
 
 /* DataTables Overrides */
