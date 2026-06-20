@@ -532,7 +532,13 @@ function addLRToTable(lr, getClientName) {
         `<span class="badge ${displayStatusClass}">${displayStatus}</span>`,
         employeeName,
         `<button class="btn btn-sm btn-outline-info" onclick="showLRCopy('${lrId}')" title="View LR Copy"><i class="fas fa-print"></i></button>`,
-        `<button class="btn btn-sm btn-outline-primary" onclick="editLR('${lrId}')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="deleteLR('${lrId}')"><i class="fas fa-trash"></i></button>`
+        (function() {
+            const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+            const isOwner = ctx && ctx.role === 'owner';
+            return isOwner
+                ? `<button class="btn btn-sm btn-outline-primary" onclick="editLR('${lrId}')" title="Edit LR"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="deleteLR('${lrId}')" title="Delete LR"><i class="fas fa-trash"></i></button>`
+                : `<button class="btn btn-sm btn-outline-primary" disabled style="opacity: 0.5; cursor: not-allowed;" title="Only the owner can edit LRs"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-outline-danger" disabled style="opacity: 0.5; cursor: not-allowed;" title="Only the owner can delete LRs"><i class="fas fa-trash"></i></button>`;
+        })()
     ]);
 }
 
@@ -1254,6 +1260,8 @@ async function updateLR() {
 }
 
 window.deleteLR = async function (lrId) {
+    const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+    if (ctx && ctx.role !== 'owner') { alert("Only the account owner has permission to delete LR reports."); return; }
     if (window.AuthManager && !window.AuthManager.hasPermission("delete_records")) { alert("You do not have permission to perform this action."); return; }
     if (!window.currentCoreAccountId) return;
     if (confirm('Are you sure you want to delete this LR record?')) {
@@ -1286,6 +1294,8 @@ window.deleteLR = async function (lrId) {
 };
 
 window.editLR = function (lrId) {
+    const ctx = window.AuthManager ? window.AuthManager.getCachedUserContext() : null;
+    if (ctx && ctx.role !== 'owner') { alert("Only the account owner has permission to edit LR reports."); return; }
     if (window.AuthManager && !window.AuthManager.hasPermission("edit_records")) { alert("You do not have permission to perform this action."); return; }
     window.currentEditingLRId = lrId;
     if (!window.currentCoreAccountId) return;
